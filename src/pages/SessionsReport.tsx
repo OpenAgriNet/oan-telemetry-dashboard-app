@@ -1,3 +1,4 @@
+
 import React, { useState } from "react";
 import { useQuery } from "@tanstack/react-query";
 import { generateSessionReport, fetchUsers } from "@/services/api";
@@ -22,6 +23,7 @@ import {
 } from "@/components/ui/table";
 import { format } from "date-fns";
 import { Search } from "lucide-react";
+import TablePagination from "@/components/TablePagination";
 
 const SessionsReport = () => {
   const navigate = useNavigate();
@@ -31,10 +33,12 @@ const SessionsReport = () => {
   }>({ from: undefined, to: undefined });
   const [selectedUser, setSelectedUser] = useState<string>("");
   const [searchQuery, setSearchQuery] = useState<string>("");
+  const [page, setPage] = useState(1);
+  const pageSize = 10;
 
-  const { data: users = [], isLoading: isLoadingUsers } = useQuery({
+  const { data: usersResponse = { data: [] }, isLoading: isLoadingUsers } = useQuery({
     queryKey: ["users"],
-    queryFn: fetchUsers,
+    queryFn: () => fetchUsers({ page: 1, pageSize: 1000 }),
   });
 
   const {
@@ -55,6 +59,8 @@ const SessionsReport = () => {
         dateRange.to?.toISOString()
       ),
   });
+
+  const users = usersResponse.data;
 
   const handleSessionClick = (sessionId: string) => {
     navigate(`/sessions/${sessionId}`);
@@ -80,6 +86,12 @@ const SessionsReport = () => {
     const searchLower = searchQuery.toLowerCase();
     return session.sessionId.toLowerCase().includes(searchLower);
   });
+
+  // Calculate pagination for filtered report
+  const startIndex = (page - 1) * pageSize;
+  const endIndex = startIndex + pageSize;
+  const paginatedSessions = filteredReport.slice(startIndex, endIndex);
+  const totalPages = Math.ceil(filteredReport.length / pageSize);
 
   return (
     <div className="space-y-6">
@@ -142,14 +154,14 @@ const SessionsReport = () => {
               </TableRow>
             </TableHeader>
             <TableBody>
-              {filteredReport.length === 0 ? (
+              {paginatedSessions.length === 0 ? (
                 <TableRow>
                   <TableCell colSpan={6} className="text-center">
                     No data found for the selected filters.
                   </TableCell>
                 </TableRow>
               ) : (
-                filteredReport.map((session) => (
+                paginatedSessions.map((session) => (
                   <TableRow key={session.sessionId}>
                     <TableCell className="font-medium">
                       <button
@@ -173,6 +185,12 @@ const SessionsReport = () => {
           </Table>
         )}
       </div>
+
+      <TablePagination 
+        currentPage={page}
+        totalPages={totalPages}
+        onPageChange={setPage}
+      />
     </div>
   );
 };

@@ -1,3 +1,4 @@
+
 import users from '../data/users.json';
 import sessions from '../data/sessions.json';
 import questions from '../data/questions.json';
@@ -88,12 +89,16 @@ export interface PaginatedResponse<T> {
   totalPages: number;
 }
 
+// Default pagination values
+const DEFAULT_PAGE = 1;
+const DEFAULT_PAGE_SIZE = 10;
+
 // Fetch functions with simulated delay
 const delay = (ms: number) => new Promise(resolve => setTimeout(resolve, ms));
 
 export const fetchUsers = async (pagination?: PaginationParams): Promise<PaginatedResponse<User>> => {
   await delay(300);
-  const { page = 1, pageSize = 10 } = pagination || {};
+  const { page = DEFAULT_PAGE, pageSize = DEFAULT_PAGE_SIZE } = pagination || {};
   const start = (page - 1) * pageSize;
   const end = start + pageSize;
   const data = users.slice(start, end);
@@ -109,7 +114,7 @@ export const fetchUsers = async (pagination?: PaginationParams): Promise<Paginat
 
 export const fetchSessions = async (pagination?: PaginationParams): Promise<PaginatedResponse<Session>> => {
   await delay(400);
-  const { page = 1, pageSize = 10 } = pagination || {};
+  const { page = DEFAULT_PAGE, pageSize = DEFAULT_PAGE_SIZE } = pagination || {};
   const start = (page - 1) * pageSize;
   const end = start + pageSize;
   const data = sessions.slice(start, end);
@@ -125,7 +130,7 @@ export const fetchSessions = async (pagination?: PaginationParams): Promise<Pagi
 
 export const fetchQuestions = async (pagination?: PaginationParams): Promise<PaginatedResponse<Question>> => {
   await delay(500);
-  const { page = 1, pageSize = 10 } = pagination || {};
+  const { page = DEFAULT_PAGE, pageSize = DEFAULT_PAGE_SIZE } = pagination || {};
   const start = (page - 1) * pageSize;
   const end = start + pageSize;
   const data = questions.slice(start, end);
@@ -146,7 +151,7 @@ export const fetchDailyMetrics = async (): Promise<DailyMetric[]> => {
 
 export const fetchFeedback = async (pagination?: PaginationParams): Promise<PaginatedResponse<Feedback>> => {
   await delay(300);
-  const { page = 1, pageSize = 10 } = pagination || {};
+  const { page = DEFAULT_PAGE, pageSize = DEFAULT_PAGE_SIZE } = pagination || {};
   const start = (page - 1) * pageSize;
   const end = start + pageSize;
   const data = feedback.slice(start, end);
@@ -176,18 +181,18 @@ export const generateUserReport = async (
   endDate?: string
 ): Promise<UserReport[]> => {
   const [usersData, sessionsData, questionsData] = await Promise.all([
-    fetchUsers(),
-    fetchSessions(),
-    fetchQuestions()
+    fetchUsers({ page: 1, pageSize: 1000 }),
+    fetchSessions({ page: 1, pageSize: 1000 }),
+    fetchQuestions({ page: 1, pageSize: 1000 })
   ]);
   
-  let filteredUsers = usersData;
+  let filteredUsers = usersData.data;
   if (userId) {
-    filteredUsers = usersData.filter(user => user.id === userId);
+    filteredUsers = usersData.data.filter(user => user.id === userId);
   }
   
   const report = filteredUsers.map(user => {
-    const userSessions = sessionsData.filter(session => session.userId === user.id);
+    const userSessions = sessionsData.data.filter(session => session.userId === user.id);
     const filteredSessions = userSessions.filter(session => {
       if (!startDate && !endDate) return true;
       
@@ -198,7 +203,7 @@ export const generateUserReport = async (
       return sessionDate >= start && sessionDate <= end;
     });
     
-    const userQuestions = questionsData.filter(question => question.userId === user.id);
+    const userQuestions = questionsData.data.filter(question => question.userId === user.id);
     
     const sessionDates = filteredSessions.map(s => new Date(s.startTime).getTime());
     const firstSession = sessionDates.length ? new Date(Math.min(...sessionDates)).toISOString() : '';
@@ -222,14 +227,15 @@ export const generateSessionReport = async (
   startDate?: string,
   endDate?: string
 ): Promise<Session[]> => {
-  let sessionsData = await fetchSessions();
+  const sessionsData = await fetchSessions({ page: 1, pageSize: 1000 });
+  let filteredSessions = sessionsData.data;
   
   if (userId) {
-    sessionsData = sessionsData.filter(session => session.userId === userId);
+    filteredSessions = filteredSessions.filter(session => session.userId === userId);
   }
   
   if (startDate || endDate) {
-    sessionsData = sessionsData.filter(session => {
+    filteredSessions = filteredSessions.filter(session => {
       const sessionDate = new Date(session.startTime);
       const start = startDate ? new Date(startDate) : new Date(0);
       const end = endDate ? new Date(endDate) : new Date(8640000000000000);
@@ -238,28 +244,30 @@ export const generateSessionReport = async (
     });
   }
   
-  return sessionsData;
+  return filteredSessions;
 };
 
 export const generateQuestionsReport = async (
+  pagination: PaginationParams,
   userId?: string,
   sessionId?: string,
   startDate?: string,
   endDate?: string,
   searchText?: string
-): Promise<Question[]> => {
-  let questionsData = await fetchQuestions();
+): Promise<PaginatedResponse<Question>> => {
+  const allQuestions = await fetchQuestions({ page: 1, pageSize: 1000 });
+  let filteredQuestions = allQuestions.data;
   
   if (userId) {
-    questionsData = questionsData.filter(question => question.userId === userId);
+    filteredQuestions = filteredQuestions.filter(question => question.userId === userId);
   }
   
   if (sessionId) {
-    questionsData = questionsData.filter(question => question.sessionId === sessionId);
+    filteredQuestions = filteredQuestions.filter(question => question.sessionId === sessionId);
   }
   
   if (startDate || endDate) {
-    questionsData = questionsData.filter(question => {
+    filteredQuestions = filteredQuestions.filter(question => {
       const questionDate = new Date(question.dateAsked);
       const start = startDate ? new Date(startDate) : new Date(0);
       const end = endDate ? new Date(endDate) : new Date(8640000000000000);
@@ -270,12 +278,23 @@ export const generateQuestionsReport = async (
   
   if (searchText) {
     const searchLower = searchText.toLowerCase();
-    questionsData = questionsData.filter(question => 
+    filteredQuestions = filteredQuestions.filter(question => 
       question.text.toLowerCase().includes(searchLower)
     );
   }
   
-  return questionsData;
+  const { page, pageSize } = pagination;
+  const start = (page - 1) * pageSize;
+  const end = start + pageSize;
+  const paginatedData = filteredQuestions.slice(start, end);
+  
+  return {
+    data: paginatedData,
+    total: filteredQuestions.length,
+    page,
+    pageSize,
+    totalPages: Math.ceil(filteredQuestions.length / pageSize)
+  };
 };
 
 export const fetchSessionEvents = async (sessionId: string): Promise<SessionEvent[]> => {

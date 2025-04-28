@@ -1,3 +1,4 @@
+
 import React, { useEffect, useState } from "react";
 import { useQuery } from "@tanstack/react-query";
 import {
@@ -56,31 +57,36 @@ const Dashboard = () => {
   });
 
   const {
-    data: users = [],
+    data: usersResponse,
     isLoading: isLoadingUsers,
     error: usersError,
   } = useQuery({
     queryKey: ["users"],
-    queryFn: fetchUsers,
+    queryFn: () => fetchUsers({ page: 1, pageSize: 1000 }),
   });
 
   const {
-    data: sessions = [],
+    data: sessionsResponse,
     isLoading: isLoadingSessions,
     error: sessionsError,
   } = useQuery({
     queryKey: ["sessions"],
-    queryFn: fetchSessions,
+    queryFn: () => fetchSessions({ page: 1, pageSize: 1000 }),
   });
 
   const {
-    data: questions = [],
+    data: questionsResponse,
     isLoading: isLoadingQuestions,
     error: questionsError,
   } = useQuery({
     queryKey: ["questions"],
-    queryFn: fetchQuestions,
+    queryFn: () => fetchQuestions({ page: 1, pageSize: 1000 }),
   });
+
+  // Extract data from paginated responses
+  const users = usersResponse?.data || [];
+  const sessions = sessionsResponse?.data || [];
+  const questions = questionsResponse?.data || [];
 
   useEffect(() => {
     // Update date range when time range changes

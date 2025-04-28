@@ -22,6 +22,7 @@ import {
 } from "@/components/ui/table";
 import { format } from "date-fns";
 import { Search } from "lucide-react";
+import TablePagination from "@/components/TablePagination";
 
 const UsersReport = () => {
   const [dateRange, setDateRange] = useState<{
@@ -30,10 +31,12 @@ const UsersReport = () => {
   }>({ from: undefined, to: undefined });
   const [selectedUser, setSelectedUser] = useState<string>("");
   const [searchQuery, setSearchQuery] = useState<string>("");
+  const [page, setPage] = useState(1);
+  const pageSize = 10;
 
-  const { data: users = [], isLoading: isLoadingUsers } = useQuery({
+  const { data: usersResponse = { data: [] }, isLoading: isLoadingUsers } = useQuery({
     queryKey: ["users"],
-    queryFn: fetchUsers,
+    queryFn: () => fetchUsers({ page: 1, pageSize: 1000 }),
   });
 
   const {
@@ -55,6 +58,8 @@ const UsersReport = () => {
       ),
   });
 
+  const users = usersResponse.data;
+
   // Filter report based on search query
   const filteredReport = userReport.filter((user) => {
     const searchLower = searchQuery.toLowerCase();
@@ -63,6 +68,12 @@ const UsersReport = () => {
       user.id.toLowerCase().includes(searchLower)
     );
   });
+
+  // Calculate pagination for filtered report
+  const startIndex = (page - 1) * pageSize;
+  const endIndex = startIndex + pageSize;
+  const paginatedUsers = filteredReport.slice(startIndex, endIndex);
+  const totalPages = Math.ceil(filteredReport.length / pageSize);
 
   const formatDate = (dateString: string) => {
     if (!dateString) return "N/A";
@@ -143,14 +154,14 @@ const UsersReport = () => {
               </TableRow>
             </TableHeader>
             <TableBody>
-              {filteredReport.length === 0 ? (
+              {paginatedUsers.length === 0 ? (
                 <TableRow>
                   <TableCell colSpan={6} className="text-center">
                     No data found for the selected filters.
                   </TableCell>
                 </TableRow>
               ) : (
-                filteredReport.map((user) => (
+                paginatedUsers.map((user) => (
                   <TableRow key={user.id}>
                     <TableCell className="font-medium">{user.id}</TableCell>
                     <TableCell>{user.name}</TableCell>
@@ -169,6 +180,12 @@ const UsersReport = () => {
           </Table>
         )}
       </div>
+
+      <TablePagination 
+        currentPage={page}
+        totalPages={totalPages}
+        onPageChange={setPage}
+      />
     </div>
   );
 };

@@ -1,3 +1,4 @@
+
 import React, { useState } from "react";
 import { Link } from "react-router-dom";
 import { useQuery } from "@tanstack/react-query";
@@ -9,43 +10,25 @@ import { Input } from "@/components/ui/input";
 import DateRangePicker from "@/components/dashboard/DateRangePicker";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { fetchFeedback, fetchUsers, type Feedback } from "@/services/api";
+import TablePagination from "@/components/TablePagination";
 import users from "@/data/users.json";
 
-const feedbackData = [
-  {
-    id: "fb1",
-    sessionId: "ses001",
-    userId: "user1",
-    questionText: "How do I improve my presentation skills?",
-    feedback: "Very helpful response",
-    rating: 5,
-    timestamp: "2025-04-28T09:01:45Z",
-  },
-  {
-    id: "fb2",
-    sessionId: "ses002",
-    userId: "user2",
-    questionText: "What are effective time management techniques?",
-    feedback: "Clear and practical advice",
-    rating: 4,
-    timestamp: "2025-04-28T10:15:30Z",
-  },
-];
-
-const Feedback = () => {
+const FeedbackPage = () => {
   const [searchTerm, setSearchTerm] = useState("");
   const [selectedUser, setSelectedUser] = useState("all");
   const [dateRange, setDateRange] = useState<{ from: Date | undefined; to: Date | undefined }>({
     from: undefined,
     to: undefined,
   });
+  const [page, setPage] = useState(1);
+  const pageSize = 10;
 
-  const { data: feedbackData = [] } = useQuery({
-    queryKey: ['feedback'],
-    queryFn: fetchFeedback
+  const { data: feedbackResponse = { data: [], totalPages: 0 } } = useQuery({
+    queryKey: ['feedback', page, pageSize],
+    queryFn: () => fetchFeedback({ page, pageSize })
   });
 
-  const filteredFeedback = feedbackData.filter((feedback) => {
+  const filteredFeedback = feedbackResponse.data.filter((feedback) => {
     const matchesSearch = feedback.questionText.toLowerCase().includes(searchTerm.toLowerCase()) ||
       feedback.feedback.toLowerCase().includes(searchTerm.toLowerCase());
     
@@ -166,6 +149,12 @@ const Feedback = () => {
                 })}
               </TableBody>
             </Table>
+            
+            <TablePagination
+              currentPage={page}
+              totalPages={feedbackResponse.totalPages}
+              onPageChange={setPage}
+            />
           </div>
         </CardContent>
       </Card>
@@ -173,4 +162,4 @@ const Feedback = () => {
   );
 };
 
-export default Feedback;
+export default FeedbackPage;

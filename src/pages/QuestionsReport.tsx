@@ -1,3 +1,4 @@
+
 import React, { useState } from "react";
 import { useQuery } from "@tanstack/react-query";
 import {
@@ -26,6 +27,7 @@ import {
 } from "@/components/ui/table";
 import { format } from "date-fns";
 import { Mic, Search, ThumbsUp, ThumbsDown } from "lucide-react";
+import DateRangePicker from "@/components/dashboard/DateRangePicker";
 
 const QuestionsReport = () => {
   const [dateRange, setDateRange] = useState<{
@@ -38,18 +40,18 @@ const QuestionsReport = () => {
   const [page, setPage] = useState(1);
   const pageSize = 10;
 
-  const { data: users = [], isLoading: isLoadingUsers } = useQuery({
+  const { data: usersResponse = { data: [] }, isLoading: isLoadingUsers } = useQuery({
     queryKey: ["users"],
-    queryFn: fetchUsers,
+    queryFn: () => fetchUsers({ page: 1, pageSize: 1000 }),
   });
 
-  const { data: sessions = [], isLoading: isLoadingSessions } = useQuery({
+  const { data: sessionsResponse = { data: [] }, isLoading: isLoadingSessions } = useQuery({
     queryKey: ["sessions"],
-    queryFn: fetchSessions,
+    queryFn: () => fetchSessions({ page: 1, pageSize: 1000 }),
   });
 
   const {
-    data: questionsReport,
+    data: questionsReport = { data: [], total: 0, totalPages: 0 },
     isLoading,
     refetch,
   } = useQuery({
@@ -65,10 +67,7 @@ const QuestionsReport = () => {
     ],
     queryFn: () =>
       generateQuestionsReport(
-        {
-          page,
-          pageSize,
-        },
+        { page, pageSize },
         selectedUser || undefined,
         selectedSession || undefined,
         dateRange.from?.toISOString(),
@@ -76,6 +75,9 @@ const QuestionsReport = () => {
         searchQuery || undefined
       ),
   });
+
+  const users = usersResponse.data;
+  const sessions = sessionsResponse.data;
 
   const filteredSessions = sessions.filter(
     (session) => !selectedUser || session.userId === selectedUser
@@ -180,14 +182,14 @@ const QuestionsReport = () => {
               </TableRow>
             </TableHeader>
             <TableBody>
-              {questionsReport.length === 0 ? (
+              {questionsReport.data.length === 0 ? (
                 <TableRow>
                   <TableCell colSpan={6} className="text-center">
                     No data found for the selected filters.
                   </TableCell>
                 </TableRow>
               ) : (
-                questionsReport.map((question) => (
+                questionsReport.data.map((question) => (
                   <TableRow key={question.id}>
                     <TableCell className="font-medium">
                       {question.text}
