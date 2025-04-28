@@ -10,7 +10,8 @@ import {
   Moon,
   Sun,
   LayoutDashboard,
-  Settings,
+  LogOut,
+  UserRound,
 } from "lucide-react";
 import {
   DropdownMenu,
@@ -18,6 +19,7 @@ import {
   DropdownMenuItem,
   DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu";
+import { Avatar, AvatarFallback } from "@/components/ui/avatar";
 
 interface LayoutProps {
   children: React.ReactNode;
@@ -27,6 +29,10 @@ const Layout: React.FC<LayoutProps> = ({ children }) => {
   const { theme, setTheme } = useTheme();
   const location = useLocation();
   const [collapsed, setCollapsed] = useState(false);
+
+  const handleLogout = () => {
+    console.log("Logout clicked");
+  };
 
   const navItems = [
     {
@@ -148,9 +154,39 @@ const Layout: React.FC<LayoutProps> = ({ children }) => {
       </aside>
 
       {/* Main content */}
-      <main className="flex-1 overflow-x-hidden overflow-y-auto p-6">
+      <main className="flex-1 overflow-x-hidden overflow-y-auto">
         <div className="container mx-auto">
-          {children}
+          {/* User Profile Section */}
+          <div className="flex justify-end items-center p-4 border-b">
+            <DropdownMenu>
+              <DropdownMenuTrigger asChild>
+                <Button variant="ghost" className="relative h-10 w-10 rounded-full">
+                  <Avatar>
+                    <AvatarFallback>
+                      <UserRound className="h-6 w-6" />
+                    </AvatarFallback>
+                  </Avatar>
+                </Button>
+              </DropdownMenuTrigger>
+              <DropdownMenuContent className="w-56" align="end">
+                <DropdownMenuItem className="flex items-center">
+                  <UserRound className="mr-2 h-4 w-4" />
+                  <span>John Doe</span>
+                </DropdownMenuItem>
+                <DropdownMenuItem
+                  className="flex items-center text-red-600 focus:text-red-600"
+                  onClick={handleLogout}
+                >
+                  <LogOut className="mr-2 h-4 w-4" />
+                  <span>Log out</span>
+                </DropdownMenuItem>
+              </DropdownMenuContent>
+            </DropdownMenu>
+          </div>
+          
+          <div className="p-6">
+            {children}
+          </div>
         </div>
       </main>
     </div>
