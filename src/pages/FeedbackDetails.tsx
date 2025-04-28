@@ -1,5 +1,5 @@
 import React from "react";
-import { useParams } from "react-router-dom";
+import { useParams, useNavigate } from "react-router-dom";
 import {
   Card,
   CardContent,
@@ -7,7 +7,7 @@ import {
   CardHeader,
   CardTitle,
 } from "@/components/ui/card";
-import { User, MessageCircle, Calendar, ThumbsUp } from "lucide-react";
+import { User, MessageCircle, Calendar, ThumbsUp, Languages } from "lucide-react";
 import { format } from "date-fns";
 import users from "@/data/users.json";
 import sessions from "@/data/sessions.json";
@@ -26,15 +26,32 @@ const feedbackData = [
   // ... other feedback items
 ];
 
+// Mock translations - in a real app this would come from a translation service
+const translations = {
+  "fb1": {
+    questionMarathi: "माझी प्रेझेंटेशन कौशल्ये कशी सुधारावीत?",
+    feedbackMarathi: "खूप उपयुक्त प्रतिसाद. एआयने स्पष्ट, कृतीयोग्य पावले प्रदान केली जी मी लगेच अंमलात आणू शकतो.",
+  },
+  // Add more translations as needed
+};
+
 const FeedbackDetails = () => {
   const { feedbackId } = useParams();
+  const navigate = useNavigate();
   const feedback = feedbackData.find(f => f.id === feedbackId);
   const user = feedback ? users.find(u => u.id === feedback.userId) : null;
   const session = feedback ? sessions.find(s => s.sessionId === feedback.sessionId) : null;
+  const translation = feedbackId ? translations[feedbackId] : null;
 
   if (!feedback || !user) {
     return <div>Feedback not found</div>;
   }
+
+  const handleSessionClick = () => {
+    if (session) {
+      navigate(`/sessions/${session.sessionId}`);
+    }
+  };
 
   return (
     <div className="space-y-6">
@@ -93,14 +110,32 @@ const FeedbackDetails = () => {
           <CardTitle>Question & Feedback</CardTitle>
           <CardDescription>Detailed feedback information</CardDescription>
         </CardHeader>
-        <CardContent className="space-y-4">
-          <div>
-            <h3 className="font-medium mb-2">Question</h3>
+        <CardContent className="space-y-6">
+          <div 
+            className="cursor-pointer p-4 rounded-lg bg-muted/50 hover:bg-muted transition-colors"
+            onClick={handleSessionClick}
+          >
+            <div className="flex items-center gap-2 mb-2">
+              <MessageCircle className="h-4 w-4" />
+              <h3 className="font-medium">Session Question</h3>
+            </div>
             <p className="text-muted-foreground">{feedback.questionText}</p>
           </div>
-          <div>
-            <h3 className="font-medium mb-2">Feedback</h3>
-            <p className="text-muted-foreground">{feedback.feedback}</p>
+
+          <div className="space-y-4">
+            <div>
+              <div className="flex items-center gap-2 mb-2">
+                <Languages className="h-4 w-4" />
+                <h3 className="font-medium">Question in Marathi</h3>
+              </div>
+              <p className="text-muted-foreground">{translation?.questionMarathi || "Translation not available"}</p>
+            </div>
+
+            <div>
+              <h3 className="font-medium mb-2">Feedback</h3>
+              <p className="text-muted-foreground mb-2">{feedback.feedback}</p>
+              <p className="text-muted-foreground">{translation?.feedbackMarathi || "Translation not available"}</p>
+            </div>
           </div>
         </CardContent>
       </Card>

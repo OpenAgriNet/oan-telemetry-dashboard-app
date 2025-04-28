@@ -1,5 +1,4 @@
-
-import React from "react";
+import React, { useState } from "react";
 import { Link } from "react-router-dom";
 import {
   Table,
@@ -16,12 +15,20 @@ import {
   CardHeader,
   CardTitle,
 } from "@/components/ui/card";
-import { MessageSquare, ThumbsUp } from "lucide-react";
+import { MessageSquare, ThumbsUp, Search } from "lucide-react";
 import { format } from "date-fns";
+import { Input } from "@/components/ui/input";
+import DateRangePicker from "@/components/dashboard/DateRangePicker";
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from "@/components/ui/select";
 import sessions from "@/data/sessions.json";
 import users from "@/data/users.json";
 
-// Mock feedback data - in real app this would come from an API
 const feedbackData = [
   {
     id: "fb1",
@@ -41,10 +48,30 @@ const feedbackData = [
     rating: 4,
     timestamp: "2025-04-28T10:15:30Z",
   },
-  // Add more mock feedback items as needed
 ];
 
 const Feedback = () => {
+  const [searchTerm, setSearchTerm] = useState("");
+  const [selectedUser, setSelectedUser] = useState("");
+  const [dateRange, setDateRange] = useState<{ from: Date | undefined; to: Date | undefined }>({
+    from: undefined,
+    to: undefined,
+  });
+
+  const filteredFeedback = feedbackData.filter((feedback) => {
+    const matchesSearch = feedback.questionText.toLowerCase().includes(searchTerm.toLowerCase()) ||
+      feedback.feedback.toLowerCase().includes(searchTerm.toLowerCase());
+    
+    const matchesUser = !selectedUser || feedback.userId === selectedUser;
+    
+    const matchesDate = !dateRange.from || !dateRange.to || (
+      new Date(feedback.timestamp) >= dateRange.from &&
+      new Date(feedback.timestamp) <= dateRange.to
+    );
+
+    return matchesSearch && matchesUser && matchesDate;
+  });
+
   return (
     <div className="space-y-6">
       <div className="flex items-center justify-between">
@@ -58,7 +85,7 @@ const Feedback = () => {
             <MessageSquare className="h-4 w-4 text-muted-foreground" />
           </CardHeader>
           <CardContent>
-            <div className="text-2xl font-bold">{feedbackData.length}</div>
+            <div className="text-2xl font-bold">{filteredFeedback.length}</div>
           </CardContent>
         </Card>
 
@@ -69,7 +96,7 @@ const Feedback = () => {
           </CardHeader>
           <CardContent>
             <div className="text-2xl font-bold">
-              {(feedbackData.reduce((acc, fb) => acc + fb.rating, 0) / feedbackData.length).toFixed(1)}
+              {(filteredFeedback.reduce((acc, fb) => acc + fb.rating, 0) / filteredFeedback.length || 0).toFixed(1)}
             </div>
           </CardContent>
         </Card>
@@ -81,46 +108,78 @@ const Feedback = () => {
           <CardDescription>User feedback across all sessions</CardDescription>
         </CardHeader>
         <CardContent>
-          <Table>
-            <TableHeader>
-              <TableRow>
-                <TableHead>Date</TableHead>
-                <TableHead>User</TableHead>
-                <TableHead>Question</TableHead>
-                <TableHead>Rating</TableHead>
-                <TableHead>Feedback</TableHead>
-                <TableHead>Details</TableHead>
-              </TableRow>
-            </TableHeader>
-            <TableBody>
-              {feedbackData.map((feedback) => {
-                const user = users.find(u => u.id === feedback.userId);
-                return (
-                  <TableRow key={feedback.id}>
-                    <TableCell>
-                      {format(new Date(feedback.timestamp), "MMM dd, yyyy")}
-                    </TableCell>
-                    <TableCell>{user?.name || "Unknown"}</TableCell>
-                    <TableCell className="max-w-[200px] truncate">
-                      {feedback.questionText}
-                    </TableCell>
-                    <TableCell>{feedback.rating}/5</TableCell>
-                    <TableCell className="max-w-[200px] truncate">
-                      {feedback.feedback}
-                    </TableCell>
-                    <TableCell>
-                      <Link
-                        to={`/feedback/${feedback.id}`}
-                        className="text-blue-500 hover:underline"
-                      >
-                        View Details
-                      </Link>
-                    </TableCell>
-                  </TableRow>
-                );
-              })}
-            </TableBody>
-          </Table>
+          <div className="space-y-4">
+            <div className="flex flex-col gap-4 md:flex-row">
+              <div className="flex items-center gap-2 md:w-1/3">
+                <Search className="h-4 w-4 text-muted-foreground" />
+                <Input
+                  placeholder="Search questions or feedback..."
+                  value={searchTerm}
+                  onChange={(e) => setSearchTerm(e.target.value)}
+                  className="flex-1"
+                />
+              </div>
+              <div className="md:w-1/3">
+                <Select value={selectedUser} onValueChange={setSelectedUser}>
+                  <SelectTrigger>
+                    <SelectValue placeholder="Select User" />
+                  </SelectTrigger>
+                  <SelectContent>
+                    <SelectItem value="">All Users</SelectItem>
+                    {users.map((user) => (
+                      <SelectItem key={user.id} value={user.id}>
+                        {user.name}
+                      </SelectItem>
+                    ))}
+                  </SelectContent>
+                </Select>
+              </div>
+              <div className="md:w-1/3">
+                <DateRangePicker dateRange={dateRange} setDateRange={setDateRange} />
+              </div>
+            </div>
+
+            <Table>
+              <TableHeader>
+                <TableRow>
+                  <TableHead>Date</TableHead>
+                  <TableHead>User</TableHead>
+                  <TableHead>Question</TableHead>
+                  <TableHead>Rating</TableHead>
+                  <TableHead>Feedback</TableHead>
+                  <TableHead>Details</TableHead>
+                </TableRow>
+              </TableHeader>
+              <TableBody>
+                {filteredFeedback.map((feedback) => {
+                  const user = users.find(u => u.id === feedback.userId);
+                  return (
+                    <TableRow key={feedback.id}>
+                      <TableCell>
+                        {format(new Date(feedback.timestamp), "MMM dd, yyyy")}
+                      </TableCell>
+                      <TableCell>{user?.name || "Unknown"}</TableCell>
+                      <TableCell className="max-w-[200px] truncate">
+                        {feedback.questionText}
+                      </TableCell>
+                      <TableCell>{feedback.rating}/5</TableCell>
+                      <TableCell className="max-w-[200px] truncate">
+                        {feedback.feedback}
+                      </TableCell>
+                      <TableCell>
+                        <Link
+                          to={`/feedback/${feedback.id}`}
+                          className="text-blue-500 hover:underline"
+                        >
+                          View Details
+                        </Link>
+                      </TableCell>
+                    </TableRow>
+                  );
+                })}
+              </TableBody>
+            </Table>
+          </div>
         </CardContent>
       </Card>
     </div>
