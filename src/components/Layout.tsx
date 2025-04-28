@@ -1,4 +1,3 @@
-
 import React, { useState } from "react";
 import { Link, useLocation } from "react-router-dom";
 import { useTheme } from "@/contexts/ThemeContext";
@@ -54,6 +53,11 @@ const Layout: React.FC<LayoutProps> = ({ children }) => {
       name: "Analytics",
       path: "/analytics",
       icon: <BarChart3 size={20} />,
+    },
+    {
+      name: "Feedback",
+      path: "/feedback",
+      icon: <MessageSquare size={20} />,
     },
   ];
 

@@ -12,6 +12,8 @@ import QuestionsReport from "./pages/QuestionsReport";
 import Analytics from "./pages/Analytics";
 import NotFound from "./pages/NotFound";
 import SessionDetails from "./pages/SessionDetails";
+import Feedback from "./pages/Feedback";
+import FeedbackDetails from "./pages/FeedbackDetails";
 
 const queryClient = new QueryClient({
   defaultOptions: {
@@ -58,6 +60,16 @@ const App = () => (
             <Route path="/sessions/:sessionId" element={
               <Layout>
                 <SessionDetails />
+              </Layout>
+            } />
+            <Route path="/feedback" element={
+              <Layout>
+                <Feedback />
+              </Layout>
+            } />
+            <Route path="/feedback/:feedbackId" element={
+              <Layout>
+                <FeedbackDetails />
               </Layout>
             } />
             <Route path="*" element={<NotFound />} />
