@@ -1,3 +1,4 @@
+
 import React, { useState } from "react";
 import { Link } from "react-router-dom";
 import {
@@ -52,7 +53,7 @@ const feedbackData = [
 
 const Feedback = () => {
   const [searchTerm, setSearchTerm] = useState("");
-  const [selectedUser, setSelectedUser] = useState("");
+  const [selectedUser, setSelectedUser] = useState("all");
   const [dateRange, setDateRange] = useState<{ from: Date | undefined; to: Date | undefined }>({
     from: undefined,
     to: undefined,
@@ -62,7 +63,7 @@ const Feedback = () => {
     const matchesSearch = feedback.questionText.toLowerCase().includes(searchTerm.toLowerCase()) ||
       feedback.feedback.toLowerCase().includes(searchTerm.toLowerCase());
     
-    const matchesUser = !selectedUser || feedback.userId === selectedUser;
+    const matchesUser = selectedUser === "all" || feedback.userId === selectedUser;
     
     const matchesDate = !dateRange.from || !dateRange.to || (
       new Date(feedback.timestamp) >= dateRange.from &&
@@ -125,7 +126,7 @@ const Feedback = () => {
                     <SelectValue placeholder="Select User" />
                   </SelectTrigger>
                   <SelectContent>
-                    <SelectItem value="">All Users</SelectItem>
+                    <SelectItem value="all">All Users</SelectItem>
                     {users.map((user) => (
                       <SelectItem key={user.id} value={user.id}>
                         {user.name}
