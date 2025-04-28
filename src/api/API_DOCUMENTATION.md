@@ -1,4 +1,3 @@
-
 # Analytics Dashboard API Documentation
 
 This document describes the API endpoints available in the Analytics Dashboard application.
@@ -19,6 +18,7 @@ This document describes the API endpoints available in the Analytics Dashboard a
 ### Sessions
 - `GET /api/sessions` - Retrieve all sessions
 - `GET /api/sessions/report` - Generate a sessions report with optional filters
+- `GET /api/sessions/{sessionId}/events` - Retrieve all events for a specific session
 
 ### Questions
 - `GET /api/questions` - Retrieve all questions

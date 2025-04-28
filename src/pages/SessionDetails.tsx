@@ -1,4 +1,3 @@
-
 import React from "react";
 import { useParams } from "react-router-dom";
 import { useQuery } from "@tanstack/react-query";
@@ -23,102 +22,45 @@ import {
   MessageCircle,
   Calendar
 } from "lucide-react";
-import users from "@/data/users.json";
-import sessions from "@/data/sessions.json";
-
-// Function to get user stats
-const getUserStats = (userId: string) => {
-  const userSessions = sessions.filter(session => session.userId === userId);
-  return {
-    totalSessions: userSessions.length,
-    totalQuestions: userSessions.reduce((acc, session) => acc + session.numQuestions, 0),
-    firstSession: userSessions.length > 0 
-      ? format(new Date(userSessions[0].startTime), "MMM dd, yyyy")
-      : "N/A"
-  };
-};
-
-// Mock function to get session events with sample data
-const getSessionEvents = async (sessionId: string) => {
-  // Mock timeline data with clips and sample data
-  return [
-    {
-      type: "Login",
-      timestamp: "2025-04-28T09:00:00Z",
-      icon: LogIn,
-      sampleData: "User login from Chrome/MacOS",
-    },
-    {
-      type: "Asked Question Voice",
-      timestamp: "2025-04-28T09:01:00Z",
-      icon: Mic,
-      sampleData: "Voice input detected (5 seconds)",
-      clip: "voice_input_001.mp3",
-    },
-    {
-      type: "Voice Clip",
-      timestamp: "2025-04-28T09:01:05Z",
-      icon: Volume,
-      sampleData: "How do I improve my presentation skills?",
-      clip: "processed_voice_001.mp3",
-    },
-    {
-      type: "Transcribe Data from Voice",
-      timestamp: "2025-04-28T09:01:10Z",
-      icon: MessageSquare,
-      sampleData: "Text: 'How do I improve my presentation skills?'",
-    },
-    {
-      type: "Translation Data",
-      timestamp: "2025-04-28T09:01:15Z", 
-      icon: Languages,
-      sampleData: {
-        sourceLanguage: "en",
-        translatedText: "Comment puis-je améliorer mes compétences en présentation?",
-        targetLanguage: "fr",
-      },
-    },
-    {
-      type: "Answer From AI",
-      timestamp: "2025-04-28T09:01:30Z",
-      icon: MessageSquareHeart,
-      sampleData: "Here are some key tips to improve your presentation skills: 1. Practice regularly, 2. Know your audience, 3. Use storytelling techniques...",
-      clip: "ai_response_001.mp3",
-    },
-    {
-      type: "User Reaction",
-      timestamp: "2025-04-28T09:01:45Z",
-      icon: Smile,
-      sampleData: { reaction: "helpful", rating: 5 },
-    },
-    {
-      type: "Suggested Questions",
-      timestamp: "2025-04-28T09:02:00Z",
-      icon: SmilePlus,
-      sampleData: [
-        "How can I handle presentation anxiety?",
-        "What are good presentation structures?",
-        "How to engage the audience better?",
-      ],
-    },
-  ];
-};
+import { fetchSessionEvents, fetchSessions, fetchUsers } from "@/services/api";
 
 const SessionDetails = () => {
   const { sessionId } = useParams();
 
-  const currentSession = sessions.find(s => s.sessionId === sessionId);
-  const user = currentSession ? users.find(u => u.id === currentSession.userId) : null;
-  const userStats = user ? getUserStats(user.id) : null;
+  const { data: sessions = [] } = useQuery({
+    queryKey: ['sessions'],
+    queryFn: fetchSessions
+  });
+
+  const { data: users = [] } = useQuery({
+    queryKey: ['users'],
+    queryFn: fetchUsers
+  });
 
   const { data: events = [], isLoading } = useQuery({
     queryKey: ["sessionEvents", sessionId],
-    queryFn: () => getSessionEvents(sessionId || ""),
+    queryFn: () => fetchSessionEvents(sessionId || ""),
     enabled: !!sessionId,
   });
 
+  const currentSession = sessions.find(s => s.sessionId === sessionId);
+  const user = currentSession ? users.find(u => u.id === currentSession.userId) : null;
+  const userStats = user ? getUserStats(user.id, sessions) : null;
+
   if (isLoading) {
     return <div>Loading session details...</div>;
+  }
+
+  // Function to get user stats
+  function getUserStats(userId: string, sessions: any[]) {
+    const userSessions = sessions.filter(session => session.userId === userId);
+    return {
+      totalSessions: userSessions.length,
+      totalQuestions: userSessions.reduce((acc, session) => acc + session.numQuestions, 0),
+      firstSession: userSessions.length > 0 
+        ? format(new Date(userSessions[0].startTime), "MMM dd, yyyy")
+        : "N/A"
+    };
   }
 
   return (
@@ -233,4 +175,3 @@ const SessionDetails = () => {
 };
 
 export default SessionDetails;
-

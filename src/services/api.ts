@@ -66,6 +66,14 @@ export interface Translation {
   responseMarathi: string;
 }
 
+export interface SessionEvent {
+  type: string;
+  timestamp: string;
+  icon?: any;
+  sampleData: string | string[] | object;
+  clip?: string;
+}
+
 // Fetch functions with simulated delay
 const delay = (ms: number) => new Promise(resolve => setTimeout(resolve, ms));
 
@@ -210,4 +218,62 @@ export const generateQuestionsReport = async (
   }
   
   return questionsData;
+};
+
+export const fetchSessionEvents = async (sessionId: string): Promise<SessionEvent[]> => {
+  await delay(500);
+  // Mock timeline data with clips and sample data
+  return [
+    {
+      type: "Login",
+      timestamp: "2025-04-28T09:00:00Z",
+      sampleData: "User login from Chrome/MacOS",
+    },
+    {
+      type: "Asked Question Voice",
+      timestamp: "2025-04-28T09:01:00Z",
+      sampleData: "Voice input detected (5 seconds)",
+      clip: "voice_input_001.mp3",
+    },
+    {
+      type: "Voice Clip",
+      timestamp: "2025-04-28T09:01:05Z",
+      sampleData: "How do I improve my presentation skills?",
+      clip: "processed_voice_001.mp3",
+    },
+    {
+      type: "Transcribe Data from Voice",
+      timestamp: "2025-04-28T09:01:10Z",
+      sampleData: "Text: 'How do I improve my presentation skills?'",
+    },
+    {
+      type: "Translation Data",
+      timestamp: "2025-04-28T09:01:15Z",
+      sampleData: {
+        sourceLanguage: "en",
+        translatedText: "Comment puis-je améliorer mes compétences en présentation?",
+        targetLanguage: "fr",
+      },
+    },
+    {
+      type: "Answer From AI",
+      timestamp: "2025-04-28T09:01:30Z",
+      sampleData: "Here are some key tips to improve your presentation skills: 1. Practice regularly, 2. Know your audience, 3. Use storytelling techniques...",
+      clip: "ai_response_001.mp3",
+    },
+    {
+      type: "User Reaction",
+      timestamp: "2025-04-28T09:01:45Z",
+      sampleData: { reaction: "helpful", rating: 5 },
+    },
+    {
+      type: "Suggested Questions",
+      timestamp: "2025-04-28T09:02:00Z",
+      sampleData: [
+        "How can I handle presentation anxiety?",
+        "What are good presentation structures?",
+        "How to engage the audience better?",
+      ],
+    },
+  ];
 };
