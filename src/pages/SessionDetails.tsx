@@ -11,10 +11,10 @@ import {
   CardTitle,
 } from "@/components/ui/card";
 import {
-  Login,
+  LogIn,
   MessageSquare,
   Mic,
-  Translate,
+  Languages,
   MessageSquareHeart,
   Smile,
   Volume,
@@ -28,7 +28,7 @@ const getSessionEvents = async (sessionId: string) => {
     {
       type: "Login",
       timestamp: "2025-04-28T09:00:00Z",
-      icon: Login,
+      icon: LogIn,
       sampleData: "User login from Chrome/MacOS",
     },
     {
@@ -53,8 +53,8 @@ const getSessionEvents = async (sessionId: string) => {
     },
     {
       type: "Translation Data",
-      timestamp: "2025-04-28T09:01:15Z",
-      icon: Translate,
+      timestamp: "2025-04-28T09:01:15Z", 
+      icon: Languages,
       sampleData: {
         sourceLanguage: "en",
         translatedText: "Comment puis-je améliorer mes compétences en présentation?",
