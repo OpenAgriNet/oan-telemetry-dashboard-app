@@ -19,7 +19,24 @@ import {
   Smile,
   Volume,
   SmilePlus,
+  User,
+  MessageCircle,
+  Calendar
 } from "lucide-react";
+import users from "@/data/users.json";
+import sessions from "@/data/sessions.json";
+
+// Function to get user stats
+const getUserStats = (userId: string) => {
+  const userSessions = sessions.filter(session => session.userId === userId);
+  return {
+    totalSessions: userSessions.length,
+    totalQuestions: userSessions.reduce((acc, session) => acc + session.numQuestions, 0),
+    firstSession: userSessions.length > 0 
+      ? format(new Date(userSessions[0].startTime), "MMM dd, yyyy")
+      : "N/A"
+  };
+};
 
 // Mock function to get session events with sample data
 const getSessionEvents = async (sessionId: string) => {
@@ -90,6 +107,10 @@ const getSessionEvents = async (sessionId: string) => {
 const SessionDetails = () => {
   const { sessionId } = useParams();
 
+  const currentSession = sessions.find(s => s.sessionId === sessionId);
+  const user = currentSession ? users.find(u => u.id === currentSession.userId) : null;
+  const userStats = user ? getUserStats(user.id) : null;
+
   const { data: events = [], isLoading } = useQuery({
     queryKey: ["sessionEvents", sessionId],
     queryFn: () => getSessionEvents(sessionId || ""),
@@ -107,6 +128,41 @@ const SessionDetails = () => {
           Session Details: {sessionId}
         </h1>
       </div>
+
+      {user && userStats && (
+        <div className="grid gap-4 md:grid-cols-4">
+          <Card>
+            <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
+              <CardTitle className="text-sm font-medium">User</CardTitle>
+              <User className="h-4 w-4 text-muted-foreground" />
+            </CardHeader>
+            <CardContent>
+              <div className="text-2xl font-bold">{user.name}</div>
+            </CardContent>
+          </Card>
+
+          <Card>
+            <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
+              <CardTitle className="text-sm font-medium">Total Sessions</CardTitle>
+              <Calendar className="h-4 w-4 text-muted-foreground" />
+            </CardHeader>
+            <CardContent>
+              <div className="text-2xl font-bold">{userStats.totalSessions}</div>
+              <p className="text-xs text-muted-foreground">Since {userStats.firstSession}</p>
+            </CardContent>
+          </Card>
+
+          <Card>
+            <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
+              <CardTitle className="text-sm font-medium">Total Questions</CardTitle>
+              <MessageCircle className="h-4 w-4 text-muted-foreground" />
+            </CardHeader>
+            <CardContent>
+              <div className="text-2xl font-bold">{userStats.totalQuestions}</div>
+            </CardContent>
+          </Card>
+        </div>
+      )}
 
       <Card>
         <CardHeader>
