@@ -1,12 +1,12 @@
-
 import React, { useState } from "react";
 import { useQuery } from "@tanstack/react-query";
 import {
   generateQuestionsReport,
   fetchUsers,
   fetchSessions,
+  type PaginationParams
 } from "@/services/api";
-import DateRangePicker from "@/components/dashboard/DateRangePicker";
+import TablePagination from "@/components/TablePagination";
 import {
   Select,
   SelectContent,
@@ -35,6 +35,8 @@ const QuestionsReport = () => {
   const [selectedUser, setSelectedUser] = useState<string>("");
   const [selectedSession, setSelectedSession] = useState<string>("");
   const [searchQuery, setSearchQuery] = useState<string>("");
+  const [page, setPage] = useState(1);
+  const pageSize = 10;
 
   const { data: users = [], isLoading: isLoadingUsers } = useQuery({
     queryKey: ["users"],
@@ -47,7 +49,7 @@ const QuestionsReport = () => {
   });
 
   const {
-    data: questionsReport = [],
+    data: questionsReport,
     isLoading,
     refetch,
   } = useQuery({
@@ -58,9 +60,15 @@ const QuestionsReport = () => {
       dateRange.from?.toISOString(),
       dateRange.to?.toISOString(),
       searchQuery,
+      page,
+      pageSize
     ],
     queryFn: () =>
       generateQuestionsReport(
+        {
+          page,
+          pageSize,
+        },
         selectedUser || undefined,
         selectedSession || undefined,
         dateRange.from?.toISOString(),
@@ -69,7 +77,6 @@ const QuestionsReport = () => {
       ),
   });
 
-  // Filter sessions based on selected user
   const filteredSessions = sessions.filter(
     (session) => !selectedUser || session.userId === selectedUser
   );
@@ -90,7 +97,6 @@ const QuestionsReport = () => {
     setSearchQuery("");
   };
 
-  // Reset selected session when user changes
   React.useEffect(() => {
     setSelectedSession("");
   }, [selectedUser]);
@@ -210,6 +216,14 @@ const QuestionsReport = () => {
           </Table>
         )}
       </div>
+
+      {questionsReport && questionsReport.data.length > 0 && (
+        <TablePagination
+          currentPage={page}
+          totalPages={questionsReport.totalPages}
+          onPageChange={setPage}
+        />
+      )}
     </div>
   );
 };

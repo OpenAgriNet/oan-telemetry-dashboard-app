@@ -74,22 +74,69 @@ export interface SessionEvent {
   clip?: string;
 }
 
+// Pagination types
+export interface PaginationParams {
+  page: number;
+  pageSize: number;
+}
+
+export interface PaginatedResponse<T> {
+  data: T[];
+  total: number;
+  page: number;
+  pageSize: number;
+  totalPages: number;
+}
+
 // Fetch functions with simulated delay
 const delay = (ms: number) => new Promise(resolve => setTimeout(resolve, ms));
 
-export const fetchUsers = async (): Promise<User[]> => {
+export const fetchUsers = async (pagination?: PaginationParams): Promise<PaginatedResponse<User>> => {
   await delay(300);
-  return users;
+  const { page = 1, pageSize = 10 } = pagination || {};
+  const start = (page - 1) * pageSize;
+  const end = start + pageSize;
+  const data = users.slice(start, end);
+  
+  return {
+    data,
+    total: users.length,
+    page,
+    pageSize,
+    totalPages: Math.ceil(users.length / pageSize)
+  };
 };
 
-export const fetchSessions = async (): Promise<Session[]> => {
+export const fetchSessions = async (pagination?: PaginationParams): Promise<PaginatedResponse<Session>> => {
   await delay(400);
-  return sessions;
+  const { page = 1, pageSize = 10 } = pagination || {};
+  const start = (page - 1) * pageSize;
+  const end = start + pageSize;
+  const data = sessions.slice(start, end);
+  
+  return {
+    data,
+    total: sessions.length,
+    page,
+    pageSize,
+    totalPages: Math.ceil(sessions.length / pageSize)
+  };
 };
 
-export const fetchQuestions = async (): Promise<Question[]> => {
+export const fetchQuestions = async (pagination?: PaginationParams): Promise<PaginatedResponse<Question>> => {
   await delay(500);
-  return questions;
+  const { page = 1, pageSize = 10 } = pagination || {};
+  const start = (page - 1) * pageSize;
+  const end = start + pageSize;
+  const data = questions.slice(start, end);
+  
+  return {
+    data,
+    total: questions.length,
+    page,
+    pageSize,
+    totalPages: Math.ceil(questions.length / pageSize)
+  };
 };
 
 export const fetchDailyMetrics = async (): Promise<DailyMetric[]> => {
@@ -97,9 +144,20 @@ export const fetchDailyMetrics = async (): Promise<DailyMetric[]> => {
   return dailyMetrics;
 };
 
-export const fetchFeedback = async (): Promise<Feedback[]> => {
+export const fetchFeedback = async (pagination?: PaginationParams): Promise<PaginatedResponse<Feedback>> => {
   await delay(300);
-  return feedback;
+  const { page = 1, pageSize = 10 } = pagination || {};
+  const start = (page - 1) * pageSize;
+  const end = start + pageSize;
+  const data = feedback.slice(start, end);
+  
+  return {
+    data,
+    total: feedback.length,
+    page,
+    pageSize,
+    totalPages: Math.ceil(feedback.length / pageSize)
+  };
 };
 
 export const fetchFeedbackById = async (id: string): Promise<Feedback | undefined> => {

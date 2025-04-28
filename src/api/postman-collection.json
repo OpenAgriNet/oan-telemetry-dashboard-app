@@ -14,11 +14,23 @@
             "method": "GET",
             "header": [],
             "url": {
-              "raw": "{{baseUrl}}/api/users",
+              "raw": "{{baseUrl}}/api/users?page={{page}}&pageSize={{pageSize}}",
               "host": ["{{baseUrl}}"],
-              "path": ["api", "users"]
+              "path": ["api", "users"],
+              "query": [
+                {
+                  "key": "page",
+                  "value": "{{page}}",
+                  "description": "Page number"
+                },
+                {
+                  "key": "pageSize",
+                  "value": "{{pageSize}}",
+                  "description": "Items per page"
+                }
+              ]
             },
-            "description": "Retrieve all users"
+            "description": "Retrieve all users with pagination"
           }
         }
       ]
@@ -227,6 +239,16 @@
     {
       "key": "baseUrl",
       "value": "http://localhost:5173",
+      "type": "string"
+    },
+    {
+      "key": "page",
+      "value": "1",
+      "type": "string"
+    },
+    {
+      "key": "pageSize",
+      "value": "10",
       "type": "string"
     }
   ]
