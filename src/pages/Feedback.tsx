@@ -1,33 +1,14 @@
-
 import React, { useState } from "react";
 import { Link } from "react-router-dom";
-import {
-  Table,
-  TableBody,
-  TableCell,
-  TableHead,
-  TableHeader,
-  TableRow,
-} from "@/components/ui/table";
-import {
-  Card,
-  CardContent,
-  CardDescription,
-  CardHeader,
-  CardTitle,
-} from "@/components/ui/card";
+import { useQuery } from "@tanstack/react-query";
+import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
+import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { MessageSquare, ThumbsUp, Search } from "lucide-react";
 import { format } from "date-fns";
 import { Input } from "@/components/ui/input";
 import DateRangePicker from "@/components/dashboard/DateRangePicker";
-import {
-  Select,
-  SelectContent,
-  SelectItem,
-  SelectTrigger,
-  SelectValue,
-} from "@/components/ui/select";
-import sessions from "@/data/sessions.json";
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
+import { fetchFeedback, fetchUsers, type Feedback } from "@/services/api";
 import users from "@/data/users.json";
 
 const feedbackData = [
@@ -57,6 +38,11 @@ const Feedback = () => {
   const [dateRange, setDateRange] = useState<{ from: Date | undefined; to: Date | undefined }>({
     from: undefined,
     to: undefined,
+  });
+
+  const { data: feedbackData = [] } = useQuery({
+    queryKey: ['feedback'],
+    queryFn: fetchFeedback
   });
 
   const filteredFeedback = feedbackData.filter((feedback) => {

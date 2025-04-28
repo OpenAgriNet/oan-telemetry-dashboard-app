@@ -1,0 +1,22 @@
+
+[
+  {
+    "id": "fb1",
+    "sessionId": "ses001",
+    "userId": "user1",
+    "questionText": "How do I improve my presentation skills?",
+    "feedback": "Very helpful response. The AI provided clear, actionable steps that I could immediately implement.",
+    "aiResponse": "Here are some steps you can take: 1) Practice regularly 2) Know your audience 3) Build confidence.",
+    "rating": 5,
+    "timestamp": "2025-04-28T09:01:45Z"
+  },
+  {
+    "id": "fb2",
+    "sessionId": "ses002",
+    "userId": "user2",
+    "questionText": "What are effective time management techniques?",
+    "feedback": "Clear and practical advice",
+    "rating": 4,
+    "timestamp": "2025-04-28T10:15:30Z"
+  }
+]

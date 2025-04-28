@@ -1,49 +1,35 @@
 import React from "react";
 import { useParams, useNavigate } from "react-router-dom";
-import {
-  Card,
-  CardContent,
-  CardDescription,
-  CardHeader,
-  CardTitle,
-} from "@/components/ui/card";
+import { useQuery } from "@tanstack/react-query";
+import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { User, MessageCircle, Calendar, ThumbsUp, Languages } from "lucide-react";
 import { format } from "date-fns";
+import { fetchFeedbackById, fetchTranslation } from "@/services/api";
 import users from "@/data/users.json";
 import sessions from "@/data/sessions.json";
-
-// Mock feedback data - would come from an API in a real app
-const feedbackData = [
-  {
-    id: "fb1",
-    sessionId: "ses001",
-    userId: "user1",
-    questionText: "How do I improve my presentation skills?",
-    feedback: "Very helpful response. The AI provided clear, actionable steps that I could immediately implement.",
-    aiResponse: "Here are some steps you can take: 1) Practice regularly 2) Know your audience 3) Build confidence.",
-    rating: 5,
-    timestamp: "2025-04-28T09:01:45Z",
-  },
-  // ... other feedback items
-];
-
-// Mock translations - in a real app this would come from a translation service
-const translations = {
-  "fb1": {
-    questionMarathi: "माझी प्रेझेंटेशन कौशल्ये कशी सुधारावीत?",
-    feedbackMarathi: "खूप उपयुक्त प्रतिसाद. एआयने स्पष्ट, कृतीयोग्य पावले प्रदान केली जी मी लगेच अंमलात आणू शकतो.",
-    responseMarathi: "तुम्ही खालील गोष्टी करू शकता: 1) नियमित सराव करा 2) तुमचे श्रोते जाणून घ्या 3) आत्मविश्वास वाढवा.",
-  },
-  // Add more translations as needed
-};
 
 const FeedbackDetails = () => {
   const { feedbackId } = useParams();
   const navigate = useNavigate();
-  const feedback = feedbackData.find(f => f.id === feedbackId);
+
+  const { data: feedback, isLoading: isFeedbackLoading } = useQuery({
+    queryKey: ['feedback', feedbackId],
+    queryFn: () => fetchFeedbackById(feedbackId || ''),
+    enabled: !!feedbackId
+  });
+
+  const { data: translation } = useQuery({
+    queryKey: ['translation', feedbackId],
+    queryFn: () => fetchTranslation(feedbackId || ''),
+    enabled: !!feedbackId
+  });
+
   const user = feedback ? users.find(u => u.id === feedback.userId) : null;
   const session = feedback ? sessions.find(s => s.sessionId === feedback.sessionId) : null;
-  const translation = feedbackId ? translations[feedbackId] : null;
+
+  if (isFeedbackLoading) {
+    return <div>Loading...</div>;
+  }
 
   if (!feedback || !user) {
     return <div>Feedback not found</div>;

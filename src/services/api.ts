@@ -1,8 +1,9 @@
-
 import users from '../data/users.json';
 import sessions from '../data/sessions.json';
 import questions from '../data/questions.json';
 import dailyMetrics from '../data/dailyMetrics.json';
+import feedback from '../data/feedback.json';
+import translations from '../data/translations.json';
 
 // Types
 export interface User {
@@ -48,6 +49,23 @@ export interface UserReport {
   lastSessionDate: string;
 }
 
+export interface Feedback {
+  id: string;
+  sessionId: string;
+  userId: string;
+  questionText: string;
+  feedback: string;
+  aiResponse?: string;
+  rating: number;
+  timestamp: string;
+}
+
+export interface Translation {
+  questionMarathi: string;
+  feedbackMarathi: string;
+  responseMarathi: string;
+}
+
 // Fetch functions with simulated delay
 const delay = (ms: number) => new Promise(resolve => setTimeout(resolve, ms));
 
@@ -71,7 +89,21 @@ export const fetchDailyMetrics = async (): Promise<DailyMetric[]> => {
   return dailyMetrics;
 };
 
-// Generate reports based on the raw data
+export const fetchFeedback = async (): Promise<Feedback[]> => {
+  await delay(300);
+  return feedback;
+};
+
+export const fetchFeedbackById = async (id: string): Promise<Feedback | undefined> => {
+  await delay(200);
+  return feedback.find(f => f.id === id);
+};
+
+export const fetchTranslation = async (feedbackId: string): Promise<Translation | undefined> => {
+  await delay(200);
+  return translations[feedbackId as keyof typeof translations];
+};
+
 export const generateUserReport = async (
   userId?: string, 
   startDate?: string, 
@@ -83,32 +115,25 @@ export const generateUserReport = async (
     fetchQuestions()
   ]);
   
-  // Filter by user if specified
   let filteredUsers = usersData;
   if (userId) {
     filteredUsers = usersData.filter(user => user.id === userId);
   }
   
-  // Generate report for each user
   const report = filteredUsers.map(user => {
-    // Get sessions for this user
     const userSessions = sessionsData.filter(session => session.userId === user.id);
-    
-    // Apply date filter if specified
     const filteredSessions = userSessions.filter(session => {
       if (!startDate && !endDate) return true;
       
       const sessionDate = new Date(session.startTime);
       const start = startDate ? new Date(startDate) : new Date(0);
-      const end = endDate ? new Date(endDate) : new Date(8640000000000000); // Max date
+      const end = endDate ? new Date(endDate) : new Date(8640000000000000);
       
       return sessionDate >= start && sessionDate <= end;
     });
     
-    // Get questions for this user
     const userQuestions = questionsData.filter(question => question.userId === user.id);
     
-    // Determine first and last session dates
     const sessionDates = filteredSessions.map(s => new Date(s.startTime).getTime());
     const firstSession = sessionDates.length ? new Date(Math.min(...sessionDates)).toISOString() : '';
     const lastSession = sessionDates.length ? new Date(Math.max(...sessionDates)).toISOString() : '';
@@ -123,7 +148,6 @@ export const generateUserReport = async (
     };
   });
   
-  // Filter out users with no sessions in the date range
   return report.filter(user => user.numSessions > 0);
 };
 
@@ -134,17 +158,15 @@ export const generateSessionReport = async (
 ): Promise<Session[]> => {
   let sessionsData = await fetchSessions();
   
-  // Filter by user if specified
   if (userId) {
     sessionsData = sessionsData.filter(session => session.userId === userId);
   }
   
-  // Apply date filter if specified
   if (startDate || endDate) {
     sessionsData = sessionsData.filter(session => {
       const sessionDate = new Date(session.startTime);
       const start = startDate ? new Date(startDate) : new Date(0);
-      const end = endDate ? new Date(endDate) : new Date(8640000000000000); // Max date
+      const end = endDate ? new Date(endDate) : new Date(8640000000000000);
       
       return sessionDate >= start && sessionDate <= end;
     });
@@ -162,28 +184,24 @@ export const generateQuestionsReport = async (
 ): Promise<Question[]> => {
   let questionsData = await fetchQuestions();
   
-  // Filter by user if specified
   if (userId) {
     questionsData = questionsData.filter(question => question.userId === userId);
   }
   
-  // Filter by session if specified
   if (sessionId) {
     questionsData = questionsData.filter(question => question.sessionId === sessionId);
   }
   
-  // Apply date filter if specified
   if (startDate || endDate) {
     questionsData = questionsData.filter(question => {
       const questionDate = new Date(question.dateAsked);
       const start = startDate ? new Date(startDate) : new Date(0);
-      const end = endDate ? new Date(endDate) : new Date(8640000000000000); // Max date
+      const end = endDate ? new Date(endDate) : new Date(8640000000000000);
       
       return questionDate >= start && questionDate <= end;
     });
   }
   
-  // Filter by search text if specified
   if (searchText) {
     const searchLower = searchText.toLowerCase();
     questionsData = questionsData.filter(question => 
