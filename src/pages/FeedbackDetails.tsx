@@ -1,3 +1,4 @@
+
 import React from "react";
 import { useParams, useNavigate } from "react-router-dom";
 import {
@@ -120,21 +121,37 @@ const FeedbackDetails = () => {
               <h3 className="font-medium">Session Question</h3>
             </div>
             <p className="text-muted-foreground">{feedback.questionText}</p>
+            {translation?.questionMarathi && (
+              <div className="mt-2">
+                <div className="flex items-center gap-2">
+                  <Languages className="h-4 w-4" />
+                  <span className="text-sm text-muted-foreground">Marathi</span>
+                </div>
+                <p className="text-muted-foreground mt-1">{translation.questionMarathi}</p>
+              </div>
+            )}
           </div>
 
           <div className="space-y-4">
             <div>
-              <div className="flex items-center gap-2 mb-2">
-                <Languages className="h-4 w-4" />
-                <h3 className="font-medium">Question in Marathi</h3>
-              </div>
-              <p className="text-muted-foreground">{translation?.questionMarathi || "Translation not available"}</p>
-            </div>
-
-            <div>
               <h3 className="font-medium mb-2">Feedback</h3>
-              <p className="text-muted-foreground mb-2">{feedback.feedback}</p>
-              <p className="text-muted-foreground">{translation?.feedbackMarathi || "Translation not available"}</p>
+              <div className="space-y-4">
+                <div>
+                  <div className="flex items-center gap-2">
+                    <span className="text-sm text-muted-foreground">English</span>
+                  </div>
+                  <p className="text-muted-foreground mt-1">{feedback.feedback}</p>
+                </div>
+                {translation?.feedbackMarathi && (
+                  <div>
+                    <div className="flex items-center gap-2">
+                      <Languages className="h-4 w-4" />
+                      <span className="text-sm text-muted-foreground">Marathi</span>
+                    </div>
+                    <p className="text-muted-foreground mt-1">{translation.feedbackMarathi}</p>
+                  </div>
+                )}
+              </div>
             </div>
           </div>
         </CardContent>
