@@ -1,4 +1,3 @@
-
 import React from "react";
 import { useParams, useNavigate } from "react-router-dom";
 import {
@@ -21,6 +20,7 @@ const feedbackData = [
     userId: "user1",
     questionText: "How do I improve my presentation skills?",
     feedback: "Very helpful response. The AI provided clear, actionable steps that I could immediately implement.",
+    aiResponse: "Here are some steps you can take: 1) Practice regularly 2) Know your audience 3) Build confidence.",
     rating: 5,
     timestamp: "2025-04-28T09:01:45Z",
   },
@@ -32,6 +32,7 @@ const translations = {
   "fb1": {
     questionMarathi: "माझी प्रेझेंटेशन कौशल्ये कशी सुधारावीत?",
     feedbackMarathi: "खूप उपयुक्त प्रतिसाद. एआयने स्पष्ट, कृतीयोग्य पावले प्रदान केली जी मी लगेच अंमलात आणू शकतो.",
+    responseMarathi: "तुम्ही खालील गोष्टी करू शकता: 1) नियमित सराव करा 2) तुमचे श्रोते जाणून घ्या 3) आत्मविश्वास वाढवा.",
   },
   // Add more translations as needed
 };
@@ -133,6 +134,27 @@ const FeedbackDetails = () => {
           </div>
 
           <div className="space-y-4">
+            <div>
+              <h3 className="font-medium mb-2">AI Response</h3>
+              <div className="space-y-4">
+                <div>
+                  <div className="flex items-center gap-2">
+                    <span className="text-sm text-muted-foreground">English</span>
+                  </div>
+                  <p className="text-muted-foreground mt-1">{feedback.aiResponse}</p>
+                </div>
+                {translation?.responseMarathi && (
+                  <div>
+                    <div className="flex items-center gap-2">
+                      <Languages className="h-4 w-4" />
+                      <span className="text-sm text-muted-foreground">Marathi</span>
+                    </div>
+                    <p className="text-muted-foreground mt-1">{translation.responseMarathi}</p>
+                  </div>
+                )}
+              </div>
+            </div>
+
             <div>
               <h3 className="font-medium mb-2">Feedback</h3>
               <div className="space-y-4">
