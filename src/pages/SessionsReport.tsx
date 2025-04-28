@@ -1,7 +1,7 @@
-
 import React, { useState } from "react";
 import { useQuery } from "@tanstack/react-query";
 import { generateSessionReport, fetchUsers } from "@/services/api";
+import { useNavigate } from "react-router-dom";
 import DateRangePicker from "@/components/dashboard/DateRangePicker";
 import {
   Select,
@@ -24,6 +24,7 @@ import { format } from "date-fns";
 import { Search } from "lucide-react";
 
 const SessionsReport = () => {
+  const navigate = useNavigate();
   const [dateRange, setDateRange] = useState<{
     from: Date | undefined;
     to: Date | undefined;
@@ -55,12 +56,9 @@ const SessionsReport = () => {
       ),
   });
 
-  // Filter report based on search query
-  const filteredReport = sessionReport.filter((session) => {
-    if (!searchQuery) return true;
-    const searchLower = searchQuery.toLowerCase();
-    return session.sessionId.toLowerCase().includes(searchLower);
-  });
+  const handleSessionClick = (sessionId: string) => {
+    navigate(`/sessions/${sessionId}`);
+  };
 
   const formatDate = (dateString: string) => {
     if (!dateString) return "N/A";
@@ -76,6 +74,12 @@ const SessionsReport = () => {
     setDateRange({ from: undefined, to: undefined });
     setSearchQuery("");
   };
+
+  const filteredReport = sessionReport.filter((session) => {
+    if (!searchQuery) return true;
+    const searchLower = searchQuery.toLowerCase();
+    return session.sessionId.toLowerCase().includes(searchLower);
+  });
 
   return (
     <div className="space-y-6">
@@ -148,7 +152,12 @@ const SessionsReport = () => {
                 filteredReport.map((session) => (
                   <TableRow key={session.sessionId}>
                     <TableCell className="font-medium">
-                      {session.sessionId}
+                      <button
+                        onClick={() => handleSessionClick(session.sessionId)}
+                        className="text-primary hover:underline"
+                      >
+                        {session.sessionId}
+                      </button>
                     </TableCell>
                     <TableCell>{session.userId}</TableCell>
                     <TableCell className="text-right">

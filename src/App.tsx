@@ -1,4 +1,3 @@
-
 import { Toaster } from "@/components/ui/toaster";
 import { Toaster as Sonner } from "@/components/ui/sonner";
 import { TooltipProvider } from "@/components/ui/tooltip";
@@ -12,6 +11,7 @@ import SessionsReport from "./pages/SessionsReport";
 import QuestionsReport from "./pages/QuestionsReport";
 import Analytics from "./pages/Analytics";
 import NotFound from "./pages/NotFound";
+import SessionDetails from "./pages/SessionDetails";
 
 const queryClient = new QueryClient({
   defaultOptions: {
@@ -53,6 +53,11 @@ const App = () => (
             <Route path="/analytics" element={
               <Layout>
                 <Analytics />
+              </Layout>
+            } />
+            <Route path="/sessions/:sessionId" element={
+              <Layout>
+                <SessionDetails />
               </Layout>
             } />
             <Route path="*" element={<NotFound />} />
