@@ -108,7 +108,7 @@ const QuestionsReport = () => {
               <SelectValue placeholder="All Users" />
             </SelectTrigger>
             <SelectContent>
-              <SelectItem value="">All Users</SelectItem>
+              <SelectItem value="all">All Users</SelectItem>
               {users.map((user) => (
                 <SelectItem key={user.id} value={user.id}>
                   {user.name}
@@ -123,7 +123,7 @@ const QuestionsReport = () => {
               <SelectValue placeholder="All Sessions" />
             </SelectTrigger>
             <SelectContent>
-              <SelectItem value="">All Sessions</SelectItem>
+              <SelectItem value="all">All Sessions</SelectItem>
               {filteredSessions.map((session) => (
                 <SelectItem key={session.sessionId} value={session.sessionId}>
                   {session.sessionId}
