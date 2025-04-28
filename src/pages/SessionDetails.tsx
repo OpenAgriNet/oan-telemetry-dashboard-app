@@ -10,20 +10,80 @@ import {
   CardHeader,
   CardTitle,
 } from "@/components/ui/card";
+import {
+  Login,
+  MessageSquare,
+  Mic,
+  Translate,
+  MessageSquareHeart,
+  Smile,
+  Volume,
+  SmilePlus,
+} from "lucide-react";
 
-// Mock function to get session events - replace with actual API call later
+// Mock function to get session events with sample data
 const getSessionEvents = async (sessionId: string) => {
-  // Mock timeline data - replace with actual API data
+  // Mock timeline data with clips and sample data
   return [
-    { type: "Login", timestamp: "2025-04-28T09:00:00Z" },
-    { type: "Asked Question Voice", timestamp: "2025-04-28T09:01:00Z" },
-    { type: "Voice Clip", timestamp: "2025-04-28T09:01:05Z" },
-    { type: "Transcribe Data from Voice", timestamp: "2025-04-28T09:01:10Z" },
-    { type: "Translation Data", timestamp: "2025-04-28T09:01:15Z" },
-    { type: "Answer From AI", timestamp: "2025-04-28T09:01:30Z" },
-    { type: "User Reaction", timestamp: "2025-04-28T09:01:45Z" },
-    { type: "Suggested Questions", timestamp: "2025-04-28T09:02:00Z" },
-    { type: "Asked Next Questions", timestamp: "2025-04-28T09:02:15Z" },
+    {
+      type: "Login",
+      timestamp: "2025-04-28T09:00:00Z",
+      icon: Login,
+      sampleData: "User login from Chrome/MacOS",
+    },
+    {
+      type: "Asked Question Voice",
+      timestamp: "2025-04-28T09:01:00Z",
+      icon: Mic,
+      sampleData: "Voice input detected (5 seconds)",
+      clip: "voice_input_001.mp3",
+    },
+    {
+      type: "Voice Clip",
+      timestamp: "2025-04-28T09:01:05Z",
+      icon: Volume,
+      sampleData: "How do I improve my presentation skills?",
+      clip: "processed_voice_001.mp3",
+    },
+    {
+      type: "Transcribe Data from Voice",
+      timestamp: "2025-04-28T09:01:10Z",
+      icon: MessageSquare,
+      sampleData: "Text: 'How do I improve my presentation skills?'",
+    },
+    {
+      type: "Translation Data",
+      timestamp: "2025-04-28T09:01:15Z",
+      icon: Translate,
+      sampleData: {
+        sourceLanguage: "en",
+        translatedText: "Comment puis-je améliorer mes compétences en présentation?",
+        targetLanguage: "fr",
+      },
+    },
+    {
+      type: "Answer From AI",
+      timestamp: "2025-04-28T09:01:30Z",
+      icon: MessageSquareHeart,
+      sampleData: "Here are some key tips to improve your presentation skills: 1. Practice regularly, 2. Know your audience, 3. Use storytelling techniques...",
+      clip: "ai_response_001.mp3",
+    },
+    {
+      type: "User Reaction",
+      timestamp: "2025-04-28T09:01:45Z",
+      icon: Smile,
+      sampleData: { reaction: "helpful", rating: 5 },
+    },
+    {
+      type: "Suggested Questions",
+      timestamp: "2025-04-28T09:02:00Z",
+      icon: SmilePlus,
+      sampleData: [
+        "How can I handle presentation anxiety?",
+        "What are good presentation structures?",
+        "How to engage the audience better?",
+      ],
+    },
   ];
 };
 
@@ -66,11 +126,46 @@ const SessionDetails = () => {
                   <div className="absolute left-0 h-full w-px bg-border -translate-x-1/2" />
                   <div className="relative h-2 w-2 rounded-full bg-primary" />
                 </div>
-                <div className="flex flex-col gap-1">
-                  <p className="text-sm font-medium">{event.type}</p>
-                  <p className="text-sm text-muted-foreground">
-                    {format(new Date(event.timestamp), "MMM dd, yyyy HH:mm:ss")}
-                  </p>
+                <div className="flex flex-1 gap-4">
+                  <div className="flex h-8 w-8 items-center justify-center rounded-full bg-muted">
+                    {event.icon && <event.icon className="h-4 w-4" />}
+                  </div>
+                  <div className="flex flex-col gap-1">
+                    <div className="flex items-center gap-2">
+                      <p className="font-medium">{event.type}</p>
+                      <p className="text-sm text-muted-foreground">
+                        {format(new Date(event.timestamp), "HH:mm:ss")}
+                      </p>
+                    </div>
+                    {event.sampleData && (
+                      <div className="rounded-md bg-muted p-3 text-sm">
+                        {typeof event.sampleData === "string" ? (
+                          event.sampleData
+                        ) : Array.isArray(event.sampleData) ? (
+                          <ul className="list-inside list-disc space-y-1">
+                            {event.sampleData.map((item, i) => (
+                              <li key={i}>{item}</li>
+                            ))}
+                          </ul>
+                        ) : (
+                          <pre className="overflow-x-auto">
+                            {JSON.stringify(event.sampleData, null, 2)}
+                          </pre>
+                        )}
+                      </div>
+                    )}
+                    {event.clip && (
+                      <div className="mt-2">
+                        <audio
+                          controls
+                          className="w-full max-w-[300px]"
+                          src={event.clip}
+                        >
+                          Your browser does not support the audio element.
+                        </audio>
+                      </div>
+                    )}
+                  </div>
                 </div>
               </div>
             ))}
@@ -82,3 +177,4 @@ const SessionDetails = () => {
 };
 
 export default SessionDetails;
+
