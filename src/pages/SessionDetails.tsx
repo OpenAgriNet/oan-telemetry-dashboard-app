@@ -1,4 +1,3 @@
-
 import React from "react";
 import { useParams } from "react-router-dom";
 import { useQuery } from "@tanstack/react-query";
@@ -28,14 +27,14 @@ import { fetchSessionEvents, fetchSessions, fetchUsers } from "@/services/api";
 const SessionDetails = () => {
   const { sessionId } = useParams();
 
-  const { data: sessionsResponse } = useQuery({
+  const { data: sessions = [] } = useQuery({
     queryKey: ['sessions'],
-    queryFn: () => fetchSessions({ page: 1, pageSize: 100 })
+    queryFn: fetchSessions
   });
 
-  const { data: usersResponse } = useQuery({
+  const { data: users = [] } = useQuery({
     queryKey: ['users'],
-    queryFn: () => fetchUsers({ page: 1, pageSize: 100 })
+    queryFn: fetchUsers
   });
 
   const { data: events = [], isLoading } = useQuery({
@@ -44,10 +43,6 @@ const SessionDetails = () => {
     enabled: !!sessionId,
   });
 
-  // Extract the data from paginated responses
-  const sessions = sessionsResponse?.data || [];
-  const users = usersResponse?.data || [];
-  
   const currentSession = sessions.find(s => s.sessionId === sessionId);
   const user = currentSession ? users.find(u => u.id === currentSession.userId) : null;
   const userStats = user ? getUserStats(user.id, sessions) : null;

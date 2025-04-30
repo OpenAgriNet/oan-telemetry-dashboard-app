@@ -1,4 +1,3 @@
-
 import * as React from "react"
 
 import type {
@@ -169,8 +168,7 @@ function toast({ ...props }: Toast) {
   }
 }
 
-// This is the React hook that components will use
-export const useToast = () => {
+function useToast() {
   const [state, setState] = React.useState<State>(memoryState)
 
   React.useEffect(() => {
@@ -190,5 +188,4 @@ export const useToast = () => {
   }
 }
 
-// Export the toast function separately so it can be used outside of components
-export { toast }
+export { useToast, toast }

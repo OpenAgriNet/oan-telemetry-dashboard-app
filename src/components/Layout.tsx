@@ -1,8 +1,6 @@
-
 import React, { useState } from "react";
 import { Link, useLocation } from "react-router-dom";
 import { useTheme } from "@/contexts/ThemeContext";
-import { useAuth } from "@/contexts/AuthContext";
 import { Button } from "@/components/ui/button";
 import {
   BarChart3,
@@ -29,12 +27,11 @@ interface LayoutProps {
 
 const Layout: React.FC<LayoutProps> = ({ children }) => {
   const { theme, setTheme } = useTheme();
-  const { user, logout } = useAuth();
   const location = useLocation();
   const [collapsed, setCollapsed] = useState(false);
 
   const handleLogout = () => {
-    logout();
+    console.log("Logout clicked");
   };
 
   const navItems = [
@@ -166,7 +163,7 @@ const Layout: React.FC<LayoutProps> = ({ children }) => {
                 <Button variant="ghost" className="relative h-10 w-10 rounded-full">
                   <Avatar>
                     <AvatarFallback>
-                      {user?.firstName?.[0] || user?.username?.[0] || <UserRound className="h-6 w-6" />}
+                      <UserRound className="h-6 w-6" />
                     </AvatarFallback>
                   </Avatar>
                 </Button>
@@ -174,7 +171,7 @@ const Layout: React.FC<LayoutProps> = ({ children }) => {
               <DropdownMenuContent className="w-56" align="end">
                 <DropdownMenuItem className="flex items-center">
                   <UserRound className="mr-2 h-4 w-4" />
-                  <span>{user?.name || user?.username || "User"}</span>
+                  <span>John Doe</span>
                 </DropdownMenuItem>
                 <DropdownMenuItem
                   className="flex items-center text-red-600 focus:text-red-600"
