@@ -7,12 +7,31 @@ import ServiceStatusBar from "@/components/service-status/ServiceStatusBar";
 import { Bell, ChevronLeft, ChevronRight, Calendar, Info } from "lucide-react";
 import serviceUptimeData from "../data/serviceUptime.json";
 
+// Define the type for the daily status to ensure compatibility
+type DailyStatus = {
+  date: string;
+  status: "operational" | "degraded" | "outage";
+};
+
+// Ensure the service data conforms to expected types
+interface Service {
+  id: string;
+  name: string;
+  components: number;
+  uptime: string;
+  status: "operational" | "degraded" | "outage";
+  dailyStatus: DailyStatus[];
+}
+
 const ServiceStatus = () => {
   const [isSubscribed, setIsSubscribed] = useState(false);
   
   const handleSubscribe = () => {
     setIsSubscribed(!isSubscribed);
   };
+
+  // Type assertion to ensure service status conforms to expected type
+  const services = serviceUptimeData.services as unknown as Service[];
 
   return (
     <div className="space-y-6">
@@ -63,12 +82,12 @@ const ServiceStatus = () => {
         </div>
 
         <div className="space-y-6">
-          {serviceUptimeData.services.map((service) => (
+          {services.map((service) => (
             <div key={service.id} className="border rounded-lg p-4 bg-background">
               <div className="flex items-center justify-between mb-2">
                 <div className="flex items-center gap-2">
                   <StatusBadge 
-                    status={service.status as "operational" | "degraded" | "outage"} 
+                    status={service.status} 
                     size="sm" 
                   />
                   <h3 className="font-medium">{service.name}</h3>

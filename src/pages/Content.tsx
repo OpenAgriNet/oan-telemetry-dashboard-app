@@ -2,7 +2,7 @@ import React, { useState } from "react";
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/components/ui/card";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
-import { FileText, BookOpen, Book, Search, FileSearch, ArrowUp, Language, Info } from "lucide-react";
+import { FileText, BookOpen, Book, Search, FileSearch, ArrowUp, Languages, Info } from "lucide-react";
 import DateRangePicker from "@/components/dashboard/DateRangePicker";
 import contentData from "../data/contentData.json";
 import { format } from "date-fns";
@@ -186,7 +186,7 @@ const Content: React.FC = () => {
                   <TableHead>Source</TableHead>
                   <TableHead>
                     <div className="flex items-center gap-1">
-                      <Language size={14} /> Language
+                      <Languages size={14} /> Language
                     </div>
                   </TableHead>
                   <TableHead>Format</TableHead>
@@ -231,7 +231,7 @@ const Content: React.FC = () => {
                   <TableHead>Source</TableHead>
                   <TableHead>
                     <div className="flex items-center gap-1">
-                      <Language size={14} /> Language
+                      <Languages size={14} /> Language
                     </div>
                   </TableHead>
                   <TableHead>Format</TableHead>
