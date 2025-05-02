@@ -3,7 +3,7 @@ import React, { useState } from "react";
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/components/ui/card";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
-import { FileText } from "lucide-react";
+import { FileText, BookOpen, Book, Search, FileSearch, ArrowUp } from "lucide-react";
 import DateRangePicker from "@/components/dashboard/DateRangePicker";
 import contentData from "../data/contentData.json";
 import { format } from "date-fns";
@@ -70,7 +70,9 @@ const Content: React.FC = () => {
   return (
     <div className="space-y-6">
       <div className="flex justify-between items-center">
-        <h1 className="text-3xl font-bold tracking-tight">Content Dashboard</h1>
+        <h1 className="text-3xl font-bold tracking-tight flex items-center gap-2">
+          <BookOpen className="text-primary" size={32} /> Content Dashboard
+        </h1>
         <div className="flex items-center space-x-2">
           <Tabs defaultValue="7days" value={activeTab} onValueChange={setActiveTab} className="mr-4">
             <TabsList>
@@ -85,35 +87,39 @@ const Content: React.FC = () => {
         </div>
       </div>
 
-      {/* Metrics Cards - Updated format */}
+      {/* Metrics Cards - With updated format */}
       <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-4">
         <MetricCard 
           title={contentData.metrics.totalContentsIngested.toString()}
           value={`Contents Ingested ${periodText}`}
-          icon={<FileText size={18} />}
+          icon={<FileText size={24} className="text-primary" />}
         />
         <MetricCard 
           title={contentData.metrics.totalQuestionsAnswered.toString()}
           value={`Questions Answered ${periodText}`}
-          icon={<FileText size={18} />}
+          icon={<Search size={24} className="text-primary" />}
         />
         <MetricCard 
           title={contentData.metrics.totalContentsUsed.toString()}
           value={`Contents Used ${periodText}`}
-          icon={<FileText size={18} />}
+          icon={<Book size={24} className="text-primary" />}
         />
         <MetricCard 
           title={contentData.metrics.unusedContents.toString()}
           value={`Unused Contents ${periodText}`}
-          icon={<FileText size={18} />}
+          icon={<FileSearch size={24} className="text-primary" />}
         />
       </div>
 
-      {/* Source Utilization Section - Moved before Top 10 Most Used Contents */}
+      {/* Source Utilization Section - Improved with icon */}
       <Card>
-        <CardHeader>
-          <CardTitle>Source-wise Utilization</CardTitle>
-          <CardDescription>Document sources and their utilization metrics</CardDescription>
+        <CardHeader className="flex flex-row items-start justify-between">
+          <div>
+            <CardTitle className="flex items-center gap-2">
+              <Book size={20} className="text-primary" /> Source-wise Utilization
+            </CardTitle>
+            <CardDescription>Document sources and their utilization metrics</CardDescription>
+          </div>
         </CardHeader>
         <CardContent>
           <div className="overflow-auto">
@@ -129,7 +135,9 @@ const Content: React.FC = () => {
               <TableBody>
                 {contentData.sourceUtilization.map((source, index) => (
                   <TableRow key={index}>
-                    <TableCell className="font-medium">{source.source}</TableCell>
+                    <TableCell className="font-medium flex items-center gap-2">
+                      <Book size={16} className="text-muted-foreground" /> {source.source}
+                    </TableCell>
                     <TableCell className="text-right">{source.documentsCount}</TableCell>
                     <TableCell className="text-right">{source.questionsReferred}</TableCell>
                     <TableCell className="text-right">
@@ -145,11 +153,15 @@ const Content: React.FC = () => {
         </CardContent>
       </Card>
       
-      {/* Content Tables - Full row layout */}
+      {/* Content Tables - With icons */}
       <Card>
-        <CardHeader>
-          <CardTitle>Top 10 Most Used Contents</CardTitle>
-          <CardDescription>Contents that have been referred to answer questions most frequently</CardDescription>
+        <CardHeader className="flex flex-row items-start justify-between">
+          <div>
+            <CardTitle className="flex items-center gap-2">
+              <ArrowUp size={20} className="text-primary" /> Top 10 Most Used Contents
+            </CardTitle>
+            <CardDescription>Contents that have been referred to answer questions most frequently</CardDescription>
+          </div>
         </CardHeader>
         <CardContent>
           <div className="overflow-auto">
@@ -167,7 +179,9 @@ const Content: React.FC = () => {
               <TableBody>
                 {contentData.topUsedContents.map((content) => (
                   <TableRow key={content.id}>
-                    <TableCell className="font-medium">{content.name}</TableCell>
+                    <TableCell className="font-medium flex items-center gap-2">
+                      <FileText size={16} className="text-muted-foreground" /> {content.name}
+                    </TableCell>
                     <TableCell>{content.source}</TableCell>
                     <TableCell>{content.language}</TableCell>
                     <TableCell>{content.format}</TableCell>
@@ -182,9 +196,13 @@ const Content: React.FC = () => {
       </Card>
 
       <Card>
-        <CardHeader>
-          <CardTitle>Top Least Used Contents</CardTitle>
-          <CardDescription>Contents that have been referred to answer questions least frequently</CardDescription>
+        <CardHeader className="flex flex-row items-start justify-between">
+          <div>
+            <CardTitle className="flex items-center gap-2">
+              <ArrowUp size={20} className="text-primary rotate-180" /> Top Least Used Contents
+            </CardTitle>
+            <CardDescription>Contents that have been referred to answer questions least frequently</CardDescription>
+          </div>
         </CardHeader>
         <CardContent>
           <div className="overflow-auto">
@@ -202,7 +220,9 @@ const Content: React.FC = () => {
               <TableBody>
                 {contentData.leastUsedContents.map((content) => (
                   <TableRow key={content.id}>
-                    <TableCell className="font-medium">{content.name}</TableCell>
+                    <TableCell className="font-medium flex items-center gap-2">
+                      <FileText size={16} className="text-muted-foreground" /> {content.name}
+                    </TableCell>
                     <TableCell>{content.source}</TableCell>
                     <TableCell>{content.language}</TableCell>
                     <TableCell>{content.format}</TableCell>
