@@ -158,7 +158,7 @@ const Content: React.FC = () => {
                 <TableRow>
                   <TableHead>Name</TableHead>
                   <TableHead>Source</TableHead>
-                  <TableHead>Category</TableHead>
+                  <TableHead>Language</TableHead>
                   <TableHead>Format</TableHead>
                   <TableHead className="text-right">Questions</TableHead>
                   <TableHead className="text-right">Uploaded</TableHead>
@@ -169,7 +169,7 @@ const Content: React.FC = () => {
                   <TableRow key={content.id}>
                     <TableCell className="font-medium">{content.name}</TableCell>
                     <TableCell>{content.source}</TableCell>
-                    <TableCell>{content.category}</TableCell>
+                    <TableCell>{content.language}</TableCell>
                     <TableCell>{content.format}</TableCell>
                     <TableCell className="text-right">{content.questionsReferred}</TableCell>
                     <TableCell className="text-right">{formatDate(content.uploadedDate)}</TableCell>
@@ -193,7 +193,7 @@ const Content: React.FC = () => {
                 <TableRow>
                   <TableHead>Name</TableHead>
                   <TableHead>Source</TableHead>
-                  <TableHead>Category</TableHead>
+                  <TableHead>Language</TableHead>
                   <TableHead>Format</TableHead>
                   <TableHead className="text-right">Questions</TableHead>
                   <TableHead className="text-right">Uploaded</TableHead>
@@ -204,7 +204,7 @@ const Content: React.FC = () => {
                   <TableRow key={content.id}>
                     <TableCell className="font-medium">{content.name}</TableCell>
                     <TableCell>{content.source}</TableCell>
-                    <TableCell>{content.category}</TableCell>
+                    <TableCell>{content.language}</TableCell>
                     <TableCell>{content.format}</TableCell>
                     <TableCell className="text-right">{content.questionsReferred}</TableCell>
                     <TableCell className="text-right">{formatDate(content.uploadedDate)}</TableCell>

@@ -24,7 +24,7 @@
       "source": "Agricultural Research Institute",
       "questionsReferred": 42,
       "uploadedDate": "2025-03-15T09:30:00Z",
-      "category": "Agriculture",
+      "language": "English",
       "format": "PDF"
     },
     {
@@ -33,7 +33,7 @@
       "source": "Ministry of Agriculture",
       "questionsReferred": 38,
       "uploadedDate": "2025-03-18T14:45:00Z",
-      "category": "Agriculture",
+      "language": "Hindi",
       "format": "DOC"
     },
     {
@@ -42,7 +42,7 @@
       "source": "National Farming Association",
       "questionsReferred": 31,
       "uploadedDate": "2025-03-20T11:15:00Z",
-      "category": "Agriculture",
+      "language": "English",
       "format": "PDF"
     },
     {
@@ -51,7 +51,7 @@
       "source": "Organic Farming Institute",
       "questionsReferred": 27,
       "uploadedDate": "2025-03-22T10:00:00Z",
-      "category": "Agriculture",
+      "language": "Marathi",
       "format": "PDF"
     },
     {
@@ -60,7 +60,7 @@
       "source": "Water Resources Board",
       "questionsReferred": 25,
       "uploadedDate": "2025-03-25T13:20:00Z",
-      "category": "Water Management",
+      "language": "Hindi",
       "format": "PDF"
     },
     {
@@ -69,7 +69,7 @@
       "source": "Agricultural Planning Department",
       "questionsReferred": 22,
       "uploadedDate": "2025-03-27T16:05:00Z",
-      "category": "Agriculture",
+      "language": "English",
       "format": "XLSX"
     },
     {
@@ -78,7 +78,7 @@
       "source": "Sustainable Farming Institute",
       "questionsReferred": 18,
       "uploadedDate": "2025-03-29T08:45:00Z",
-      "category": "Agriculture",
+      "language": "Hindi",
       "format": "PDF"
     },
     {
@@ -87,7 +87,7 @@
       "source": "Agricultural Labs Association",
       "questionsReferred": 16,
       "uploadedDate": "2025-04-01T15:30:00Z",
-      "category": "Agriculture",
+      "language": "Marathi",
       "format": "PDF"
     },
     {
@@ -96,7 +96,7 @@
       "source": "Climate Change Council",
       "questionsReferred": 14,
       "uploadedDate": "2025-04-03T12:10:00Z",
-      "category": "Agriculture",
+      "language": "English",
       "format": "PDF"
     },
     {
@@ -105,7 +105,7 @@
       "source": "Water Technology Institute",
       "questionsReferred": 12,
       "uploadedDate": "2025-04-05T09:25:00Z",
-      "category": "Water Management",
+      "language": "Hindi",
       "format": "PDF"
     }
   ],
@@ -116,7 +116,7 @@
       "source": "Modern Farming Solutions",
       "questionsReferred": 0,
       "uploadedDate": "2025-04-28T11:20:00Z",
-      "category": "Agriculture",
+      "language": "English",
       "format": "PDF"
     },
     {
@@ -125,7 +125,7 @@
       "source": "Protected Cultivation Institute",
       "questionsReferred": 0,
       "uploadedDate": "2025-04-28T14:45:00Z",
-      "category": "Agriculture",
+      "language": "Marathi",
       "format": "PDF"
     },
     {
@@ -134,7 +134,7 @@
       "source": "Seed Technology Center",
       "questionsReferred": 1,
       "uploadedDate": "2025-04-27T10:30:00Z",
-      "category": "Agriculture",
+      "language": "Hindi",
       "format": "DOC"
     },
     {
@@ -143,7 +143,7 @@
       "source": "Food Processing Board",
       "questionsReferred": 1,
       "uploadedDate": "2025-04-26T16:15:00Z",
-      "category": "Agriculture",
+      "language": "English",
       "format": "PDF"
     },
     {
@@ -152,7 +152,7 @@
       "source": "Agricultural Engineering Institute",
       "questionsReferred": 2,
       "uploadedDate": "2025-04-20T15:30:00Z",
-      "category": "Machinery",
+      "language": "Hindi",
       "format": "PDF"
     },
     {
@@ -161,7 +161,7 @@
       "source": "Animal Husbandry Department",
       "questionsReferred": 2,
       "uploadedDate": "2025-04-21T10:20:00Z",
-      "category": "Animal Husbandry",
+      "language": "Marathi",
       "format": "PDF"
     }
   ],
