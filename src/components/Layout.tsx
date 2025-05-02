@@ -1,4 +1,3 @@
-
 import React, { useState } from "react";
 import { Link, useLocation } from "react-router-dom";
 import { useTheme } from "@/contexts/ThemeContext";
@@ -14,6 +13,7 @@ import {
   LogOut,
   UserRound,
   FileText,
+  Activity,
 } from "lucide-react";
 import {
   DropdownMenu,
@@ -71,6 +71,11 @@ const Layout: React.FC<LayoutProps> = ({ children }) => {
       name: "Feedback",
       path: "/feedback",
       icon: <MessageSquare size={20} />,
+    },
+    {
+      name: "Service Status",
+      path: "/service-status",
+      icon: <Activity size={20} />,
     },
   ];
 

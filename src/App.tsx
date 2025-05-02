@@ -16,6 +16,7 @@ import SessionDetails from "./pages/SessionDetails";
 import Feedback from "./pages/Feedback";
 import FeedbackDetails from "./pages/FeedbackDetails";
 import Content from "./pages/Content";
+import ServiceStatus from "./pages/ServiceStatus";
 
 const queryClient = new QueryClient({
   defaultOptions: {
@@ -77,6 +78,11 @@ const App = () => (
             <Route path="/content" element={
               <Layout>
                 <Content />
+              </Layout>
+            } />
+            <Route path="/service-status" element={
+              <Layout>
+                <ServiceStatus />
               </Layout>
             } />
             <Route path="*" element={<NotFound />} />
