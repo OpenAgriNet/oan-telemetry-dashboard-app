@@ -1,4 +1,3 @@
-
 {
   "metrics": {
     "totalContentsIngested": 16,
@@ -20,211 +19,171 @@
   "topUsedContents": [
     {
       "id": "content001",
-      "name": "Soil Health Enhancement Guide",
-      "source": "Agricultural Research Institute",
+      "name": "MPKV Krishi Darshani",
+      "source": "Maharashtra Agricultural University",
       "questionsReferred": 42,
-      "uploadedDate": "2025-03-15T09:30:00Z",
+      "uploadedDate": "2025-04-06T09:30:00Z",
       "language": "English",
       "format": "PDF"
     },
     {
       "id": "content002",
-      "name": "Sustainable Farming Techniques",
-      "source": "Ministry of Agriculture",
+      "name": "Krushi VNMAU",
+      "source": "VNMU",
       "questionsReferred": 38,
-      "uploadedDate": "2025-03-18T14:45:00Z",
-      "language": "Hindi",
-      "format": "DOC"
+      "uploadedDate": "2025-04-06T14:45:00Z",
+      "language": "English",
+      "format": "PDF"
     },
     {
       "id": "content003",
-      "name": "Crop Rotation Best Practices",
-      "source": "National Farming Association",
+      "name": "Dr. Panjabrao Deshmukh Krishi Vidyapeeth",
+      "source": "Dr. Panjabrao Deshmukh Krishi Vidyapeeth, Akola",
       "questionsReferred": 31,
-      "uploadedDate": "2025-03-20T11:15:00Z",
+      "uploadedDate": "2025-04-06T11:15:00Z",
       "language": "English",
       "format": "PDF"
     },
     {
       "id": "content004",
-      "name": "Pest Management Without Chemicals",
-      "source": "Organic Farming Institute",
+      "name": "MPKV Research Recommendation 2022 Rahuri",
+      "source": "MPKV",
       "questionsReferred": 27,
-      "uploadedDate": "2025-03-22T10:00:00Z",
-      "language": "Marathi",
+      "uploadedDate": "2025-04-17T10:00:00Z",
+      "language": "English",
       "format": "PDF"
     },
     {
       "id": "content005",
-      "name": "Water Conservation Techniques for Farmers",
-      "source": "Water Resources Board",
+      "name": "MPKV Research Recommendation 2023 Rahuri",
+      "source": "MPKV",
       "questionsReferred": 25,
-      "uploadedDate": "2025-03-25T13:20:00Z",
-      "language": "Hindi",
+      "uploadedDate": "2025-04-17T13:20:00Z",
+      "language": "English",
       "format": "PDF"
     },
     {
       "id": "content006",
-      "name": "Seasonal Crop Calendar",
-      "source": "Agricultural Planning Department",
+      "name": "MPKV Research Recommendation 2024 Rahuri",
+      "source": "MPKV",
       "questionsReferred": 22,
-      "uploadedDate": "2025-03-27T16:05:00Z",
+      "uploadedDate": "2025-04-17T16:05:00Z",
       "language": "English",
-      "format": "XLSX"
+      "format": "PDF"
     },
     {
       "id": "content007",
-      "name": "Organic Fertilizer Production Guide",
-      "source": "Sustainable Farming Institute",
+      "name": "Chickpea MPKV Rahuri",
+      "source": "MPKV",
       "questionsReferred": 18,
-      "uploadedDate": "2025-03-29T08:45:00Z",
-      "language": "Hindi",
+      "uploadedDate": "2025-04-21T08:45:00Z",
+      "language": "English",
       "format": "PDF"
     },
     {
       "id": "content008",
-      "name": "Soil Testing Manual",
-      "source": "Agricultural Labs Association",
+      "name": "Cotton MPKV Rahuri",
+      "source": "MPKV",
       "questionsReferred": 16,
-      "uploadedDate": "2025-04-01T15:30:00Z",
-      "language": "Marathi",
+      "uploadedDate": "2025-04-21T15:30:00Z",
+      "language": "English",
       "format": "PDF"
     },
     {
       "id": "content009",
-      "name": "Climate-Smart Agriculture Handbook",
-      "source": "Climate Change Council",
+      "name": "Fruit crops MPKV Rahuri",
+      "source": "MPKV",
       "questionsReferred": 14,
-      "uploadedDate": "2025-04-03T12:10:00Z",
+      "uploadedDate": "2025-04-21T12:10:00Z",
       "language": "English",
       "format": "PDF"
     },
     {
       "id": "content010",
-      "name": "Irrigation Systems Comparison",
-      "source": "Water Technology Institute",
+      "name": "Maize MPKV Rahuri",
+      "source": "MPKV",
       "questionsReferred": 12,
-      "uploadedDate": "2025-04-05T09:25:00Z",
-      "language": "Hindi",
+      "uploadedDate": "2025-04-22T09:25:00Z",
+      "language": "English",
       "format": "PDF"
     }
   ],
   "leastUsedContents": [
     {
-      "id": "content015",
-      "name": "Advanced Hydroponics Systems",
-      "source": "Modern Farming Solutions",
+      "id": "content011",
+      "name": "Pearlmillet MPKV Rahuri",
+      "source": "MPKV",
       "questionsReferred": 0,
-      "uploadedDate": "2025-04-28T11:20:00Z",
-      "language": "English",
-      "format": "PDF"
-    },
-    {
-      "id": "content016",
-      "name": "Greenhouse Management Protocol",
-      "source": "Protected Cultivation Institute",
-      "questionsReferred": 0,
-      "uploadedDate": "2025-04-28T14:45:00Z",
-      "language": "Marathi",
-      "format": "PDF"
-    },
-    {
-      "id": "content014",
-      "name": "Seed Treatment Techniques",
-      "source": "Seed Technology Center",
-      "questionsReferred": 1,
-      "uploadedDate": "2025-04-27T10:30:00Z",
-      "language": "Hindi",
-      "format": "DOC"
-    },
-    {
-      "id": "content013",
-      "name": "Post-Harvest Processing Guidelines",
-      "source": "Food Processing Board",
-      "questionsReferred": 1,
-      "uploadedDate": "2025-04-26T16:15:00Z",
+      "uploadedDate": "2025-04-22T11:20:00Z",
       "language": "English",
       "format": "PDF"
     },
     {
       "id": "content012",
-      "name": "Farm Equipment Maintenance Manual",
-      "source": "Agricultural Engineering Institute",
-      "questionsReferred": 2,
-      "uploadedDate": "2025-04-20T15:30:00Z",
-      "language": "Hindi",
+      "name": "Rice MPKV Rahuri",
+      "source": "MPKV",
+      "questionsReferred": 0,
+      "uploadedDate": "2025-04-22T14:45:00Z",
+      "language": "English",
       "format": "PDF"
     },
     {
-      "id": "content011",
-      "name": "Dairy Farm Management",
-      "source": "Animal Husbandry Department",
+      "id": "content013",
+      "name": "Sorghum MPKV Rahuri",
+      "source": "MPKV",
+      "questionsReferred": 1,
+      "uploadedDate": "2025-04-23T10:30:00Z",
+      "language": "English",
+      "format": "PDF"
+    },
+    {
+      "id": "content014",
+      "name": "Sugarcane MPKV Rahuri",
+      "source": "MPKV",
+      "questionsReferred": 1,
+      "uploadedDate": "2025-04-23T16:15:00Z",
+      "language": "English",
+      "format": "PDF"
+    },
+    {
+      "id": "content015",
+      "name": "Vegetable MPKV Rahuri",
+      "source": "MPKV",
       "questionsReferred": 2,
-      "uploadedDate": "2025-04-21T10:20:00Z",
-      "language": "Marathi",
+      "uploadedDate": "2025-04-23T15:30:00Z",
+      "language": "English",
+      "format": "PDF"
+    },
+    {
+      "id": "content016",
+      "name": "Wheat MPKV Rahuri",
+      "source": "MPKV",
+      "questionsReferred": 2,
+      "uploadedDate": "2025-04-23T10:20:00Z",
+      "language": "English",
       "format": "PDF"
     }
   ],
   "sourceUtilization": [
     {
-      "source": "Agricultural Research Institute",
-      "documentsCount": 3,
-      "questionsReferred": 61
-    },
-    {
-      "source": "Ministry of Agriculture",
-      "documentsCount": 2,
-      "questionsReferred": 49
-    },
-    {
-      "source": "National Farming Association",
-      "documentsCount": 2,
+      "source": "Maharashtra Agricultural University",
+      "documentsCount": 1,
       "questionsReferred": 42
     },
     {
-      "source": "Organic Farming Institute",
+      "source": "VNMU",
       "documentsCount": 1,
-      "questionsReferred": 27
+      "questionsReferred": 38
     },
     {
-      "source": "Water Resources Board",
+      "source": "Dr. Panjabrao Deshmukh Krishi Vidyapeeth, Akola",
       "documentsCount": 1,
-      "questionsReferred": 25
+      "questionsReferred": 31
     },
     {
-      "source": "Agricultural Planning Department",
-      "documentsCount": 1,
-      "questionsReferred": 22
-    },
-    {
-      "source": "Sustainable Farming Institute",
-      "documentsCount": 1,
-      "questionsReferred": 18
-    },
-    {
-      "source": "Agricultural Labs Association",
-      "documentsCount": 1,
-      "questionsReferred": 16
-    },
-    {
-      "source": "Climate Change Council",
-      "documentsCount": 1,
-      "questionsReferred": 14
-    },
-    {
-      "source": "Water Technology Institute",
-      "documentsCount": 1,
-      "questionsReferred": 12
-    },
-    {
-      "source": "Protected Cultivation Institute",
-      "documentsCount": 1,
-      "questionsReferred": 0
-    },
-    {
-      "source": "Modern Farming Solutions",
-      "documentsCount": 1,
-      "questionsReferred": 0
+      "source": "MPKV",
+      "documentsCount": 13,
+      "questionsReferred": 135
     }
   ]
 }
