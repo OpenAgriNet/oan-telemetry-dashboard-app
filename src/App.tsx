@@ -1,3 +1,4 @@
+
 import { Toaster } from "@/components/ui/toaster";
 import { Toaster as Sonner } from "@/components/ui/sonner";
 import { TooltipProvider } from "@/components/ui/tooltip";
@@ -14,6 +15,7 @@ import NotFound from "./pages/NotFound";
 import SessionDetails from "./pages/SessionDetails";
 import Feedback from "./pages/Feedback";
 import FeedbackDetails from "./pages/FeedbackDetails";
+import Content from "./pages/Content";
 
 const queryClient = new QueryClient({
   defaultOptions: {
@@ -70,6 +72,11 @@ const App = () => (
             <Route path="/feedback/:feedbackId" element={
               <Layout>
                 <FeedbackDetails />
+              </Layout>
+            } />
+            <Route path="/content" element={
+              <Layout>
+                <Content />
               </Layout>
             } />
             <Route path="*" element={<NotFound />} />

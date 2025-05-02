@@ -1,3 +1,4 @@
+
 import React, { useState } from "react";
 import { Link, useLocation } from "react-router-dom";
 import { useTheme } from "@/contexts/ThemeContext";
@@ -12,6 +13,7 @@ import {
   LayoutDashboard,
   LogOut,
   UserRound,
+  FileText,
 } from "lucide-react";
 import {
   DropdownMenu,
@@ -56,6 +58,11 @@ const Layout: React.FC<LayoutProps> = ({ children }) => {
       icon: <MessageSquare size={20} />,
     },
     {
+      name: "Content",
+      path: "/content",
+      icon: <FileText size={20} />,
+    },
+    {
       name: "Analytics",
       path: "/analytics",
       icon: <BarChart3 size={20} />,
@@ -78,7 +85,7 @@ const Layout: React.FC<LayoutProps> = ({ children }) => {
         <div className="flex flex-col h-full">
           <div className="p-4 border-b border-sidebar-border flex justify-between items-center">
             {!collapsed && (
-              <h2 className="text-lg font-semibold">Chatbot Insights</h2>
+              <h2 className="text-lg font-semibold">MAHA Vistaar Insights</h2>
             )}
             <Button
               variant="ghost"

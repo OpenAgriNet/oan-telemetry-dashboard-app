@@ -1,0 +1,204 @@
+
+{
+  "metrics": {
+    "totalContentsIngested": 243,
+    "totalQuestionsAnswered": 1867,
+    "totalContentsUsed": 198,
+    "unusedContents": 45,
+    "averageQuestionsPerContent": 9.4,
+    "byPeriod": [
+      { "date": "2025-04-25", "contentsIngested": 3, "questionsAnswered": 47 },
+      { "date": "2025-04-26", "contentsIngested": 5, "questionsAnswered": 52 },
+      { "date": "2025-04-27", "contentsIngested": 0, "questionsAnswered": 61 },
+      { "date": "2025-04-28", "contentsIngested": 7, "questionsAnswered": 72 },
+      { "date": "2025-04-29", "contentsIngested": 2, "questionsAnswered": 64 },
+      { "date": "2025-04-30", "contentsIngested": 4, "questionsAnswered": 58 },
+      { "date": "2025-05-01", "contentsIngested": 6, "questionsAnswered": 69 },
+      { "date": "2025-05-02", "contentsIngested": 3, "questionsAnswered": 54 }
+    ]
+  },
+  "topUsedContents": [
+    {
+      "id": "content001",
+      "name": "Soil Health Enhancement Guide",
+      "source": "Agricultural Research Institute",
+      "questionsReferred": 127,
+      "uploadedDate": "2025-03-15T09:30:00Z",
+      "category": "Agriculture",
+      "format": "PDF"
+    },
+    {
+      "id": "content002",
+      "name": "Sustainable Farming Techniques",
+      "source": "Ministry of Agriculture",
+      "questionsReferred": 113,
+      "uploadedDate": "2025-03-18T14:45:00Z",
+      "category": "Agriculture",
+      "format": "DOC"
+    },
+    {
+      "id": "content003",
+      "name": "Crop Rotation Best Practices",
+      "source": "National Farming Association",
+      "questionsReferred": 98,
+      "uploadedDate": "2025-03-20T11:15:00Z",
+      "category": "Agriculture",
+      "format": "PDF"
+    },
+    {
+      "id": "content004",
+      "name": "Pest Management Without Chemicals",
+      "source": "Organic Farming Institute",
+      "questionsReferred": 92,
+      "uploadedDate": "2025-03-22T10:00:00Z",
+      "category": "Agriculture",
+      "format": "PDF"
+    },
+    {
+      "id": "content005",
+      "name": "Water Conservation Techniques for Farmers",
+      "source": "Water Resources Board",
+      "questionsReferred": 87,
+      "uploadedDate": "2025-03-25T13:20:00Z",
+      "category": "Water Management",
+      "format": "PDF"
+    },
+    {
+      "id": "content006",
+      "name": "Seasonal Crop Calendar",
+      "source": "Agricultural Planning Department",
+      "questionsReferred": 81,
+      "uploadedDate": "2025-03-27T16:05:00Z",
+      "category": "Agriculture",
+      "format": "XLSX"
+    },
+    {
+      "id": "content007",
+      "name": "Organic Fertilizer Production Guide",
+      "source": "Sustainable Farming Network",
+      "questionsReferred": 76,
+      "uploadedDate": "2025-03-29T08:45:00Z",
+      "category": "Agriculture",
+      "format": "PDF"
+    },
+    {
+      "id": "content008",
+      "name": "Soil Testing Manual",
+      "source": "Agricultural Labs Association",
+      "questionsReferred": 72,
+      "uploadedDate": "2025-04-01T15:30:00Z",
+      "category": "Agriculture",
+      "format": "PDF"
+    },
+    {
+      "id": "content009",
+      "name": "Climate-Smart Agriculture Handbook",
+      "source": "Climate Change Council",
+      "questionsReferred": 68,
+      "uploadedDate": "2025-04-03T12:10:00Z",
+      "category": "Agriculture",
+      "format": "PDF"
+    },
+    {
+      "id": "content010",
+      "name": "Irrigation Systems Comparison",
+      "source": "Water Technology Institute",
+      "questionsReferred": 63,
+      "uploadedDate": "2025-04-05T09:25:00Z",
+      "category": "Water Management",
+      "format": "PDF"
+    }
+  ],
+  "leastUsedContents": [
+    {
+      "id": "content234",
+      "name": "Advanced Hydroponics Systems",
+      "source": "Modern Farming Solutions",
+      "questionsReferred": 0,
+      "uploadedDate": "2025-04-28T11:20:00Z",
+      "category": "Agriculture",
+      "format": "PDF"
+    },
+    {
+      "id": "content235",
+      "name": "Greenhouse Management Protocol",
+      "source": "Protected Cultivation Institute",
+      "questionsReferred": 0,
+      "uploadedDate": "2025-04-28T14:45:00Z",
+      "category": "Agriculture",
+      "format": "PDF"
+    },
+    {
+      "id": "content236",
+      "name": "Seed Treatment Techniques",
+      "source": "Seed Technology Center",
+      "questionsReferred": 1,
+      "uploadedDate": "2025-04-27T10:30:00Z",
+      "category": "Agriculture",
+      "format": "DOC"
+    },
+    {
+      "id": "content237",
+      "name": "Post-Harvest Processing Guidelines",
+      "source": "Food Processing Board",
+      "questionsReferred": 1,
+      "uploadedDate": "2025-04-26T16:15:00Z",
+      "category": "Agriculture",
+      "format": "PDF"
+    },
+    {
+      "id": "content238",
+      "name": "Subsidy Programs for Small Farmers",
+      "source": "Agricultural Finance Department",
+      "questionsReferred": 2,
+      "uploadedDate": "2025-04-25T09:10:00Z",
+      "category": "Finance",
+      "format": "PDF"
+    },
+    {
+      "id": "content239",
+      "name": "Export Standards for Agricultural Products",
+      "source": "Export Promotion Council",
+      "questionsReferred": 2,
+      "uploadedDate": "2025-04-24T14:50:00Z",
+      "category": "Commerce",
+      "format": "PDF"
+    },
+    {
+      "id": "content240",
+      "name": "Vertical Farming Technology Guide",
+      "source": "Agricultural Innovation Center",
+      "questionsReferred": 3,
+      "uploadedDate": "2025-04-23T11:05:00Z",
+      "category": "Agriculture",
+      "format": "PDF"
+    },
+    {
+      "id": "content241",
+      "name": "Apiculture Best Practices",
+      "source": "Beekeeping Association",
+      "questionsReferred": 3,
+      "uploadedDate": "2025-04-22T13:40:00Z",
+      "category": "Animal Husbandry",
+      "format": "PDF"
+    },
+    {
+      "id": "content242",
+      "name": "Dairy Farm Management",
+      "source": "Animal Husbandry Department",
+      "questionsReferred": 4,
+      "uploadedDate": "2025-04-21T10:20:00Z",
+      "category": "Animal Husbandry",
+      "format": "PDF"
+    },
+    {
+      "id": "content243",
+      "name": "Farm Equipment Maintenance Manual",
+      "source": "Agricultural Engineering Institute",
+      "questionsReferred": 4,
+      "uploadedDate": "2025-04-20T15:30:00Z",
+      "category": "Machinery",
+      "format": "PDF"
+    }
+  ]
+}
