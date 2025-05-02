@@ -1,20 +1,20 @@
 
 {
   "metrics": {
-    "totalContentsIngested": 243,
-    "totalQuestionsAnswered": 1867,
-    "totalContentsUsed": 198,
-    "unusedContents": 45,
-    "averageQuestionsPerContent": 9.4,
+    "totalContentsIngested": 16,
+    "totalQuestionsAnswered": 246,
+    "totalContentsUsed": 14,
+    "unusedContents": 2,
+    "averageQuestionsPerContent": 15.4,
     "byPeriod": [
-      { "date": "2025-04-25", "contentsIngested": 3, "questionsAnswered": 47 },
-      { "date": "2025-04-26", "contentsIngested": 5, "questionsAnswered": 52 },
-      { "date": "2025-04-27", "contentsIngested": 0, "questionsAnswered": 61 },
-      { "date": "2025-04-28", "contentsIngested": 7, "questionsAnswered": 72 },
-      { "date": "2025-04-29", "contentsIngested": 2, "questionsAnswered": 64 },
-      { "date": "2025-04-30", "contentsIngested": 4, "questionsAnswered": 58 },
-      { "date": "2025-05-01", "contentsIngested": 6, "questionsAnswered": 69 },
-      { "date": "2025-05-02", "contentsIngested": 3, "questionsAnswered": 54 }
+      { "date": "2025-04-25", "contentsIngested": 1, "questionsAnswered": 21 },
+      { "date": "2025-04-26", "contentsIngested": 2, "questionsAnswered": 28 },
+      { "date": "2025-04-27", "contentsIngested": 0, "questionsAnswered": 32 },
+      { "date": "2025-04-28", "contentsIngested": 3, "questionsAnswered": 41 },
+      { "date": "2025-04-29", "contentsIngested": 1, "questionsAnswered": 35 },
+      { "date": "2025-04-30", "contentsIngested": 2, "questionsAnswered": 29 },
+      { "date": "2025-05-01", "contentsIngested": 4, "questionsAnswered": 34 },
+      { "date": "2025-05-02", "contentsIngested": 3, "questionsAnswered": 26 }
     ]
   },
   "topUsedContents": [
@@ -22,7 +22,7 @@
       "id": "content001",
       "name": "Soil Health Enhancement Guide",
       "source": "Agricultural Research Institute",
-      "questionsReferred": 127,
+      "questionsReferred": 42,
       "uploadedDate": "2025-03-15T09:30:00Z",
       "category": "Agriculture",
       "format": "PDF"
@@ -31,7 +31,7 @@
       "id": "content002",
       "name": "Sustainable Farming Techniques",
       "source": "Ministry of Agriculture",
-      "questionsReferred": 113,
+      "questionsReferred": 38,
       "uploadedDate": "2025-03-18T14:45:00Z",
       "category": "Agriculture",
       "format": "DOC"
@@ -40,7 +40,7 @@
       "id": "content003",
       "name": "Crop Rotation Best Practices",
       "source": "National Farming Association",
-      "questionsReferred": 98,
+      "questionsReferred": 31,
       "uploadedDate": "2025-03-20T11:15:00Z",
       "category": "Agriculture",
       "format": "PDF"
@@ -49,7 +49,7 @@
       "id": "content004",
       "name": "Pest Management Without Chemicals",
       "source": "Organic Farming Institute",
-      "questionsReferred": 92,
+      "questionsReferred": 27,
       "uploadedDate": "2025-03-22T10:00:00Z",
       "category": "Agriculture",
       "format": "PDF"
@@ -58,7 +58,7 @@
       "id": "content005",
       "name": "Water Conservation Techniques for Farmers",
       "source": "Water Resources Board",
-      "questionsReferred": 87,
+      "questionsReferred": 25,
       "uploadedDate": "2025-03-25T13:20:00Z",
       "category": "Water Management",
       "format": "PDF"
@@ -67,7 +67,7 @@
       "id": "content006",
       "name": "Seasonal Crop Calendar",
       "source": "Agricultural Planning Department",
-      "questionsReferred": 81,
+      "questionsReferred": 22,
       "uploadedDate": "2025-03-27T16:05:00Z",
       "category": "Agriculture",
       "format": "XLSX"
@@ -75,8 +75,8 @@
     {
       "id": "content007",
       "name": "Organic Fertilizer Production Guide",
-      "source": "Sustainable Farming Network",
-      "questionsReferred": 76,
+      "source": "Sustainable Farming Institute",
+      "questionsReferred": 18,
       "uploadedDate": "2025-03-29T08:45:00Z",
       "category": "Agriculture",
       "format": "PDF"
@@ -85,7 +85,7 @@
       "id": "content008",
       "name": "Soil Testing Manual",
       "source": "Agricultural Labs Association",
-      "questionsReferred": 72,
+      "questionsReferred": 16,
       "uploadedDate": "2025-04-01T15:30:00Z",
       "category": "Agriculture",
       "format": "PDF"
@@ -94,7 +94,7 @@
       "id": "content009",
       "name": "Climate-Smart Agriculture Handbook",
       "source": "Climate Change Council",
-      "questionsReferred": 68,
+      "questionsReferred": 14,
       "uploadedDate": "2025-04-03T12:10:00Z",
       "category": "Agriculture",
       "format": "PDF"
@@ -103,7 +103,7 @@
       "id": "content010",
       "name": "Irrigation Systems Comparison",
       "source": "Water Technology Institute",
-      "questionsReferred": 63,
+      "questionsReferred": 12,
       "uploadedDate": "2025-04-05T09:25:00Z",
       "category": "Water Management",
       "format": "PDF"
@@ -111,7 +111,7 @@
   ],
   "leastUsedContents": [
     {
-      "id": "content234",
+      "id": "content015",
       "name": "Advanced Hydroponics Systems",
       "source": "Modern Farming Solutions",
       "questionsReferred": 0,
@@ -120,7 +120,7 @@
       "format": "PDF"
     },
     {
-      "id": "content235",
+      "id": "content016",
       "name": "Greenhouse Management Protocol",
       "source": "Protected Cultivation Institute",
       "questionsReferred": 0,
@@ -129,7 +129,7 @@
       "format": "PDF"
     },
     {
-      "id": "content236",
+      "id": "content014",
       "name": "Seed Treatment Techniques",
       "source": "Seed Technology Center",
       "questionsReferred": 1,
@@ -138,7 +138,7 @@
       "format": "DOC"
     },
     {
-      "id": "content237",
+      "id": "content013",
       "name": "Post-Harvest Processing Guidelines",
       "source": "Food Processing Board",
       "questionsReferred": 1,
@@ -147,58 +147,84 @@
       "format": "PDF"
     },
     {
-      "id": "content238",
-      "name": "Subsidy Programs for Small Farmers",
-      "source": "Agricultural Finance Department",
-      "questionsReferred": 2,
-      "uploadedDate": "2025-04-25T09:10:00Z",
-      "category": "Finance",
-      "format": "PDF"
-    },
-    {
-      "id": "content239",
-      "name": "Export Standards for Agricultural Products",
-      "source": "Export Promotion Council",
-      "questionsReferred": 2,
-      "uploadedDate": "2025-04-24T14:50:00Z",
-      "category": "Commerce",
-      "format": "PDF"
-    },
-    {
-      "id": "content240",
-      "name": "Vertical Farming Technology Guide",
-      "source": "Agricultural Innovation Center",
-      "questionsReferred": 3,
-      "uploadedDate": "2025-04-23T11:05:00Z",
-      "category": "Agriculture",
-      "format": "PDF"
-    },
-    {
-      "id": "content241",
-      "name": "Apiculture Best Practices",
-      "source": "Beekeeping Association",
-      "questionsReferred": 3,
-      "uploadedDate": "2025-04-22T13:40:00Z",
-      "category": "Animal Husbandry",
-      "format": "PDF"
-    },
-    {
-      "id": "content242",
-      "name": "Dairy Farm Management",
-      "source": "Animal Husbandry Department",
-      "questionsReferred": 4,
-      "uploadedDate": "2025-04-21T10:20:00Z",
-      "category": "Animal Husbandry",
-      "format": "PDF"
-    },
-    {
-      "id": "content243",
+      "id": "content012",
       "name": "Farm Equipment Maintenance Manual",
       "source": "Agricultural Engineering Institute",
-      "questionsReferred": 4,
+      "questionsReferred": 2,
       "uploadedDate": "2025-04-20T15:30:00Z",
       "category": "Machinery",
       "format": "PDF"
+    },
+    {
+      "id": "content011",
+      "name": "Dairy Farm Management",
+      "source": "Animal Husbandry Department",
+      "questionsReferred": 2,
+      "uploadedDate": "2025-04-21T10:20:00Z",
+      "category": "Animal Husbandry",
+      "format": "PDF"
+    }
+  ],
+  "sourceUtilization": [
+    {
+      "source": "Agricultural Research Institute",
+      "documentsCount": 3,
+      "questionsReferred": 61
+    },
+    {
+      "source": "Ministry of Agriculture",
+      "documentsCount": 2,
+      "questionsReferred": 49
+    },
+    {
+      "source": "National Farming Association",
+      "documentsCount": 2,
+      "questionsReferred": 42
+    },
+    {
+      "source": "Organic Farming Institute",
+      "documentsCount": 1,
+      "questionsReferred": 27
+    },
+    {
+      "source": "Water Resources Board",
+      "documentsCount": 1,
+      "questionsReferred": 25
+    },
+    {
+      "source": "Agricultural Planning Department",
+      "documentsCount": 1,
+      "questionsReferred": 22
+    },
+    {
+      "source": "Sustainable Farming Institute",
+      "documentsCount": 1,
+      "questionsReferred": 18
+    },
+    {
+      "source": "Agricultural Labs Association",
+      "documentsCount": 1,
+      "questionsReferred": 16
+    },
+    {
+      "source": "Climate Change Council",
+      "documentsCount": 1,
+      "questionsReferred": 14
+    },
+    {
+      "source": "Water Technology Institute",
+      "documentsCount": 1,
+      "questionsReferred": 12
+    },
+    {
+      "source": "Protected Cultivation Institute",
+      "documentsCount": 1,
+      "questionsReferred": 0
+    },
+    {
+      "source": "Modern Farming Solutions",
+      "documentsCount": 1,
+      "questionsReferred": 0
     }
   ]
 }
