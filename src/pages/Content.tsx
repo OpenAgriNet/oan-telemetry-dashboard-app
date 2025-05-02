@@ -1,13 +1,14 @@
-
 import React, { useState } from "react";
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/components/ui/card";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
-import { FileText, BookOpen, Book, Search, FileSearch, ArrowUp } from "lucide-react";
+import { FileText, BookOpen, Book, Search, FileSearch, ArrowUp, Language, Info } from "lucide-react";
 import DateRangePicker from "@/components/dashboard/DateRangePicker";
 import contentData from "../data/contentData.json";
 import { format } from "date-fns";
 import MetricCard from "@/components/dashboard/MetricCard";
+import ContentInsights from "@/components/dashboard/ContentInsights";
+import { Button } from "@/components/ui/button";
 
 const Content: React.FC = () => {
   const [dateRange, setDateRange] = useState<{ from: Date | undefined; to: Date | undefined }>({
@@ -15,6 +16,7 @@ const Content: React.FC = () => {
     to: undefined
   });
   const [activeTab, setActiveTab] = useState<string>("7days");
+  const [showInsights, setShowInsights] = useState<boolean>(false);
 
   // Format date for display
   const formatDate = (dateString: string) => {
@@ -74,6 +76,14 @@ const Content: React.FC = () => {
           <BookOpen className="text-primary" size={32} /> Content Dashboard
         </h1>
         <div className="flex items-center space-x-2">
+          <Button 
+            variant="outline" 
+            size="sm"
+            className="mr-2 gap-1"
+            onClick={() => setShowInsights(!showInsights)}
+          >
+            <Info size={16} /> {showInsights ? "Hide Insights" : "Show PPT Insights"}
+          </Button>
           <Tabs defaultValue="7days" value={activeTab} onValueChange={setActiveTab} className="mr-4">
             <TabsList>
               <TabsTrigger value="7days">Last 7 Days</TabsTrigger>
@@ -87,7 +97,11 @@ const Content: React.FC = () => {
         </div>
       </div>
 
-      {/* Metrics Cards - With updated format */}
+      {showInsights && (
+        <ContentInsights period={periodText} />
+      )}
+
+      {/* Metrics Cards */}
       <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-4">
         <MetricCard 
           title={contentData.metrics.totalContentsIngested.toString()}
@@ -111,7 +125,7 @@ const Content: React.FC = () => {
         />
       </div>
 
-      {/* Source Utilization Section - Improved with icon */}
+      {/* Source Utilization Section */}
       <Card>
         <CardHeader className="flex flex-row items-start justify-between">
           <div>
@@ -153,7 +167,7 @@ const Content: React.FC = () => {
         </CardContent>
       </Card>
       
-      {/* Content Tables - With icons */}
+      {/* Content Tables */}
       <Card>
         <CardHeader className="flex flex-row items-start justify-between">
           <div>
@@ -170,7 +184,11 @@ const Content: React.FC = () => {
                 <TableRow>
                   <TableHead>Name</TableHead>
                   <TableHead>Source</TableHead>
-                  <TableHead>Language</TableHead>
+                  <TableHead>
+                    <div className="flex items-center gap-1">
+                      <Language size={14} /> Language
+                    </div>
+                  </TableHead>
                   <TableHead>Format</TableHead>
                   <TableHead className="text-right">Questions</TableHead>
                   <TableHead className="text-right">Uploaded</TableHead>
@@ -211,7 +229,11 @@ const Content: React.FC = () => {
                 <TableRow>
                   <TableHead>Name</TableHead>
                   <TableHead>Source</TableHead>
-                  <TableHead>Language</TableHead>
+                  <TableHead>
+                    <div className="flex items-center gap-1">
+                      <Language size={14} /> Language
+                    </div>
+                  </TableHead>
                   <TableHead>Format</TableHead>
                   <TableHead className="text-right">Questions</TableHead>
                   <TableHead className="text-right">Uploaded</TableHead>
