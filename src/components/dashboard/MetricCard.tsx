@@ -40,22 +40,22 @@ const MetricCard: React.FC<MetricCardProps> = ({
   return (
     <Card className="card-gradient overflow-hidden">
       <CardHeader className="flex flex-row items-center justify-between pb-2 space-y-0">
-        <CardTitle className="text-sm font-medium">{title}</CardTitle>
         <div className="h-8 w-8 rounded-md bg-primary/20 flex items-center justify-center text-primary">
           {icon}
         </div>
       </CardHeader>
       <CardContent>
-        <div className="text-2xl font-bold">{value}</div>
-        {(description || trend) && (
-          <p className="mt-1 text-xs text-muted-foreground flex items-center">
-            {trend && (
-              <span className={`mr-1 ${getTrendColor()}`}>
-                {getTrendArrow()} {Math.abs(trend)}%
-              </span>
-            )}
-            {description}
-          </p>
+        <div className="text-2xl font-bold">{title}</div>
+        <p className="mt-1 text-sm text-muted-foreground">
+          {value}
+          {trend && (
+            <span className={`ml-2 ${getTrendColor()}`}>
+              {getTrendArrow()} {Math.abs(trend)}%
+            </span>
+          )}
+        </p>
+        {description && (
+          <p className="mt-1 text-xs text-muted-foreground">{description}</p>
         )}
       </CardContent>
     </Card>
