@@ -118,7 +118,7 @@ const QuestionsReport = () => {
               <SelectItem value="all">All Users</SelectItem>
               {users.map((user) => (
                 <SelectItem key={user.id} value={user.id}>
-                  {user.name}
+                  {user.id}
                 </SelectItem>
               ))}
             </SelectContent>

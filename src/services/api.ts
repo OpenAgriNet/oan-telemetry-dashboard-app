@@ -102,19 +102,33 @@ const DEFAULT_PAGE_SIZE = 10;
 const delay = (ms: number) => new Promise(resolve => setTimeout(resolve, ms));
 
 export const fetchUsers = async (pagination?: PaginationParams): Promise<PaginatedResponse<User>> => {
-  await delay(300);
-  const { page = DEFAULT_PAGE, pageSize = DEFAULT_PAGE_SIZE } = pagination || {};
-  const start = (page - 1) * pageSize;
-  const end = start + pageSize;
-  const data = users.slice(start, end);
-  
-  return {
-    data,
-    total: users.length,
-    page,
-    pageSize,
-    totalPages: Math.ceil(users.length / pageSize)
-  };
+  try {
+    // First fetch all questions to get unique user IDs
+    const questionsResponse = await fetch('http://localhost:3001/api/v1/questions');
+    const questionsResult = await questionsResponse.json();
+    
+    if (!questionsResult.success) {
+      throw new Error('Failed to fetch questions');
+    }
+
+    // Get unique user IDs from questions
+    const uniqueUsers = Array.from(new Set(questionsResult.data.map((q: Question) => q.user_id)))
+      .map(userId => ({
+        id: userId,
+        name: userId // Using user ID as name since we don't have user names
+      }));
+
+    return {
+      data: uniqueUsers as User[],
+      total: uniqueUsers.length,
+      page: 1,
+      pageSize: uniqueUsers.length,
+      totalPages: 1
+    };
+  } catch (error) {
+    console.error('Error fetching users:', error);
+    throw error;
+  }
 };
 
 export const fetchSessions = async (pagination?: PaginationParams): Promise<PaginatedResponse<Session>> => {
