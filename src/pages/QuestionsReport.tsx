@@ -1,4 +1,3 @@
-
 import React, { useState } from "react";
 import { useQuery } from "@tanstack/react-query";
 import {
@@ -173,9 +172,10 @@ const QuestionsReport = () => {
           <Table>
             <TableHeader>
               <TableRow>
-                <TableHead className="w-[400px]">Question Text</TableHead>
+                <TableHead className="w-[400px]">Question</TableHead>
                 <TableHead>User ID</TableHead>
                 <TableHead>Session ID</TableHead>
+                <TableHead>Channel</TableHead>
                 <TableHead>Date Asked</TableHead>
                 <TableHead>Voice</TableHead>
                 <TableHead>Reaction</TableHead>
@@ -184,18 +184,19 @@ const QuestionsReport = () => {
             <TableBody>
               {questionsReport.data.length === 0 ? (
                 <TableRow>
-                  <TableCell colSpan={6} className="text-center">
+                  <TableCell colSpan={7} className="text-center">
                     No data found for the selected filters.
                   </TableCell>
                 </TableRow>
               ) : (
                 questionsReport.data.map((question) => (
-                  <TableRow key={question.id}>
+                  <TableRow key={question.qid}>
                     <TableCell className="font-medium">
-                      {question.text}
+                      {question.question}
                     </TableCell>
-                    <TableCell>{question.userId}</TableCell>
-                    <TableCell>{question.sessionId}</TableCell>
+                    <TableCell>{question.user_id}</TableCell>
+                    <TableCell>{question.session_id}</TableCell>
+                    <TableCell>{question.channel}</TableCell>
                     <TableCell>{formatDate(question.dateAsked)}</TableCell>
                     <TableCell>
                       {question.hasVoiceInput ? (

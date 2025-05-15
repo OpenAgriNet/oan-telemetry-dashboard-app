@@ -21,10 +21,16 @@ export interface Session {
 }
 
 export interface Question {
-  id: string;
-  text: string;
-  userId: string;
-  sessionId: string;
+  id: number;
+  qid: string;
+  question: string;
+  answer: string | null;
+  question_type: string;
+  user_id: string;
+  created_at: string;
+  event_ets: string;
+  channel: string;
+  session_id: string;
   dateAsked: string;
   hasVoiceInput: boolean;
   reaction: string;
@@ -128,19 +134,27 @@ export const fetchSessions = async (pagination?: PaginationParams): Promise<Pagi
 };
 
 export const fetchQuestions = async (pagination?: PaginationParams): Promise<PaginatedResponse<Question>> => {
-  await delay(500);
   const { page = DEFAULT_PAGE, pageSize = DEFAULT_PAGE_SIZE } = pagination || {};
-  const start = (page - 1) * pageSize;
-  const end = start + pageSize;
-  const data = questions.slice(start, end);
   
-  return {
-    data,
-    total: questions.length,
-    page,
-    pageSize,
-    totalPages: Math.ceil(questions.length / pageSize)
-  };
+  try {
+    const response = await fetch(`http://localhost:3001/api/v1/questions?page=${page}&pageSize=${pageSize}`);
+    const result = await response.json();
+    
+    if (!result.success) {
+      throw new Error('Failed to fetch questions');
+    }
+
+    return {
+      data: result.data,
+      total: result.data.length, // You might want to get total count from the API
+      page,
+      pageSize,
+      totalPages: Math.ceil(result.data.length / pageSize)
+    };
+  } catch (error) {
+    console.error('Error fetching questions:', error);
+    throw error;
+  }
 };
 
 export const fetchDailyMetrics = async (): Promise<DailyMetric[]> => {
@@ -202,7 +216,7 @@ export const generateUserReport = async (
       return sessionDate >= start && sessionDate <= end;
     });
     
-    const userQuestions = questionsData.data.filter(question => question.userId === user.id);
+    const userQuestions = questionsData.data.filter(question => question.user_id === user.id);
     
     const sessionDates = filteredSessions.map(s => new Date(s.startTime).getTime());
     const firstSession = sessionDates.length ? new Date(Math.min(...sessionDates)).toISOString() : '';
@@ -258,11 +272,11 @@ export const generateQuestionsReport = async (
   let filteredQuestions = allQuestions.data;
   
   if (userId) {
-    filteredQuestions = filteredQuestions.filter(question => question.userId === userId);
+    filteredQuestions = filteredQuestions.filter(question => question.user_id === userId);
   }
   
   if (sessionId) {
-    filteredQuestions = filteredQuestions.filter(question => question.sessionId === sessionId);
+    filteredQuestions = filteredQuestions.filter(question => question.session_id === sessionId);
   }
   
   if (startDate || endDate) {
@@ -278,7 +292,7 @@ export const generateQuestionsReport = async (
   if (searchText) {
     const searchLower = searchText.toLowerCase();
     filteredQuestions = filteredQuestions.filter(question => 
-      question.text.toLowerCase().includes(searchLower)
+      question.question.toLowerCase().includes(searchLower)
     );
   }
   
