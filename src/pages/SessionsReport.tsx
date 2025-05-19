@@ -146,11 +146,12 @@ const SessionsReport = () => {
             <TableHeader>
               <TableRow>
                 <TableHead>Session ID</TableHead>
-                <TableHead>User ID</TableHead>
-                <TableHead className="text-right">Questions</TableHead>
-                <TableHead>Start Time</TableHead>
+                <TableHead>User</TableHead>
+                <TableHead >Questions</TableHead>
+                <TableHead>Session time</TableHead>
+                {/* <TableHead>Start Time</TableHead>
                 <TableHead>End Time</TableHead>
-                <TableHead>Device</TableHead>
+                <TableHead>Device</TableHead> */}
               </TableRow>
             </TableHeader>
             <TableBody>
