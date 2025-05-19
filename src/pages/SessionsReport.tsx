@@ -4,6 +4,7 @@ import { fetchSessions, fetchUsers } from "@/services/api";
 import { useNavigate } from "react-router-dom";
 import { generateSessionReport } from "@/services/api";
 import DateRangePicker from "@/components/dashboard/DateRangePicker";
+
 import {
   Select,
   SelectContent,
@@ -31,7 +32,7 @@ const SessionsReport = () => {
     from: Date | undefined;
     to: Date | undefined;
   }>({ from: undefined, to: undefined });
-  const [selectedUser, setSelectedUser] = useState<string>("");
+  const [selectedUser, setSelectedUser] = useState<string>("all");
   const [searchQuery, setSearchQuery] = useState<string>("");
   const [page, setPage] = useState(1);
   const pageSize = 10;
@@ -58,7 +59,7 @@ const SessionsReport = () => {
       fetchSessions({
         page,
         pageSize,
-        username: selectedUser || undefined,
+        username: selectedUser === "all" ? undefined : selectedUser,
         startDate: dateRange.from?.toISOString(),
         endDate: dateRange.to?.toISOString()
       }),
@@ -80,12 +81,16 @@ const SessionsReport = () => {
   };
 
   const handleResetFilters = () => {
-    setSelectedUser("");
+    setSelectedUser("all");
     setDateRange({ from: undefined, to: undefined });
     setSearchQuery("");
   };
 
   const filteredReport = sessionReport.data.filter((session) => {
+    if (selectedUser !== "all" && session.username !== selectedUser) {
+      return false;
+    }
+    
     if (!searchQuery) return true;
     const searchLower = searchQuery.toLowerCase();
     return session.sessionId.toLowerCase().includes(searchLower);
@@ -111,8 +116,8 @@ const SessionsReport = () => {
             </SelectTrigger>
             <SelectContent>
               <SelectItem value="all">All Users</SelectItem>
-              {users.map((user, idx) => (
-                <SelectItem key={user.username || idx} value={user.username}>
+              {users.map((user) => (
+                <SelectItem key={user.username } value={user.username}>
                   {user.username}
                 </SelectItem>
               ))}

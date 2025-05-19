@@ -256,15 +256,15 @@ export const generateUserReport = async (
 };
 
 export const generateSessionReport = async (
-  userId?: string,
+  username?: string,
   startDate?: string,
   endDate?: string
 ): Promise<Session[]> => {
   const sessionsData = await fetchSessions({ page: 1, pageSize: 1000 });
   let filteredSessions = sessionsData.data;
   
-  if (userId) {
-    filteredSessions = filteredSessions.filter(session => session.username === userId);
+  if (username) {
+    filteredSessions = filteredSessions.filter(session => session.username === username);
   }
   
   if (startDate || endDate) {
