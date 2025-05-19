@@ -49,7 +49,7 @@ const SessionDetails = () => {
   const users = usersResponse?.data || [];
   
   const currentSession = sessions.find(s => s.sessionId === sessionId);
-  const user = currentSession ? users.find(u => u.id === currentSession.userId) : null;
+  const user = currentSession ? users.find(u => u.id === currentSession.username) : null;
   const userStats = user ? getUserStats(user.id, sessions) : null;
 
   if (isLoading) {
@@ -84,7 +84,7 @@ const SessionDetails = () => {
               <User className="h-4 w-4 text-muted-foreground" />
             </CardHeader>
             <CardContent>
-              <div className="text-2xl font-bold">{user.name}</div>
+              <div className="text-2xl font-bold">{user.username}</div>
             </CardContent>
           </Card>
 

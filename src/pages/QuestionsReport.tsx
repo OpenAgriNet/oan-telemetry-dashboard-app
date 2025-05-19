@@ -119,7 +119,7 @@ const QuestionsReport = () => {
   const sessions = sessionsResponse.data;
 
   const filteredSessions = sessions.filter(
-    (session) => !selectedUser || session.userId === selectedUser
+    (session) => !selectedUser || session.username === selectedUser
   );
 
   const formatDate = (dateString: string) => {
