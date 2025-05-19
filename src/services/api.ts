@@ -8,7 +8,9 @@ import translations from '../data/translations.json';
 // Types
 export interface User {
   id: string;
-  name: string;
+  username: string;
+  sessions: number;
+  latestSession: string;
 }
 
 export interface Session {
@@ -99,26 +101,18 @@ const delay = (ms: number) => new Promise(resolve => setTimeout(resolve, ms));
 
 export const fetchUsers = async (pagination?: PaginationParams): Promise<PaginatedResponse<User>> => {
   try {
-    // First fetch all questions to get unique user IDs
-    const questionsResponse = await fetch('http://localhost:3001/api/v1/questions');
-    const questionsResult = await questionsResponse.json();
+    const response = await fetch('http://localhost:3001/api/v1/users');
+    const result = await response.json();
     
-    if (!questionsResult.success) {
-      throw new Error('Failed to fetch questions');
+    if (!result.success) {
+      throw new Error('Failed to fetch users');
     }
 
-    // Get unique user IDs from questions
-    const uniqueUsers = Array.from(new Set(questionsResult.data.map((q: Question) => q.user_id)))
-      .map(userId => ({
-        id: userId,
-        name: userId // Using user ID as name since we don't have user names
-      }));
-
     return {
-      data: uniqueUsers as User[],
-      total: uniqueUsers.length,
+      data: result.data,
+      total: result.data.length,
       page: 1,
-      pageSize: uniqueUsers.length,
+      pageSize: result.data.length,
       totalPages: 1
     };
   } catch (error) {
@@ -248,7 +242,7 @@ export const generateUserReport = async (
     
     return {
       id: user.id,
-      name: user.name,
+      name: user.username,
       numSessions: filteredSessions.length,
       numQuestions: userQuestions.length,
       firstSessionDate: firstSession,

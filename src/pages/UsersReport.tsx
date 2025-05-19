@@ -1,4 +1,3 @@
-
 import React, { useState } from "react";
 import { useQuery } from "@tanstack/react-query";
 import { generateUserReport, fetchUsers } from "@/services/api";
@@ -34,46 +33,26 @@ const UsersReport = () => {
   const [page, setPage] = useState(1);
   const pageSize = 10;
 
-  const { data: usersResponse = { data: [] }, isLoading: isLoadingUsers } = useQuery({
+  const { data: usersResponse = { data: [] }, isLoading, refetch } = useQuery({
     queryKey: ["users"],
     queryFn: () => fetchUsers({ page: 1, pageSize: 1000 }),
   });
 
-  const {
-    data: userReport = [],
-    isLoading,
-    refetch,
-  } = useQuery({
-    queryKey: [
-      "userReport",
-      selectedUser,
-      dateRange.from?.toISOString(),
-      dateRange.to?.toISOString(),
-    ],
-    queryFn: () =>
-      generateUserReport(
-        selectedUser || undefined,
-        dateRange.from?.toISOString(),
-        dateRange.to?.toISOString()
-      ),
-  });
-
   const users = usersResponse.data;
 
-  // Filter report based on search query
-  const filteredReport = userReport.filter((user) => {
+  // Filter users based on search query
+  const filteredUsers = users.filter((user) => {
     const searchLower = searchQuery.toLowerCase();
     return (
-      user.name.toLowerCase().includes(searchLower) ||
+      user.username.toLowerCase().includes(searchLower) ||
       user.id.toLowerCase().includes(searchLower)
     );
   });
 
-  // Calculate pagination for filtered report
+  // Calculate pagination for filtered users
   const startIndex = (page - 1) * pageSize;
-  const endIndex = startIndex + pageSize;
-  const paginatedUsers = filteredReport.slice(startIndex, endIndex);
-  const totalPages = Math.ceil(filteredReport.length / pageSize);
+  const paginatedUsers = filteredUsers.slice(startIndex, startIndex + pageSize);
+  const totalPages = Math.ceil(filteredUsers.length / pageSize);
 
   const formatDate = (dateString: string) => {
     if (!dateString) return "N/A";
@@ -118,16 +97,16 @@ const UsersReport = () => {
         <div>
           <DateRangePicker dateRange={dateRange} setDateRange={setDateRange} />
         </div>
-        <div className="flex gap-2">
-          <div className="relative flex-1">
-            <Search className="absolute left-2.5 top-2.5 h-4 w-4 text-muted-foreground" />
-            <Input
-              type="search"
-              placeholder="Search users..."
-              className="pl-8"
-              value={searchQuery}
-              onChange={(e) => setSearchQuery(e.target.value)}
-            />
+      <div className="flex gap-2">
+        <div className="relative flex-1">
+          <Search className="absolute left-2.5 top-2.5 h-4 w-4 text-muted-foreground" />
+          <Input
+            type="search"
+            placeholder="Search users..."
+            className="pl-8"
+            value={searchQuery}
+            onChange={(e) => setSearchQuery(e.target.value)}
+          />
           </div>
           <Button onClick={handleApplyFilters}>Apply</Button>
           <Button variant="outline" onClick={handleResetFilters}>
@@ -137,26 +116,24 @@ const UsersReport = () => {
       </div>
 
       <div className="border rounded-md">
-        {isLoading || isLoadingUsers ? (
+        {isLoading ? (
           <div className="flex justify-center items-center p-8">
-            <p>Loading report data...</p>
+            <p>Loading users data...</p>
           </div>
         ) : (
           <Table>
             <TableHeader>
               <TableRow>
                 <TableHead>User ID</TableHead>
-                <TableHead>Name</TableHead>
+                <TableHead>Username</TableHead>
                 <TableHead className="text-right">Sessions</TableHead>
-                <TableHead className="text-right">Questions</TableHead>
-                <TableHead>First Session</TableHead>
-                <TableHead>Last Session</TableHead>
+                <TableHead>Latest Session</TableHead>
               </TableRow>
             </TableHeader>
             <TableBody>
               {paginatedUsers.length === 0 ? (
                 <TableRow>
-                  <TableCell colSpan={6} className="text-center">
+                  <TableCell colSpan={4} className="text-center">
                     No data found for the selected filters.
                   </TableCell>
                 </TableRow>
@@ -164,15 +141,11 @@ const UsersReport = () => {
                 paginatedUsers.map((user) => (
                   <TableRow key={user.id}>
                     <TableCell className="font-medium">{user.id}</TableCell>
-                    <TableCell>{user.name}</TableCell>
+                    <TableCell>{user.username}</TableCell>
                     <TableCell className="text-right">
-                      {user.numSessions}
+                      {user.sessions}
                     </TableCell>
-                    <TableCell className="text-right">
-                      {user.numQuestions}
-                    </TableCell>
-                    <TableCell>{formatDate(user.firstSessionDate)}</TableCell>
-                    <TableCell>{formatDate(user.lastSessionDate)}</TableCell>
+                    <TableCell>{formatDate(user.latestSession)}</TableCell>
                   </TableRow>
                 ))
               )}

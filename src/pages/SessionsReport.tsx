@@ -175,9 +175,9 @@ const SessionsReport = () => {
                     <TableCell className="text-right">
                       {session.numQuestions}
                     </TableCell>
-                    <TableCell>{formatDate(session.startTime)}</TableCell>
-                    <TableCell>{formatDate(session.endTime)}</TableCell>
-                    <TableCell className="capitalize">{session.device}</TableCell>
+                    {/* <TableCell>{formatDate(session.startTime)}</TableCell>
+                    <TableCell>{formatDate(session.endTime)}</TableCell> */}
+                    {/* <TableCell className="capitalize">{session.device}</TableCell> */}
                   </TableRow>
                 ))
               )}
