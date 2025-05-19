@@ -15,7 +15,9 @@ export interface User {
 
 export interface Session {
   sessionId: string;
-  userId: string;
+  username: string;
+  questionCount: number;
+  sessionTime: string;
 }
 
 export interface Question {
@@ -82,6 +84,9 @@ export interface SessionEvent {
 export interface PaginationParams {
   page: number;
   pageSize: number;
+  username?: string;
+  startDate?: string;
+  endDate?: string;
 }
 
 export interface PaginatedResponse<T> {
@@ -123,27 +128,24 @@ export const fetchUsers = async (pagination?: PaginationParams): Promise<Paginat
 
 export const fetchSessions = async (pagination?: PaginationParams): Promise<PaginatedResponse<Session>> => {
   try {
-    // First fetch all questions to get unique session IDs
-    const questionsResponse = await fetch('http://localhost:3001/api/v1/questions');
-    const questionsResult = await questionsResponse.json();
+    const response = await fetch('http://localhost:3001/api/v1/sessions');
+    const result = await response.json();
     
-    if (!questionsResult.success) {
-      throw new Error('Failed to fetch questions');
+    if (!result.success) {
+      throw new Error('Failed to fetch sessions');
     }
 
-    // Get unique session IDs from questions
-    const uniqueSessions = Array.from(new Set(questionsResult.data.map((q: Question) => q.session_id)))
-      .map(sessionId => ({
-        sessionId: sessionId,
-        userId: questionsResult.data.find((q: Question) => q.session_id === sessionId)?.user_id || ''
-      }));
+    const { page = 1, pageSize = 10 } = pagination || {};
+    const start = (page - 1) * pageSize;
+    const end = start + pageSize;
+    const paginatedData = result.data.slice(start, end);
 
     return {
-      data: uniqueSessions as Session[],
-      total: uniqueSessions.length,
-      page: 1,
-      pageSize: uniqueSessions.length,
-      totalPages: 1
+      data: paginatedData,
+      total: result.data.length,
+      page,
+      pageSize,
+      totalPages: Math.ceil(result.data.length / pageSize)
     };
   } catch (error) {
     console.error('Error fetching sessions:', error);
@@ -223,7 +225,7 @@ export const generateUserReport = async (
   }
   
   const report = filteredUsers.map(user => {
-    const userSessions = sessionsData.data.filter(session => session.userId === user.id);
+    const userSessions = sessionsData.data.filter(session => session.username === user.username);
     const filteredSessions = userSessions.filter(session => {
       if (!startDate && !endDate) return true;
       
@@ -234,7 +236,7 @@ export const generateUserReport = async (
       return sessionDate >= start && sessionDate <= end;
     });
     
-    const userQuestions = questionsData.data.filter(question => question.user_id === user.id);
+    const userQuestions = questionsData.data.filter(question => question.user_id === user.username);
     
     const sessionDates = filteredSessions.map(s => new Date(s.sessionId).getTime());
     const firstSession = sessionDates.length ? new Date(Math.min(...sessionDates)).toISOString() : '';
@@ -262,7 +264,7 @@ export const generateSessionReport = async (
   let filteredSessions = sessionsData.data;
   
   if (userId) {
-    filteredSessions = filteredSessions.filter(session => session.userId === userId);
+    filteredSessions = filteredSessions.filter(session => session.username === userId);
   }
   
   if (startDate || endDate) {
@@ -280,7 +282,7 @@ export const generateSessionReport = async (
 
 export const generateQuestionsReport = async (
   pagination: PaginationParams,
-  userId?: string,
+  username?: string,
   sessionId?: string,
   startDate?: string,
   endDate?: string,
@@ -289,8 +291,8 @@ export const generateQuestionsReport = async (
   const allQuestions = await fetchQuestions({ page: 1, pageSize: 1000 });
   let filteredQuestions = allQuestions.data;
   
-  if (userId) {
-    filteredQuestions = filteredQuestions.filter(question => question.user_id === userId);
+  if (username) {
+    filteredQuestions = filteredQuestions.filter(question => question.user_id === username);
   }
   
   if (sessionId) {

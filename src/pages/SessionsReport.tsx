@@ -1,8 +1,8 @@
-
 import React, { useState } from "react";
 import { useQuery } from "@tanstack/react-query";
-import { generateSessionReport, fetchUsers } from "@/services/api";
+import { fetchSessions, fetchUsers } from "@/services/api";
 import { useNavigate } from "react-router-dom";
+import { generateSessionReport } from "@/services/api";
 import DateRangePicker from "@/components/dashboard/DateRangePicker";
 import {
   Select,
@@ -42,7 +42,7 @@ const SessionsReport = () => {
   });
 
   const {
-    data: sessionReport = [],
+    data: sessionReport = { data: [], total: 0, totalPages: 0 },
     isLoading,
     refetch,
   } = useQuery({
@@ -51,13 +51,17 @@ const SessionsReport = () => {
       selectedUser,
       dateRange.from?.toISOString(),
       dateRange.to?.toISOString(),
+      page,
+      pageSize
     ],
     queryFn: () =>
-      generateSessionReport(
-        selectedUser || undefined,
-        dateRange.from?.toISOString(),
-        dateRange.to?.toISOString()
-      ),
+      fetchSessions({
+        page,
+        pageSize,
+        username: selectedUser || undefined,
+        startDate: dateRange.from?.toISOString(),
+        endDate: dateRange.to?.toISOString()
+      }),
   });
 
   const users = usersResponse.data;
@@ -81,7 +85,7 @@ const SessionsReport = () => {
     setSearchQuery("");
   };
 
-  const filteredReport = sessionReport.filter((session) => {
+  const filteredReport = sessionReport.data.filter((session) => {
     if (!searchQuery) return true;
     const searchLower = searchQuery.toLowerCase();
     return session.sessionId.toLowerCase().includes(searchLower);
@@ -107,8 +111,8 @@ const SessionsReport = () => {
             </SelectTrigger>
             <SelectContent>
               <SelectItem value="all">All Users</SelectItem>
-              {users.map((user) => (
-                <SelectItem key={user.id} value={user.id}>
+              {users.map((user, idx) => (
+                <SelectItem key={user.id || idx} value={user.id}>
                   {user.name}
                 </SelectItem>
               ))}
@@ -157,13 +161,13 @@ const SessionsReport = () => {
             <TableBody>
               {paginatedSessions.length === 0 ? (
                 <TableRow>
-                  <TableCell colSpan={6} className="text-center">
+                  <TableCell colSpan={4} className="text-center">
                     No data found for the selected filters.
                   </TableCell>
                 </TableRow>
               ) : (
-                paginatedSessions.map((session) => (
-                  <TableRow key={session.sessionId}>
+                paginatedSessions.map((session, idx) => (
+                  <TableRow key={session.sessionId || idx}>
                     <TableCell className="font-medium">
                       <button
                         onClick={() => handleSessionClick(session.sessionId)}
@@ -172,10 +176,11 @@ const SessionsReport = () => {
                         {session.sessionId}
                       </button>
                     </TableCell>
-                    <TableCell>{session.userId}</TableCell>
+                    <TableCell>{session.username}</TableCell>
                     <TableCell className="text-right">
-                      {session.numQuestions}
+                      {session.questionCount}
                     </TableCell>
+                    <TableCell>{formatDate(session.sessionTime)}</TableCell>
                     {/* <TableCell>{formatDate(session.startTime)}</TableCell>
                     <TableCell>{formatDate(session.endTime)}</TableCell> */}
                     {/* <TableCell className="capitalize">{session.device}</TableCell> */}
