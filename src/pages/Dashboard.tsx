@@ -226,7 +226,7 @@ const Dashboard = () => {
       </div>
 
       <div className="grid gap-4 grid-cols-1 lg:grid-cols-3">
-        <div className="lg:col-span-2">
+        <div className="lg:col-span-4">
           <Tabs defaultValue="users">
             <TabsList>
               <TabsTrigger value="users">Users</TabsTrigger>
@@ -264,7 +264,7 @@ const Dashboard = () => {
             </TabsContent>
           </Tabs>
         </div>
-        <div className="lg:col-span-1">
+        {/* <div className="lg:col-span-1">
           <Card className="card-gradient h-full">
             <CardHeader>
               <CardTitle>Device Usage</CardTitle>
@@ -318,7 +318,7 @@ const Dashboard = () => {
               </div>
             </CardContent>
           </Card>
-        </div>
+        </div> */}
       </div>
     </div>
   );
