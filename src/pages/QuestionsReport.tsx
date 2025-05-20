@@ -65,7 +65,7 @@ const QuestionsReport = () => {
       pageSize
     ],
     queryFn: async () => {
-      const response = await fetch('http://localhost:3001/api/v1/questions');
+      const response = await fetch('http://localhost:4000/api/v1/questions');
       const result = await response.json();
       
       if (!result.success) {
@@ -158,7 +158,7 @@ const QuestionsReport = () => {
               <SelectItem value="all">All Users</SelectItem>
               {users.map((user) => (
                 <SelectItem 
-                  key={user.username || `user-${user.id}`} 
+                  key={user.id} 
                   value={user.username || `user-${user.id}`}
                 >
                   {user.username || `User ${user.id}`}

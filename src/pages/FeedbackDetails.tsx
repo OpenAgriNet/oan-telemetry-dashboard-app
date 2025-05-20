@@ -24,14 +24,19 @@ const FeedbackDetails = () => {
     enabled: !!feedbackId
   });
 
-  const user = feedback ? users.find(u => u.id === feedback.userId) : null;
+  // Try to find user in local data, but use API userId as fallback
+  const user = feedback ? (
+    users.find(u => u.id === feedback.userId) || 
+    { id: feedback.userId, name: feedback.userId }
+  ) : null;
+  
   const session = feedback ? sessions.find(s => s.sessionId === feedback.sessionId) : null;
 
   if (isFeedbackLoading) {
     return <div>Loading...</div>;
   }
 
-  if (!feedback || !user) {
+  if (!feedback) {
     return <div>Feedback not found</div>;
   }
 
@@ -56,7 +61,7 @@ const FeedbackDetails = () => {
             <User className="h-4 w-4 text-muted-foreground" />
           </CardHeader>
           <CardContent>
-            <div className="text-2xl font-bold">{user.name}</div>
+            <div className="text-2xl font-bold">{user?.name || 'Unknown User'}</div>
           </CardContent>
         </Card>
 
@@ -67,12 +72,12 @@ const FeedbackDetails = () => {
           </CardHeader>
           <CardContent>
             <div className="text-2xl font-bold">
-              {format(new Date(feedback.timestamp), "MMM dd, yyyy")}
+              {format(new Date(feedback.date), "MMM dd, yyyy")}
             </div>
           </CardContent>
         </Card>
 
-        <Card>
+        {/* <Card>
           <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
             <CardTitle className="text-sm font-medium">Rating</CardTitle>
             <ThumbsUp className="h-4 w-4 text-muted-foreground" />
@@ -90,7 +95,7 @@ const FeedbackDetails = () => {
           <CardContent>
             <div className="text-2xl font-bold">{session?.numQuestions || 0}</div>
           </CardContent>
-        </Card>
+        </Card> */}
       </div>
 
       <Card>
@@ -100,14 +105,14 @@ const FeedbackDetails = () => {
         </CardHeader>
         <CardContent className="space-y-6">
           <div 
-            className="cursor-pointer p-4 rounded-lg bg-muted/50 hover:bg-muted transition-colors"
-            onClick={handleSessionClick}
+            className={`p-4 rounded-lg bg-muted/50 ${session ? 'cursor-pointer hover:bg-muted transition-colors' : ''}`}
+            onClick={session ? handleSessionClick : undefined}
           >
             <div className="flex items-center gap-2 mb-2">
               <MessageCircle className="h-4 w-4" />
               <h3 className="font-medium">Session Question</h3>
             </div>
-            <p className="text-muted-foreground">{feedback.questionText}</p>
+            <p className="text-muted-foreground">{feedback.question}</p>
             {translation?.questionMarathi && (
               <div className="mt-2">
                 <div className="flex items-center gap-2">
@@ -127,7 +132,7 @@ const FeedbackDetails = () => {
                   <div className="flex items-center gap-2">
                     <span className="text-sm text-muted-foreground">English</span>
                   </div>
-                  <p className="text-muted-foreground mt-1">{feedback.aiResponse}</p>
+                  <p className="text-muted-foreground mt-1">{feedback.answer}</p>
                 </div>
                 {translation?.responseMarathi && (
                   <div>

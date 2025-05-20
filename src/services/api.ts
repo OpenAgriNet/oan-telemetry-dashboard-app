@@ -5,6 +5,9 @@ import dailyMetrics from '../data/dailyMetrics.json';
 import feedback from '../data/feedback.json';
 import translations from '../data/translations.json';
 
+// API Base URL
+const SERVER_URL = 'http://localhost:4000/api/v1';
+
 // Types
 export interface User {
   id: string;
@@ -57,13 +60,28 @@ export interface UserReport {
 
 export interface Feedback {
   id: string;
-  sessionId: string;
-  userId: string;
-  questionText: string;
+  date: string;
+  question: string;
+  answer: string;
+  rating: string;
   feedback: string;
-  aiResponse?: string;
-  rating: number;
-  timestamp: string;
+  sessionId?: string;
+  userId?: string;
+}
+
+export interface FeedbackResponse {
+  id: string;
+  user_id: string;
+  session_id: string;
+  groupdetails: null | Record<string, unknown>;
+  channel: string;
+  ets: string;
+  feedbacktext: string;
+  questiontext: string;
+  answertext: string;
+  feedbacktype: string;
+  created_at: string;
+  question_id: string;
 }
 
 export interface Translation {
@@ -106,7 +124,7 @@ const delay = (ms: number) => new Promise(resolve => setTimeout(resolve, ms));
 
 export const fetchUsers = async (pagination?: PaginationParams): Promise<PaginatedResponse<User>> => {
   try {
-    const response = await fetch('http://localhost:3001/api/v1/users');
+    const response = await fetch(`${SERVER_URL}/users`);
     const result = await response.json();
     
     if (!result.success) {
@@ -128,8 +146,7 @@ export const fetchUsers = async (pagination?: PaginationParams): Promise<Paginat
 
 export const fetchSessions = async (pagination?: PaginationParams): Promise<PaginatedResponse<Session>> => {
   try {
-    console.log('API: Fetching sessions with params:', pagination);
-    const response = await fetch('http://localhost:3001/api/v1/sessions');
+    const response = await fetch(`${SERVER_URL}/sessions`);
     const result = await response.json();
     
     console.log('API: Raw response:', result);
@@ -168,7 +185,7 @@ export const fetchQuestions = async (pagination?: PaginationParams): Promise<Pag
   const { page = DEFAULT_PAGE, pageSize = DEFAULT_PAGE_SIZE } = pagination || {};
   
   try {
-    const response = await fetch(`http://localhost:3001/api/v1/questions?page=${page}&pageSize=${pageSize}`);
+    const response = await fetch(`${SERVER_URL}/questions?page=${page}&pageSize=${pageSize}`);
     const result = await response.json();
     
     if (!result.success) {
@@ -194,24 +211,63 @@ export const fetchDailyMetrics = async (): Promise<DailyMetric[]> => {
 };
 
 export const fetchFeedback = async (pagination?: PaginationParams): Promise<PaginatedResponse<Feedback>> => {
-  await delay(300);
-  const { page = DEFAULT_PAGE, pageSize = DEFAULT_PAGE_SIZE } = pagination || {};
-  const start = (page - 1) * pageSize;
-  const end = start + pageSize;
-  const data = feedback.slice(start, end);
-  
-  return {
-    data,
-    total: feedback.length,
-    page,
-    pageSize,
-    totalPages: Math.ceil(feedback.length / pageSize)
-  };
+  try {
+    const response = await fetch(`${SERVER_URL}/feedback`);
+    const result = await response.json();
+    
+    const { page = DEFAULT_PAGE, pageSize = DEFAULT_PAGE_SIZE } = pagination || {};
+    const start = (page - 1) * pageSize;
+    const end = start + pageSize;
+    
+    // API returns a flat array of feedback items
+    const feedbackData = Array.isArray(result) ? result : [];
+    const paginatedData = feedbackData.slice(start, end);
+    
+    return {
+      data: paginatedData,
+      total: feedbackData.length,
+      page,
+      pageSize,
+      totalPages: Math.ceil(feedbackData.length / pageSize)
+    };
+  } catch (error) {
+    console.error('Error fetching feedback:', error);
+    throw error;
+  }
 };
 
 export const fetchFeedbackById = async (id: string): Promise<Feedback | undefined> => {
-  await delay(200);
-  return feedback.find(f => f.id === id);
+  try {
+    // Get feedback item
+    const response = await fetch(`${SERVER_URL}/feedback/qid/${id}`);
+    const result = await response.json();
+    
+    // Handle both array or single object response
+    const feedbackData = Array.isArray(result) ? result[0] : result;
+    
+    // If no feedback was found
+    if (!feedbackData) {
+      console.log("No feedback data found for ID:", id);
+      return undefined;
+    }
+    
+    console.log("Raw feedback data:", feedbackData);
+    
+    // Map the API response to the Feedback interface
+    return {
+      id: feedbackData.id || feedbackData.question_id || id,
+      date: feedbackData.created_at || new Date().toISOString(),
+      question: feedbackData.questiontext || "",
+      answer: feedbackData.answertext || "",
+      rating: feedbackData.feedbacktype === "like" ? "5" : "1",
+      feedback: feedbackData.feedbacktext || "",
+      sessionId: feedbackData.session_id || "",
+      userId: feedbackData.user_id || ""
+    };
+  } catch (error) {
+    console.error('Error fetching feedback by ID:', error);
+    return undefined;
+  }
 };
 
 export const fetchTranslation = async (feedbackId: string): Promise<Translation | undefined> => {
@@ -236,7 +292,7 @@ export const generateUserReport = async (
   }
   
   const report = filteredUsers.map(user => {
-    const userSessions = sessionsData.data.filter(session => session.username === user.username);
+    const userSessions = sessionsData.data.filter(session => session.userId === user.id);
     const filteredSessions = userSessions.filter(session => {
       if (!startDate && !endDate) return true;
       
@@ -247,7 +303,7 @@ export const generateUserReport = async (
       return sessionDate >= start && sessionDate <= end;
     });
     
-    const userQuestions = questionsData.data.filter(question => question.user_id === user.username);
+    const userQuestions = questionsData.data.filter(question => question.user_id === user.id);
     
     const sessionDates = filteredSessions.map(s => new Date(s.sessionId).getTime());
     const firstSession = sessionDates.length ? new Date(Math.min(...sessionDates)).toISOString() : '';
@@ -293,7 +349,7 @@ export const generateSessionReport = async (
 
 export const generateQuestionsReport = async (
   pagination: PaginationParams,
-  username?: string,
+  userId?: string,
   sessionId?: string,
   startDate?: string,
   endDate?: string,
@@ -302,8 +358,8 @@ export const generateQuestionsReport = async (
   const allQuestions = await fetchQuestions({ page: 1, pageSize: 1000 });
   let filteredQuestions = allQuestions.data;
   
-  if (username) {
-    filteredQuestions = filteredQuestions.filter(question => question.user_id === username);
+  if (userId) {
+    filteredQuestions = filteredQuestions.filter(question => question.user_id === userId);
   }
   
   if (sessionId) {

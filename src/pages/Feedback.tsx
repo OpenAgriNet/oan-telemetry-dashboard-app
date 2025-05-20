@@ -1,4 +1,3 @@
-
 import React, { useState } from "react";
 import { Link } from "react-router-dom";
 import { useQuery } from "@tanstack/react-query";
@@ -23,20 +22,20 @@ const FeedbackPage = () => {
   const [page, setPage] = useState(1);
   const pageSize = 10;
 
-  const { data: feedbackResponse = { data: [], totalPages: 0 } } = useQuery({
+  const { data: feedbackResponse = { data: [], total: 0, totalPages: 0 }, isLoading } = useQuery({
     queryKey: ['feedback', page, pageSize],
     queryFn: () => fetchFeedback({ page, pageSize })
   });
 
   const filteredFeedback = feedbackResponse.data.filter((feedback) => {
-    const matchesSearch = feedback.questionText.toLowerCase().includes(searchTerm.toLowerCase()) ||
+    const matchesSearch = feedback.question.toLowerCase().includes(searchTerm.toLowerCase()) ||
       feedback.feedback.toLowerCase().includes(searchTerm.toLowerCase());
     
     const matchesUser = selectedUser === "all" || feedback.userId === selectedUser;
     
     const matchesDate = !dateRange.from || !dateRange.to || (
-      new Date(feedback.timestamp) >= dateRange.from &&
-      new Date(feedback.timestamp) <= dateRange.to
+      new Date(feedback.date) >= dateRange.from &&
+      new Date(feedback.date) <= dateRange.to
     );
 
     return matchesSearch && matchesUser && matchesDate;
@@ -48,25 +47,51 @@ const FeedbackPage = () => {
         <h1 className="text-2xl font-bold tracking-tight">User Feedback</h1>
       </div>
 
-      <div className="grid gap-4 md:grid-cols-2">
+      <div className="grid gap-4 md:grid-cols-3">
         <Card>
           <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
             <CardTitle className="text-sm font-medium">Total Feedback</CardTitle>
             <MessageSquare className="h-4 w-4 text-muted-foreground" />
           </CardHeader>
           <CardContent>
-            <div className="text-2xl font-bold">{filteredFeedback.length}</div>
+            <div className="text-2xl font-bold">{feedbackResponse.total || 0}</div>
           </CardContent>
         </Card>
 
         <Card>
           <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-            <CardTitle className="text-sm font-medium">Average Rating</CardTitle>
+            <CardTitle className="text-sm font-medium">Total Likes</CardTitle>
             <ThumbsUp className="h-4 w-4 text-muted-foreground" />
           </CardHeader>
           <CardContent>
             <div className="text-2xl font-bold">
-              {(filteredFeedback.reduce((acc, fb) => acc + fb.rating, 0) / filteredFeedback.length || 0).toFixed(1)}
+              {(() => {
+                if (feedbackResponse.data.length === 0) return "0";
+                let totalLikes = 0;
+                feedbackResponse.data.forEach(fb => {
+                  if (fb.rating === "like") totalLikes += 1;
+                });
+                return totalLikes;
+              })()}
+            </div>
+          </CardContent>
+        </Card>
+
+        <Card>
+          <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
+            <CardTitle className="text-sm font-medium">Total Dislikes</CardTitle>
+            <ThumbsUp className="h-4 w-4 text-muted-foreground rotate-180" />
+          </CardHeader>
+          <CardContent>
+            <div className="text-2xl font-bold">
+              {(() => {
+                if (feedbackResponse.data.length === 0) return "0";
+                let totalDislikes = 0;
+                feedbackResponse.data.forEach(fb => {
+                  if (fb.rating === "dislike") totalDislikes += 1;
+                });
+                return totalDislikes;
+              })()}
             </div>
           </CardContent>
         </Card>
@@ -98,7 +123,7 @@ const FeedbackPage = () => {
                     <SelectItem value="all">All Users</SelectItem>
                     {users.map((user) => (
                       <SelectItem key={user.id} value={user.id}>
-                        {user.name}
+                        {user.id}
                       </SelectItem>
                     ))}
                   </SelectContent>
@@ -109,46 +134,58 @@ const FeedbackPage = () => {
               </div>
             </div>
 
-            <Table>
-              <TableHeader>
-                <TableRow>
-                  <TableHead>Date</TableHead>
-                  <TableHead>User</TableHead>
-                  <TableHead>Question</TableHead>
-                  <TableHead>Rating</TableHead>
-                  <TableHead>Feedback</TableHead>
-                  <TableHead>Details</TableHead>
-                </TableRow>
-              </TableHeader>
-              <TableBody>
-                {filteredFeedback.map((feedback) => {
-                  const user = users.find(u => u.id === feedback.userId);
-                  return (
-                    <TableRow key={feedback.id}>
-                      <TableCell>
-                        {format(new Date(feedback.timestamp), "MMM dd, yyyy")}
-                      </TableCell>
-                      <TableCell>{user?.name || "Unknown"}</TableCell>
-                      <TableCell className="max-w-[200px] truncate">
-                        {feedback.questionText}
-                      </TableCell>
-                      <TableCell>{feedback.rating}/5</TableCell>
-                      <TableCell className="max-w-[200px] truncate">
-                        {feedback.feedback}
-                      </TableCell>
-                      <TableCell>
-                        <Link
-                          to={`/feedback/${feedback.id}`}
-                          className="text-blue-500 hover:underline"
-                        >
-                          View Details
-                        </Link>
-                      </TableCell>
-                    </TableRow>
-                  );
-                })}
-              </TableBody>
-            </Table>
+            {isLoading ? (
+              <div className="py-8 text-center">Loading feedback data...</div>
+            ) : feedbackResponse.data.length === 0 ? (
+              <div className="py-8 text-center">No feedback data available</div>
+            ) : (
+              <Table>
+                <TableHeader>
+                  <TableRow>
+                    <TableHead>Date</TableHead>
+                    <TableHead>User</TableHead>
+                    <TableHead>Question</TableHead>
+                    <TableHead>Answer</TableHead>
+                    <TableHead>Rating</TableHead>
+                    <TableHead>Feedback</TableHead>
+                    <TableHead>Details</TableHead>
+                  </TableRow>
+                </TableHeader>
+                <TableBody>
+                  {feedbackResponse.data.map((feedback, index) => {
+                    const user = users.find(u => u.id === feedback.userId);
+                    return (
+                      <TableRow key={`${feedback.id}-${index}`}>
+                        <TableCell>
+                          {format(new Date(feedback.date), "MMM dd, yyyy")}
+                        </TableCell>
+                        <TableCell>{feedback.user || "Unknown"}</TableCell>
+                        <TableCell className="max-w-[200px] truncate">
+                          {feedback.question}
+                        </TableCell>
+                        <TableCell className="max-w-[200px] truncate">
+                          {feedback.answer}
+                        </TableCell>
+                        <TableCell>
+                          {feedback.rating === "like" ? "👍" : feedback.rating === "dislike" ? "👎" : feedback.rating}
+                        </TableCell>
+                        <TableCell className="max-w-[200px] truncate">
+                          {feedback.feedback}
+                        </TableCell>
+                        <TableCell>
+                          <Link
+                            to={`/feedback/${feedback.id}`}
+                            className="text-blue-500 hover:underline"
+                          >
+                            View Details
+                          </Link>
+                        </TableCell>
+                      </TableRow>
+                    );
+                  })}
+                </TableBody>
+              </Table>
+            )}
             
             <TablePagination
               currentPage={page}
