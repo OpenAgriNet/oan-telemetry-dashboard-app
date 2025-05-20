@@ -56,17 +56,26 @@ const SessionsReport = () => {
       pageSize,
       searchQuery
     ],
-    queryFn: () =>
-      fetchSessions({
+    queryFn: () => {
+      console.log('Fetching sessions with params:', {
+        selectedUser,
+        username: selectedUser === "all" ? undefined : selectedUser,
+        startDate: dateRange.from?.toISOString(),
+        endDate: dateRange.to?.toISOString()
+      });
+      return fetchSessions({
         page,
         pageSize,
         username: selectedUser === "all" ? undefined : selectedUser,
         startDate: dateRange.from?.toISOString(),
         endDate: dateRange.to?.toISOString(),
-      }),
+      });
+    },
   });
 
   const users = usersResponse.data;
+
+  console.log('Available users:', users);
 
   const handleSessionClick = (sessionId: string) => {
     navigate(`/sessions/${sessionId}`);
@@ -88,6 +97,12 @@ const SessionsReport = () => {
   };
 
   const filteredReport = sessionReport.data.filter((session) => {
+    console.log('Filtering session:', {
+      sessionUsername: session.username,
+      selectedUser,
+      matches: selectedUser === "all" || session.username === selectedUser
+    });
+    
     if (selectedUser !== "all" && session.username !== selectedUser) {
       return false;
     }
@@ -97,16 +112,23 @@ const SessionsReport = () => {
     return session.sessionId.toLowerCase().includes(searchLower);
   });
 
+  console.log('Filtered sessions:', {
+    totalSessions: sessionReport.data.length,
+    filteredSessions: filteredReport.length,
+    selectedUser,
+    searchQuery
+  });
+
   // Instead, use the data directly from the API response
   const paginatedSessions = sessionReport.data;
 
   // Use totalPages from the API response
   const totalPages = sessionReport.totalPages;
 
-  console.log({
+  console.log('Pagination:', {
     currentPage: page,
     totalPages: sessionReport.totalPages,
-    dataLength: sessionReport.data.length
+    pageSize
   });
 
   return (
@@ -124,8 +146,8 @@ const SessionsReport = () => {
             <SelectContent>
               <SelectItem value="all">All Users</SelectItem>
               {users.map((user) => (
-                <SelectItem key={user.username } value={user.username}>
-                  {user.username}
+                <SelectItem key={user.id} value={user.username}>
+                  {user.username || `User ${user.id}`}
                 </SelectItem>
               ))}
             </SelectContent>

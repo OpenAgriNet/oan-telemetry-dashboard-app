@@ -128,8 +128,11 @@ export const fetchUsers = async (pagination?: PaginationParams): Promise<Paginat
 
 export const fetchSessions = async (pagination?: PaginationParams): Promise<PaginatedResponse<Session>> => {
   try {
+    console.log('API: Fetching sessions with params:', pagination);
     const response = await fetch('http://localhost:3001/api/v1/sessions');
     const result = await response.json();
+    
+    console.log('API: Raw response:', result);
     
     if (!result.success) {
       throw new Error('Failed to fetch sessions');
@@ -140,6 +143,14 @@ export const fetchSessions = async (pagination?: PaginationParams): Promise<Pagi
     const end = start + pageSize;
     const paginatedData = result.data.slice(start, end);
 
+    console.log('API: Processed response:', {
+      totalData: result.data.length,
+      paginatedData: paginatedData.length,
+      page,
+      pageSize,
+      totalPages: Math.ceil(result.data.length / pageSize)
+    });
+
     return {
       data: paginatedData,
       total: result.data.length,
@@ -148,7 +159,7 @@ export const fetchSessions = async (pagination?: PaginationParams): Promise<Pagi
       totalPages: Math.ceil(result.data.length / pageSize)
     };
   } catch (error) {
-    console.error('Error fetching sessions:', error);
+    console.error('API: Error fetching sessions:', error);
     throw error;
   }
 };
