@@ -1,4 +1,4 @@
-import React, { useState } from "react";
+import React, { useState, useEffect } from "react";
 import { useQuery } from "@tanstack/react-query";
 import { fetchSessions, fetchUsers } from "@/services/api";
 import { useNavigate } from "react-router-dom";
@@ -52,24 +52,53 @@ const SessionsReport = () => {
       selectedUser,
       dateRange.from?.toISOString(),
       dateRange.to?.toISOString(),
+      searchQuery,
       page,
-      pageSize,
-      searchQuery
+      pageSize
     ],
-    queryFn: () => {
-      console.log('Fetching sessions with params:', {
-        selectedUser,
-        username: selectedUser === "all" ? undefined : selectedUser,
-        startDate: dateRange.from?.toISOString(),
-        endDate: dateRange.to?.toISOString()
-      });
-      return fetchSessions({
+    queryFn: async () => {
+      const response = await fetch('http://localhost:3001/api/v1/sessions');
+      const result = await response.json();
+      
+      if (!result.success) {
+        throw new Error('Failed to fetch sessions');
+      }
+
+      // Filter sessions based on selected filters
+      let filteredSessions = result.data;
+      
+      if (selectedUser && selectedUser !== 'all') {
+        filteredSessions = filteredSessions.filter(session => session.username === selectedUser);
+      }
+      
+      if (dateRange.from || dateRange.to) {
+        filteredSessions = filteredSessions.filter(session => {
+          const sessionDate = new Date(session.sessionId);
+          const from = dateRange.from || new Date(0);
+          const to = dateRange.to || new Date(8640000000000000);
+          return sessionDate >= from && sessionDate <= to;
+        });
+      }
+      
+      if (searchQuery) {
+        const searchLower = searchQuery.toLowerCase();
+        filteredSessions = filteredSessions.filter(session => 
+          session.sessionId.toLowerCase().includes(searchLower)
+        );
+      }
+
+      // Apply pagination
+      const start = (page - 1) * pageSize;
+      const end = start + pageSize;
+      const paginatedSessions = filteredSessions.slice(start, end);
+
+      return {
+        data: paginatedSessions,
+        total: filteredSessions.length,
         page,
         pageSize,
-        username: selectedUser === "all" ? undefined : selectedUser,
-        startDate: dateRange.from?.toISOString(),
-        endDate: dateRange.to?.toISOString(),
-      });
+        totalPages: Math.ceil(filteredSessions.length / pageSize)
+      };
     },
   });
 
@@ -96,40 +125,7 @@ const SessionsReport = () => {
     setSearchQuery("");
   };
 
-  const filteredReport = sessionReport.data.filter((session) => {
-    console.log('Filtering session:', {
-      sessionUsername: session.username,
-      selectedUser,
-      matches: selectedUser === "all" || session.username === selectedUser
-    });
-    
-    if (selectedUser !== "all" && session.username !== selectedUser) {
-      return false;
-    }
-    
-    if (!searchQuery) return true;
-    const searchLower = searchQuery.toLowerCase();
-    return session.sessionId.toLowerCase().includes(searchLower);
-  });
-
-  console.log('Filtered sessions:', {
-    totalSessions: sessionReport.data.length,
-    filteredSessions: filteredReport.length,
-    selectedUser,
-    searchQuery
-  });
-
-  // Instead, use the data directly from the API response
   const paginatedSessions = sessionReport.data;
-
-  // Use totalPages from the API response
-  const totalPages = sessionReport.totalPages;
-
-  console.log('Pagination:', {
-    currentPage: page,
-    totalPages: sessionReport.totalPages,
-    pageSize
-  });
 
   return (
     <div className="space-y-6">
@@ -228,7 +224,7 @@ const SessionsReport = () => {
 
       <TablePagination 
         currentPage={page}
-        totalPages={totalPages}
+        totalPages={sessionReport.totalPages}
         onPageChange={setPage}
       />
     </div>
