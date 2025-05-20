@@ -179,9 +179,9 @@ const QuestionsReport = () => {
                 <TableHead className="w-[400px]">Question</TableHead>
                 <TableHead>User ID</TableHead>
                 <TableHead>Session ID</TableHead>
-                <TableHead>Channel</TableHead>
+                {/* <TableHead>Channel</TableHead> */}
                 <TableHead>Date Asked</TableHead>
-                <TableHead>Voice</TableHead>
+                {/* <TableHead>Voice</TableHead> */}
                 <TableHead>Reaction</TableHead>
               </TableRow>
             </TableHeader>
@@ -200,13 +200,13 @@ const QuestionsReport = () => {
                     </TableCell>
                     <TableCell>{question.user_id}</TableCell>
                     <TableCell>{question.session_id}</TableCell>
-                    <TableCell>{question.channel}</TableCell>
+                    {/* <TableCell>{question.channel}</TableCell> */}
                     <TableCell>{formatDate(question.dateAsked)}</TableCell>
-                    <TableCell>
+                    {/* <TableCell>
                       {question.hasVoiceInput ? (
                         <Mic className="h-4 w-4 text-primary" />
                       ) : null}
-                    </TableCell>
+                    </TableCell> */}
                     <TableCell>
                       {question.reaction === "thumbs-up" ? (
                         <ThumbsUp className="h-4 w-4 text-green-500" />
