@@ -28,31 +28,73 @@ const UsersReport = () => {
     from: Date | undefined;
     to: Date | undefined;
   }>({ from: undefined, to: undefined });
-  const [selectedUser, setSelectedUser] = useState<string>("");
+  const [selectedUser, setSelectedUser] = useState<string>("all");
   const [searchQuery, setSearchQuery] = useState<string>("");
   const [page, setPage] = useState(1);
   const pageSize = 10;
 
-  const { data: usersResponse = { data: [] }, isLoading, refetch } = useQuery({
-    queryKey: ["users"],
-    queryFn: () => fetchUsers({ page: 1, pageSize: 1000 }),
+  const {
+    data: usersResponse = { data: [], total: 0, totalPages: 0 },
+    isLoading,
+    refetch,
+  } = useQuery({
+    queryKey: [
+      "users",
+      selectedUser,
+      dateRange.from?.toISOString(),
+      dateRange.to?.toISOString(),
+      searchQuery,
+      page,
+      pageSize
+    ],
+    queryFn: async () => {
+      const response = await fetch('http://localhost:3001/api/v1/users');
+      const result = await response.json();
+      
+      if (!result.success) {
+        throw new Error('Failed to fetch users');
+      }
+
+      // Filter users based on selected filters
+      let filteredUsers = result.data;
+      
+      if (selectedUser && selectedUser !== 'all') {
+        filteredUsers = filteredUsers.filter(user => user.username === selectedUser);
+      }
+      
+      if (dateRange.from || dateRange.to) {
+        filteredUsers = filteredUsers.filter(user => {
+          const userDate = new Date(user.createdAt);
+          const from = dateRange.from || new Date(0);
+          const to = dateRange.to || new Date(8640000000000000);
+          return userDate >= from && userDate <= to;
+        });
+      }
+      
+      if (searchQuery) {
+        const searchLower = searchQuery.toLowerCase();
+        filteredUsers = filteredUsers.filter(user => 
+          user.username.toLowerCase().includes(searchLower) ||
+          user.id.toLowerCase().includes(searchLower)
+        );
+      }
+
+      // Apply pagination
+      const start = (page - 1) * pageSize;
+      const end = start + pageSize;
+      const paginatedUsers = filteredUsers.slice(start, end);
+
+      return {
+        data: paginatedUsers,
+        total: filteredUsers.length,
+        page,
+        pageSize,
+        totalPages: Math.ceil(filteredUsers.length / pageSize)
+      };
+    },
   });
 
-  const users = usersResponse.data;
-
-  // Filter users based on search query
-  const filteredUsers = users.filter((user) => {
-    const searchLower = searchQuery.toLowerCase();
-    return (
-      user.username.toLowerCase().includes(searchLower) ||
-      user.id.toLowerCase().includes(searchLower)
-    );
-  });
-
-  // Calculate pagination for filtered users
-  const startIndex = (page - 1) * pageSize;
-  const paginatedUsers = filteredUsers.slice(startIndex, startIndex + pageSize);
-  const totalPages = Math.ceil(filteredUsers.length / pageSize);
+  const paginatedUsers = usersResponse.data;
 
   const formatDate = (dateString: string) => {
     if (!dateString) return "N/A";
@@ -64,7 +106,7 @@ const UsersReport = () => {
   };
 
   const handleResetFilters = () => {
-    setSelectedUser("");
+    setSelectedUser("all");
     setDateRange({ from: undefined, to: undefined });
     setSearchQuery("");
   };
@@ -77,18 +119,15 @@ const UsersReport = () => {
 
       <div className="grid gap-4 md:grid-cols-1 lg:grid-cols-3">
         <div>
-          <Select
-            value={selectedUser}
-            onValueChange={setSelectedUser}
-          >
+          <Select value={selectedUser} onValueChange={setSelectedUser}>
             <SelectTrigger>
               <SelectValue placeholder="All Users" />
             </SelectTrigger>
             <SelectContent>
               <SelectItem value="all">All Users</SelectItem>
-              {users.map((user) => (
-                <SelectItem key={user.username} value={user.username}>
-                  {user.username}
+              {usersResponse.data.map((user) => (
+                <SelectItem key={user.id} value={user.username}>
+                  {user.username || `User ${user.id}`}
                 </SelectItem>
               ))}
             </SelectContent>
@@ -97,16 +136,16 @@ const UsersReport = () => {
         <div>
           <DateRangePicker dateRange={dateRange} setDateRange={setDateRange} />
         </div>
-      <div className="flex gap-2">
-        <div className="relative flex-1">
-          <Search className="absolute left-2.5 top-2.5 h-4 w-4 text-muted-foreground" />
-          <Input
-            type="search"
-            placeholder="Search users..."
-            className="pl-8"
-            value={searchQuery}
-            onChange={(e) => setSearchQuery(e.target.value)}
-          />
+        <div className="flex gap-2">
+          <div className="relative flex-1">
+            <Search className="absolute left-2.5 top-2.5 h-4 w-4 text-muted-foreground" />
+            <Input
+              type="search"
+              placeholder="Search by username or ID..."
+              className="pl-8"
+              value={searchQuery}
+              onChange={(e) => setSearchQuery(e.target.value)}
+            />
           </div>
           <Button onClick={handleApplyFilters}>Apply</Button>
           <Button variant="outline" onClick={handleResetFilters}>
@@ -118,7 +157,7 @@ const UsersReport = () => {
       <div className="border rounded-md">
         {isLoading ? (
           <div className="flex justify-center items-center p-8">
-            <p>Loading users data...</p>
+            <p>Loading user data...</p>
           </div>
         ) : (
           <Table>
@@ -138,8 +177,8 @@ const UsersReport = () => {
                   </TableCell>
                 </TableRow>
               ) : (
-                paginatedUsers.map((user) => (
-                  <TableRow key={user.id}>
+                paginatedUsers.map((user, idx) => (
+                  <TableRow key={user.id || idx}>
                     <TableCell className="font-medium">{user.id}</TableCell>
                     <TableCell>{user.username}</TableCell>
                     <TableCell className="text-right">
@@ -156,7 +195,7 @@ const UsersReport = () => {
 
       <TablePagination 
         currentPage={page}
-        totalPages={totalPages}
+        totalPages={usersResponse.totalPages}
         onPageChange={setPage}
       />
     </div>
