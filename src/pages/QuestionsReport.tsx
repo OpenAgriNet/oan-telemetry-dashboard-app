@@ -177,7 +177,7 @@ const QuestionsReport = () => {
             <TableHeader>
               <TableRow>
                 <TableHead className="w-[400px]">Question</TableHead>
-                <TableHead>User ID</TableHead>
+                <TableHead>User </TableHead>
                 <TableHead>Session ID</TableHead>
                 {/* <TableHead>Channel</TableHead> */}
                 <TableHead>Date Asked</TableHead>
