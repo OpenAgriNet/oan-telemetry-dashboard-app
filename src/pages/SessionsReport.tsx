@@ -73,13 +73,36 @@ const SessionsReport = () => {
       }
       
       if (dateRange.from || dateRange.to) {
-        filteredSessions = filteredSessions.filter(session => {
-          const sessionDate = new Date(session.sessionId);
-          const from = dateRange.from || new Date(0);
-          const to = dateRange.to || new Date(8640000000000000);
-          return sessionDate >= from && sessionDate <= to;
+        const from = dateRange.from
+          ? new Date(dateRange.from.setHours(0, 0, 0, 0))
+          : new Date(0); // earliest possible date
+      
+        const to = dateRange.to
+          ? new Date(dateRange.to.setHours(23, 59, 59, 999))
+          : new Date(8640000000000000); // max valid date in JS
+
+        console.log('Date Range Filter:', {
+          from: from.toISOString(),
+          to: to.toISOString()
         });
+      
+        filteredSessions = filteredSessions.filter((session) => {
+          const sessionDate = new Date(session.sessionTime);
+          console.log('Comparing Session:', {
+            sessionId: session.sessionId,
+            sessionTime: session.sessionTime,
+            sessionDate: sessionDate.toISOString(),
+            isValid: !isNaN(sessionDate.getTime()),
+            isAfterFrom: sessionDate >= from,
+            isBeforeTo: sessionDate <= to
+          });
+          
+          return !isNaN(sessionDate.getTime()) && sessionDate >= from && sessionDate <= to;
+        });
+
+        console.log('Filtered Sessions Count:', filteredSessions.length);
       }
+      
       
       if (searchQuery) {
         const searchLower = searchQuery.toLowerCase();
