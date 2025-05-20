@@ -118,7 +118,7 @@ const UsersReport = () => {
         <h1 className="text-2xl font-bold tracking-tight">Users Report</h1>
       </div>
 
-      <div className="grid gap-4 md:grid-cols-1 lg:grid-cols-3">
+      <div className="grid gap-4 md:grid-cols-1 lg:grid-cols-2">
         <div>
           <Select value={selectedUser} onValueChange={setSelectedUser}>
             <SelectTrigger>
@@ -134,9 +134,9 @@ const UsersReport = () => {
             </SelectContent>
           </Select>
         </div>
-        <div>
+        {/* <div>
           <DateRangePicker dateRange={dateRange} setDateRange={setDateRange} />
-        </div>
+        </div> */}
         <div className="flex gap-2">
           <div className="relative flex-1">
             <Search className="absolute left-2.5 top-2.5 h-4 w-4 text-muted-foreground" />
