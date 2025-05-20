@@ -292,7 +292,7 @@ export const generateUserReport = async (
   }
   
   const report = filteredUsers.map(user => {
-    const userSessions = sessionsData.data.filter(session => session.userId === user.id);
+    const userSessions = sessionsData.data.filter(session => session.username === user.username);
     const filteredSessions = userSessions.filter(session => {
       if (!startDate && !endDate) return true;
       
