@@ -65,54 +65,15 @@ const QuestionsReport = () => {
       pageSize
     ],
     queryFn: async () => {
-      const response = await fetch('http://localhost:4000/api/v1/questions');
-      const result = await response.json();
-      
-      if (!result.success) {
-        throw new Error('Failed to fetch questions');
-      }
-
-      // Filter questions based on selected filters
-      let filteredQuestions = result.data;
-      
-      if (selectedUser && selectedUser !== 'all') {
-        filteredQuestions = filteredQuestions.filter(q => q.user_id === selectedUser);
-      }
-      
-      if (selectedSession && selectedSession !== 'all') {
-        filteredQuestions = filteredQuestions.filter(q => q.session_id === selectedSession);
-      }
-      
-      if (dateRange.from || dateRange.to) {
-        filteredQuestions = filteredQuestions.filter(q => {
-          const questionDate = new Date(q.dateAsked);
-          const from = dateRange.from || new Date(0);
-          const to = dateRange.to || new Date(8640000000000000);
-          return questionDate >= from && questionDate <= to;
-        });
-      }
-      
-      if (searchQuery) {
-        const searchLower = searchQuery.toLowerCase();
-        filteredQuestions = filteredQuestions.filter(q => 
-          q.question.toLowerCase().includes(searchLower) ||
-          q.qid.toLowerCase().includes(searchLower)
-        );
-      }
-
-      // Apply pagination
-      const start = (page - 1) * pageSize;
-      const end = start + pageSize;
-      const paginatedQuestions = filteredQuestions.slice(start, end);
-
-      return {
-        data: paginatedQuestions,
-        total: filteredQuestions.length,
-        page,
-        pageSize,
-        totalPages: Math.ceil(filteredQuestions.length / pageSize)
-      };
-    },
+      return generateQuestionsReport(
+        { page, pageSize },
+        selectedUser !== 'all' ? selectedUser : undefined,
+        selectedSession !== 'all' ? selectedSession : undefined,
+        dateRange.from?.toISOString(),
+        dateRange.to?.toISOString(),
+        searchQuery
+      );
+    }
   });
 
   const users = usersResponse.data;
