@@ -223,13 +223,14 @@ const SessionsReport = () => {
                 paginatedSessions.map((session, idx) => (
                   <TableRow key={session.sessionId || idx}>
                     <TableCell className="font-medium">
-                      <button
+                      {/* <button
                         onClick={() => handleSessionClick(session.sessionId)}
                         className="text-primary hover:underline"
-                      >
+                      > */}
                         {session.sessionId}
-                      </button>
-                    </TableCell>
+                      {/* </button>
+                     */}
+                     </TableCell>
                     <TableCell>{session.username}</TableCell>
                     <TableCell className="text-right">
                       {session.questionCount}
