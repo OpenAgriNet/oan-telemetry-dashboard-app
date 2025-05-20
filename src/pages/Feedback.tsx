@@ -1,4 +1,4 @@
-import React, { useState } from "react";
+import React, { useState, useMemo } from "react";
 import { Link } from "react-router-dom";
 import { useQuery } from "@tanstack/react-query";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
@@ -22,24 +22,54 @@ const FeedbackPage = () => {
   const [page, setPage] = useState(1);
   const pageSize = 10;
 
-  const { data: feedbackResponse = { data: [], total: 0, totalPages: 0 }, isLoading } = useQuery({
-    queryKey: ['feedback', page, pageSize],
-    queryFn: () => fetchFeedback({ page, pageSize })
+  // Fetch all feedback data at once since there's no server-side pagination
+  const { data: allFeedback = [], isLoading } = useQuery({
+    queryKey: ['feedback'],
+    queryFn: () => fetchFeedback({ page: 1, pageSize: 1000 }).then(res => res.data)
   });
 
-  const filteredFeedback = feedbackResponse.data.filter((feedback) => {
-    const matchesSearch = feedback.question.toLowerCase().includes(searchTerm.toLowerCase()) ||
-      feedback.feedback.toLowerCase().includes(searchTerm.toLowerCase());
-    
-    const matchesUser = selectedUser === "all" || feedback.userId === selectedUser;
-    
-    const matchesDate = !dateRange.from || !dateRange.to || (
-      new Date(feedback.date) >= dateRange.from &&
-      new Date(feedback.date) <= dateRange.to
-    );
+  // Apply filters to all feedback data
+  const filteredFeedback = useMemo(() => {
+    return allFeedback.filter((feedback) => {
+      const matchesSearch = feedback.question.toLowerCase().includes(searchTerm.toLowerCase()) ||
+        feedback.feedback.toLowerCase().includes(searchTerm.toLowerCase());
+      
+      const matchesUser = selectedUser === "all" || feedback.userId === selectedUser;
+      
+      const matchesDate = !dateRange.from || !dateRange.to || (
+        new Date(feedback.date) >= dateRange.from &&
+        new Date(feedback.date) <= dateRange.to
+      );
 
-    return matchesSearch && matchesUser && matchesDate;
-  });
+      return matchesSearch && matchesUser && matchesDate;
+    });
+  }, [allFeedback, searchTerm, selectedUser, dateRange]);
+
+  // Apply pagination to filtered data
+  const paginatedFeedback = useMemo(() => {
+    const start = (page - 1) * pageSize;
+    const end = start + pageSize;
+    return filteredFeedback.slice(start, end);
+  }, [filteredFeedback, page, pageSize]);
+
+  // Calculate total pages
+  const totalPages = Math.ceil(filteredFeedback.length / pageSize);
+  
+  // Reset to page 1 when filters change
+  React.useEffect(() => {
+    setPage(1);
+  }, [searchTerm, selectedUser, dateRange]);
+
+  // Count statistics
+  const totalLikes = useMemo(() => 
+    allFeedback.filter(fb => fb.rating === "like").length, 
+    [allFeedback]
+  );
+  
+  const totalDislikes = useMemo(() => 
+    allFeedback.filter(fb => fb.rating === "dislike").length, 
+    [allFeedback]
+  );
 
   return (
     <div className="space-y-6">
@@ -54,7 +84,7 @@ const FeedbackPage = () => {
             <MessageSquare className="h-4 w-4 text-muted-foreground" />
           </CardHeader>
           <CardContent>
-            <div className="text-2xl font-bold">{feedbackResponse.total || 0}</div>
+            <div className="text-2xl font-bold">{allFeedback.length || 0}</div>
           </CardContent>
         </Card>
 
@@ -64,16 +94,7 @@ const FeedbackPage = () => {
             <ThumbsUp className="h-4 w-4 text-muted-foreground" />
           </CardHeader>
           <CardContent>
-            <div className="text-2xl font-bold">
-              {(() => {
-                if (feedbackResponse.data.length === 0) return "0";
-                let totalLikes = 0;
-                feedbackResponse.data.forEach(fb => {
-                  if (fb.rating === "like") totalLikes += 1;
-                });
-                return totalLikes;
-              })()}
-            </div>
+            <div className="text-2xl font-bold">{totalLikes}</div>
           </CardContent>
         </Card>
 
@@ -83,16 +104,7 @@ const FeedbackPage = () => {
             <ThumbsUp className="h-4 w-4 text-muted-foreground rotate-180" />
           </CardHeader>
           <CardContent>
-            <div className="text-2xl font-bold">
-              {(() => {
-                if (feedbackResponse.data.length === 0) return "0";
-                let totalDislikes = 0;
-                feedbackResponse.data.forEach(fb => {
-                  if (fb.rating === "dislike") totalDislikes += 1;
-                });
-                return totalDislikes;
-              })()}
-            </div>
+            <div className="text-2xl font-bold">{totalDislikes}</div>
           </CardContent>
         </Card>
       </div>
@@ -136,8 +148,10 @@ const FeedbackPage = () => {
 
             {isLoading ? (
               <div className="py-8 text-center">Loading feedback data...</div>
-            ) : feedbackResponse.data.length === 0 ? (
+            ) : allFeedback.length === 0 ? (
               <div className="py-8 text-center">No feedback data available</div>
+            ) : filteredFeedback.length === 0 ? (
+              <div className="py-8 text-center">No feedback matches your filters</div>
             ) : (
               <Table>
                 <TableHeader>
@@ -152,7 +166,7 @@ const FeedbackPage = () => {
                   </TableRow>
                 </TableHeader>
                 <TableBody>
-                  {feedbackResponse.data.map((feedback, index) => {
+                  {paginatedFeedback.map((feedback, index) => {
                     const user = users.find(u => u.id === feedback.userId);
                     return (
                       <TableRow key={`${feedback.id}-${index}`}>
@@ -187,11 +201,13 @@ const FeedbackPage = () => {
               </Table>
             )}
             
-            <TablePagination
-              currentPage={page}
-              totalPages={feedbackResponse.totalPages}
-              onPageChange={setPage}
-            />
+            {filteredFeedback.length > 0 && (
+              <TablePagination
+                currentPage={page}
+                totalPages={totalPages}
+                onPageChange={setPage}
+              />
+            )}
           </div>
         </CardContent>
       </Card>

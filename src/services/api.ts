@@ -4,9 +4,11 @@ import questions from '../data/questions.json';
 import dailyMetrics from '../data/dailyMetrics.json';
 import feedback from '../data/feedback.json';
 import translations from '../data/translations.json';
+import React from 'react';
+import { API_CONFIG } from '../config/environment';
 
 // API Base URL
-const SERVER_URL = 'http://localhost:4000/api/v1';
+const { SERVER_URL } = API_CONFIG;
 
 // Types
 export interface User {
@@ -59,6 +61,7 @@ export interface UserReport {
 }
 
 export interface Feedback {
+  user: string;
   id: string;
   date: string;
   question: string;
@@ -239,7 +242,7 @@ export const fetchFeedback = async (pagination?: PaginationParams): Promise<Pagi
 export const fetchFeedbackById = async (id: string): Promise<Feedback | undefined> => {
   try {
     // Get feedback item
-    const response = await fetch(`${SERVER_URL}/feedback/qid/${id}`);
+    const response = await fetch(`${SERVER_URL}/feedback/id/${id}`);
     const result = await response.json();
     
     // Handle both array or single object response
@@ -252,14 +255,15 @@ export const fetchFeedbackById = async (id: string): Promise<Feedback | undefine
     }
     
     console.log("Raw feedback data:", feedbackData);
-    
+
     // Map the API response to the Feedback interface
     return {
       id: feedbackData.id || feedbackData.question_id || id,
       date: feedbackData.created_at || new Date().toISOString(),
       question: feedbackData.questiontext || "",
       answer: feedbackData.answertext || "",
-      rating: feedbackData.feedbacktype === "like" ? "5" : "1",
+      user: feedbackData.user || null, // Fix: add required 'user' property, fallback to null if missing
+      rating: feedbackData.feedbacktype === "like" ? "like" : "dislike",
       feedback: feedbackData.feedbacktext || "",
       sessionId: feedbackData.session_id || "",
       userId: feedbackData.user_id || ""

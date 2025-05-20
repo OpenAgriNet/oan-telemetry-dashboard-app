@@ -37,11 +37,11 @@ const Layout: React.FC<LayoutProps> = ({ children }) => {
   };
 
   const navItems = [
-    {
-      name: "Dashboard",
-      path: "/",
-      icon: <LayoutDashboard size={20} />,
-    },
+    // {
+    //   name: "Dashboard",
+    //   path: "/",
+    //   icon: <LayoutDashboard size={20} />,
+    // },
     {
       name: "Users",
       path: "/users",
@@ -57,26 +57,26 @@ const Layout: React.FC<LayoutProps> = ({ children }) => {
       path: "/questions",
       icon: <MessageSquare size={20} />,
     },
-    {
-      name: "Content",
-      path: "/content",
-      icon: <FileText size={20} />,
-    },
-    {
-      name: "Analytics",
-      path: "/analytics",
-      icon: <BarChart3 size={20} />,
-    },
+    // {
+    //   name: "Content",
+    //   path: "/content",
+    //   icon: <FileText size={20} />,
+    // },
+    // {
+    //   name: "Analytics",
+    //   path: "/analytics",
+    //   icon: <BarChart3 size={20} />,
+    // },
     {
       name: "Feedback",
       path: "/feedback",
       icon: <MessageSquare size={20} />,
     },
-    {
-      name: "Service Status",
-      path: "/service-status",
-      icon: <Activity size={20} />,
-    },
+    // {
+    //   name: "Service Status",
+    //   path: "/service-status",
+    //   icon: <Activity size={20} />,
+    // },
   ];
 
   return (
@@ -95,7 +95,7 @@ const Layout: React.FC<LayoutProps> = ({ children }) => {
             <Button
               variant="ghost"
               size="icon"
-              onClick={() => setCollapsed(!collapsed)}
+              onClick={() => setCollapsed(!collapsed)}  
               className="hover:bg-sidebar-accent"
             >
               {collapsed ? (

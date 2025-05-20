@@ -2,6 +2,7 @@ import React, { useState } from "react";
 import { useQuery } from "@tanstack/react-query";
 import { generateUserReport, fetchUsers } from "@/services/api";
 import DateRangePicker from "@/components/dashboard/DateRangePicker";
+import { API_CONFIG } from "@/config/environment";
 import {
   Select,
   SelectContent,
@@ -48,7 +49,7 @@ const UsersReport = () => {
       pageSize
     ],
     queryFn: async () => {
-      const response = await fetch('http://localhost:3001/api/v1/users');
+      const response = await fetch(`${API_CONFIG.SERVER_URL}/users`);
       const result = await response.json();
       
       if (!result.success) {

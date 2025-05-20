@@ -4,6 +4,7 @@ import { fetchSessions, fetchUsers } from "@/services/api";
 import { useNavigate } from "react-router-dom";
 import { generateSessionReport } from "@/services/api";
 import DateRangePicker from "@/components/dashboard/DateRangePicker";
+import { API_CONFIG } from "@/config/environment";
 
 import {
   Select,
@@ -57,7 +58,7 @@ const SessionsReport = () => {
       pageSize
     ],
     queryFn: async () => {
-      const response = await fetch('http://localhost:3001/api/v1/sessions');
+      const response = await fetch(`${API_CONFIG.SERVER_URL}/sessions`);
       const result = await response.json();
       
       if (!result.success) {
