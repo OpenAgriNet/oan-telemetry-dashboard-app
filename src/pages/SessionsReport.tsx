@@ -53,7 +53,8 @@ const SessionsReport = () => {
       dateRange.from?.toISOString(),
       dateRange.to?.toISOString(),
       page,
-      pageSize
+      pageSize,
+      searchQuery
     ],
     queryFn: () =>
       fetchSessions({
@@ -61,7 +62,7 @@ const SessionsReport = () => {
         pageSize,
         username: selectedUser === "all" ? undefined : selectedUser,
         startDate: dateRange.from?.toISOString(),
-        endDate: dateRange.to?.toISOString()
+        endDate: dateRange.to?.toISOString(),
       }),
   });
 
@@ -96,11 +97,17 @@ const SessionsReport = () => {
     return session.sessionId.toLowerCase().includes(searchLower);
   });
 
-  // Calculate pagination for filtered report
-  const startIndex = (page - 1) * pageSize;
-  const endIndex = startIndex + pageSize;
-  const paginatedSessions = filteredReport.slice(startIndex, endIndex);
-  const totalPages = Math.ceil(filteredReport.length / pageSize);
+  // Instead, use the data directly from the API response
+  const paginatedSessions = sessionReport.data;
+
+  // Use totalPages from the API response
+  const totalPages = sessionReport.totalPages;
+
+  console.log({
+    currentPage: page,
+    totalPages: sessionReport.totalPages,
+    dataLength: sessionReport.data.length
+  });
 
   return (
     <div className="space-y-6">
