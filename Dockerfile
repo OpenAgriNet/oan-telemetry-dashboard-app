@@ -3,18 +3,19 @@ FROM node:18-alpine AS builder
 
 WORKDIR /app
 
-# Copy package.json and package-lock.json (or bun.lockb)
-COPY package*.json ./
-# If using bun, uncomment the following line and comment out the npm ci line
-# COPY bun.lockb ./
-# RUN bun install --frozen-lockfile
-RUN npm ci
+# Copy package.json and bun.lockb
+COPY package.json ./
+COPY bun.lockb ./
+
+# Install dependencies using bun
+RUN npm install -g bun
+RUN bun install --frozen-lockfile
 
 # Copy the rest of the application code
 COPY . .
 
 # Build the application
-RUN npm run build
+RUN bun run build
 
 # Stage 2: Serve the application with Nginx
 FROM nginx:stable-alpine AS server
