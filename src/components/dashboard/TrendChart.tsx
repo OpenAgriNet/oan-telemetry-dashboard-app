@@ -39,6 +39,16 @@ const TrendChart: React.FC<TrendChartProps> = ({
   color = "var(--primary)",
   xAxisKey = "date",
 }) => {
+  // Format timestamp for hourly data if needed
+  const formatXAxis = (tickItem: string) => {
+    if (tickItem.includes('T') || tickItem.includes(' ')) {
+      // This is likely an ISO timestamp or has hour information
+      const date = new Date(tickItem);
+      return date.getHours() + ':00';
+    }
+    return tickItem;
+  };
+  
   const renderChart = () => {
     switch (type) {
       case "bar":
@@ -51,6 +61,8 @@ const TrendChart: React.FC<TrendChartProps> = ({
                 fontSize={12}
                 tickLine={false}
                 axisLine={false}
+                tickFormatter={formatXAxis}
+                interval="preserveStartEnd"
               />
               <YAxis
                 stroke="#888888"
@@ -78,6 +90,8 @@ const TrendChart: React.FC<TrendChartProps> = ({
                 fontSize={12}
                 tickLine={false}
                 axisLine={false}
+                tickFormatter={formatXAxis}
+                interval="preserveStartEnd"
               />
               <YAxis
                 stroke="#888888"
@@ -107,6 +121,8 @@ const TrendChart: React.FC<TrendChartProps> = ({
                 fontSize={12}
                 tickLine={false}
                 axisLine={false}
+                tickFormatter={formatXAxis}
+                interval="preserveStartEnd"
               />
               <YAxis
                 stroke="#888888"
