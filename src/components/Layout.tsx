@@ -2,6 +2,7 @@ import React, { useState } from "react";
 import { Link, useLocation } from "react-router-dom";
 import { useTheme } from "@/contexts/ThemeContext";
 import { Button } from "@/components/ui/button";
+import { useKeycloak } from "@react-keycloak/web";
 import {
   BarChart3,
   Users,
@@ -31,9 +32,10 @@ const Layout: React.FC<LayoutProps> = ({ children }) => {
   const { theme, setTheme } = useTheme();
   const location = useLocation();
   const [collapsed, setCollapsed] = useState(false);
+  const { keycloak } = useKeycloak();
 
   const handleLogout = () => {
-    console.log("Logout clicked");
+    keycloak.logout();
   };
 
   const navItems = [
@@ -127,6 +129,21 @@ const Layout: React.FC<LayoutProps> = ({ children }) => {
           </nav>
 
           <div className="p-4 border-t border-sidebar-border">
+            <DropdownMenu>
+              <DropdownMenuTrigger asChild>
+                <Button
+                  variant="ghost"
+                  size="sm"
+                  className={`w-full justify-${
+                    collapsed ? "center" : "start"
+                  } hover:bg-sidebar-accent`}
+                  onClick={handleLogout}
+                >
+                  <LogOut size={20} className="mr-2" />
+                  {!collapsed && <span>Logout</span>}
+                </Button>
+              </DropdownMenuTrigger>
+            </DropdownMenu>
             <DropdownMenu>
               <DropdownMenuTrigger asChild>
                 <Button
