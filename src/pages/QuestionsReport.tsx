@@ -28,13 +28,27 @@ import { format } from "date-fns";
 import { Mic, Search, ThumbsUp, ThumbsDown } from "lucide-react";
 import DateRangePicker from "@/components/dashboard/DateRangePicker";
 
+// Utility function to adjust dates for IST to UTC conversion
+const adjustDateForUTC = (date: Date | undefined): Date | undefined => {
+  if (!date) return undefined;
+  
+  // Create a new date object to avoid mutating the original
+  const adjustedDate = new Date(date);
+  
+  // IST is UTC+5:30, so subtract 5 hours and 30 minutes to get UTC time
+  adjustedDate.setHours(adjustedDate.getHours() - 5);
+  adjustedDate.setMinutes(adjustedDate.getMinutes() - 30);
+  
+  return adjustedDate;
+};
+
 const QuestionsReport = () => {
   const [dateRange, setDateRange] = useState<{
     from: Date | undefined;
     to: Date | undefined;
   }>({ from: undefined, to: undefined });
-  const [selectedUser, setSelectedUser] = useState<string>("");
-  const [selectedSession, setSelectedSession] = useState<string>("");
+  const [selectedUser, setSelectedUser] = useState<string>("all");
+  const [selectedSession, setSelectedSession] = useState<string>("all");
   const [searchQuery, setSearchQuery] = useState<string>("");
   const [page, setPage] = useState(1);
   const pageSize = 10;
@@ -58,29 +72,61 @@ const QuestionsReport = () => {
       "questionsReport",
       selectedUser,
       selectedSession,
-      dateRange.from?.toISOString(),
-      dateRange.to?.toISOString(),
+      dateRange.from ? dateRange.from.toISOString() : undefined,
+      dateRange.to ? 
+        new Date(dateRange.to).toISOString() : 
+        dateRange.from ? new Date(dateRange.from).toISOString() : undefined,
       searchQuery,
       page,
       pageSize
     ],
     queryFn: async () => {
-      return generateQuestionsReport(
+      // Apply IST to UTC offset adjustment before sending to API
+      const fromDate = dateRange.from ? adjustDateForUTC(new Date(dateRange.from)) : undefined;
+      
+      let toDate;
+      if (dateRange.to) {
+        // Set to end of day and adjust for UTC
+        const endOfDay = new Date(dateRange.to);
+        endOfDay.setHours(23, 59, 59, 999);
+        toDate = adjustDateForUTC(endOfDay);
+      } else if (dateRange.from) {
+        // If only from date is provided, use same day end as to date
+        const endOfDay = new Date(dateRange.from);
+        endOfDay.setHours(23, 59, 59, 999);
+        toDate = adjustDateForUTC(endOfDay);
+      }
+
+      console.log('Requesting with params:', {
+        page, 
+        pageSize,
+        user: selectedUser !== 'all' ? selectedUser : undefined,
+        session: selectedSession !== 'all' ? selectedSession : undefined,
+        fromDate: fromDate?.toISOString(),
+        toDate: toDate?.toISOString(),
+        search: searchQuery
+      });
+
+      const response = await generateQuestionsReport(
         { page, pageSize },
         selectedUser !== 'all' ? selectedUser : undefined,
         selectedSession !== 'all' ? selectedSession : undefined,
-        dateRange.from?.toISOString(),
-        dateRange.to?.toISOString(),
+        fromDate ? fromDate.toISOString() : undefined,
+        toDate ? toDate.toISOString() : undefined,
         searchQuery
       );
-    }
+      console.log('Questions report response:', response);
+      return response;
+    },
+    // Don't auto-refetch on window focus to avoid unexpected changes
+    refetchOnWindowFocus: false
   });
 
   const users = usersResponse.data;
   const sessions = sessionsResponse.data;
 
   const filteredSessions = sessions.filter(
-    (session) => !selectedUser || session.username === selectedUser
+    (session) => selectedUser === 'all' || session.username === selectedUser
   );
 
   const formatDate = (dateString: string) => {
@@ -89,18 +135,20 @@ const QuestionsReport = () => {
   };
 
   const handleApplyFilters = () => {
+    setPage(1); // Reset to first page when applying new filters
     refetch();
   };
 
   const handleResetFilters = () => {
-    setSelectedUser("");
-    setSelectedSession("");
+    setSelectedUser("all");
+    setSelectedSession("all");
     setDateRange({ from: undefined, to: undefined });
     setSearchQuery("");
+    setPage(1);
   };
 
   React.useEffect(() => {
-    setSelectedSession("");
+    setSelectedSession("all");
   }, [selectedUser]);
 
   return (
@@ -120,7 +168,7 @@ const QuestionsReport = () => {
               {users.map((user) => (
                 <SelectItem 
                   key={user.id} 
-                  value={user.username || `user-${user.id}`}
+                  value={user.username || user.id}
                 >
                   {user.username || `User ${user.id}`}
                 </SelectItem>
@@ -136,8 +184,8 @@ const QuestionsReport = () => {
             <SelectContent>
               <SelectItem value="all">All Sessions</SelectItem>
               {filteredSessions.map((session) => (
-                <SelectItem key={session.sessionId || `session-${session.sessionId}`} value={session.sessionId || `session-${session.sessionId}`}>
-                  {session.sessionId || `Session ${session.sessionId}`}
+                <SelectItem key={session.sessionId} value={session.sessionId}>
+                  {session.sessionId}
                 </SelectItem>
               ))}
             </SelectContent>
@@ -165,6 +213,12 @@ const QuestionsReport = () => {
         <Button variant="outline" onClick={handleResetFilters}>
           Reset Filters
         </Button>
+      </div>
+
+      <div className="bg-muted/50 p-3 rounded-md">
+        <p className="text-sm font-medium">
+          Total Questions: {questionsReport.total || 0}
+        </p>
       </div>
 
       <div className="border rounded-md">
