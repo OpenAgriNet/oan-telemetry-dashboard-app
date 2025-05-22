@@ -62,7 +62,18 @@ const TrendChart: React.FC<TrendChartProps> = ({
   console.log('xAxisKey:', xAxisKey);
   console.log('dataKey:', dataKey);
   
+  // Check if we have data to display
+  const hasData = data && data.length > 0;
+  
   const renderChart = () => {
+    if (!hasData) {
+      return (
+        <div className="flex items-center justify-center h-60 text-muted-foreground">
+          No data available for selected time period
+        </div>
+      );
+    }
+    
     switch (type) {
       case "bar":
         return (

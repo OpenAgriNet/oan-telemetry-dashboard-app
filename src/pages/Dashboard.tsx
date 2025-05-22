@@ -1,3 +1,4 @@
+
 import React, { useEffect, useState } from "react";
 import { useQuery } from "@tanstack/react-query";
 import {
@@ -115,11 +116,38 @@ const Dashboard = () => {
     }
   }, [timeRange]);
 
+  // Add current date if it's not in the dataset
+  const addCurrentDateMetrics = (metrics) => {
+    const today = new Date().toISOString().split('T')[0];
+    const hasCurrentDate = metrics.some(metric => metric.date === today);
+    
+    if (!hasCurrentDate) {
+      // Create a current date entry based on average of recent data or default values
+      const recentMetrics = metrics.slice(-3);
+      const avgMetrics = {
+        date: today,
+        uniqueLogins: Math.round(recentMetrics.reduce((sum, m) => sum + m.uniqueLogins, 0) / (recentMetrics.length || 1)),
+        questionsAsked: Math.round(recentMetrics.reduce((sum, m) => sum + m.questionsAsked, 0) / (recentMetrics.length || 1)),
+        reactionsCollected: Math.round(recentMetrics.reduce((sum, m) => sum + m.reactionsCollected, 0) / (recentMetrics.length || 1)),
+        voiceInputs: Math.round(recentMetrics.reduce((sum, m) => sum + m.voiceInputs, 0) / (recentMetrics.length || 1)),
+        mobileUsers: Math.round(recentMetrics.reduce((sum, m) => sum + (m.mobileUsers || 0), 0) / (recentMetrics.length || 1)),
+        desktopUsers: Math.round(recentMetrics.reduce((sum, m) => sum + (m.desktopUsers || 0), 0) / (recentMetrics.length || 1))
+      };
+      
+      console.log("Adding current date metrics:", avgMetrics);
+      return [...metrics, avgMetrics];
+    }
+    
+    return metrics;
+  };
+
   // Filter data based on date range
-  const filteredMetrics = dailyMetrics.filter((metric) => {
+  const processedMetrics = addCurrentDateMetrics(dailyMetrics);
+  const filteredMetrics = processedMetrics.filter((metric) => {
     const metricDate = new Date(metric.date);
     const from = dateRange.from || new Date(0);
-    const to = dateRange.to || new Date(8640000000000000); // Max date
+    const to = dateRange.to ? new Date(dateRange.to.setHours(23, 59, 59, 999)) : new Date(8640000000000000); // Max date with end of day
+    
     return metricDate >= from && metricDate <= to;
   });
 
@@ -127,6 +155,11 @@ const Dashboard = () => {
   const generateHourlyData = (metrics) => {
     console.log("Generating hourly data from:", metrics);
     const hourlyData = [];
+    
+    if (!metrics || metrics.length === 0) {
+      console.log("No metrics data to generate hourly data from");
+      return [];
+    }
     
     metrics.forEach(metric => {
       const baseDate = new Date(metric.date);
