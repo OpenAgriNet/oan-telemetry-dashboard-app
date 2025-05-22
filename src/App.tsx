@@ -17,6 +17,8 @@ import Feedback from "./pages/Feedback";
 import FeedbackDetails from "./pages/FeedbackDetails";
 import Content from "./pages/Content";
 import ServiceStatus from "./pages/ServiceStatus";
+import { useKeycloak } from "@react-keycloak/web";
+import { useEffect } from "node_modules/react-resizable-panels/dist/declarations/src/vendor/react";
 
 const queryClient = new QueryClient({
   defaultOptions: {
@@ -27,7 +29,19 @@ const queryClient = new QueryClient({
   },
 });
 
-const App = () => (
+const App = () => {
+  const { keycloak, initialized } = useKeycloak();
+  
+  // Show loading state while Keycloak is initializing
+  if (!initialized) {
+    return <div className=" bg-foreground/80 flex justify-center items-center h-screen text-background">Loading...</div>;
+  }
+  
+  // If not authenticated, don't render the app
+  if (!keycloak.authenticated) {
+    return null;
+  }
+  return (
   <QueryClientProvider client={queryClient}>
     <ThemeProvider>
       <TooltipProvider>
@@ -97,5 +111,7 @@ const App = () => (
     </ThemeProvider>
   </QueryClientProvider>
 );
+};
+
 
 export default App;
