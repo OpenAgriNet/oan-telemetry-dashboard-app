@@ -41,13 +41,26 @@ const TrendChart: React.FC<TrendChartProps> = ({
 }) => {
   // Format timestamp for hourly data if needed
   const formatXAxis = (tickItem: string) => {
-    if (tickItem.includes('T') || tickItem.includes(' ')) {
-      // This is likely an ISO timestamp or has hour information
-      const date = new Date(tickItem);
-      return date.getHours() + ':00';
+    if (!tickItem) return "";
+    
+    try {
+      // Check if this is a timestamp (hourly data)
+      if (tickItem.includes('T') || tickItem.includes(' ')) {
+        // This is likely an ISO timestamp or has hour information
+        const date = new Date(tickItem);
+        return `${date.getHours()}:00`;
+      }
+      return tickItem;
+    } catch (error) {
+      console.error('Error formatting X axis tick:', error, tickItem);
+      return tickItem;
     }
-    return tickItem;
   };
+  
+  // Add console logs for debugging
+  console.log('TrendChart data:', data);
+  console.log('xAxisKey:', xAxisKey);
+  console.log('dataKey:', dataKey);
   
   const renderChart = () => {
     switch (type) {

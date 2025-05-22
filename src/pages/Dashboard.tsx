@@ -123,8 +123,9 @@ const Dashboard = () => {
     return metricDate >= from && metricDate <= to;
   });
 
-  // Generate hourly data (mock data based on daily data for demo purposes)
+  // Generate hourly data (mock data based on daily data)
   const generateHourlyData = (metrics) => {
+    console.log("Generating hourly data from:", metrics);
     const hourlyData = [];
     
     metrics.forEach(metric => {
@@ -140,7 +141,7 @@ const Dashboard = () => {
         const hourlyUserMultiplier = Math.random() * 0.3 + 0.85; // 0.85 to 1.15
         
         hourlyData.push({
-          date: `${metric.date} ${hour}:00`,
+          date: metric.date,
           timestamp: hourDate.toISOString(),
           uniqueLogins: Math.round(metric.uniqueLogins * hourlyUserMultiplier / 24),
           questionsAsked: Math.round(metric.questionsAsked * hourlyMultiplier / 24),
@@ -151,6 +152,7 @@ const Dashboard = () => {
       }
     });
     
+    console.log("Generated hourly data:", hourlyData);
     return hourlyData;
   };
 
@@ -158,6 +160,9 @@ const Dashboard = () => {
   
   // Select the appropriate dataset based on the selected time granularity
   const displayMetrics = timeGranularity === "daily" ? filteredMetrics : hourlyMetrics;
+  
+  console.log("Current time granularity:", timeGranularity);
+  console.log("Display metrics:", displayMetrics);
 
   // Calculate summary metrics
   const totalUniqueLogins = filteredMetrics.reduce(
