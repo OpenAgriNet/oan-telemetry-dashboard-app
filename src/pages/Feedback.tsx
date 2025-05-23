@@ -17,6 +17,7 @@ import {
   type UserPaginationParams,
   fetchAllPages
 } from "@/services/api";
+import { Download } from "lucide-react";
 import TablePagination from "@/components/TablePagination";
 import { exportToCSV } from "@/lib/utils";
 
@@ -218,6 +219,7 @@ const FeedbackPage = () => {
               { key: 'sessionId', header: 'Session ID' },
             ], 'feedback_report.csv');
           }} disabled={isLoading} variant="outline">
+            <Download className="h-4 w-4 mr-2" />
             Download as CSV
           </Button>
         </div>

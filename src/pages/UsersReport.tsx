@@ -38,7 +38,8 @@ import {
   Activity,
   ThumbsUp,
   ThumbsDown,
-  TrendingUp 
+  TrendingUp ,
+  Download 
 } from "lucide-react";
 import TablePagination from "@/components/TablePagination";
 import { exportToCSV } from "@/lib/utils";
@@ -332,6 +333,7 @@ const UsersReport = () => {
               { key: 'latestSession', header: 'Latest Activity' },
             ], 'users_report.csv');
           }} disabled={isLoading} variant="outline">
+             <Download className="h-4 w-4 mr-2" />
             Download as CSV
           </Button>
         </div>

@@ -28,7 +28,7 @@ import {
   TableRow,
 } from "@/components/ui/table";
 import { format } from "date-fns";
-import { Mic, Search, ThumbsUp, ThumbsDown, RefreshCw, AlertCircle } from "lucide-react";
+import { Mic, Search, ThumbsUp, ThumbsDown, RefreshCw, AlertCircle, Download } from "lucide-react";
 import { useDateFilter } from "@/contexts/DateFilterContext";
 import { exportToCSV } from "@/lib/utils";
 
@@ -303,6 +303,7 @@ const QuestionsReport = () => {
             Refresh
           </Button>
           <Button onClick={downloadQuestionsCSV} disabled={isLoading} variant="outline">
+            <Download className="h-4 w-4 mr-2" />
             Download as CSV
           </Button>
         </div>

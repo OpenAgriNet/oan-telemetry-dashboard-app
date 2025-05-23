@@ -30,7 +30,7 @@ import {
   TableRow,
 } from "@/components/ui/table";
 import { format } from "date-fns";
-import { Search, RefreshCw, AlertCircle, Users, MessageSquare, Activity } from "lucide-react";
+import { Search, RefreshCw, AlertCircle, Users, MessageSquare, Activity, Download } from "lucide-react";
 import TablePagination from "@/components/TablePagination";
 import { exportToCSV } from "@/lib/utils";
 import { fetchAllPages } from "@/services/api";
@@ -268,6 +268,7 @@ const SessionsReport = () => {
               { key: 'sessionTime', header: 'Session Time' },
             ], 'sessions_report.csv');
           }} disabled={isLoading} variant="outline">
+            <Download className="h-4 w-4 mr-2" />
             Download as CSV
           </Button>
         </div>
