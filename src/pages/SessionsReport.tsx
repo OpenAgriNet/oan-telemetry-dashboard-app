@@ -42,6 +42,7 @@ const SessionsReport = () => {
   const [searchQuery, setSearchQuery] = useState<string>("");
   const [page, setPage] = useState(1);
   const pageSize = 10;
+  const [sortConfig, setSortConfig] = useState({ key: 'sessionTime', direction: 'desc' });
 
   // Reset page when filters change
   const resetPage = () => setPage(1);
@@ -129,7 +130,9 @@ const SessionsReport = () => {
       dateRange.to?.toISOString(),
       searchQuery,
       page,
-      pageSize
+      pageSize,
+      sortConfig.key,
+      sortConfig.direction
     ],
     queryFn: async () => {
       const params: SessionPaginationParams = {
@@ -174,7 +177,19 @@ const SessionsReport = () => {
       console.log('Fetching sessions with params:', params);
       const result = await fetchSessions(params);
       
-      return result;
+      // Client-side sorting
+      const sortedData = [...result.data].sort((a, b) => {
+        let aValue = a[sortConfig.key] ?? '';
+        let bValue = b[sortConfig.key] ?? '';
+        if (sortConfig.key === 'sessionTime') {
+          aValue = new Date(String(aValue)).getTime();
+          bValue = new Date(String(bValue)).getTime();
+        }
+        if (aValue < bValue) return sortConfig.direction === 'asc' ? -1 : 1;
+        if (aValue > bValue) return sortConfig.direction === 'asc' ? 1 : -1;
+        return 0;
+      });
+      return { ...result, data: sortedData };
     },
     refetchOnWindowFocus: false,
     retry: 3,
@@ -201,6 +216,20 @@ const SessionsReport = () => {
 
   const handleApplyFilters = () => {
     refetch();
+  };
+
+  const handleSort = (key) => {
+    setSortConfig((current) => ({
+      key,
+      direction: current.key === key && current.direction === 'asc' ? 'desc' : 'asc'
+    }));
+  };
+
+  const SortIndicator = ({ columnKey }) => {
+    if (sortConfig.key === columnKey) {
+      return sortConfig.direction === 'asc' ? ' ↑' : ' ↓';
+    }
+    return ' ↕';
   };
 
   // Show error state
@@ -403,10 +432,18 @@ const SessionsReport = () => {
               <Table>
                 <TableHeader>
                   <TableRow>
-                    <TableHead>Session ID</TableHead>
-                    <TableHead>User</TableHead>
-                    <TableHead className="text-right">Questions</TableHead>
-                    <TableHead>Session Time</TableHead>
+                    <TableHead className="cursor-pointer hover:bg-muted/50" onClick={() => handleSort('sessionId')}>
+                      Session ID<SortIndicator columnKey="sessionId" />
+                    </TableHead>
+                    <TableHead className="cursor-pointer hover:bg-muted/50" onClick={() => handleSort('username')}>
+                      User<SortIndicator columnKey="username" />
+                    </TableHead>
+                    <TableHead className="text-right cursor-pointer hover:bg-muted/50" onClick={() => handleSort('questionCount')}>
+                      Questions<SortIndicator columnKey="questionCount" />
+                    </TableHead>
+                    <TableHead className="cursor-pointer hover:bg-muted/50" onClick={() => handleSort('sessionTime')}>
+                      Session Time<SortIndicator columnKey="sessionTime" />
+                    </TableHead>
                   </TableRow>
                 </TableHeader>
                 <TableBody>
