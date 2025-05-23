@@ -27,6 +27,7 @@ const FeedbackPage = () => {
   const { dateRange } = useDateFilter();
   const [page, setPage] = useState(1);
   const pageSize = 10;
+  const [sortConfig, setSortConfig] = useState({ key: 'date', direction: 'desc' });
 
   // Reset page when filters change
   const resetPage = () => setPage(1);
@@ -45,6 +46,20 @@ const FeedbackPage = () => {
     setSearchTerm("");
     setSelectedUser("all");
     setPage(1);
+  };
+
+  const handleSort = (key) => {
+    setSortConfig((current) => ({
+      key,
+      direction: current.key === key && current.direction === 'asc' ? 'desc' : 'asc'
+    }));
+  };
+
+  const SortIndicator = ({ columnKey }) => {
+    if (sortConfig.key === columnKey) {
+      return sortConfig.direction === 'asc' ? ' ↑' : ' ↓';
+    }
+    return ' ↕';
   };
 
   // Fetch users for the filter dropdown
@@ -96,7 +111,9 @@ const FeedbackPage = () => {
       searchTerm, 
       selectedUser, 
       dateRange.from?.toISOString(), 
-      dateRange.to?.toISOString()
+      dateRange.to?.toISOString(),
+      sortConfig.key,
+      sortConfig.direction
     ],
     queryFn: async () => {
       const params: PaginationParams = {
@@ -129,7 +146,19 @@ const FeedbackPage = () => {
       console.log('Fetching feedback with params:', params);
       const result = await fetchFeedback(params);
       
-      return result;
+      // Client-side sorting
+      const sortedData = [...result.data].sort((a, b) => {
+        let aValue = a[sortConfig.key] ?? '';
+        let bValue = b[sortConfig.key] ?? '';
+        if (sortConfig.key === 'date') {
+          aValue = new Date(String(aValue)).getTime();
+          bValue = new Date(String(bValue)).getTime();
+        }
+        if (aValue < bValue) return sortConfig.direction === 'asc' ? -1 : 1;
+        if (aValue > bValue) return sortConfig.direction === 'asc' ? 1 : -1;
+        return 0;
+      });
+      return { ...result, data: sortedData };
     },
     refetchOnWindowFocus: false,
     retry: 3,
@@ -340,12 +369,24 @@ const FeedbackPage = () => {
               <Table>
                 <TableHeader>
                   <TableRow>
-                    <TableHead>Date</TableHead>
-                    <TableHead>User</TableHead>
-                    <TableHead>Question</TableHead>
-                    <TableHead>Answer</TableHead>
-                    <TableHead>Rating</TableHead>
-                    <TableHead>Feedback</TableHead>
+                    <TableHead className="cursor-pointer hover:bg-muted/50" onClick={() => handleSort('date')}>
+                      Date<SortIndicator columnKey="date" />
+                    </TableHead>
+                    <TableHead className="cursor-pointer hover:bg-muted/50" onClick={() => handleSort('user')}>
+                      User<SortIndicator columnKey="user" />
+                    </TableHead>
+                    <TableHead className="cursor-pointer hover:bg-muted/50" onClick={() => handleSort('question')}>
+                      Question<SortIndicator columnKey="question" />
+                    </TableHead>
+                    <TableHead className="cursor-pointer hover:bg-muted/50" onClick={() => handleSort('answer')}>
+                      Answer<SortIndicator columnKey="answer" />
+                    </TableHead>
+                    <TableHead className="cursor-pointer hover:bg-muted/50" onClick={() => handleSort('rating')}>
+                      Rating<SortIndicator columnKey="rating" />
+                    </TableHead>
+                    <TableHead className="cursor-pointer hover:bg-muted/50" onClick={() => handleSort('feedback')}>
+                      Feedback<SortIndicator columnKey="feedback" />
+                    </TableHead>
                     <TableHead>Details</TableHead>
                   </TableRow>
                 </TableHeader>
