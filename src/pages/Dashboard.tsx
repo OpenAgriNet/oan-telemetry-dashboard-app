@@ -62,7 +62,7 @@ const Dashboard = () => {
     error: usersError,
   } = useQuery({
     queryKey: ["users"],
-    queryFn: () => fetchUsers({ page: 1, pageSize: 1000 }),
+    queryFn: () => fetchUsers({ page: 1, limit: 1000 }),
   });
 
   const {
@@ -71,7 +71,7 @@ const Dashboard = () => {
     error: sessionsError,
   } = useQuery({
     queryKey: ["sessions"],
-    queryFn: () => fetchSessions({ page: 1, pageSize: 1000 }),
+    queryFn: () => fetchSessions({ page: 1, limit: 1000 }),
   });
 
   const {
@@ -80,7 +80,7 @@ const Dashboard = () => {
     error: questionsError,
   } = useQuery({
     queryKey: ["questions"],
-    queryFn: () => fetchQuestions({ page: 1, pageSize: 1000 }),
+    queryFn: () => fetchQuestions({ page: 1, limit: 1000 }),
   });
 
   // Extract data from paginated responses
