@@ -198,6 +198,8 @@ export interface FeedbackAPIResponse {
     currentPage: number;
     totalPages: number;
     totalItems: number;
+    totalLikes?: number;
+    totalDislikes?: number;
     itemsPerPage: number;
     hasNextPage: boolean;
     hasPreviousPage: boolean;
@@ -921,13 +923,15 @@ export const fetchFeedbackStats = async (params: PaginationParams = {}): Promise
   try {
     const { startDate, endDate } = params;
     
-    // Fetch a large sample to get statistics
+    // Use the regular feedback endpoint with minimal data (just 1 item) to get pagination stats
     const queryParams = buildQueryParams({
       page: 1,
-      limit: 10000, // Large limit to get comprehensive stats
+      limit: 1, // We only need pagination info, not the actual data
       startDate: startDate || '',
       endDate: endDate || ''
     });
+
+    console.log('Fetching feedback stats with URL:', `${SERVER_URL}/feedback?${queryParams}`);
 
     const response = await fetch(`${SERVER_URL}/feedback?${queryParams}`);
     
@@ -937,11 +941,17 @@ export const fetchFeedbackStats = async (params: PaginationParams = {}): Promise
     
     const result: FeedbackAPIResponse = await response.json();
     
-    const totalLikes = result.data.filter(fb => fb.rating === "like").length;
-    const totalDislikes = result.data.filter(fb => fb.rating === "dislike").length;
+    console.log('Feedback stats API response:', result);
+    
+    // Extract stats from pagination object
+    const totalFeedback = result.pagination?.totalItems || 0;
+    const totalLikes = result.pagination?.totalLikes || 0;
+    const totalDislikes = result.pagination?.totalDislikes || 0;
+
+    console.log('Extracted stats:', { totalFeedback, totalLikes, totalDislikes });
 
     return {
-      totalFeedback: result.pagination.totalItems,
+      totalFeedback,
       totalLikes,
       totalDislikes
     };

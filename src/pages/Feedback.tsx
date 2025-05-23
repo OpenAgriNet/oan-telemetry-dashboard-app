@@ -7,8 +7,8 @@ import { MessageSquare, ThumbsUp, ThumbsDown, Search, RefreshCw, AlertCircle } f
 import { format } from "date-fns";
 import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
-import DateRangePicker from "@/components/dashboard/DateRangePicker";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
+import { useDateFilter } from "@/contexts/DateFilterContext";
 import { 
   fetchFeedback, 
   fetchFeedbackStats, 
@@ -21,10 +21,7 @@ import TablePagination from "@/components/TablePagination";
 const FeedbackPage = () => {
   const [searchTerm, setSearchTerm] = useState("");
   const [selectedUser, setSelectedUser] = useState("all");
-  const [dateRange, setDateRange] = useState<{ from: Date | undefined; to: Date | undefined }>({
-    from: undefined,
-    to: undefined,
-  });
+  const { dateRange } = useDateFilter();
   const [page, setPage] = useState(1);
   const pageSize = 10;
 
@@ -41,15 +38,9 @@ const FeedbackPage = () => {
     resetPage();
   };
 
-  const handleDateRangeChange = (newDateRange: { from: Date | undefined; to: Date | undefined }) => {
-    setDateRange(newDateRange);
-    resetPage();
-  };
-
   const handleResetFilters = () => {
     setSearchTerm("");
     setSelectedUser("all");
-    setDateRange({ from: undefined, to: undefined });
     setPage(1);
   };
 
@@ -247,39 +238,18 @@ const FeedbackPage = () => {
         </CardHeader>
         <CardContent>
           <div className="space-y-4">
-            <div className="flex flex-col gap-4 md:flex-row">
-              <div className="flex items-center gap-2 md:w-1/3">
-                <Search className="h-4 w-4 text-muted-foreground" />
+            <div className="flex gap-4 items-center">
+              <div className="relative flex-1 max-w-md">
+                <Search className="h-4 w-4 absolute left-2.5 top-2.5 text-muted-foreground" />
                 <Input
                   placeholder="Search questions or feedback..."
                   value={searchTerm}
                   onChange={(e) => handleSearchChange(e.target.value)}
-                  className="flex-1"
+                  className="pl-8"
                   maxLength={1000}
                 />
               </div>
-              <div className="md:w-1/3">
-                <Select value={selectedUser} onValueChange={handleUserChange} disabled={isLoadingUsers}>
-                  <SelectTrigger>
-                    <SelectValue placeholder={isLoadingUsers ? "Loading users..." : "All Users"} />
-                  </SelectTrigger>
-                  <SelectContent>
-                    <SelectItem value="all">All Users</SelectItem>
-                    {users.map((user) => (
-                      <SelectItem key={user.id} value={user.id}>
-                        {user.username || user.id}
-                      </SelectItem>
-                    ))}
-                  </SelectContent>
-                </Select>
-              </div>
-              <div className="md:w-1/3">
-                <DateRangePicker dateRange={dateRange} setDateRange={handleDateRangeChange} />
-              </div>
-            </div>
-
-            <div className="flex gap-2">
-              <Button onClick={handleApplyFilters} disabled={isLoading}>
+              {/* <Button onClick={handleApplyFilters} disabled={isLoading}>
                 {isLoading ? (
                   <>
                     <RefreshCw className="h-4 w-4 mr-2 animate-spin" />
@@ -293,7 +263,7 @@ const FeedbackPage = () => {
               </Button>
               <Button variant="outline" onClick={handleResetFilters} disabled={isLoading}>
                 Reset Filters
-              </Button>
+              </Button> */}
             </div>
 
             <div className="bg-muted/50 p-3 rounded-lg border">

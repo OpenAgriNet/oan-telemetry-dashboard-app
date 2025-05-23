@@ -1,8 +1,10 @@
 import React, { useState } from "react";
 import { Link, useLocation } from "react-router-dom";
 import { useTheme } from "@/contexts/ThemeContext";
+import { useDateFilter } from "@/contexts/DateFilterContext";
 import { Button } from "@/components/ui/button";
 import { useKeycloak } from "@react-keycloak/web";
+import DateRangePicker from "@/components/dashboard/DateRangePicker";
 import {
   BarChart3,
   Users,
@@ -15,6 +17,8 @@ import {
   UserRound,
   FileText,
   Activity,
+  CalendarIcon,
+  RotateCcw,
 } from "lucide-react";
 import {
   DropdownMenu,
@@ -30,6 +34,7 @@ interface LayoutProps {
 
 const Layout: React.FC<LayoutProps> = ({ children }) => {
   const { theme, setTheme } = useTheme();
+  const { dateRange, setDateRange, resetDateRange } = useDateFilter();
   const location = useLocation();
   const [collapsed, setCollapsed] = useState(false);
   const { keycloak } = useKeycloak();
@@ -185,8 +190,30 @@ const Layout: React.FC<LayoutProps> = ({ children }) => {
       {/* Main content */}
       <main className="flex-1 overflow-x-hidden overflow-y-auto">
         <div className="container mx-auto">
-          {/* User Profile Section */}
-          <div className="flex justify-end items-center p-4 border-b">
+          {/* Header with Global Date Filter and User Profile */}
+          <div className="flex justify-between items-center p-4 border-b">
+            <div className="flex items-center gap-4">
+              <div className="flex items-center gap-2">
+                <CalendarIcon className="h-4 w-4 text-muted-foreground" />
+                <span className="text-sm font-medium text-muted-foreground">Global Filter:</span>
+              </div>
+              <div className="flex items-center gap-2">
+                <div className="w-64">
+                  <DateRangePicker dateRange={dateRange} setDateRange={setDateRange} />
+                </div>
+                {(dateRange.from || dateRange.to) && (
+                  <Button
+                    variant="outline"
+                    size="sm"
+                    onClick={resetDateRange}
+                    className="h-8 px-2"
+                  >
+                    <RotateCcw className="h-3 w-3" />
+                  </Button>
+                )}
+              </div>
+            </div>
+            
             <DropdownMenu>
               <DropdownMenuTrigger asChild>
                 <Button variant="ghost" className="relative h-10 w-10 rounded-full">
@@ -200,7 +227,6 @@ const Layout: React.FC<LayoutProps> = ({ children }) => {
               <DropdownMenuContent className="w-56" align="end">
                 <DropdownMenuItem className="flex items-center">
                   <UserRound className="mr-2 h-4 w-4" />
-                  <span>John Doe</span>
                 </DropdownMenuItem>
                 <DropdownMenuItem
                   className="flex items-center text-red-600 focus:text-red-600"

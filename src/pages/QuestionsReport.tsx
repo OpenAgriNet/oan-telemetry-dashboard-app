@@ -28,7 +28,7 @@ import {
 } from "@/components/ui/table";
 import { format } from "date-fns";
 import { Mic, Search, ThumbsUp, ThumbsDown, RefreshCw, AlertCircle } from "lucide-react";
-import DateRangePicker from "@/components/dashboard/DateRangePicker";
+import { useDateFilter } from "@/contexts/DateFilterContext";
 
 // Utility function to adjust dates for IST to UTC conversion
 const adjustDateForUTC = (date: Date | undefined): Date | undefined => {
@@ -45,10 +45,7 @@ const adjustDateForUTC = (date: Date | undefined): Date | undefined => {
 };
 
 const QuestionsReport = () => {
-  const [dateRange, setDateRange] = useState<{
-    from: Date | undefined;
-    to: Date | undefined;
-  }>({ from: undefined, to: undefined });
+  const { dateRange } = useDateFilter();
   const [selectedUser, setSelectedUser] = useState<string>("all");
   const [selectedSession, setSelectedSession] = useState<string>("all");
   const [searchQuery, setSearchQuery] = useState<string>("");
@@ -69,14 +66,6 @@ const QuestionsReport = () => {
     resetPage();
   };
 
-  const handleDateRangeChange = (newDateRange: {
-    from: Date | undefined;
-    to: Date | undefined;
-  }) => {
-    setDateRange(newDateRange);
-    resetPage();
-  };
-
   const handleSearchQueryChange = (query: string) => {
     setSearchQuery(query);
     resetPage();
@@ -85,24 +74,32 @@ const QuestionsReport = () => {
   const handleResetFilters = () => {
     setSelectedUser("all");
     setSelectedSession("all");
-    setDateRange({ from: undefined, to: undefined });
     setSearchQuery("");
     setPage(1);
   };
 
-  // Fetch users with proper pagination
+  // Fetch users with search parameter if needed
   const { data: usersResponse = { data: [] }, isLoading: isLoadingUsers } = useQuery({
     queryKey: ["users-for-filter"],
     queryFn: () => fetchUsers({ limit: 1000 } as UserPaginationParams),
     staleTime: 5 * 60 * 1000, // Cache for 5 minutes
   });
 
-  // Fetch sessions with proper pagination and user filter
+  // Fetch sessions with search parameter based on selected user
   const { data: sessionsResponse = { data: [] }, isLoading: isLoadingSessions } = useQuery({
     queryKey: ["sessions-for-filter", selectedUser],
-    queryFn: () => fetchSessions({ 
-      limit: 1000,
-    } as SessionPaginationParams),
+    queryFn: () => {
+      const params: SessionPaginationParams = { 
+        limit: 1000,
+      };
+      
+      // Use search parameter to filter sessions by selected user
+      if (selectedUser !== 'all') {
+        params.search = selectedUser;
+      }
+      
+      return fetchSessions(params);
+    },
     staleTime: 5 * 60 * 1000, // Cache for 5 minutes
   });
 
@@ -129,19 +126,27 @@ const QuestionsReport = () => {
         limit: pageSize,
       };
 
-      // Add search filter
-      if (searchQuery.trim()) {
-        params.search = searchQuery.trim();
-      }
-
-      // Add user filter using userId parameter
+      // Build search terms array for proper search
+      const searchTerms: string[] = [];
+      
+      // Add user search if selected
       if (selectedUser !== 'all') {
-        params.userId = selectedUser;
+        searchTerms.push(selectedUser);
       }
 
-      // Add session filter using sessionId parameter
+      // Add session search if selected  
       if (selectedSession !== 'all') {
-        params.sessionId = selectedSession;
+        searchTerms.push(selectedSession);
+      }
+
+      // Add text search if provided
+      if (searchQuery.trim()) {
+        searchTerms.push(searchQuery.trim());
+      }
+
+      // Combine search terms - the backend will OR search across all fields
+      if (searchTerms.length > 0) {
+        params.search = searchTerms.join(' ');
       }
 
       // Format dates for API (backend expects ISO strings or Unix timestamps)
@@ -175,11 +180,6 @@ const QuestionsReport = () => {
 
   const users = usersResponse.data;
   const sessions = sessionsResponse.data;
-
-  // Filter sessions by selected user (client-side filter as fallback)
-  const filteredSessions = sessions.filter(
-    (session) => selectedUser === 'all' || session.username === selectedUser || session.userId === selectedUser
-  );
 
   const formatDate = (dateString: string) => {
     if (!dateString) return "N/A";
@@ -230,60 +230,19 @@ const QuestionsReport = () => {
         </Button>
       </div>
 
-      <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-4">
-        <div>
-          <Select value={selectedUser} onValueChange={handleUserChange} disabled={isLoadingUsers}>
-            <SelectTrigger>
-              <SelectValue placeholder={isLoadingUsers ? "Loading users..." : "All Users"} />
-            </SelectTrigger>
-            <SelectContent>
-              <SelectItem value="all">All Users</SelectItem>
-              {users.map((user) => (
-                <SelectItem 
-                  key={user.id} 
-                  value={user.username || user.id}
-                >
-                  {user.username || `User ${user.id}`}
-                </SelectItem>
-              ))}
-            </SelectContent>
-          </Select>
+      <div className="flex gap-4 items-center">
+        <div className="relative flex-1 max-w-md">
+          <Search className="absolute left-2.5 top-2.5 h-4 w-4 text-muted-foreground" />
+          <Input
+            type="search"
+            placeholder="Search questions..."
+            className="pl-8"
+            value={searchQuery}
+            onChange={(e) => handleSearchQueryChange(e.target.value)}
+            maxLength={1000}
+          />
         </div>
-        <div>
-          <Select value={selectedSession} onValueChange={handleSessionChange} disabled={isLoadingSessions}>
-            <SelectTrigger>
-              <SelectValue placeholder={isLoadingSessions ? "Loading sessions..." : "All Sessions"} />
-            </SelectTrigger>
-            <SelectContent>
-              <SelectItem value="all">All Sessions</SelectItem>
-              {filteredSessions.map((session) => (
-                <SelectItem key={session.sessionId} value={session.sessionId}>
-                  {session.sessionId.substring(0, 8)}...
-                </SelectItem>
-              ))}
-            </SelectContent>
-          </Select>
-        </div>
-        <div>
-          <DateRangePicker dateRange={dateRange} setDateRange={handleDateRangeChange} />
-        </div>
-        <div className="flex gap-2">
-          <div className="relative flex-1">
-            <Search className="absolute left-2.5 top-2.5 h-4 w-4 text-muted-foreground" />
-            <Input
-              type="search"
-              placeholder="Search questions..."
-              className="pl-8"
-              value={searchQuery}
-              onChange={(e) => handleSearchQueryChange(e.target.value)}
-              maxLength={1000}
-            />
-          </div>
-        </div>
-      </div>
-
-      <div className="flex gap-2">
-        <Button onClick={handleApplyFilters} disabled={isLoading}>
+        {/* <Button onClick={handleApplyFilters} disabled={isLoading}>
           {isLoading ? (
             <>
               <RefreshCw className="h-4 w-4 mr-2 animate-spin" />
@@ -297,7 +256,7 @@ const QuestionsReport = () => {
         </Button>
         <Button variant="outline" onClick={handleResetFilters} disabled={isLoading}>
           Reset Filters
-        </Button>
+        </Button> */}
       </div>
 
       <div className="bg-muted/50 p-3 rounded-lg border">

@@ -9,7 +9,7 @@ import {
   type PaginationParams
 } from "@/services/api";
 import { useNavigate } from "react-router-dom";
-import DateRangePicker from "@/components/dashboard/DateRangePicker";
+import { useDateFilter } from "@/contexts/DateFilterContext";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 
 import {
@@ -35,10 +35,7 @@ import TablePagination from "@/components/TablePagination";
 
 const SessionsReport = () => {
   const navigate = useNavigate();
-  const [dateRange, setDateRange] = useState<{
-    from: Date | undefined;
-    to: Date | undefined;
-  }>({ from: undefined, to: undefined });
+  const { dateRange } = useDateFilter();
   const [selectedUser, setSelectedUser] = useState<string>("all");
   const [searchQuery, setSearchQuery] = useState<string>("");
   const [page, setPage] = useState(1);
@@ -57,17 +54,8 @@ const SessionsReport = () => {
     resetPage();
   };
 
-  const handleDateRangeChange = (newDateRange: {
-    from: Date | undefined;
-    to: Date | undefined;
-  }) => {
-    setDateRange(newDateRange);
-    resetPage();
-  };
-
   const handleResetFilters = () => {
     setSelectedUser("all");
-    setDateRange({ from: undefined, to: undefined });
     setSearchQuery("");
     setPage(1);
   };
@@ -299,42 +287,19 @@ const SessionsReport = () => {
         </CardHeader>
         <CardContent>
           <div className="space-y-4">
-            <div className="grid gap-4 md:grid-cols-1 lg:grid-cols-3">
-              <div>
-                <Select value={selectedUser} onValueChange={handleUserChange} disabled={isLoadingUsers}>
-                  <SelectTrigger>
-                    <SelectValue placeholder={isLoadingUsers ? "Loading users..." : "All Users"} />
-                  </SelectTrigger>
-                  <SelectContent>
-                    <SelectItem value="all">All Users</SelectItem>
-                    {users.map((user) => (
-                      <SelectItem key={user.id} value={user.username || user.id}>
-                        {user.username || `User ${user.id}`}
-                      </SelectItem>
-                    ))}
-                  </SelectContent>
-                </Select>
+            <div className="flex gap-4 items-center">
+              <div className="relative flex-1 max-w-md">
+                <Search className="absolute left-2.5 top-2.5 h-4 w-4 text-muted-foreground" />
+                <Input
+                  type="search"
+                  placeholder="Search by session ID or user..."
+                  className="pl-8"
+                  value={searchQuery}
+                  onChange={(e) => handleSearchChange(e.target.value)}
+                  maxLength={1000}
+                />
               </div>
-              <div>
-                <DateRangePicker dateRange={dateRange} setDateRange={handleDateRangeChange} />
-              </div>
-              <div className="flex gap-2">
-                <div className="relative flex-1">
-                  <Search className="absolute left-2.5 top-2.5 h-4 w-4 text-muted-foreground" />
-                  <Input
-                    type="search"
-                    placeholder="Search by session ID or user..."
-                    className="pl-8"
-                    value={searchQuery}
-                    onChange={(e) => handleSearchChange(e.target.value)}
-                    maxLength={1000}
-                  />
-                </div>
-              </div>
-            </div>
-
-            <div className="flex gap-2">
-              <Button onClick={handleApplyFilters} disabled={isLoading}>
+              {/* <Button onClick={handleApplyFilters} disabled={isLoading}>
                 {isLoading ? (
                   <>
                     <RefreshCw className="h-4 w-4 mr-2 animate-spin" />
@@ -348,7 +313,7 @@ const SessionsReport = () => {
               </Button>
               <Button variant="outline" onClick={handleResetFilters} disabled={isLoading}>
                 Reset Filters
-              </Button>
+              </Button> */}
             </div>
 
             <div className="bg-muted/50 p-3 rounded-lg border">

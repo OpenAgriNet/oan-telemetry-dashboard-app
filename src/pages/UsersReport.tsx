@@ -9,7 +9,7 @@ import {
   type PaginationParams,
   type UserStatsResponse
 } from "@/services/api";
-import DateRangePicker from "@/components/dashboard/DateRangePicker";
+import { useDateFilter } from "@/contexts/DateFilterContext";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import {
   Select,
@@ -43,10 +43,7 @@ import {
 import TablePagination from "@/components/TablePagination";
 
 const UsersReport = () => {
-  const [dateRange, setDateRange] = useState<{
-    from: Date | undefined;
-    to: Date | undefined;
-  }>({ from: undefined, to: undefined });
+  const { dateRange } = useDateFilter();
   const [selectedUser, setSelectedUser] = useState<string>("all");
   const [searchQuery, setSearchQuery] = useState<string>("");
   const [page, setPage] = useState(1);
@@ -65,17 +62,8 @@ const UsersReport = () => {
     resetPage();
   };
 
-  const handleDateRangeChange = (newDateRange: {
-    from: Date | undefined;
-    to: Date | undefined;
-  }) => {
-    setDateRange(newDateRange);
-    resetPage();
-  };
-
   const handleResetFilters = () => {
     setSelectedUser("all");
-    setDateRange({ from: undefined, to: undefined });
     setSearchQuery("");
     setPage(1);
   };
@@ -367,24 +355,6 @@ const UsersReport = () => {
             </p>
           </CardContent>
         </Card>
-
-        {/* <Card>
-          <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-            <CardTitle className="text-sm font-medium">User Satisfaction</CardTitle>
-            <TrendingUp className="h-4 w-4 text-muted-foreground" />
-          </CardHeader>
-          <CardContent>
-            <div className="text-2xl font-bold">
-              {finalUserStats.totalFeedback > 0 
-                ? `${Math.round((finalUserStats.totalLikes / finalUserStats.totalFeedback) * 100)}%`
-                : "N/A"
-              }
-            </div>
-            <p className="text-xs text-muted-foreground">
-              {finalUserStats.totalLikes} likes, {finalUserStats.totalDislikes} dislikes
-            </p>
-          </CardContent>
-        </Card> */}
       </div>
 
       <Card>
@@ -394,42 +364,19 @@ const UsersReport = () => {
         </CardHeader>
         <CardContent>
           <div className="space-y-4">
-            <div className="grid gap-4 md:grid-cols-1 lg:grid-cols-3">
-              <div>
-                <Select value={selectedUser} onValueChange={handleUserChange} disabled={isLoadingAllUsers}>
-                  <SelectTrigger>
-                    <SelectValue placeholder={isLoadingAllUsers ? "Loading users..." : "All Users"} />
-                  </SelectTrigger>
-                  <SelectContent>
-                    <SelectItem value="all">All Users</SelectItem>
-                    {allUsers.map((user) => (
-                      <SelectItem key={user.id} value={user.username || user.id}>
-                        {user.username || `User ${user.id}`}
-                      </SelectItem>
-                    ))}
-                  </SelectContent>
-                </Select>
+            <div className="flex gap-4 items-center">
+              <div className="relative flex-1 max-w-md">
+                <Search className="absolute left-2.5 top-2.5 h-4 w-4 text-muted-foreground" />
+                <Input
+                  type="search"
+                  placeholder="Search by username..."
+                  className="pl-8"
+                  value={searchQuery}
+                  onChange={(e) => handleSearchChange(e.target.value)}
+                  maxLength={1000}
+                />
               </div>
-              <div>
-                <DateRangePicker dateRange={dateRange} setDateRange={handleDateRangeChange} />
-              </div>
-              <div className="flex gap-2">
-                <div className="relative flex-1">
-                  <Search className="absolute left-2.5 top-2.5 h-4 w-4 text-muted-foreground" />
-                  <Input
-                    type="search"
-                    placeholder="Search by username..."
-                    className="pl-8"
-                    value={searchQuery}
-                    onChange={(e) => handleSearchChange(e.target.value)}
-                    maxLength={1000}
-                  />
-                </div>
-              </div>
-            </div>
-
-            <div className="flex gap-2">
-              <Button onClick={handleApplyFilters} disabled={isLoading}>
+              {/* <Button onClick={handleApplyFilters} disabled={isLoading}>
                 {isLoading ? (
                   <>
                     <RefreshCw className="h-4 w-4 mr-2 animate-spin" />
@@ -443,7 +390,7 @@ const UsersReport = () => {
               </Button>
               <Button variant="outline" onClick={handleResetFilters} disabled={isLoading}>
                 Reset Filters
-              </Button>
+              </Button> */}
             </div>
 
             <div className="bg-muted/50 p-3 rounded-lg border">
