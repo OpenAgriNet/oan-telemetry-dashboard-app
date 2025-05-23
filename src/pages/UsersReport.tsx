@@ -93,19 +93,7 @@ const UsersReport = () => {
           toDate.setHours(23, 59, 59, 999);
           statsParams.endDate = toDate.toISOString();
         }
-
-        // First try the official stats endpoint
-        try {
-          const result = await fetchUserStats(statsParams);
-          console.log('Official user stats result:', result);
-          if (result.totalUsers > 0 || result.totalSessions > 0 || result.totalQuestions > 0) {
-            return result;
-          }
-        } catch (error) {
-          console.warn('Official stats endpoint failed, using fallback:', error);
-        }
-
-        // Fallback: Calculate stats from other endpoints
+        // Calculate stats from other endpoints
         console.log('Using fallback calculation...');
         
         // Get users data to calculate user stats
