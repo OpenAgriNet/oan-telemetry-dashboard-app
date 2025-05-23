@@ -1,7 +1,7 @@
 import { clsx, type ClassValue } from "clsx"
 import { twMerge } from "tailwind-merge"
-import { addMinutes, format as formatDateFnsInternal, addHours, parseISO } from "date-fns"
-import { toZonedTime, formatInTimeZone } from "date-fns-tz"
+import { addMinutes, format as formatDateFnsInternal, addHours } from "date-fns"
+import { formatInTimeZone } from "date-fns-tz"
 
 export function cn(...inputs: ClassValue[]) {
   return twMerge(clsx(inputs))
@@ -38,38 +38,39 @@ export function exportToCSV<T extends Record<string, unknown>>(
 
 /**
  * Converts a UTC date string or Date object to IST (UTC+5:30) and returns a Date object representing that time in IST.
- * This function is primarily for consistency or if a Date object in the target timezone is specifically needed.
- * For formatting directly, consider using formatInTimeZone where possible.
  * @param date UTC date string or Date object
  * @returns Date object representing the time in IST
  */
 export function convertUTCToIST(date: string | Date): Date {
-  // Ensure input is a Date object, treating string as UTC
-  const utcDate = typeof date === 'string' ? new Date(date) : new Date(date.getTime());
+  let utcDate: Date;
+  
+  if (typeof date === 'string') {
+    // Handle different date string formats and ensure they are treated as UTC
+    if (date.includes('Z') || date.includes('+') || date.includes('-', 10)) {
+      // String already has timezone info
+      utcDate = new Date(date);
+    } else {
+      // String without timezone info - treat as UTC by appending 'Z'
+      utcDate = new Date(date + (date.includes('T') ? 'Z' : 'T00:00:00Z'));
+    }
+  } else {
+    utcDate = new Date(date.getTime());
+  }
 
-  // Define the target timezone
-  const targetTimeZone = 'Asia/Kolkata'; // IST
-
-  // Convert the UTC date to a Date object representing the time in the target timezone
-  const istDate = toZonedTime(utcDate, targetTimeZone);
-
+  // IST is UTC+5:30 (330 minutes ahead of UTC)
+  const istDate = new Date(utcDate.getTime() + (5.5 * 60 * 60 * 1000));
   return istDate;
 }
 
 /**
- * Formats an ISO date string, with a potential adjustment for hours that are
- * parsed as AM from the string but are intended by the backend to be PM.
- * Assumes the input dateString without an offset is intended as UTC.
- *
- * @param dateString The ISO-like date string from the backend (e.g., "2025-05-22T07:16:47").
- *                   It's assumed to be UTC if no offset is specified.
- * @param pmCorrectionHoursAM An array of UTC hours (0-11) that, if parsed from the string
- *                            (e.g., 'T07' implies 7 AM UTC), indicate the time should be
- *                            shifted by +12 hours (e.g., to 7 PM UTC).
- *                            Example: [7] for the user's case.
- * @param targetTimeZone The IANA timezone string for the output (e.g., 'Asia/Kolkata').
+ * Formats a UTC date string to IST with optional PM correction.
+ * 
+ * @param dateString The UTC date string from the backend (e.g., "2025-05-22T07:16:47" or "2025-05-22T07:16:47Z").
+ * @param pmCorrectionHoursAM An array of UTC hours (0-11) that should be shifted by +12 hours to convert AM to PM.
+ *                            Example: [7] means if the UTC hour is 7 AM, treat it as 7 PM instead.
+ * @param targetTimeZone The IANA timezone string for the output (default: 'Asia/Kolkata' for IST).
  * @param outputFormat The date-fns format string for the output.
- * @returns Formatted date string in the targetTimeZone, or "N/A".
+ * @returns Formatted date string in the target timezone, or "N/A" if invalid.
  */
 export function formatUtcDateWithPMCorrection(
   dateString: string | null | undefined,
@@ -80,37 +81,58 @@ export function formatUtcDateWithPMCorrection(
   if (!dateString) return "N/A";
 
   try {
-    // 1. Parse the ISO string. parseISO correctly handles strings like "2025-05-22T07:16:47"
-    //    as 7:16:47 AM UTC.
-    let date = parseISO(dateString);
-
-    // 2. Get the hour in UTC from the parsed date.
-    const utcHour = date.getUTCHours();
-
-    // 3. If this UTC hour is in the pmCorrectionHoursAM list, add 12 hours to the date.
-    //    This effectively shifts an AM time to PM in UTC.
-    if (pmCorrectionHoursAM.includes(utcHour)) {
-      date = addHours(date, 12);
+    let utcDate: Date;
+    
+    // Parse the date string as UTC
+    if (dateString.includes('Z') || dateString.includes('+') || dateString.includes('-', 10)) {
+      // String already has timezone info
+      utcDate = new Date(dateString);
+    } else {
+      // String without timezone info - treat as UTC by appending 'Z'
+      utcDate = new Date(dateString + (dateString.includes('T') ? 'Z' : 'T00:00:00Z'));
     }
 
-    // 4. Format the (potentially adjusted) UTC Date object into the target timezone and format.
-    return formatInTimeZone(date, targetTimeZone, outputFormat);
+    // Check if the date is valid
+    if (isNaN(utcDate.getTime())) {
+      throw new Error('Invalid date string');
+    }
+
+    // Apply PM correction if needed
+    const utcHour = utcDate.getUTCHours();
+    if (pmCorrectionHoursAM.includes(utcHour)) {
+      utcDate = addHours(utcDate, 12);
+    }
+
+    // Format the date in the target timezone
+    return formatInTimeZone(utcDate, targetTimeZone, outputFormat);
 
   } catch (error) {
     const errMessage = error instanceof Error ? error.message : String(error);
-    console.warn(`Error in formatUtcDateWithPMCorrection for dateString "${dateString}" (pmCorrectionHoursAM: [${pmCorrectionHoursAM.join(', ')}]): ${errMessage}`);
-    // Fallback: Try to format directly using toZonedTime and date-fns format,
-    // which might work if the dateString is in a format they can handle and the primary logic failed.
+    console.warn(`Error formatting date "${dateString}": ${errMessage}`);
+    
+    // Fallback: try to parse as-is and format
     try {
-      // toZonedTime's parsing behavior for ambiguous strings might differ from parseISO.
-      // It might interpret "2025-05-22T07:16:47" as local time if not careful.
-      // However, if parseISO failed, this is a last resort.
-      const zonedDate = toZonedTime(dateString, targetTimeZone); 
-      return formatDateFnsInternal(zonedDate, outputFormat); // Use the aliased format
+      const fallbackDate = new Date(dateString);
+      if (!isNaN(fallbackDate.getTime())) {
+        return formatInTimeZone(fallbackDate, targetTimeZone, outputFormat);
+      }
     } catch (fallbackError) {
-      const fallbackErrMessage = fallbackError instanceof Error ? fallbackError.message : String(fallbackError);
-      console.warn(`Fallback formatting failed for dateString "${dateString}": ${fallbackErrMessage}`);
-      return "N/A"; // Final fallback
+      console.warn(`Fallback formatting also failed for "${dateString}"`);
     }
+    
+    return "N/A";
   }
+}
+
+/**
+ * Simple UTC to IST formatter without PM correction
+ * @param dateString UTC date string
+ * @param outputFormat Output format (default: "MMM dd, yyyy hh:mm a")
+ * @returns Formatted date string in IST
+ */
+export function formatUTCToIST(
+  dateString: string | null | undefined,
+  outputFormat: string = "MMM dd, yyyy hh:mm a"
+): string {
+  return formatUtcDateWithPMCorrection(dateString, [], 'Asia/Kolkata', outputFormat);
 }
