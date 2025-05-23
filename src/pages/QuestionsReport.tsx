@@ -27,24 +27,9 @@ import {
   TableHeader,
   TableRow,
 } from "@/components/ui/table";
-import { format } from "date-fns";
 import { Mic, Search, ThumbsUp, ThumbsDown, RefreshCw, AlertCircle, Download } from "lucide-react";
 import { useDateFilter } from "@/contexts/DateFilterContext";
-import { exportToCSV } from "@/lib/utils";
-
-// Utility function to adjust dates for IST to UTC conversion
-const adjustDateForUTC = (date: Date | undefined): Date | undefined => {
-  if (!date) return undefined;
-  
-  // Create a new date object to avoid mutating the original
-  const adjustedDate = new Date(date);
-  
-  // IST is UTC+5:30, so subtract 5 hours and 30 minutes to get UTC time
-  adjustedDate.setHours(adjustedDate.getHours() - 5);
-  adjustedDate.setMinutes(adjustedDate.getMinutes() - 30);
-  
-  return adjustedDate;
-};
+import { exportToCSV, formatUtcDateWithPMCorrection } from "@/lib/utils";
 
 const QuestionsReport = () => {
   const { dateRange } = useDateFilter();
@@ -198,19 +183,6 @@ const QuestionsReport = () => {
 
   const users = usersResponse.data;
   const sessions = sessionsResponse.data;
-
-  const formatDate = (dateString: string) => {
-    if (!dateString) return "N/A";
-    try {
-      // Handle both ISO strings and timestamps
-      const date = new Date(dateString);
-      if (isNaN(date.getTime())) return "N/A";
-      return format(date, "MMM dd, yyyy hh:mm a");
-    } catch (error) {
-      console.warn('Error formatting date:', dateString, error);
-      return "N/A";
-    }
-  };
 
   const handleApplyFilters = () => {
     refetch();
@@ -414,8 +386,8 @@ const QuestionsReport = () => {
                   </TableCell>
                 </TableRow>
               ) : (
-                questionsReport.data.map((question) => (
-                  <TableRow key={question.qid || question.id} className="hover:bg-muted/30">
+                questionsReport.data.map((question, index) => (
+                  <TableRow key={`${question.qid || question.id || 'question'}-${index}`} className="hover:bg-muted/30">
                     <TableCell className="font-medium">
                       <div className="max-w-md">
                         <p className="truncate" title={question.question}>
@@ -438,7 +410,7 @@ const QuestionsReport = () => {
                         {question.session_id.substring(0, 8)}...
                       </code>
                     </TableCell>
-                    <TableCell>{formatDate(question.dateAsked || question.created_at)}</TableCell>
+                    <TableCell>{formatUtcDateWithPMCorrection(question.dateAsked || question.created_at, [7])}</TableCell>
                     {/* <TableCell>
                       <span className="inline-flex items-center rounded-full bg-primary/10 px-2.5 py-0.5 text-xs font-medium text-primary">
                         {question.channel || 'N/A'}

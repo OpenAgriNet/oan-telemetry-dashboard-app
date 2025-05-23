@@ -28,7 +28,6 @@ import {
   TableHeader,
   TableRow,
 } from "@/components/ui/table";
-import { format } from "date-fns";
 import { 
   Search, 
   RefreshCw, 
@@ -42,7 +41,7 @@ import {
   Download 
 } from "lucide-react";
 import TablePagination from "@/components/TablePagination";
-import { exportToCSV } from "@/lib/utils";
+import { exportToCSV, formatUtcDateWithPMCorrection } from "@/lib/utils";
 import { fetchAllPages } from "@/services/api";
 
 // Add these types near the top of the file
@@ -288,18 +287,6 @@ const UsersReport = () => {
 
   const allUsers = allUsersResponse.data;
   const paginatedUsers = usersResponse.data;
-
-  const formatDate = (dateString: string) => {
-    if (!dateString) return "N/A";
-    try {
-      const date = new Date(dateString);
-      if (isNaN(date.getTime())) return "N/A";
-      return format(date, "MMM dd, yyyy hh:mm a");
-    } catch (error) {
-      console.warn('Error formatting date:', dateString, error);
-      return "N/A";
-    }
-  };
 
   const formatDuration = (seconds: number) => {
     if (!seconds || isNaN(seconds)) return "N/A";
@@ -590,7 +577,7 @@ const UsersReport = () => {
                           )}
                         </div>
                       </TableCell>
-                      <TableCell>{formatDate(user.latestSession || user.lastActivity || "")}</TableCell>
+                      <TableCell>{formatUtcDateWithPMCorrection(user.latestSession || user.lastActivity || "", [7])}</TableCell>
                     </TableRow>
                   ))}
                 </TableBody>

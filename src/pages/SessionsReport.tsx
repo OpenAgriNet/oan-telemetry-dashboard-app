@@ -29,10 +29,9 @@ import {
   TableHeader,
   TableRow,
 } from "@/components/ui/table";
-import { format } from "date-fns";
 import { Search, RefreshCw, AlertCircle, Users, MessageSquare, Activity, Download } from "lucide-react";
 import TablePagination from "@/components/TablePagination";
-import { exportToCSV } from "@/lib/utils";
+import { exportToCSV, formatUtcDateWithPMCorrection } from "@/lib/utils";
 import { fetchAllPages } from "@/services/api";
 
 const SessionsReport = () => {
@@ -200,18 +199,6 @@ const SessionsReport = () => {
 
   const handleSessionClick = (sessionId: string) => {
     navigate(`/sessions/${sessionId}`);
-  };
-
-  const formatDate = (dateString: string) => {
-    if (!dateString) return "N/A";
-    try {
-      const date = new Date(dateString);
-      if (isNaN(date.getTime())) return "N/A";
-      return format(date, "MMM dd, yyyy hh:mm a");
-    } catch (error) {
-      console.warn('Error formatting date:', dateString, error);
-      return "N/A";
-    }
   };
 
   const handleApplyFilters = () => {
@@ -469,7 +456,7 @@ const SessionsReport = () => {
                           {session.questionCount}
                         </span>
                       </TableCell>
-                      <TableCell>{formatDate(session.sessionTime)}</TableCell>
+                      <TableCell>{formatUtcDateWithPMCorrection(session.sessionTime, [7])}</TableCell>
                     </TableRow>
                   ))}
                 </TableBody>
