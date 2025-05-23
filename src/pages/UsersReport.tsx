@@ -300,42 +300,6 @@ const UsersReport = () => {
             <RefreshCw className={`h-4 w-4 mr-2 ${isLoading ? 'animate-spin' : ''}`} />
             Refresh
           </Button>
-          <Button onClick={async () => {
-            // Build params for all filters
-            const params: UserPaginationParams = {};
-            if (searchQuery.trim()) params.search = searchQuery.trim();
-            if (dateRange.from) {
-              const fromDate = new Date(dateRange.from);
-              fromDate.setHours(0, 0, 0, 0);
-              params.startDate = fromDate.toISOString();
-            }
-            if (dateRange.to) {
-              const toDate = new Date(dateRange.to);
-              toDate.setHours(23, 59, 59, 999);
-              params.endDate = toDate.toISOString();
-            } else if (dateRange.from) {
-              const toDate = new Date(dateRange.from);
-              toDate.setHours(23, 59, 59, 999);
-              params.endDate = toDate.toISOString();
-            }
-            const allUsers = await fetchAllPages(fetchUsers, params);
-            // Client-side user filter if needed
-            const filtered = selectedUser !== "all"
-              ? allUsers.filter(user => user.username === selectedUser || user.id === selectedUser)
-              : allUsers;
-            exportToCSV(filtered, [
-              { key: 'username', header: 'Username' },
-              { key: 'sessions', header: 'Sessions' },
-              { key: 'totalQuestions', header: 'Questions' },
-              { key: 'feedbackCount', header: 'Feedback' },
-              { key: 'likes', header: 'Likes' },
-              { key: 'dislikes', header: 'Dislikes' },
-              { key: 'latestSession', header: 'Latest Activity' },
-            ], 'users_report.csv');
-          }} disabled={isLoading} variant="outline">
-             <Download className="h-4 w-4 mr-2" />
-            Download as CSV
-          </Button>
         </div>
       </div>
 
@@ -346,7 +310,11 @@ const UsersReport = () => {
             <Users className="h-4 w-4 text-muted-foreground" />
           </CardHeader>
           <CardContent>
-            <div className="text-2xl font-bold">{finalUserStats.totalUsers}</div>
+            {isLoadingStats ? (
+              <div className="h-8 w-24 bg-muted animate-pulse rounded mb-2" />
+            ) : (
+              <div className="text-2xl font-bold">{finalUserStats.totalUsers}</div>
+            )}
             <p className="text-xs text-muted-foreground">
               {dateRange.from || dateRange.to ? "Filtered period" : "All time"}
             </p>
@@ -359,9 +327,15 @@ const UsersReport = () => {
             <Activity className="h-4 w-4 text-muted-foreground" />
           </CardHeader>
           <CardContent>
-            <div className="text-2xl font-bold">{finalUserStats.totalSessions}</div>
+            {isLoadingStats ? (
+              <div className="h-8 w-24 bg-muted animate-pulse rounded mb-2" />
+            ) : (
+              <div className="text-2xl font-bold">{finalUserStats.totalSessions}</div>
+            )}
             <p className="text-xs text-muted-foreground">
-              {finalUserStats.totalUsers > 0 
+              {isLoadingStats ? (
+                <span className="h-4 w-16 bg-muted animate-pulse rounded inline-block" />
+              ) : finalUserStats.totalUsers > 0 
                 ? `${Math.round(finalUserStats.totalSessions / finalUserStats.totalUsers)} avg per user`
                 : "No data"
               }
@@ -375,9 +349,15 @@ const UsersReport = () => {
             <MessageSquare className="h-4 w-4 text-muted-foreground" />
           </CardHeader>
           <CardContent>
-            <div className="text-2xl font-bold">{finalUserStats.totalQuestions}</div>
+            {isLoadingStats ? (
+              <div className="h-8 w-24 bg-muted animate-pulse rounded mb-2" />
+            ) : (
+              <div className="text-2xl font-bold">{finalUserStats.totalQuestions}</div>
+            )}
             <p className="text-xs text-muted-foreground">
-              {finalUserStats.totalSessions > 0 
+              {isLoadingStats ? (
+                <span className="h-4 w-16 bg-muted animate-pulse rounded inline-block" />
+              ) : finalUserStats.totalSessions > 0 
                 ? `${Math.round(finalUserStats.totalQuestions / finalUserStats.totalSessions)} avg per session`
                 : "No data"
               }
@@ -389,11 +369,11 @@ const UsersReport = () => {
       <Card>
         <CardHeader>
           <CardTitle>User Activity</CardTitle>
-          <CardDescription>User accounts with advanced filtering and search</CardDescription>
+          {/* <CardDescription>User accounts with advanced filtering and search</CardDescription> */}
         </CardHeader>
         <CardContent>
           <div className="space-y-4">
-            <div className="flex gap-4 items-center">
+            <div className="flex gap-4 items-center justify-between">
               <div className="relative flex-1 max-w-md">
                 <Search className="absolute left-2.5 top-2.5 h-4 w-4 text-muted-foreground" />
                 <Input
@@ -405,21 +385,42 @@ const UsersReport = () => {
                   maxLength={1000}
                 />
               </div>
-              {/* <Button onClick={handleApplyFilters} disabled={isLoading}>
-                {isLoading ? (
-                  <>
-                    <RefreshCw className="h-4 w-4 mr-2 animate-spin" />
-                    Loading...
-                  </>
-                ) : (
-                  <>
-                    Apply Filters
-                  </>
-                )}
+              <Button onClick={async () => {
+                // Build params for all filters
+                const params: UserPaginationParams = {};
+                if (searchQuery.trim()) params.search = searchQuery.trim();
+                if (dateRange.from) {
+                  const fromDate = new Date(dateRange.from);
+                  fromDate.setHours(0, 0, 0, 0);
+                  params.startDate = fromDate.toISOString();
+                }
+                if (dateRange.to) {
+                  const toDate = new Date(dateRange.to);
+                  toDate.setHours(23, 59, 59, 999);
+                  params.endDate = toDate.toISOString();
+                } else if (dateRange.from) {
+                  const toDate = new Date(dateRange.from);
+                  toDate.setHours(23, 59, 59, 999);
+                  params.endDate = toDate.toISOString();
+                }
+                const allUsers = await fetchAllPages(fetchUsers, params);
+                // Client-side user filter if needed
+                const filtered = selectedUser !== "all"
+                  ? allUsers.filter(user => user.username === selectedUser || user.id === selectedUser)
+                  : allUsers;
+                exportToCSV(filtered, [
+                  { key: 'username', header: 'Username' },
+                  { key: 'sessions', header: 'Sessions' },
+                  { key: 'totalQuestions', header: 'Questions' },
+                  { key: 'feedbackCount', header: 'Feedback' },
+                  { key: 'likes', header: 'Likes' },
+                  { key: 'dislikes', header: 'Dislikes' },
+                  { key: 'latestSession', header: 'Latest Activity' },
+                ], 'users_report.csv');
+              }} disabled={isLoading} variant="outline">
+                <Download className="h-4 w-4 mr-2" />
+                Download as CSV
               </Button>
-              <Button variant="outline" onClick={handleResetFilters} disabled={isLoading}>
-                Reset Filters
-              </Button> */}
             </div>
 
             <div className="bg-muted/50 p-3 rounded-lg border">

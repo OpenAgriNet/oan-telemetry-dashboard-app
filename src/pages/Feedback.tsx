@@ -55,7 +55,7 @@ const FeedbackPage = () => {
   });
 
   // Fetch feedback statistics
-  const { data: feedbackStats = { totalFeedback: 0, totalLikes: 0, totalDislikes: 0 } } = useQuery({
+  const { data: feedbackStats = { totalFeedback: 0, totalLikes: 0, totalDislikes: 0 }, isLoading: isLoadingStats } = useQuery({
     queryKey: ['feedback-stats', dateRange.from?.toISOString(), dateRange.to?.toISOString()],
     queryFn: async () => {
       const statsParams: PaginationParams = {};
@@ -129,20 +129,7 @@ const FeedbackPage = () => {
       console.log('Fetching feedback with params:', params);
       const result = await fetchFeedback(params);
       
-      // Apply user filter client-side if needed (since API might not support user filtering directly)
-      let filteredData = result.data;
-      if (selectedUser !== "all") {
-        filteredData = result.data.filter(feedback => 
-          feedback.userId === selectedUser || feedback.user === selectedUser
-        );
-      }
-
-      return {
-        ...result,
-        data: filteredData,
-        total: selectedUser !== "all" ? filteredData.length : result.total,
-        totalPages: selectedUser !== "all" ? Math.ceil(filteredData.length / pageSize) : result.totalPages
-      };
+      return result;
     },
     refetchOnWindowFocus: false,
     retry: 3,
@@ -186,42 +173,6 @@ const FeedbackPage = () => {
             <RefreshCw className={`h-4 w-4 mr-2 ${isLoading ? 'animate-spin' : ''}`} />
             Refresh
           </Button>
-          <Button onClick={async () => {
-            // Build params for all filters
-            const params: PaginationParams = {};
-            if (searchTerm.trim()) params.search = searchTerm.trim();
-            if (dateRange.from) {
-              const fromDate = new Date(dateRange.from);
-              fromDate.setHours(0, 0, 0, 0);
-              params.startDate = fromDate.toISOString();
-            }
-            if (dateRange.to) {
-              const toDate = new Date(dateRange.to);
-              toDate.setHours(23, 59, 59, 999);
-              params.endDate = toDate.toISOString();
-            } else if (dateRange.from) {
-              const toDate = new Date(dateRange.from);
-              toDate.setHours(23, 59, 59, 999);
-              params.endDate = toDate.toISOString();
-            }
-            const allFeedback = await fetchAllPages(fetchFeedback, params);
-            // Client-side user filter if needed
-            const filtered = selectedUser !== "all"
-              ? allFeedback.filter(fb => fb.userId === selectedUser || fb.user === selectedUser)
-              : allFeedback;
-            exportToCSV(filtered, [
-              { key: 'date', header: 'Date' },
-              { key: 'user', header: 'User' },
-              { key: 'question', header: 'Question' },
-              { key: 'answer', header: 'Answer' },
-              { key: 'rating', header: 'Rating' },
-              { key: 'feedback', header: 'Feedback' },
-              { key: 'sessionId', header: 'Session ID' },
-            ], 'feedback_report.csv');
-          }} disabled={isLoading} variant="outline">
-            <Download className="h-4 w-4 mr-2" />
-            Download as CSV
-          </Button>
         </div>
       </div>
 
@@ -232,7 +183,11 @@ const FeedbackPage = () => {
             <MessageSquare className="h-4 w-4 text-muted-foreground" />
           </CardHeader>
           <CardContent>
-            <div className="text-2xl font-bold">{feedbackStats.totalFeedback}</div>
+            {isLoadingStats ? (
+              <div className="h-8 w-24 bg-muted animate-pulse rounded mb-2" />
+            ) : (
+              <div className="text-2xl font-bold">{feedbackStats.totalFeedback}</div>
+            )}
             <p className="text-xs text-muted-foreground">
               {dateRange.from || dateRange.to ? "Filtered period" : "All time"}
             </p>
@@ -245,9 +200,15 @@ const FeedbackPage = () => {
             <ThumbsUp className="h-4 w-4 text-green-600" />
           </CardHeader>
           <CardContent>
-            <div className="text-2xl font-bold text-green-600">{feedbackStats.totalLikes}</div>
+            {isLoadingStats ? (
+              <div className="h-8 w-24 bg-muted animate-pulse rounded mb-2" />
+            ) : (
+              <div className="text-2xl font-bold text-green-600">{feedbackStats.totalLikes}</div>
+            )}
             <p className="text-xs text-muted-foreground">
-              {feedbackStats.totalFeedback > 0 
+              {isLoadingStats ? (
+                <span className="h-4 w-16 bg-muted animate-pulse rounded inline-block" />
+              ) : feedbackStats.totalFeedback > 0 
                 ? `${Math.round((feedbackStats.totalLikes / feedbackStats.totalFeedback) * 100)}% positive`
                 : "No data"
               }
@@ -261,9 +222,15 @@ const FeedbackPage = () => {
             <ThumbsDown className="h-4 w-4 text-red-600" />
           </CardHeader>
           <CardContent>
-            <div className="text-2xl font-bold text-red-600">{feedbackStats.totalDislikes}</div>
+            {isLoadingStats ? (
+              <div className="h-8 w-24 bg-muted animate-pulse rounded mb-2" />
+            ) : (
+              <div className="text-2xl font-bold text-red-600">{feedbackStats.totalDislikes}</div>
+            )}
             <p className="text-xs text-muted-foreground">
-              {feedbackStats.totalFeedback > 0 
+              {isLoadingStats ? (
+                <span className="h-4 w-16 bg-muted animate-pulse rounded inline-block" />
+              ) : feedbackStats.totalFeedback > 0 
                 ? `${Math.round((feedbackStats.totalDislikes / feedbackStats.totalFeedback) * 100)}% negative`
                 : "No data"
               }
@@ -279,32 +246,53 @@ const FeedbackPage = () => {
         </CardHeader>
         <CardContent>
           <div className="space-y-4">
-            <div className="flex gap-4 items-center">
+            <div className="flex gap-4 items-center justify-between">
               <div className="relative flex-1 max-w-md">
                 <Search className="h-4 w-4 absolute left-2.5 top-2.5 text-muted-foreground" />
                 <Input
-                  placeholder="Search questions or feedback..."
+                  placeholder="Search questions, feedback or users..."
                   value={searchTerm}
                   onChange={(e) => handleSearchChange(e.target.value)}
                   className="pl-8"
                   maxLength={1000}
                 />
               </div>
-              {/* <Button onClick={handleApplyFilters} disabled={isLoading}>
-                {isLoading ? (
-                  <>
-                    <RefreshCw className="h-4 w-4 mr-2 animate-spin" />
-                    Loading...
-                  </>
-                ) : (
-                  <>
-                    Apply Filters
-                  </>
-                )}
+              <Button onClick={async () => {
+                // Build params for all filters
+                const params: PaginationParams = {};
+                if (searchTerm.trim()) params.search = searchTerm.trim();
+                if (dateRange.from) {
+                  const fromDate = new Date(dateRange.from);
+                  fromDate.setHours(0, 0, 0, 0);
+                  params.startDate = fromDate.toISOString();
+                }
+                if (dateRange.to) {
+                  const toDate = new Date(dateRange.to);
+                  toDate.setHours(23, 59, 59, 999);
+                  params.endDate = toDate.toISOString();
+                } else if (dateRange.from) {
+                  const toDate = new Date(dateRange.from);
+                  toDate.setHours(23, 59, 59, 999);
+                  params.endDate = toDate.toISOString();
+                }
+                const allFeedback = await fetchAllPages(fetchFeedback, params);
+                // Client-side user filter if needed
+                const filtered = selectedUser !== "all"
+                  ? allFeedback.filter(fb => fb.userId === selectedUser || fb.user === selectedUser)
+                  : allFeedback;
+                exportToCSV(filtered, [
+                  { key: 'date', header: 'Date' },
+                  { key: 'user', header: 'User' },
+                  { key: 'question', header: 'Question' },
+                  { key: 'answer', header: 'Answer' },
+                  { key: 'rating', header: 'Rating' },
+                  { key: 'feedback', header: 'Feedback' },
+                  { key: 'sessionId', header: 'Session ID' },
+                ], 'feedback_report.csv');
+              }} disabled={isLoading} variant="outline">
+                <Download className="h-4 w-4 mr-2" />
+                Download as CSV
               </Button>
-              <Button variant="outline" onClick={handleResetFilters} disabled={isLoading}>
-                Reset Filters
-              </Button> */}
             </div>
 
             <div className="bg-muted/50 p-3 rounded-lg border">

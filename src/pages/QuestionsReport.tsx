@@ -302,14 +302,10 @@ const QuestionsReport = () => {
             <RefreshCw className={`h-4 w-4 mr-2 ${isLoading ? 'animate-spin' : ''}`} />
             Refresh
           </Button>
-          <Button onClick={downloadQuestionsCSV} disabled={isLoading} variant="outline">
-            <Download className="h-4 w-4 mr-2" />
-            Download as CSV
-          </Button>
         </div>
       </div>
 
-      <div className="flex gap-4 items-center">
+      <div className="flex gap-4 items-center justify-between">
         <div className="relative flex-1 max-w-md">
           <Search className="absolute left-2.5 top-2.5 h-4 w-4 text-muted-foreground" />
           <Input
@@ -321,21 +317,10 @@ const QuestionsReport = () => {
             maxLength={1000}
           />
         </div>
-        {/* <Button onClick={handleApplyFilters} disabled={isLoading}>
-          {isLoading ? (
-            <>
-              <RefreshCw className="h-4 w-4 mr-2 animate-spin" />
-              Loading...
-            </>
-          ) : (
-            <>
-              Apply Filters
-            </>
-          )}
+        <Button onClick={downloadQuestionsCSV} disabled={isLoading} variant="outline">
+          <Download className="h-4 w-4 mr-2" />
+          Download as CSV
         </Button>
-        <Button variant="outline" onClick={handleResetFilters} disabled={isLoading}>
-          Reset Filters
-        </Button> */}
       </div>
 
       <div className="bg-muted/50 p-3 rounded-lg border">
@@ -366,7 +351,7 @@ const QuestionsReport = () => {
                 <TableHead>Session ID</TableHead>
                 <TableHead>Date Asked</TableHead>
                 {/* <TableHead>Channel</TableHead> */}
-                <TableHead>Reaction</TableHead>
+                {/* <TableHead>Reaction</TableHead> */}
               </TableRow>
             </TableHeader>
             <TableBody>
@@ -421,7 +406,7 @@ const QuestionsReport = () => {
                         {question.channel || 'N/A'}
                       </span>
                     </TableCell> */}
-                    <TableCell>
+                    {/* <TableCell>
                       {question.reaction === "thumbs-up" || question.reaction === "like" ? (
                         <div className="flex items-center gap-1">
                           <ThumbsUp className="h-4 w-4 text-green-500" />
@@ -439,7 +424,7 @@ const QuestionsReport = () => {
                       ) : (
                         <span className="text-muted-foreground">—</span>
                       )}
-                    </TableCell>
+                    </TableCell> */}
                   </TableRow>
                 ))
               )}

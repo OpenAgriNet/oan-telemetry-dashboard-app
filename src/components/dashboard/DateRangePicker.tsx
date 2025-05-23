@@ -1,4 +1,3 @@
-
 import React from "react";
 import { Button } from "@/components/ui/button";
 import {
@@ -25,52 +24,67 @@ const DateRangePicker: React.FC<DateRangePickerProps> = ({
   const [isOpen, setIsOpen] = React.useState(false);
 
   return (
-    <div className="grid gap-2">
+    <div className="flex items-center">
       <Popover open={isOpen} onOpenChange={setIsOpen}>
         <PopoverTrigger asChild>
           <Button
             id="date"
             variant="outline"
             className={cn(
-              "justify-start text-left w-full",
+              "p-0 border-none bg-transparent shadow-none hover:bg-transparent focus:ring-0",
               !dateRange.from && "text-muted-foreground"
             )}
           >
-            <CalendarIcon className="mr-2 h-4 w-4" />
-            {dateRange.from ? (
-              dateRange.to ? (
-                <>
-                  {format(dateRange.from, "LLL dd, y")} -{" "}
-                  {format(dateRange.to, "LLL dd, y")}
-                </>
-              ) : (
-                format(dateRange.from, "LLL dd, y")
-              )
-            ) : (
-              <span>Pick a date</span>
-            )}
+            <div className="flex flex-col items-center justify-center bg-muted/40 rounded-2xl px-10 py-3 min-w-[420px]">
+              <div className="flex flex-row justify-center items-stretch gap-14 w-full">
+                <div className="flex flex-col items-center min-w-[120px]">
+                  <span className="text-xs font-medium text-muted-foreground text-center tracking-wide mb-1">Start Date</span>
+                  <div className="flex items-center gap-2 justify-center">
+                    <CalendarIcon className="h-4 w-4 text-primary" />
+                    <span className="font-semibold text-[1.05rem]">
+                      {dateRange.from ? format(dateRange.from, "LLL dd, y") : <span className="text-muted-foreground">Pick start</span>}
+                    </span>
+                  </div>
+                </div>
+                <div className="flex flex-col items-center justify-center">
+                  <span className="text-sm font-semibold text-muted-foreground">to</span>
+                </div>
+                <div className="flex flex-col items-center min-w-[120px]">
+                  <span className="text-xs font-medium text-muted-foreground text-center tracking-wide mb-1">End Date</span>
+                  <div className="flex items-center gap-2 justify-center">
+                    <span className="font-semibold text-[1.05rem]">
+                      {dateRange.to ? format(dateRange.to, "LLL dd, y") : <span className="text-muted-foreground">Pick end</span>}
+                    </span>
+                  </div>
+                </div>
+              </div>
+            </div>
           </Button>
         </PopoverTrigger>
         <PopoverContent className="w-auto p-0" align="start">
-          <Calendar
-            initialFocus
-            mode="range"
-            defaultMonth={dateRange.from}
-            selected={{
-              from: dateRange.from,
-              to: dateRange.to,
-            }}
-            onSelect={(range) => {
-              setDateRange({
-                from: range?.from,
-                to: range?.to,
-              });
-              if (range?.to) {
-                setIsOpen(false);
-              }
-            }}
-          />
-          <div className="p-3 border-t border-border flex justify-between">
+          <div className="p-4">
+            <div className="mb-2 text-sm font-semibold text-primary">Select Date Range</div>
+            <Calendar
+              initialFocus
+              mode="range"
+              defaultMonth={dateRange.from}
+              selected={{
+                from: dateRange.from,
+                to: dateRange.to,
+              }}
+              onSelect={(range) => {
+                setDateRange({
+                  from: range?.from,
+                  to: range?.to,
+                });
+                // Only close if both dates are picked
+                if (range?.from && range?.to) {
+                  setIsOpen(false);
+                }
+              }}
+            />
+          </div>
+          <div className="p-3 border-t border-border flex justify-between bg-muted">
             <Button
               variant="outline"
               size="sm"
@@ -85,6 +99,7 @@ const DateRangePicker: React.FC<DateRangePickerProps> = ({
               onClick={() => {
                 setIsOpen(false);
               }}
+              disabled={!dateRange.from || !dateRange.to}
             >
               Apply
             </Button>

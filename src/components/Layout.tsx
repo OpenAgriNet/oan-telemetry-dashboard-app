@@ -19,6 +19,7 @@ import {
   Activity,
   CalendarIcon,
   RotateCcw,
+  ClipboardCheck,
 } from "lucide-react";
 import {
   DropdownMenu,
@@ -77,7 +78,7 @@ const Layout: React.FC<LayoutProps> = ({ children }) => {
     {
       name: "Feedback",
       path: "/feedback",
-      icon: <MessageSquare size={20} />,
+      icon: <ClipboardCheck size={20} />,
     },
     // {
     //   name: "Service Status",
@@ -191,14 +192,14 @@ const Layout: React.FC<LayoutProps> = ({ children }) => {
       <main className="flex-1 overflow-x-hidden overflow-y-auto">
         <div className="container mx-auto">
           {/* Header with Global Date Filter and User Profile */}
-          <div className="flex justify-between items-center p-4 border-b">
-            <div className="flex items-center gap-4">
+          <div className="flex justify-between items-center p-6 border-b mb-2 mt-2">
+            <div className="flex items-center gap-8">
               <div className="flex items-center gap-2">
                 <CalendarIcon className="h-4 w-4 text-muted-foreground" />
                 <span className="text-sm font-medium text-muted-foreground">Global Filter:</span>
               </div>
-              <div className="flex items-center gap-2">
-                <div className="w-64">
+              <div className="flex items-center gap-8">
+                <div className="w-auto">
                   <DateRangePicker dateRange={dateRange} setDateRange={setDateRange} />
                 </div>
                 {(dateRange.from || dateRange.to) && (
@@ -206,9 +207,9 @@ const Layout: React.FC<LayoutProps> = ({ children }) => {
                     variant="outline"
                     size="sm"
                     onClick={resetDateRange}
-                    className="h-8 px-2"
+                    className="h-8 px-3 font-medium ml-4"
                   >
-                    <RotateCcw className="h-3 w-3" />
+                    Reset
                   </Button>
                 )}
               </div>

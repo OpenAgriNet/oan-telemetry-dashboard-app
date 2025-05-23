@@ -70,7 +70,7 @@ const SessionsReport = () => {
   });
 
   // Fetch session statistics
-  const { data: sessionStats = { totalSessions: 0, totalQuestions: 0, totalUsers: 0 } } = useQuery({
+  const { data: sessionStats = { totalSessions: 0, totalQuestions: 0, totalUsers: 0 }, isLoading: isLoadingStats } = useQuery({
     queryKey: ['session-stats', selectedUser, dateRange.from?.toISOString(), dateRange.to?.toISOString()],
     queryFn: async () => {
       const statsParams: SessionPaginationParams = {
@@ -234,43 +234,6 @@ const SessionsReport = () => {
             <RefreshCw className={`h-4 w-4 mr-2 ${isLoading ? 'animate-spin' : ''}`} />
             Refresh
           </Button>
-          <Button onClick={async () => {
-            // Build params for all filters
-            const params: SessionPaginationParams = {};
-            let searchTerm = '';
-            if (selectedUser !== 'all' && searchQuery.trim()) {
-              searchTerm = searchQuery.trim();
-            } else if (selectedUser !== 'all') {
-              searchTerm = selectedUser;
-            } else if (searchQuery.trim()) {
-              searchTerm = searchQuery.trim();
-            }
-            if (searchTerm) params.search = searchTerm;
-            if (dateRange.from) {
-              const fromDate = new Date(dateRange.from);
-              fromDate.setHours(0, 0, 0, 0);
-              params.startDate = fromDate.toISOString();
-            }
-            if (dateRange.to) {
-              const toDate = new Date(dateRange.to);
-              toDate.setHours(23, 59, 59, 999);
-              params.endDate = toDate.toISOString();
-            } else if (dateRange.from) {
-              const toDate = new Date(dateRange.from);
-              toDate.setHours(23, 59, 59, 999);
-              params.endDate = toDate.toISOString();
-            }
-            const allSessions = await fetchAllPages(fetchSessions, params);
-            exportToCSV(allSessions, [
-              { key: 'sessionId', header: 'Session ID' },
-              { key: 'username', header: 'User' },
-              { key: 'questionCount', header: 'Questions' },
-              { key: 'sessionTime', header: 'Session Time' },
-            ], 'sessions_report.csv');
-          }} disabled={isLoading} variant="outline">
-            <Download className="h-4 w-4 mr-2" />
-            Download as CSV
-          </Button>
         </div>
       </div>
 
@@ -281,22 +244,32 @@ const SessionsReport = () => {
             <Activity className="h-4 w-4 text-muted-foreground" />
           </CardHeader>
           <CardContent>
-            <div className="text-2xl font-bold">{sessionStats.totalSessions}</div>
+            {isLoadingStats ? (
+              <div className="h-8 w-24 bg-muted animate-pulse rounded mb-2" />
+            ) : (
+              <div className="text-2xl font-bold">{sessionStats.totalSessions}</div>
+            )}
             <p className="text-xs text-muted-foreground">
               {dateRange.from || dateRange.to ? "Filtered period" : "All time"}
             </p>
           </CardContent>
         </Card>
 
-        {/* <Card>
+        <Card>
           <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
             <CardTitle className="text-sm font-medium">Total Questions</CardTitle>
             <MessageSquare className="h-4 w-4 text-muted-foreground" />
           </CardHeader>
           <CardContent>
-            <div className="text-2xl font-bold">{sessionStats.totalQuestions}</div>
+            {isLoadingStats ? (
+              <div className="h-8 w-24 bg-muted animate-pulse rounded mb-2" />
+            ) : (
+              <div className="text-2xl font-bold">{sessionStats.totalQuestions}</div>
+            )}
             <p className="text-xs text-muted-foreground">
-              {sessionStats.totalSessions > 0 
+              {isLoadingStats ? (
+                <span className="h-4 w-16 bg-muted animate-pulse rounded inline-block" />
+              ) : sessionStats.totalSessions > 0 
                 ? `${Math.round(sessionStats.totalQuestions / sessionStats.totalSessions)} avg per session`
                 : "No data"
               }
@@ -304,15 +277,21 @@ const SessionsReport = () => {
           </CardContent>
         </Card>
 
-        <Card>
+        {/* <Card>
           <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
             <CardTitle className="text-sm font-medium">Active Users</CardTitle>
             <Users className="h-4 w-4 text-muted-foreground" />
           </CardHeader>
           <CardContent>
-            <div className="text-2xl font-bold">{sessionStats.totalUsers}</div>
+            {isLoadingStats ? (
+              <div className="h-8 w-24 bg-muted animate-pulse rounded mb-2" />
+            ) : (
+              <div className="text-2xl font-bold">{sessionStats.totalUsers}</div>
+            )}
             <p className="text-xs text-muted-foreground">
-              {sessionStats.totalUsers > 0 && sessionStats.totalSessions > 0
+              {isLoadingStats ? (
+                <span className="h-4 w-16 bg-muted animate-pulse rounded inline-block" />
+              ) : sessionStats.totalUsers > 0 && sessionStats.totalSessions > 0
                 ? `${Math.round(sessionStats.totalSessions / sessionStats.totalUsers)} avg sessions per user`
                 : "No data"
               }
@@ -328,7 +307,7 @@ const SessionsReport = () => {
         </CardHeader>
         <CardContent>
           <div className="space-y-4">
-            <div className="flex gap-4 items-center">
+            <div className="flex gap-4 items-center justify-between">
               <div className="relative flex-1 max-w-md">
                 <Search className="absolute left-2.5 top-2.5 h-4 w-4 text-muted-foreground" />
                 <Input
@@ -340,21 +319,43 @@ const SessionsReport = () => {
                   maxLength={1000}
                 />
               </div>
-              {/* <Button onClick={handleApplyFilters} disabled={isLoading}>
-                {isLoading ? (
-                  <>
-                    <RefreshCw className="h-4 w-4 mr-2 animate-spin" />
-                    Loading...
-                  </>
-                ) : (
-                  <>
-                    Apply Filters
-                  </>
-                )}
+              <Button onClick={async () => {
+                // Build params for all filters
+                const params: SessionPaginationParams = {};
+                let searchTerm = '';
+                if (selectedUser !== 'all' && searchQuery.trim()) {
+                  searchTerm = searchQuery.trim();
+                } else if (selectedUser !== 'all') {
+                  searchTerm = selectedUser;
+                } else if (searchQuery.trim()) {
+                  searchTerm = searchQuery.trim();
+                }
+                if (searchTerm) params.search = searchTerm;
+                if (dateRange.from) {
+                  const fromDate = new Date(dateRange.from);
+                  fromDate.setHours(0, 0, 0, 0);
+                  params.startDate = fromDate.toISOString();
+                }
+                if (dateRange.to) {
+                  const toDate = new Date(dateRange.to);
+                  toDate.setHours(23, 59, 59, 999);
+                  params.endDate = toDate.toISOString();
+                } else if (dateRange.from) {
+                  const toDate = new Date(dateRange.from);
+                  toDate.setHours(23, 59, 59, 999);
+                  params.endDate = toDate.toISOString();
+                }
+                const allSessions = await fetchAllPages(fetchSessions, params);
+                exportToCSV(allSessions, [
+                  { key: 'sessionId', header: 'Session ID' },
+                  { key: 'username', header: 'User' },
+                  { key: 'questionCount', header: 'Questions' },
+                  { key: 'sessionTime', header: 'Session Time' },
+                ], 'sessions_report.csv');
+              }} disabled={isLoading} variant="outline">
+                <Download className="h-4 w-4 mr-2" />
+                Download as CSV
               </Button>
-              <Button variant="outline" onClick={handleResetFilters} disabled={isLoading}>
-                Reset Filters
-              </Button> */}
             </div>
 
             <div className="bg-muted/50 p-3 rounded-lg border">
