@@ -135,21 +135,7 @@ const Layout: React.FC<LayoutProps> = ({ children }) => {
           </nav>
 
           <div className="p-4 border-t border-sidebar-border">
-            <DropdownMenu>
-              <DropdownMenuTrigger asChild>
-                <Button
-                  variant="ghost"
-                  size="sm"
-                  className={`w-full justify-${
-                    collapsed ? "center" : "start"
-                  } hover:bg-sidebar-accent`}
-                  onClick={handleLogout}
-                >
-                  <LogOut size={20} className="mr-2" />
-                  {!collapsed && <span>Logout</span>}
-                </Button>
-              </DropdownMenuTrigger>
-            </DropdownMenu>
+           
             <DropdownMenu>
               <DropdownMenuTrigger asChild>
                 <Button
@@ -178,11 +164,22 @@ const Layout: React.FC<LayoutProps> = ({ children }) => {
                   <Moon size={16} className="mr-2" />
                   Dark
                 </DropdownMenuItem>
-                <DropdownMenuItem onClick={() => setTheme("daylight")}>
-                  <Sun size={16} className="mr-2" />
-                  Daylight
-                </DropdownMenuItem>
               </DropdownMenuContent>
+            </DropdownMenu>
+            <DropdownMenu>
+              <DropdownMenuTrigger asChild>
+                <Button
+                  variant="ghost"
+                  size="sm"
+                  className={`w-full justify-${
+                    collapsed ? "center" : "start"
+                  } hover:bg-sidebar-accent`}
+                  onClick={handleLogout}
+                >
+                  <LogOut size={20} className="mr-2" />
+                  {!collapsed && <span>Logout</span>}
+                </Button>
+              </DropdownMenuTrigger>
             </DropdownMenu>
           </div>
         </div>
@@ -216,7 +213,7 @@ const Layout: React.FC<LayoutProps> = ({ children }) => {
             </div>
             
             <DropdownMenu>
-              <DropdownMenuTrigger asChild>
+              {/* <DropdownMenuTrigger asChild> */}
                 <Button variant="ghost" className="relative h-10 w-10 rounded-full">
                   <Avatar>
                     <AvatarFallback>
@@ -224,8 +221,8 @@ const Layout: React.FC<LayoutProps> = ({ children }) => {
                     </AvatarFallback>
                   </Avatar>
                 </Button>
-              </DropdownMenuTrigger>
-              <DropdownMenuContent className="w-56" align="end">
+              {/* </DropdownMenuTrigger> */}
+              {/* <DropdownMenuContent className="w-56" align="end">
                 <DropdownMenuItem className="flex items-center">
                   <UserRound className="mr-2 h-4 w-4" />
                 </DropdownMenuItem>
@@ -236,7 +233,7 @@ const Layout: React.FC<LayoutProps> = ({ children }) => {
                   <LogOut className="mr-2 h-4 w-4" />
                   <span>Log out</span>
                 </DropdownMenuItem>
-              </DropdownMenuContent>
+              </DropdownMenuContent> */}
             </DropdownMenu>
           </div>
           
