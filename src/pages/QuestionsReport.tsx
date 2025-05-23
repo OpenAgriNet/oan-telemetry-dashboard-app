@@ -53,6 +53,7 @@ const QuestionsReport = () => {
   const [searchQuery, setSearchQuery] = useState<string>("");
   const [page, setPage] = useState(1);
   const pageSize = 10;
+  const [sortConfig, setSortConfig] = useState({ key: 'dateAsked', direction: 'desc' });
 
   // Reset page when filters change
   const resetPage = () => setPage(1);
@@ -120,7 +121,9 @@ const QuestionsReport = () => {
       dateRange.to?.toISOString(),
       searchQuery,
       page,
-      pageSize
+      pageSize,
+      sortConfig.key,
+      sortConfig.direction
     ],
     queryFn: async () => {
       const params: QuestionPaginationParams = {
@@ -173,7 +176,20 @@ const QuestionsReport = () => {
       
       const response = await fetchQuestions(params);
       console.log('Questions response:', response);
-      return response;
+
+      // Client-side sorting
+      const sortedData = [...response.data].sort((a, b) => {
+        let aValue = a[sortConfig.key] ?? '';
+        let bValue = b[sortConfig.key] ?? '';
+        if (sortConfig.key === 'dateAsked' || sortConfig.key === 'created_at') {
+          aValue = new Date(String(aValue)).getTime();
+          bValue = new Date(String(bValue)).getTime();
+        }
+        if (aValue < bValue) return sortConfig.direction === 'asc' ? -1 : 1;
+        if (aValue > bValue) return sortConfig.direction === 'asc' ? 1 : -1;
+        return 0;
+      });
+      return { ...response, data: sortedData };
     },
     refetchOnWindowFocus: false,
     retry: 3,
@@ -271,6 +287,20 @@ const QuestionsReport = () => {
     }
   };
 
+  const handleSort = (key: string) => {
+    setSortConfig((current) => ({
+      key,
+      direction: current.key === key && current.direction === 'asc' ? 'desc' : 'asc'
+    }));
+  };
+
+  const SortIndicator = ({ columnKey }: { columnKey: string }) => {
+    if (sortConfig.key === columnKey) {
+      return sortConfig.direction === 'asc' ? ' ↑' : ' ↓';
+    }
+    return ' ↕';
+  };
+
   // Show error state
   if (error) {
     return (
@@ -346,10 +376,18 @@ const QuestionsReport = () => {
           <Table>
             <TableHeader>
               <TableRow>
-                <TableHead className="w-[400px]">Question</TableHead>
-                <TableHead>User</TableHead>
-                <TableHead>Session ID</TableHead>
-                <TableHead>Date Asked</TableHead>
+                <TableHead className="w-[400px] cursor-pointer hover:bg-muted/50" onClick={() => handleSort('question')}>
+                  Question<SortIndicator columnKey="question" />
+                </TableHead>
+                <TableHead className="cursor-pointer hover:bg-muted/50" onClick={() => handleSort('user_id')}>
+                  User<SortIndicator columnKey="user_id" />
+                </TableHead>
+                <TableHead className="cursor-pointer hover:bg-muted/50" onClick={() => handleSort('session_id')}>
+                  Session ID<SortIndicator columnKey="session_id" />
+                </TableHead>
+                <TableHead className="cursor-pointer hover:bg-muted/50" onClick={() => handleSort('dateAsked')}>
+                  Date Asked<SortIndicator columnKey="dateAsked" />
+                </TableHead>
                 {/* <TableHead>Channel</TableHead> */}
                 {/* <TableHead>Reaction</TableHead> */}
               </TableRow>
