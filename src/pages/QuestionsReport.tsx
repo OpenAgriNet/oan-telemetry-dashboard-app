@@ -6,7 +6,8 @@ import {
   fetchSessions,
   type QuestionPaginationParams,
   type UserPaginationParams,
-  type SessionPaginationParams
+  type SessionPaginationParams,
+  type Question
 } from "@/services/api";
 import TablePagination from "@/components/TablePagination";
 import {
@@ -29,6 +30,7 @@ import {
 import { format } from "date-fns";
 import { Mic, Search, ThumbsUp, ThumbsDown, RefreshCw, AlertCircle } from "lucide-react";
 import { useDateFilter } from "@/contexts/DateFilterContext";
+import { exportToCSV } from "@/lib/utils";
 
 // Utility function to adjust dates for IST to UTC conversion
 const adjustDateForUTC = (date: Date | undefined): Date | undefined => {
@@ -198,6 +200,77 @@ const QuestionsReport = () => {
     refetch();
   };
 
+  const downloadQuestionsCSV = async () => {
+    const limit = 1000; // Use backend's max allowed per page
+    const page = 1;
+    let allQuestions: Question[] = [];
+    let totalPages = 1;
+
+    // Build params with all filters
+    const buildParams = (pageNum: number) => {
+      const params: Record<string, string | number> = {
+        page: pageNum,
+        limit,
+      };
+      const searchTerms: string[] = [];
+      if (selectedUser !== 'all') searchTerms.push(selectedUser);
+      if (selectedSession !== 'all') searchTerms.push(selectedSession);
+      if (searchQuery.trim()) searchTerms.push(searchQuery.trim());
+      if (searchTerms.length > 0) params.search = searchTerms.join(' ');
+      if (dateRange.from) {
+        const fromDate = new Date(dateRange.from);
+        fromDate.setHours(0, 0, 0, 0);
+        params.startDate = fromDate.toISOString();
+      }
+      if (dateRange.to) {
+        const toDate = new Date(dateRange.to);
+        toDate.setHours(23, 59, 59, 999);
+        params.endDate = toDate.toISOString();
+      } else if (dateRange.from) {
+        const toDate = new Date(dateRange.from);
+        toDate.setHours(23, 59, 59, 999);
+        params.endDate = toDate.toISOString();
+      }
+      return params;
+    };
+
+    try {
+      // Fetch first page to get totalPages
+      const firstResp = await fetchQuestions(buildParams(1));
+      allQuestions = firstResp.data;
+      totalPages = firstResp.totalPages;
+
+      // Fetch remaining pages if any
+      const fetchPromises = [];
+      for (let p = 2; p <= totalPages; p++) {
+        fetchPromises.push(fetchQuestions(buildParams(p)));
+      }
+      if (fetchPromises.length > 0) {
+        const results = await Promise.all(fetchPromises);
+        results.forEach(r => {
+          allQuestions = allQuestions.concat(r.data);
+        });
+      }
+
+      // Use the reusable exportToCSV utility
+      exportToCSV<Question>(
+        allQuestions,
+        [
+          { key: 'question', header: 'Question' },
+          { key: 'answer', header: 'Answer' },
+          { key: 'user_id', header: 'User ID' },
+          { key: 'session_id', header: 'Session ID' },
+          { key: 'dateAsked', header: 'Date Asked' },
+          { key: 'reaction', header: 'Reaction' },
+          { key: 'channel', header: 'Channel' },
+        ],
+        'questions_report.csv'
+      );
+    } catch (err) {
+      alert('Failed to download CSV. Please try again.');
+    }
+  };
+
   // Show error state
   if (error) {
     return (
@@ -224,10 +297,15 @@ const QuestionsReport = () => {
     <div className="space-y-6">
       <div className="flex items-center justify-between">
         <h1 className="text-2xl font-bold tracking-tight">Questions Report</h1>
-        <Button onClick={handleApplyFilters} disabled={isLoading} variant="outline">
-          <RefreshCw className={`h-4 w-4 mr-2 ${isLoading ? 'animate-spin' : ''}`} />
-          Refresh
-        </Button>
+        <div className="flex gap-2">
+          <Button onClick={handleApplyFilters} disabled={isLoading} variant="outline">
+            <RefreshCw className={`h-4 w-4 mr-2 ${isLoading ? 'animate-spin' : ''}`} />
+            Refresh
+          </Button>
+          <Button onClick={downloadQuestionsCSV} disabled={isLoading} variant="outline">
+            Download as CSV
+          </Button>
+        </div>
       </div>
 
       <div className="flex gap-4 items-center">

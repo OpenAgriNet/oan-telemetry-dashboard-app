@@ -41,6 +41,8 @@ import {
   TrendingUp 
 } from "lucide-react";
 import TablePagination from "@/components/TablePagination";
+import { exportToCSV } from "@/lib/utils";
+import { fetchAllPages } from "@/services/api";
 
 const UsersReport = () => {
   const { dateRange } = useDateFilter();
@@ -292,10 +294,47 @@ const UsersReport = () => {
     <div className="space-y-6">
       <div className="flex items-center justify-between">
         <h1 className="text-2xl font-bold tracking-tight">Users Report</h1>
-        <Button onClick={handleApplyFilters} disabled={isLoading} variant="outline">
-          <RefreshCw className={`h-4 w-4 mr-2 ${isLoading ? 'animate-spin' : ''}`} />
-          Refresh
-        </Button>
+        <div className="flex gap-2">
+          <Button onClick={handleApplyFilters} disabled={isLoading} variant="outline">
+            <RefreshCw className={`h-4 w-4 mr-2 ${isLoading ? 'animate-spin' : ''}`} />
+            Refresh
+          </Button>
+          <Button onClick={async () => {
+            // Build params for all filters
+            const params: UserPaginationParams = {};
+            if (searchQuery.trim()) params.search = searchQuery.trim();
+            if (dateRange.from) {
+              const fromDate = new Date(dateRange.from);
+              fromDate.setHours(0, 0, 0, 0);
+              params.startDate = fromDate.toISOString();
+            }
+            if (dateRange.to) {
+              const toDate = new Date(dateRange.to);
+              toDate.setHours(23, 59, 59, 999);
+              params.endDate = toDate.toISOString();
+            } else if (dateRange.from) {
+              const toDate = new Date(dateRange.from);
+              toDate.setHours(23, 59, 59, 999);
+              params.endDate = toDate.toISOString();
+            }
+            const allUsers = await fetchAllPages(fetchUsers, params);
+            // Client-side user filter if needed
+            const filtered = selectedUser !== "all"
+              ? allUsers.filter(user => user.username === selectedUser || user.id === selectedUser)
+              : allUsers;
+            exportToCSV(filtered, [
+              { key: 'username', header: 'Username' },
+              { key: 'sessions', header: 'Sessions' },
+              { key: 'totalQuestions', header: 'Questions' },
+              { key: 'feedbackCount', header: 'Feedback' },
+              { key: 'likes', header: 'Likes' },
+              { key: 'dislikes', header: 'Dislikes' },
+              { key: 'latestSession', header: 'Latest Activity' },
+            ], 'users_report.csv');
+          }} disabled={isLoading} variant="outline">
+            Download as CSV
+          </Button>
+        </div>
       </div>
 
       <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-4">

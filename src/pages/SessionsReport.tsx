@@ -32,6 +32,8 @@ import {
 import { format } from "date-fns";
 import { Search, RefreshCw, AlertCircle, Users, MessageSquare, Activity } from "lucide-react";
 import TablePagination from "@/components/TablePagination";
+import { exportToCSV } from "@/lib/utils";
+import { fetchAllPages } from "@/services/api";
 
 const SessionsReport = () => {
   const navigate = useNavigate();
@@ -227,10 +229,48 @@ const SessionsReport = () => {
     <div className="space-y-6">
       <div className="flex items-center justify-between">
         <h1 className="text-2xl font-bold tracking-tight">Sessions Report</h1>
-        <Button onClick={handleApplyFilters} disabled={isLoading} variant="outline">
-          <RefreshCw className={`h-4 w-4 mr-2 ${isLoading ? 'animate-spin' : ''}`} />
-          Refresh
-        </Button>
+        <div className="flex gap-2">
+          <Button onClick={handleApplyFilters} disabled={isLoading} variant="outline">
+            <RefreshCw className={`h-4 w-4 mr-2 ${isLoading ? 'animate-spin' : ''}`} />
+            Refresh
+          </Button>
+          <Button onClick={async () => {
+            // Build params for all filters
+            const params: SessionPaginationParams = {};
+            let searchTerm = '';
+            if (selectedUser !== 'all' && searchQuery.trim()) {
+              searchTerm = searchQuery.trim();
+            } else if (selectedUser !== 'all') {
+              searchTerm = selectedUser;
+            } else if (searchQuery.trim()) {
+              searchTerm = searchQuery.trim();
+            }
+            if (searchTerm) params.search = searchTerm;
+            if (dateRange.from) {
+              const fromDate = new Date(dateRange.from);
+              fromDate.setHours(0, 0, 0, 0);
+              params.startDate = fromDate.toISOString();
+            }
+            if (dateRange.to) {
+              const toDate = new Date(dateRange.to);
+              toDate.setHours(23, 59, 59, 999);
+              params.endDate = toDate.toISOString();
+            } else if (dateRange.from) {
+              const toDate = new Date(dateRange.from);
+              toDate.setHours(23, 59, 59, 999);
+              params.endDate = toDate.toISOString();
+            }
+            const allSessions = await fetchAllPages(fetchSessions, params);
+            exportToCSV(allSessions, [
+              { key: 'sessionId', header: 'Session ID' },
+              { key: 'username', header: 'User' },
+              { key: 'questionCount', header: 'Questions' },
+              { key: 'sessionTime', header: 'Session Time' },
+            ], 'sessions_report.csv');
+          }} disabled={isLoading} variant="outline">
+            Download as CSV
+          </Button>
+        </div>
       </div>
 
       <div className="grid gap-4 md:grid-cols-3">

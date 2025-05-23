@@ -18,6 +18,7 @@ export interface User {
   feedbackCount?: number;
   likes?: number;
   dislikes?: number;
+  [key: string]: unknown;
 }
 
 export interface Session {
@@ -32,6 +33,7 @@ export interface Session {
   totalQuestions?: number;
   totalFeedback?: number;
   totalErrors?: number;
+  [key: string]: unknown;
 }
 
 export interface Question {
@@ -49,6 +51,7 @@ export interface Question {
   hasVoiceInput?: boolean;
   reaction?: string;
   timestamp?: string;
+  [key: string]: unknown;
 }
 
 export interface DailyMetric {
@@ -80,6 +83,7 @@ export interface Feedback {
   feedback: string;
   sessionId?: string;
   userId?: string;
+  [key: string]: unknown;
 }
 
 export interface FeedbackResponse {
@@ -1148,3 +1152,30 @@ export const fetchFeedbackBySessionId = async (sessionId: string): Promise<Feedb
     throw error;
   }
 };
+
+/**
+ * Fetch all pages of a paginated API and return the combined data array.
+ * @param fetchFn The paginated fetch function (e.g., fetchQuestions)
+ * @param params The filter params (page, limit, search, etc.)
+ * @param maxLimit The max limit per page (default 1000)
+ */
+export async function fetchAllPages<T, P extends { page?: number; limit?: number }>(
+  fetchFn: (params: P) => Promise<PaginatedResponse<T>>,
+  params: P,
+  maxLimit = 1000
+): Promise<T[]> {
+  const firstPage = await fetchFn({ ...params, page: 1, limit: maxLimit });
+  let allData = [...firstPage.data];
+  const totalPages = firstPage.totalPages;
+  if (totalPages > 1) {
+    const promises = [];
+    for (let p = 2; p <= totalPages; p++) {
+      promises.push(fetchFn({ ...params, page: p, limit: maxLimit }));
+    }
+    const results = await Promise.all(promises);
+    results.forEach(r => {
+      allData = allData.concat(r.data);
+    });
+  }
+  return allData;
+}
