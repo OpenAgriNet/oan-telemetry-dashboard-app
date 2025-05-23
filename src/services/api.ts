@@ -137,6 +137,8 @@ export interface PaginationParams {
 
 export interface UserPaginationParams extends PaginationParams {
   username?: string;
+  sortKey?: string;
+  sortDirection?: 'asc' | 'desc';
 }
 
 export interface SessionPaginationParams extends PaginationParams {
@@ -324,6 +326,8 @@ export interface UsersAPIResponse {
     hasPreviousPage: boolean;
     nextPage: number | null;
     previousPage: number | null;
+    sortBy: string;
+    sortDirection: string;
   };
   filters: {
     search: string;

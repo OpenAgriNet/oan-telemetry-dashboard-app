@@ -45,6 +45,13 @@ import TablePagination from "@/components/TablePagination";
 import { exportToCSV } from "@/lib/utils";
 import { fetchAllPages } from "@/services/api";
 
+// Add these types near the top of the file
+type SortDirection = 'asc' | 'desc' | null;
+type SortConfig = {
+  key: string;
+  direction: SortDirection;
+};
+
 const UsersReport = () => {
   const { dateRange } = useDateFilter();
   const [selectedUser, setSelectedUser] = useState<string>("all");
@@ -69,6 +76,26 @@ const UsersReport = () => {
     setSelectedUser("all");
     setSearchQuery("");
     setPage(1);
+  };
+
+  // Add new state for sorting
+  const [sortConfig, setSortConfig] = useState<SortConfig>({
+    key: 'username',
+    direction: 'asc'
+  });
+
+  // Add sorting function
+  const handleSort = (key: string) => {
+    setSortConfig(current => ({
+      key,
+      direction: current.key === key && current.direction === 'asc' ? 'desc' : 'asc'
+    }));
+  };
+
+  // Helper to check if a column is backend-sortable
+  const isBackendSortable = (key: string) => {
+    // Only username is backend-sortable in current API
+    return key === 'username';
   };
 
   // Fetch user statistics - Using fallback approach since /users/stats might be broken
@@ -180,13 +207,19 @@ const UsersReport = () => {
       dateRange.to?.toISOString(),
       selectedUser,
       page,
-      pageSize
+      pageSize,
+      sortConfig.key,
+      sortConfig.direction
     ],
     queryFn: async () => {
       const params: UserPaginationParams = {
         page,
         limit: pageSize,
       };
+      if (isBackendSortable(sortConfig.key)) {
+        params.sortKey = sortConfig.key;
+        params.sortDirection = sortConfig.direction;
+      }
 
       // Add search filter
       if (searchQuery.trim()) {
@@ -210,15 +243,28 @@ const UsersReport = () => {
         params.endDate = toDate.toISOString();
       }
 
-      console.log('Fetching users with params:', params);
       const result = await fetchUsers(params);
-      
-      // Apply user filter client-side if needed
       let filteredData = result.data;
       if (selectedUser !== 'all') {
         filteredData = result.data.filter(user => 
           user.username === selectedUser || user.id === selectedUser
         );
+      }
+
+      // Client-side sorting for non-backend-sortable columns
+      if (!isBackendSortable(sortConfig.key)) {
+        filteredData = [...filteredData].sort((a, b) => {
+          let aValue = a[sortConfig.key] ?? 0;
+          let bValue = b[sortConfig.key] ?? 0;
+          // For latestSession, parse as date
+          if (sortConfig.key === 'latestSession' || sortConfig.key === 'lastActivity') {
+            aValue = new Date(String(aValue)).getTime();
+            bValue = new Date(String(bValue)).getTime();
+          }
+          if (aValue < bValue) return sortConfig.direction === 'asc' ? -1 : 1;
+          if (aValue > bValue) return sortConfig.direction === 'asc' ? 1 : -1;
+          return 0;
+        });
       }
 
       return {
@@ -267,6 +313,14 @@ const UsersReport = () => {
 
   const handleApplyFilters = () => {
     refetch();
+  };
+
+  // Update sort indicator component
+  const SortIndicator = ({ columnKey }: { columnKey: string }) => {
+    if (sortConfig.key === columnKey) {
+      return sortConfig.direction === 'asc' ? ' ↑' : ' ↓';
+    }
+    return ' ↕';
   };
 
   // Show error state
@@ -468,11 +522,36 @@ const UsersReport = () => {
               <Table>
                 <TableHeader>
                   <TableRow>
-                    <TableHead>Username</TableHead>
-                    <TableHead className="text-right">Sessions</TableHead>
-                    <TableHead className="text-right">Questions</TableHead>
-                    <TableHead className="text-right">Feedback</TableHead>
-                    <TableHead>Latest Activity</TableHead>
+                    <TableHead 
+                      className="cursor-pointer hover:bg-muted/50"
+                      onClick={() => handleSort('username')}
+                    >
+                      Username{<SortIndicator columnKey="username" />}
+                    </TableHead>
+                    <TableHead 
+                      className="text-right cursor-pointer hover:bg-muted/50"
+                      onClick={() => handleSort('sessions')}
+                    >
+                      Sessions{<SortIndicator columnKey="sessions" />}
+                    </TableHead>
+                    <TableHead 
+                      className="text-right cursor-pointer hover:bg-muted/50"
+                      onClick={() => handleSort('totalQuestions')}
+                    >
+                      Questions{<SortIndicator columnKey="totalQuestions" />}
+                    </TableHead>
+                    <TableHead 
+                      className="text-right cursor-pointer hover:bg-muted/50"
+                      onClick={() => handleSort('feedbackCount')}
+                    >
+                      Feedback{<SortIndicator columnKey="feedbackCount" />}
+                    </TableHead>
+                    <TableHead 
+                      className="cursor-pointer hover:bg-muted/50"
+                      onClick={() => handleSort('latestSession')}
+                    >
+                      Latest Activity{<SortIndicator columnKey="latestSession" />}
+                    </TableHead>
                   </TableRow>
                 </TableHeader>
                 <TableBody>
