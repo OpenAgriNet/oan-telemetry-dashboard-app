@@ -1,9 +1,3 @@
-import users from '../data/users.json';
-import sessions from '../data/sessions.json';
-import questions from '../data/questions.json';
-import dailyMetrics from '../data/dailyMetrics.json';
-import feedback from '../data/feedback.json';
-import translations from '../data/translations.json';
 import React from 'react';
 import { API_CONFIG } from '../config/environment';
 
@@ -16,6 +10,14 @@ export interface User {
   username: string;
   sessions: number;
   latestSession: string;
+  // Additional fields from API documentation
+  totalQuestions?: number;
+  totalSessions?: number;
+  firstActivity?: string;
+  lastActivity?: string;
+  feedbackCount?: number;
+  likes?: number;
+  dislikes?: number;
 }
 
 export interface Session {
@@ -23,6 +25,13 @@ export interface Session {
   username: string;
   questionCount: number;
   sessionTime: string;
+  // Additional fields from API documentation
+  userId?: string;
+  startTime?: string;
+  endTime?: string;
+  totalQuestions?: number;
+  totalFeedback?: number;
+  totalErrors?: number;
 }
 
 export interface Question {
@@ -30,15 +39,16 @@ export interface Question {
   qid: string;
   question: string;
   answer: string | null;
-  question_type: string;
+  question_type?: string;
   user_id: string;
   created_at: string;
-  event_ets: string;
+  ets?: string;
   channel: string;
   session_id: string;
-  dateAsked: string;
-  hasVoiceInput: boolean;
-  reaction: string;
+  dateAsked?: string;
+  hasVoiceInput?: boolean;
+  reaction?: string;
+  timestamp?: string;
 }
 
 export interface DailyMetric {
@@ -73,18 +83,16 @@ export interface Feedback {
 }
 
 export interface FeedbackResponse {
+  qid: string;
+  date: string;
+  user: string;
+  question: string;
+  sessionId: string;
+  answer: string;
+  rating: string;
+  feedback: string;
   id: string;
-  user_id: string;
-  session_id: string;
-  groupdetails: null | Record<string, unknown>;
-  channel: string;
-  ets: string;
-  feedbacktext: string;
-  questiontext: string;
-  answertext: string;
-  feedbacktype: string;
-  created_at: string;
-  question_id: string;
+  timestamp: string;
 }
 
 export interface Translation {
@@ -96,18 +104,45 @@ export interface Translation {
 export interface SessionEvent {
   type: string;
   timestamp: string;
-  icon?: any;
+  icon?: string | React.ElementType;
   sampleData: string | string[] | object;
   clip?: string;
 }
 
+export interface UserStats {
+  totalUsers: number;
+  totalSessions: number;
+  totalQuestions: number;
+  totalFeedback: number;
+  dailyActivity: Array<{
+    date: string;
+    users: number;
+    sessions: number;
+    questions: number;
+  }>;
+}
+
 // Pagination types
 export interface PaginationParams {
-  page: number;
-  pageSize: number;
-  username?: string;
+  page?: number;
+  limit?: number;
+  search?: string;
   startDate?: string;
   endDate?: string;
+}
+
+export interface UserPaginationParams extends PaginationParams {
+  username?: string;
+}
+
+export interface SessionPaginationParams extends PaginationParams {
+  sessionId?: string;
+  userId?: string;
+}
+
+export interface QuestionPaginationParams extends PaginationParams {
+  userId?: string;
+  sessionId?: string;
 }
 
 export interface PaginatedResponse<T> {
@@ -118,28 +153,271 @@ export interface PaginatedResponse<T> {
   totalPages: number;
 }
 
+// API Response interface for Questions API (matches actual backend response)
+export interface QuestionsAPIResponse {
+  success: boolean;
+  data: Question[];
+  pagination: {
+    currentPage: number;
+    totalPages: number;
+    totalItems: number;
+    itemsPerPage: number;
+    hasNextPage: boolean;
+    hasPreviousPage: boolean;
+    nextPage: number | null;
+    previousPage: number | null;
+  };
+  filters: {
+    search: string;
+    startDate: string | null;
+    endDate: string | null;
+    appliedStartTimestamp: number | null;
+    appliedEndTimestamp: number | null;
+  };
+}
+
+// API Response interface for other endpoints (general structure)
+export interface APIResponse<T> {
+  success: boolean;
+  data: T[];
+  total: number;
+  page: number;
+  pageSize: number;
+  totalPages: number;
+  filters?: {
+    search?: string;
+    startDate?: string;
+    endDate?: string;
+  };
+}
+
+// Feedback API Response interface (matches actual backend response)
+export interface FeedbackAPIResponse {
+  data: FeedbackResponse[];
+  pagination: {
+    currentPage: number;
+    totalPages: number;
+    totalItems: number;
+    itemsPerPage: number;
+    hasNextPage: boolean;
+    hasPreviousPage: boolean;
+    nextPage: number | null;
+    previousPage: number | null;
+  };
+  filters: {
+    search: string;
+    startDate: string | null;
+    endDate: string | null;
+    appliedStartTimestamp: number | null;
+    appliedEndTimestamp: number | null;
+  };
+}
+
+// Sessions API Response interface (matches actual backend response)
+export interface SessionsAPIResponse {
+  success: boolean;
+  data: SessionResponse[];
+  pagination: {
+    currentPage: number;
+    totalPages: number;
+    totalItems: number;
+    itemsPerPage: number;
+    hasNextPage: boolean;
+    hasPreviousPage: boolean;
+    nextPage: number | null;
+    previousPage: number | null;
+  };
+  filters: {
+    search: string;
+    startDate: string | null;
+    endDate: string | null;
+    appliedStartTimestamp: number | null;
+    appliedEndTimestamp: number | null;
+  };
+}
+
+// Session response from backend
+export interface SessionResponse {
+  sessionId: string;
+  username: string;
+  questionCount: number;
+  sessionTime: string;
+  timestamp: string;
+}
+
+// Feedback response from session API (based on formatFeedbackData from backend)
+export interface FeedbackSessionAPIResponse {
+  qid: string;
+  date: string;
+  user: string;
+  question: string;
+  sessionId: string;
+  answer: string;
+  rating: string;
+  feedback: string;
+  id: string;
+  timestamp: string;
+}
+
+// Detailed session data from getSessionById
+export interface SessionDetail {
+  sessionId: string;
+  username: string;
+  questions: Array<{
+    id: string;
+    timestamp: string;
+    createdAt: string;
+    channel: string;
+    questionText: string;
+    answerText: string;
+  }>;
+  feedback: Array<{
+    id: string;
+    timestamp: string;
+    createdAt: string;
+    channel: string;
+    feedbackText: string;
+    feedbackType: string;
+  }>;
+  errors: Array<{
+    id: string;
+    timestamp: string;
+    createdAt: string;
+    channel: string;
+  }>;
+  totalItems: number;
+}
+
 // Default pagination values
 const DEFAULT_PAGE = 1;
-const DEFAULT_PAGE_SIZE = 10;
+const DEFAULT_LIMIT = 10;
 
-// Fetch functions with simulated delay
-const delay = (ms: number) => new Promise(resolve => setTimeout(resolve, ms));
+// Utility function to build query parameters
+const buildQueryParams = (params: Record<string, string | number | boolean>): string => {
+  const searchParams = new URLSearchParams();
+  
+  Object.entries(params).forEach(([key, value]) => {
+    if (value !== undefined && value !== null && value !== '') {
+      searchParams.append(key, value.toString());
+    }
+  });
+  
+  return searchParams.toString();
+};
 
-export const fetchUsers = async (pagination?: PaginationParams): Promise<PaginatedResponse<User>> => {
+// Users API Response interface (matches actual backend response)
+export interface UsersAPIResponse {
+  success: boolean;
+  data: UserResponse[];
+  pagination: {
+    currentPage: number;
+    totalPages: number;
+    totalItems: number;
+    itemsPerPage: number;
+    hasNextPage: boolean;
+    hasPreviousPage: boolean;
+    nextPage: number | null;
+    previousPage: number | null;
+  };
+  filters: {
+    search: string;
+    startDate: string | null;
+    endDate: string | null;
+    appliedStartTimestamp: number | null;
+    appliedEndTimestamp: number | null;
+  };
+}
+
+// User response from backend
+export interface UserResponse {
+  id: string;
+  username: string;
+  sessions: number;
+  totalQuestions: number;
+  feedbackCount: number;
+  likes: number;
+  dislikes: number;
+  latestSession: string;
+  firstSession: string;
+  lastActivity: string;
+  latestTimestamp: string;
+  firstTimestamp: string;
+  channelsUsed?: number;
+  channels?: string[];
+}
+
+// User statistics from getUserStats endpoint
+export interface UserStatsResponse {
+  totalUsers: number;
+  totalSessions: number;
+  totalQuestions: number;
+  totalFeedback: number;
+  totalLikes: number;
+  totalDislikes: number;
+  avgSessionDuration: number;
+  dailyActivity: Array<{
+    date: string;
+    activeUsers: number;
+    questionsCount: number;
+  }>;
+}
+
+// Users API - Updated to match actual backend controller
+export const fetchUsers = async (params: UserPaginationParams = {}): Promise<PaginatedResponse<User>> => {
   try {
-    const response = await fetch(`${SERVER_URL}/users`);
-    const result = await response.json();
+    const {
+      page = DEFAULT_PAGE,
+      limit = DEFAULT_LIMIT,
+      search,
+      startDate,
+      endDate
+    } = params;
+
+    const queryParams = buildQueryParams({
+      page,
+      limit,
+      search: search || '',
+      startDate: startDate || '',
+      endDate: endDate || ''
+    });
+
+    console.log('Fetching users with URL:', `${SERVER_URL}/users?${queryParams}`);
+
+    const response = await fetch(`${SERVER_URL}/users?${queryParams}`);
+    
+    if (!response.ok) {
+      throw new Error(`HTTP error! status: ${response.status}`);
+    }
+    
+    const result: UsersAPIResponse = await response.json();
+    
+    console.log('Users API response:', result);
     
     if (!result.success) {
       throw new Error('Failed to fetch users');
     }
 
+    // Transform backend response to match our User interface
+    const transformedData: User[] = result.data.map((item: UserResponse) => ({
+      id: item.id,
+      username: item.username,
+      sessions: item.sessions,
+      latestSession: item.latestSession,
+      totalQuestions: item.totalQuestions,
+      totalSessions: item.sessions,
+      firstActivity: item.firstSession,
+      lastActivity: item.lastActivity,
+      feedbackCount: item.feedbackCount,
+      likes: item.likes,
+      dislikes: item.dislikes
+    }));
+
     return {
-      data: result.data,
-      total: result.data.length,
-      page: 1,
-      pageSize: result.data.length,
-      totalPages: 1
+      data: transformedData,
+      total: result.pagination.totalItems,
+      page: result.pagination.currentPage,
+      pageSize: result.pagination.itemsPerPage,
+      totalPages: result.pagination.totalPages
     };
   } catch (error) {
     console.error('Error fetching users:', error);
@@ -147,60 +425,338 @@ export const fetchUsers = async (pagination?: PaginationParams): Promise<Paginat
   }
 };
 
-export const fetchSessions = async (pagination?: PaginationParams): Promise<PaginatedResponse<Session>> => {
+export const fetchUserByUsername = async (username: string, params: PaginationParams = {}): Promise<User | null> => {
   try {
-    const response = await fetch(`${SERVER_URL}/sessions`);
+    const { startDate, endDate } = params;
+    
+    const queryParams = buildQueryParams({
+      startDate: startDate || '',
+      endDate: endDate || ''
+    });
+
+    const response = await fetch(`${SERVER_URL}/users/${username}?${queryParams}`);
+    
+    if (!response.ok) {
+      if (response.status === 404) {
+        return null;
+      }
+      throw new Error(`HTTP error! status: ${response.status}`);
+    }
+    
     const result = await response.json();
     
-    console.log('API: Raw response:', result);
+    if (!result.success) {
+      return null;
+    }
+
+    // Transform backend response to match our User interface
+    const userData: UserResponse = result.data;
+    return {
+      id: userData.id,
+      username: userData.username,
+      sessions: userData.sessions,
+      latestSession: userData.latestSession,
+      totalQuestions: userData.totalQuestions,
+      totalSessions: userData.sessions,
+      firstActivity: userData.firstSession,
+      lastActivity: userData.lastActivity,
+      feedbackCount: userData.feedbackCount,
+      likes: userData.likes,
+      dislikes: userData.dislikes
+    };
+  } catch (error) {
+    console.error('Error fetching user by username:', error);
+    return null;
+  }
+};
+
+export const fetchUserStats = async (params: PaginationParams = {}): Promise<UserStatsResponse> => {
+  try {
+    const { startDate, endDate } = params;
+    
+    const queryParams = buildQueryParams({
+      startDate: startDate || '',
+      endDate: endDate || ''
+    });
+
+    const url = `${SERVER_URL}/users/stats${queryParams ? `?${queryParams}` : ''}`;
+    console.log('Fetching user stats with URL:', url);
+
+    const response = await fetch(url);
+    
+    console.log('User stats response status:', response.status);
+    
+    if (!response.ok) {
+      const errorText = await response.text();
+      console.error('User stats API error response:', errorText);
+      throw new Error(`HTTP error! status: ${response.status}, message: ${errorText}`);
+    }
+    
+    const result = await response.json();
+    console.log('Raw user stats API response:', result);
+    
+    if (!result.success) {
+      console.error('API returned success: false', result);
+      throw new Error('Failed to fetch user stats');
+    }
+
+    console.log('User stats data:', result.data);
+    return result.data;
+  } catch (error) {
+    console.error('Error fetching user stats:', error);
+    // Return default values on error
+    return {
+      totalUsers: 0,
+      totalSessions: 0,
+      totalQuestions: 0,
+      totalFeedback: 0,
+      totalLikes: 0,
+      totalDislikes: 0,
+      avgSessionDuration: 0,
+      dailyActivity: []
+    };
+  }
+};
+
+// Sessions API - Updated to match actual backend controller
+export const fetchSessions = async (params: SessionPaginationParams = {}): Promise<PaginatedResponse<Session>> => {
+  try {
+    const {
+      page = DEFAULT_PAGE,
+      limit = DEFAULT_LIMIT,
+      search,
+      startDate,
+      endDate
+    } = params;
+
+    const queryParams = buildQueryParams({
+      page,
+      limit,
+      search: search || '',
+      startDate: startDate || '',
+      endDate: endDate || ''
+    });
+
+    console.log('Fetching sessions with URL:', `${SERVER_URL}/sessions?${queryParams}`);
+
+    const response = await fetch(`${SERVER_URL}/sessions?${queryParams}`);
+    
+    if (!response.ok) {
+      throw new Error(`HTTP error! status: ${response.status}`);
+    }
+    
+    const result: SessionsAPIResponse = await response.json();
+    
+    console.log('Sessions API response:', result);
     
     if (!result.success) {
       throw new Error('Failed to fetch sessions');
     }
 
-    const { page = 1, pageSize = 10 } = pagination || {};
-    const start = (page - 1) * pageSize;
-    const end = start + pageSize;
-    const paginatedData = result.data.slice(start, end);
-
-    console.log('API: Processed response:', {
-      totalData: result.data.length,
-      paginatedData: paginatedData.length,
-      page,
-      pageSize,
-      totalPages: Math.ceil(result.data.length / pageSize)
-    });
+    // Transform backend response to match our Session interface
+    const transformedData: Session[] = result.data.map((item: SessionResponse) => ({
+      sessionId: item.sessionId,
+      username: item.username,
+      questionCount: item.questionCount,
+      sessionTime: item.sessionTime,
+      userId: item.username, // Use username as userId fallback
+      startTime: item.sessionTime,
+      endTime: item.sessionTime,
+      totalQuestions: item.questionCount,
+      totalFeedback: 0, // Would need separate call to get this
+      totalErrors: 0 // Would need separate call to get this
+    }));
 
     return {
-      data: paginatedData,
-      total: result.data.length,
-      page,
-      pageSize,
-      totalPages: Math.ceil(result.data.length / pageSize)
+      data: transformedData,
+      total: result.pagination.totalItems,
+      page: result.pagination.currentPage,
+      pageSize: result.pagination.itemsPerPage,
+      totalPages: result.pagination.totalPages
     };
   } catch (error) {
-    console.error('API: Error fetching sessions:', error);
+    console.error('Error fetching sessions:', error);
     throw error;
   }
 };
 
-export const fetchQuestions = async (pagination?: PaginationParams): Promise<PaginatedResponse<Question>> => {
-  const { page = DEFAULT_PAGE, pageSize = DEFAULT_PAGE_SIZE } = pagination || {};
-  
+export const fetchSessionById = async (sessionId: string, params: PaginationParams = {}): Promise<SessionDetail | null> => {
   try {
-    const response = await fetch(`${SERVER_URL}/questions?page=${page}&pageSize=${pageSize}`);
+    const { startDate, endDate } = params;
+    
+    const queryParams = buildQueryParams({
+      startDate: startDate || '',
+      endDate: endDate || ''
+    });
+
+    console.log('Fetching session details for:', sessionId);
+    
+    const response = await fetch(`${SERVER_URL}/sessions/${sessionId}?${queryParams}`);
+    
+    if (!response.ok) {
+      if (response.status === 404) {
+        return null;
+      }
+      throw new Error(`HTTP error! status: ${response.status}`);
+    }
+    
     const result = await response.json();
+    
+    if (!result.success) {
+      return null;
+    }
+
+    return result.data;
+  } catch (error) {
+    console.error('Error fetching session by ID:', error);
+    return null;
+  }
+};
+
+export const fetchSessionsByUserId = async (userId: string, params: SessionPaginationParams = {}): Promise<PaginatedResponse<Session>> => {
+  try {
+    const {
+      page = DEFAULT_PAGE,
+      limit = DEFAULT_LIMIT,
+      startDate,
+      endDate
+    } = params;
+
+    const queryParams = buildQueryParams({
+      page,
+      limit,
+      startDate: startDate || '',
+      endDate: endDate || ''
+    });
+
+    const response = await fetch(`${SERVER_URL}/sessions/user/${userId}?${queryParams}`);
+    
+    if (!response.ok) {
+      throw new Error(`HTTP error! status: ${response.status}`);
+    }
+    
+    const result: SessionsAPIResponse = await response.json();
+    
+    if (!result.success) {
+      throw new Error('Failed to fetch sessions by user ID');
+    }
+
+    // Transform backend response to match our Session interface
+    const transformedData: Session[] = result.data.map((item: SessionResponse) => ({
+      sessionId: item.sessionId,
+      username: item.username,
+      questionCount: item.questionCount,
+      sessionTime: item.sessionTime,
+      userId: userId,
+      startTime: item.sessionTime,
+      endTime: item.sessionTime,
+      totalQuestions: item.questionCount,
+      totalFeedback: 0,
+      totalErrors: 0
+    }));
+
+    return {
+      data: transformedData,
+      total: result.pagination.totalItems,
+      page: result.pagination.currentPage,
+      pageSize: result.pagination.itemsPerPage,
+      totalPages: result.pagination.totalPages
+    };
+  } catch (error) {
+    console.error('Error fetching sessions by user ID:', error);
+    throw error;
+  }
+};
+
+// Get session statistics
+export const fetchSessionStats = async (params: PaginationParams = {}): Promise<{
+  totalSessions: number;
+  totalQuestions: number;
+  totalUsers: number;
+}> => {
+  try {
+    const { startDate, endDate } = params;
+    
+    // Fetch a large sample to get statistics
+    const queryParams = buildQueryParams({
+      page: 1,
+      limit: 10000, // Large limit to get comprehensive stats
+      startDate: startDate || '',
+      endDate: endDate || ''
+    });
+
+    const response = await fetch(`${SERVER_URL}/sessions?${queryParams}`);
+    
+    if (!response.ok) {
+      throw new Error(`HTTP error! status: ${response.status}`);
+    }
+    
+    const result: SessionsAPIResponse = await response.json();
+    
+    const totalQuestions = result.data.reduce((sum, session) => sum + session.questionCount, 0);
+    const uniqueUsers = new Set(result.data.map(session => session.username)).size;
+
+    return {
+      totalSessions: result.pagination.totalItems,
+      totalQuestions,
+      totalUsers: uniqueUsers
+    };
+  } catch (error) {
+    console.error('Error fetching session stats:', error);
+    return {
+      totalSessions: 0,
+      totalQuestions: 0,
+      totalUsers: 0
+    };
+  }
+};
+
+// Questions API - Updated to match actual backend controller
+export const fetchQuestions = async (params: QuestionPaginationParams = {}): Promise<PaginatedResponse<Question>> => {
+  try {
+    const {
+      page = DEFAULT_PAGE,
+      limit = DEFAULT_LIMIT,
+      search,
+      startDate,
+      endDate,
+      userId,
+      sessionId
+    } = params;
+
+    const queryParams = buildQueryParams({
+      page,
+      limit,
+      search: search || '',
+      startDate: startDate || '',
+      endDate: endDate || '',
+      userId: userId || '',
+      sessionId: sessionId || ''
+    });
+
+    console.log('Fetching questions with URL:', `${SERVER_URL}/questions?${queryParams}`);
+
+    const response = await fetch(`${SERVER_URL}/questions?${queryParams}`);
+    
+    if (!response.ok) {
+      throw new Error(`HTTP error! status: ${response.status}`);
+    }
+    
+    const result: QuestionsAPIResponse = await response.json();
+    
+    console.log('Questions API response:', result);
     
     if (!result.success) {
       throw new Error('Failed to fetch questions');
     }
 
+    // Transform backend response to match our PaginatedResponse interface
     return {
       data: result.data,
-      total: result.data.length, // You might want to get total count from the API
-      page,
-      pageSize,
-      totalPages: Math.ceil(result.data.length / pageSize)
+      total: result.pagination.totalItems,
+      page: result.pagination.currentPage,
+      pageSize: result.pagination.itemsPerPage,
+      totalPages: result.pagination.totalPages
     };
   } catch (error) {
     console.error('Error fetching questions:', error);
@@ -208,30 +764,113 @@ export const fetchQuestions = async (pagination?: PaginationParams): Promise<Pag
   }
 };
 
-export const fetchDailyMetrics = async (): Promise<DailyMetric[]> => {
-  await delay(350);
-  return dailyMetrics;
-};
-
-export const fetchFeedback = async (pagination?: PaginationParams): Promise<PaginatedResponse<Feedback>> => {
+export const fetchQuestionById = async (id: string): Promise<Question | null> => {
   try {
-    const response = await fetch(`${SERVER_URL}/feedback`);
+    const response = await fetch(`${SERVER_URL}/questions/${id}`);
     const result = await response.json();
     
-    const { page = DEFAULT_PAGE, pageSize = DEFAULT_PAGE_SIZE } = pagination || {};
-    const start = (page - 1) * pageSize;
-    const end = start + pageSize;
-    
-    // API returns a flat array of feedback items
-    const feedbackData = Array.isArray(result) ? result : [];
-    const paginatedData = feedbackData.slice(start, end);
-    
-    return {
-      data: paginatedData,
-      total: feedbackData.length,
+    if (!result.success) {
+      return null;
+    }
+
+    return result.data;
+  } catch (error) {
+    console.error('Error fetching question by ID:', error);
+    return null;
+  }
+};
+
+export const fetchQuestionsByUserId = async (userId: string, params: QuestionPaginationParams = {}): Promise<PaginatedResponse<Question>> => {
+  try {
+    const {
+      page = DEFAULT_PAGE,
+      limit = DEFAULT_LIMIT,
+      startDate,
+      endDate
+    } = params;
+
+    const queryParams = buildQueryParams({
       page,
-      pageSize,
-      totalPages: Math.ceil(feedbackData.length / pageSize)
+      limit,
+      startDate: startDate || '',
+      endDate: endDate || ''
+    });
+
+    const response = await fetch(`${SERVER_URL}/questions/user/${userId}?${queryParams}`);
+    
+    if (!response.ok) {
+      throw new Error(`HTTP error! status: ${response.status}`);
+    }
+    
+    const result: QuestionsAPIResponse = await response.json();
+    
+    if (!result.success) {
+      throw new Error('Failed to fetch questions by user ID');
+    }
+
+    return {
+      data: result.data,
+      total: result.pagination.totalItems,
+      page: result.pagination.currentPage,
+      pageSize: result.pagination.itemsPerPage,
+      totalPages: result.pagination.totalPages
+    };
+  } catch (error) {
+    console.error('Error fetching questions by user ID:', error);
+    throw error;
+  }
+};
+
+// Feedback API - Updated to match actual backend controller
+export const fetchFeedback = async (params: PaginationParams = {}): Promise<PaginatedResponse<Feedback>> => {
+  try {
+    const {
+      page = DEFAULT_PAGE,
+      limit = DEFAULT_LIMIT,
+      search,
+      startDate,
+      endDate
+    } = params;
+
+    const queryParams = buildQueryParams({
+      page,
+      limit,
+      search: search || '',
+      startDate: startDate || '',
+      endDate: endDate || ''
+    });
+
+    console.log('Fetching feedback with URL:', `${SERVER_URL}/feedback?${queryParams}`);
+
+    const response = await fetch(`${SERVER_URL}/feedback?${queryParams}`);
+    
+    if (!response.ok) {
+      throw new Error(`HTTP error! status: ${response.status}`);
+    }
+    
+    const result: FeedbackAPIResponse = await response.json();
+    
+    console.log('Feedback API response:', result);
+
+    // Transform the API response to match the Feedback interface
+    const transformedData: Feedback[] = result.data.map((item: FeedbackSessionAPIResponse) => ({
+      id: item.id,
+      date: item.date || item.timestamp || new Date().toISOString(),
+      question: item.question || "",
+      answer: item.answer || "",
+      user: item.user || "Unknown",
+      rating: item.rating === "like" ? "like" : "dislike",
+      feedback: item.feedback || "",
+      sessionId: item.sessionId || "",
+      userId: item.user || ""
+    }));
+
+    return {
+      data: transformedData,
+      total: result.pagination.totalItems,
+      page: result.pagination.currentPage,
+      pageSize: result.pagination.itemsPerPage,
+      totalPages: result.pagination.totalPages
     };
   } catch (error) {
     console.error('Error fetching feedback:', error);
@@ -239,30 +878,29 @@ export const fetchFeedback = async (pagination?: PaginationParams): Promise<Pagi
   }
 };
 
-export const fetchFeedbackById = async (id: string): Promise<Feedback | undefined> => {
+export const fetchFeedbackById = async (id: string): Promise<Feedback | null> => {
   try {
-    // Get feedback item
     const response = await fetch(`${SERVER_URL}/feedback/id/${id}`);
-    const result = await response.json();
     
-    // Handle both array or single object response
-    const feedbackData = Array.isArray(result) ? result[0] : result;
-    
-    // If no feedback was found
-    if (!feedbackData) {
-      console.log("No feedback data found for ID:", id);
-      return undefined;
+    if (!response.ok) {
+      return null;
     }
     
-    console.log("Raw feedback data:", feedbackData);
+    const result = await response.json();
+    
+    // The getFeedbackByid controller returns an array
+    if (!result || !Array.isArray(result) || result.length === 0) {
+      return null;
+    }
 
-    // Map the API response to the Feedback interface
+    const feedbackData = result[0];
+    
     return {
-      id: feedbackData.id || feedbackData.question_id || id,
+      id: feedbackData.id || id,
       date: feedbackData.created_at || new Date().toISOString(),
       question: feedbackData.questiontext || "",
       answer: feedbackData.answertext || "",
-      user: feedbackData.user || null, // Fix: add required 'user' property, fallback to null if missing
+      user: feedbackData.user_id || "Unknown",
       rating: feedbackData.feedbacktype === "like" ? "like" : "dislike",
       feedback: feedbackData.feedbacktext || "",
       sessionId: feedbackData.session_id || "",
@@ -270,138 +908,69 @@ export const fetchFeedbackById = async (id: string): Promise<Feedback | undefine
     };
   } catch (error) {
     console.error('Error fetching feedback by ID:', error);
-    return undefined;
+    return null;
   }
+};
+
+// Get feedback statistics (total likes/dislikes)
+export const fetchFeedbackStats = async (params: PaginationParams = {}): Promise<{
+  totalFeedback: number;
+  totalLikes: number;
+  totalDislikes: number;
+}> => {
+  try {
+    const { startDate, endDate } = params;
+    
+    // Fetch a large sample to get statistics
+    const queryParams = buildQueryParams({
+      page: 1,
+      limit: 10000, // Large limit to get comprehensive stats
+      startDate: startDate || '',
+      endDate: endDate || ''
+    });
+
+    const response = await fetch(`${SERVER_URL}/feedback?${queryParams}`);
+    
+    if (!response.ok) {
+      throw new Error(`HTTP error! status: ${response.status}`);
+    }
+    
+    const result: FeedbackAPIResponse = await response.json();
+    
+    const totalLikes = result.data.filter(fb => fb.rating === "like").length;
+    const totalDislikes = result.data.filter(fb => fb.rating === "dislike").length;
+
+    return {
+      totalFeedback: result.pagination.totalItems,
+      totalLikes,
+      totalDislikes
+    };
+  } catch (error) {
+    console.error('Error fetching feedback stats:', error);
+    return {
+      totalFeedback: 0,
+      totalLikes: 0,
+      totalDislikes: 0
+    };
+  }
+};
+
+// Legacy support functions (these will be deprecated)
+export const fetchDailyMetrics = async (): Promise<DailyMetric[]> => {
+  // This would be replaced with a proper API call
+  const delay = (ms: number) => new Promise(resolve => setTimeout(resolve, ms));
+  await delay(350);
+  return []; // Return empty array until proper endpoint is implemented
 };
 
 export const fetchTranslation = async (feedbackId: string): Promise<Translation | undefined> => {
+  const delay = (ms: number) => new Promise(resolve => setTimeout(resolve, ms));
   await delay(200);
-  return translations[feedbackId as keyof typeof translations];
-};
-
-export const generateUserReport = async (
-  userId?: string, 
-  startDate?: string, 
-  endDate?: string
-): Promise<UserReport[]> => {
-  const [usersData, sessionsData, questionsData] = await Promise.all([
-    fetchUsers({ page: 1, pageSize: 1000 }),
-    fetchSessions({ page: 1, pageSize: 1000 }),
-    fetchQuestions({ page: 1, pageSize: 1000 })
-  ]);
-  
-  let filteredUsers = usersData.data;
-  if (userId) {
-    filteredUsers = usersData.data.filter(user => user.id === userId);
-  }
-  
-  const report = filteredUsers.map(user => {
-    const userSessions = sessionsData.data.filter(session => session.username === user.username);
-    const filteredSessions = userSessions.filter(session => {
-      if (!startDate && !endDate) return true;
-      
-      const sessionDate = new Date(session.sessionId);
-      const start = startDate ? new Date(startDate) : new Date(0);
-      const end = endDate ? new Date(endDate) : new Date(8640000000000000);
-      
-      return sessionDate >= start && sessionDate <= end;
-    });
-    
-    const userQuestions = questionsData.data.filter(question => question.user_id === user.id);
-    
-    const sessionDates = filteredSessions.map(s => new Date(s.sessionId).getTime());
-    const firstSession = sessionDates.length ? new Date(Math.min(...sessionDates)).toISOString() : '';
-    const lastSession = sessionDates.length ? new Date(Math.max(...sessionDates)).toISOString() : '';
-    
-    return {
-      id: user.id,
-      name: user.username,
-      numSessions: filteredSessions.length,
-      numQuestions: userQuestions.length,
-      firstSessionDate: firstSession,
-      lastSessionDate: lastSession
-    };
-  });
-  
-  return report.filter(user => user.numSessions > 0);
-};
-
-export const generateSessionReport = async (
-  username?: string,
-  startDate?: string,
-  endDate?: string
-): Promise<Session[]> => {
-  const sessionsData = await fetchSessions({ page: 1, pageSize: 1000 });
-  let filteredSessions = sessionsData.data;
-  
-  if (username) {
-    filteredSessions = filteredSessions.filter(session => session.username === username);
-  }
-  
-  if (startDate || endDate) {
-    filteredSessions = filteredSessions.filter(session => {
-      const sessionDate = new Date(session.sessionId);
-      const start = startDate ? new Date(startDate) : new Date(0);
-      const end = endDate ? new Date(endDate) : new Date(8640000000000000);
-      
-      return sessionDate >= start && sessionDate <= end;
-    });
-  }
-  
-  return filteredSessions;
-};
-
-export const generateQuestionsReport = async (
-  pagination: PaginationParams,
-  userId?: string,
-  sessionId?: string,
-  startDate?: string,
-  endDate?: string,
-  searchText?: string
-): Promise<PaginatedResponse<Question>> => {
-  const allQuestions = await fetchQuestions({ page: 1, pageSize: 1000 });
-  let filteredQuestions = allQuestions.data;
-  
-  if (userId) {
-    filteredQuestions = filteredQuestions.filter(question => question.user_id === userId);
-  }
-  
-  if (sessionId) {
-    filteredQuestions = filteredQuestions.filter(question => question.session_id === sessionId);
-  }
-  
-  if (startDate || endDate) {
-    filteredQuestions = filteredQuestions.filter(question => {
-      const questionDate = new Date(question.dateAsked);
-      const start = startDate ? new Date(startDate) : new Date(0);
-      const end = endDate ? new Date(endDate) : new Date(8640000000000000);
-      
-      return questionDate >= start && questionDate <= end;
-    });
-  }
-  
-  if (searchText) {
-    const searchLower = searchText.toLowerCase();
-    filteredQuestions = filteredQuestions.filter(question => 
-      question.question.toLowerCase().includes(searchLower)
-    );
-  }
-  
-  const { page, pageSize } = pagination;
-  const start = (page - 1) * pageSize;
-  const end = start + pageSize;
-  const paginatedData = filteredQuestions.slice(start, end);
-  
-  return {
-    data: paginatedData,
-    total: filteredQuestions.length,
-    page,
-    pageSize,
-    totalPages: Math.ceil(filteredQuestions.length / pageSize)
-  };
+  return undefined; // Return undefined until proper endpoint is implemented
 };
 
 export const fetchSessionEvents = async (sessionId: string): Promise<SessionEvent[]> => {
+  const delay = (ms: number) => new Promise(resolve => setTimeout(resolve, ms));
   await delay(500);
   // Mock timeline data with clips and sample data
   return [
@@ -457,4 +1026,115 @@ export const fetchSessionEvents = async (sessionId: string): Promise<SessionEven
       ],
     },
   ];
+};
+
+// Deprecated functions for backward compatibility
+export const generateUserReport = async (
+  userId?: string, 
+  startDate?: string, 
+  endDate?: string
+): Promise<UserReport[]> => {
+  // This should use the new API functions
+  console.warn('generateUserReport is deprecated. Use fetchUsers with filters instead.');
+  return [];
+};
+
+export const generateSessionReport = async (
+  username?: string,
+  startDate?: string,
+  endDate?: string
+): Promise<Session[]> => {
+  // This should use the new API functions
+  console.warn('generateSessionReport is deprecated. Use fetchSessions with filters instead.');
+  return [];
+};
+
+export const generateQuestionsReport = async (
+  paginationParams: { page: number; pageSize: number },
+  userId?: string,
+  sessionId?: string,
+  startDate?: string,
+  endDate?: string,
+  searchText?: string
+): Promise<PaginatedResponse<Question>> => {
+  // This should use the new fetchQuestions function
+  console.warn('generateQuestionsReport is deprecated. Use fetchQuestions with filters instead.');
+  return fetchQuestions({
+    page: paginationParams.page,
+    limit: paginationParams.pageSize,
+    userId,
+    sessionId,
+    startDate,
+    endDate,
+    search: searchText
+  });
+};
+
+// Legacy functions that aren't in the new API
+export const fetchQuestionsBySessionId = async (sessionId: string): Promise<Question[]> => {
+  try {
+    console.log('Fetching questions for session:', sessionId);
+    
+    const response = await fetch(`${SERVER_URL}/questions/session/${sessionId}`);
+    
+    if (!response.ok) {
+      throw new Error(`HTTP error! status: ${response.status}`);
+    }
+    
+    const result = await response.json();
+    
+    if (!result.success) {
+      throw new Error('Failed to fetch questions by session ID');
+    }
+
+    // Handle case where result.data might not exist
+    if (!result.data || !Array.isArray(result.data)) {
+      console.warn('Questions API returned invalid data format for session:', sessionId);
+      return [];
+    }
+
+    return result.data;
+  } catch (error) {
+    console.error('Error fetching questions by session ID:', error);
+    throw error;
+  }
+};
+
+export const fetchFeedbackBySessionId = async (sessionId: string): Promise<Feedback[]> => {
+  try {
+    console.log('Fetching feedback for session:', sessionId);
+    
+    const response = await fetch(`${SERVER_URL}/feedback/session/${sessionId}`);
+    
+    if (!response.ok) {
+      throw new Error(`HTTP error! status: ${response.status}`);
+    }
+    
+    const result = await response.json();
+    
+    // The backend returns data in FeedbackAPIResponse format with pagination
+    if (!result.data || !Array.isArray(result.data)) {
+      console.warn('Feedback API returned invalid data format for session:', sessionId);
+      return [];
+    }
+
+    // Transform the API response to match the Feedback interface
+    // The backend formatFeedbackData function returns data in this format:
+    const transformedData: Feedback[] = result.data.map((item: FeedbackSessionAPIResponse) => ({
+      id: item.id,
+      date: item.date || item.timestamp || new Date().toISOString(),
+      question: item.question || "",
+      answer: item.answer || "",
+      user: item.user || "Unknown",
+      rating: item.rating === "like" ? "like" : "dislike",
+      feedback: item.feedback || "",
+      sessionId: item.sessionId || sessionId,
+      userId: item.user || ""
+    }));
+
+    return transformedData;
+  } catch (error) {
+    console.error('Error fetching feedback by session ID:', error);
+    throw error;
+  }
 };

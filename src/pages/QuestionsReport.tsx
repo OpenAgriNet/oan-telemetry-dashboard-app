@@ -1,10 +1,12 @@
 import React, { useState } from "react";
 import { useQuery } from "@tanstack/react-query";
 import {
-  generateQuestionsReport,
+  fetchQuestions,
   fetchUsers,
   fetchSessions,
-  type PaginationParams
+  type QuestionPaginationParams,
+  type UserPaginationParams,
+  type SessionPaginationParams
 } from "@/services/api";
 import TablePagination from "@/components/TablePagination";
 import {
@@ -25,7 +27,7 @@ import {
   TableRow,
 } from "@/components/ui/table";
 import { format } from "date-fns";
-import { Mic, Search, ThumbsUp, ThumbsDown } from "lucide-react";
+import { Mic, Search, ThumbsUp, ThumbsDown, RefreshCw, AlertCircle } from "lucide-react";
 import DateRangePicker from "@/components/dashboard/DateRangePicker";
 
 // Utility function to adjust dates for IST to UTC conversion
@@ -53,90 +55,31 @@ const QuestionsReport = () => {
   const [page, setPage] = useState(1);
   const pageSize = 10;
 
-  const { data: usersResponse = { data: [] }, isLoading: isLoadingUsers } = useQuery({
-    queryKey: ["users"],
-    queryFn: () => fetchUsers({ page: 1, pageSize: 1000 }),
-  });
+  // Reset page when filters change
+  const resetPage = () => setPage(1);
 
-  const { data: sessionsResponse = { data: [] }, isLoading: isLoadingSessions } = useQuery({
-    queryKey: ["sessions"],
-    queryFn: () => fetchSessions({ page: 1, pageSize: 1000 }),
-  });
-
-  const {
-    data: questionsReport = { data: [], total: 0, totalPages: 0 },
-    isLoading,
-    refetch,
-  } = useQuery({
-    queryKey: [
-      "questionsReport",
-      selectedUser,
-      selectedSession,
-      dateRange.from ? dateRange.from.toISOString() : undefined,
-      dateRange.to ? 
-        new Date(dateRange.to).toISOString() : 
-        dateRange.from ? new Date(dateRange.from).toISOString() : undefined,
-      searchQuery,
-      page,
-      pageSize
-    ],
-    queryFn: async () => {
-      // Apply IST to UTC offset adjustment before sending to API
-      const fromDate = dateRange.from ? adjustDateForUTC(new Date(dateRange.from)) : undefined;
-      
-      let toDate;
-      if (dateRange.to) {
-        // Set to end of day and adjust for UTC
-        const endOfDay = new Date(dateRange.to);
-        endOfDay.setHours(23, 59, 59, 999);
-        toDate = adjustDateForUTC(endOfDay);
-      } else if (dateRange.from) {
-        // If only from date is provided, use same day end as to date
-        const endOfDay = new Date(dateRange.from);
-        endOfDay.setHours(23, 59, 59, 999);
-        toDate = adjustDateForUTC(endOfDay);
-      }
-
-      console.log('Requesting with params:', {
-        page, 
-        pageSize,
-        user: selectedUser !== 'all' ? selectedUser : undefined,
-        session: selectedSession !== 'all' ? selectedSession : undefined,
-        fromDate: fromDate?.toISOString(),
-        toDate: toDate?.toISOString(),
-        search: searchQuery
-      });
-
-      const response = await generateQuestionsReport(
-        { page, pageSize },
-        selectedUser !== 'all' ? selectedUser : undefined,
-        selectedSession !== 'all' ? selectedSession : undefined,
-        fromDate ? fromDate.toISOString() : undefined,
-        toDate ? toDate.toISOString() : undefined,
-        searchQuery
-      );
-      console.log('Questions report response:', response);
-      return response;
-    },
-    // Don't auto-refetch on window focus to avoid unexpected changes
-    refetchOnWindowFocus: false
-  });
-
-  const users = usersResponse.data;
-  const sessions = sessionsResponse.data;
-
-  const filteredSessions = sessions.filter(
-    (session) => selectedUser === 'all' || session.username === selectedUser
-  );
-
-  const formatDate = (dateString: string) => {
-    if (!dateString) return "N/A";
-    return format(new Date(dateString), "MMM dd, yyyy hh:mm a");
+  const handleUserChange = (userId: string) => {
+    setSelectedUser(userId);
+    setSelectedSession("all"); // Reset session when user changes
+    resetPage();
   };
 
-  const handleApplyFilters = () => {
-    setPage(1); // Reset to first page when applying new filters
-    refetch();
+  const handleSessionChange = (sessionId: string) => {
+    setSelectedSession(sessionId);
+    resetPage();
+  };
+
+  const handleDateRangeChange = (newDateRange: {
+    from: Date | undefined;
+    to: Date | undefined;
+  }) => {
+    setDateRange(newDateRange);
+    resetPage();
+  };
+
+  const handleSearchQueryChange = (query: string) => {
+    setSearchQuery(query);
+    resetPage();
   };
 
   const handleResetFilters = () => {
@@ -147,21 +90,151 @@ const QuestionsReport = () => {
     setPage(1);
   };
 
-  React.useEffect(() => {
-    setSelectedSession("all");
-  }, [selectedUser]);
+  // Fetch users with proper pagination
+  const { data: usersResponse = { data: [] }, isLoading: isLoadingUsers } = useQuery({
+    queryKey: ["users-for-filter"],
+    queryFn: () => fetchUsers({ limit: 1000 } as UserPaginationParams),
+    staleTime: 5 * 60 * 1000, // Cache for 5 minutes
+  });
+
+  // Fetch sessions with proper pagination and user filter
+  const { data: sessionsResponse = { data: [] }, isLoading: isLoadingSessions } = useQuery({
+    queryKey: ["sessions-for-filter", selectedUser],
+    queryFn: () => fetchSessions({ 
+      limit: 1000,
+    } as SessionPaginationParams),
+    staleTime: 5 * 60 * 1000, // Cache for 5 minutes
+  });
+
+  // Main questions query with all filters
+  const {
+    data: questionsReport = { data: [], total: 0, totalPages: 0 },
+    isLoading,
+    error,
+    refetch,
+  } = useQuery({
+    queryKey: [
+      "questions",
+      selectedUser,
+      selectedSession,
+      dateRange.from?.toISOString(),
+      dateRange.to?.toISOString(),
+      searchQuery,
+      page,
+      pageSize
+    ],
+    queryFn: async () => {
+      const params: QuestionPaginationParams = {
+        page,
+        limit: pageSize,
+      };
+
+      // Add search filter
+      if (searchQuery.trim()) {
+        params.search = searchQuery.trim();
+      }
+
+      // Add user filter using userId parameter
+      if (selectedUser !== 'all') {
+        params.userId = selectedUser;
+      }
+
+      // Add session filter using sessionId parameter
+      if (selectedSession !== 'all') {
+        params.sessionId = selectedSession;
+      }
+
+      // Format dates for API (backend expects ISO strings or Unix timestamps)
+      if (dateRange.from) {
+        const fromDate = new Date(dateRange.from);
+        fromDate.setHours(0, 0, 0, 0);
+        params.startDate = fromDate.toISOString();
+      }
+
+      if (dateRange.to) {
+        const toDate = new Date(dateRange.to);
+        toDate.setHours(23, 59, 59, 999);
+        params.endDate = toDate.toISOString();
+      } else if (dateRange.from) {
+        // If only from date is provided, use same day end as to date
+        const toDate = new Date(dateRange.from);
+        toDate.setHours(23, 59, 59, 999);
+        params.endDate = toDate.toISOString();
+      }
+
+      console.log('Fetching questions with params:', params);
+      
+      const response = await fetchQuestions(params);
+      console.log('Questions response:', response);
+      return response;
+    },
+    refetchOnWindowFocus: false,
+    retry: 3,
+    retryDelay: (attemptIndex) => Math.min(1000 * 2 ** attemptIndex, 30000),
+  });
+
+  const users = usersResponse.data;
+  const sessions = sessionsResponse.data;
+
+  // Filter sessions by selected user (client-side filter as fallback)
+  const filteredSessions = sessions.filter(
+    (session) => selectedUser === 'all' || session.username === selectedUser || session.userId === selectedUser
+  );
+
+  const formatDate = (dateString: string) => {
+    if (!dateString) return "N/A";
+    try {
+      // Handle both ISO strings and timestamps
+      const date = new Date(dateString);
+      if (isNaN(date.getTime())) return "N/A";
+      return format(date, "MMM dd, yyyy hh:mm a");
+    } catch (error) {
+      console.warn('Error formatting date:', dateString, error);
+      return "N/A";
+    }
+  };
+
+  const handleApplyFilters = () => {
+    refetch();
+  };
+
+  // Show error state
+  if (error) {
+    return (
+      <div className="space-y-6">
+        <div className="flex items-center justify-between">
+          <h1 className="text-2xl font-bold tracking-tight">Questions Report</h1>
+        </div>
+        <div className="flex justify-center items-center p-8 bg-destructive/10 border border-destructive/20 rounded-lg">
+          <div className="text-center">
+            <AlertCircle className="h-12 w-12 text-destructive mx-auto mb-4" />
+            <p className="text-destructive font-medium mb-2">Error loading questions data</p>
+            <p className="text-destructive/80 text-sm mb-4">{error.message}</p>
+            <Button onClick={() => refetch()} variant="outline" size="sm">
+              <RefreshCw className="h-4 w-4 mr-2" />
+              Retry
+            </Button>
+          </div>
+        </div>
+      </div>
+    );
+  }
 
   return (
     <div className="space-y-6">
       <div className="flex items-center justify-between">
         <h1 className="text-2xl font-bold tracking-tight">Questions Report</h1>
+        <Button onClick={handleApplyFilters} disabled={isLoading} variant="outline">
+          <RefreshCw className={`h-4 w-4 mr-2 ${isLoading ? 'animate-spin' : ''}`} />
+          Refresh
+        </Button>
       </div>
 
       <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-4">
         <div>
-          <Select value={selectedUser} onValueChange={setSelectedUser}>
+          <Select value={selectedUser} onValueChange={handleUserChange} disabled={isLoadingUsers}>
             <SelectTrigger>
-              <SelectValue placeholder="All Users" />
+              <SelectValue placeholder={isLoadingUsers ? "Loading users..." : "All Users"} />
             </SelectTrigger>
             <SelectContent>
               <SelectItem value="all">All Users</SelectItem>
@@ -177,22 +250,22 @@ const QuestionsReport = () => {
           </Select>
         </div>
         <div>
-          <Select value={selectedSession} onValueChange={setSelectedSession}>
+          <Select value={selectedSession} onValueChange={handleSessionChange} disabled={isLoadingSessions}>
             <SelectTrigger>
-              <SelectValue placeholder="All Sessions" />
+              <SelectValue placeholder={isLoadingSessions ? "Loading sessions..." : "All Sessions"} />
             </SelectTrigger>
             <SelectContent>
               <SelectItem value="all">All Sessions</SelectItem>
               {filteredSessions.map((session) => (
                 <SelectItem key={session.sessionId} value={session.sessionId}>
-                  {session.sessionId}
+                  {session.sessionId.substring(0, 8)}...
                 </SelectItem>
               ))}
             </SelectContent>
           </Select>
         </div>
         <div>
-          <DateRangePicker dateRange={dateRange} setDateRange={setDateRange} />
+          <DateRangePicker dateRange={dateRange} setDateRange={handleDateRangeChange} />
         </div>
         <div className="flex gap-2">
           <div className="relative flex-1">
@@ -202,72 +275,131 @@ const QuestionsReport = () => {
               placeholder="Search questions..."
               className="pl-8"
               value={searchQuery}
-              onChange={(e) => setSearchQuery(e.target.value)}
+              onChange={(e) => handleSearchQueryChange(e.target.value)}
+              maxLength={1000}
             />
           </div>
         </div>
       </div>
 
       <div className="flex gap-2">
-        <Button onClick={handleApplyFilters}>Apply Filters</Button>
-        <Button variant="outline" onClick={handleResetFilters}>
+        <Button onClick={handleApplyFilters} disabled={isLoading}>
+          {isLoading ? (
+            <>
+              <RefreshCw className="h-4 w-4 mr-2 animate-spin" />
+              Loading...
+            </>
+          ) : (
+            <>
+              Apply Filters
+            </>
+          )}
+        </Button>
+        <Button variant="outline" onClick={handleResetFilters} disabled={isLoading}>
           Reset Filters
         </Button>
       </div>
 
-      <div className="bg-muted/50 p-3 rounded-md">
+      <div className="bg-muted/50 p-3 rounded-lg border">
         <p className="text-sm font-medium">
           Total Questions: {questionsReport.total || 0}
+          {questionsReport.total > 0 && (
+            <span className="text-muted-foreground ml-2">
+              (Page {page} of {questionsReport.totalPages})
+            </span>
+          )}
         </p>
       </div>
 
-      <div className="border rounded-md">
-        {isLoading || isLoadingUsers || isLoadingSessions ? (
-          <div className="flex justify-center items-center p-8">
-            <p>Loading questions data...</p>
+      <div className="border rounded-lg">
+        {isLoading ? (
+          <div className="flex justify-center items-center p-12 bg-muted/30">
+            <div className="text-center">
+              <RefreshCw className="h-8 w-8 animate-spin mx-auto mb-3 text-muted-foreground" />
+              <p className="text-muted-foreground">Loading questions data...</p>
+            </div>
           </div>
         ) : (
           <Table>
             <TableHeader>
               <TableRow>
                 <TableHead className="w-[400px]">Question</TableHead>
-                <TableHead>User </TableHead>
+                <TableHead>User</TableHead>
                 <TableHead>Session ID</TableHead>
-                {/* <TableHead>Channel</TableHead> */}
                 <TableHead>Date Asked</TableHead>
-                {/* <TableHead>Voice</TableHead> */}
+                {/* <TableHead>Channel</TableHead> */}
                 <TableHead>Reaction</TableHead>
               </TableRow>
             </TableHeader>
             <TableBody>
               {questionsReport.data.length === 0 ? (
                 <TableRow>
-                  <TableCell colSpan={7} className="text-center">
-                    No data found for the selected filters.
+                  <TableCell colSpan={6} className="text-center py-12">
+                    <div className="text-center">
+                      <Search className="h-12 w-12 text-muted-foreground mx-auto mb-4" />
+                      <p className="text-muted-foreground font-medium mb-2">No questions found</p>
+                      <p className="text-sm text-muted-foreground/80 mb-4">
+                        {(searchQuery || selectedUser !== 'all' || selectedSession !== 'all' || dateRange.from || dateRange.to) 
+                          ? 'Try adjusting your filters to see more results.'
+                          : 'No questions are available in the database.'
+                        }
+                      </p>
+                      {(searchQuery || selectedUser !== 'all' || selectedSession !== 'all' || dateRange.from || dateRange.to) && (
+                        <Button variant="outline" onClick={handleResetFilters} size="sm">
+                          Clear all filters
+                        </Button>
+                      )}
+                    </div>
                   </TableCell>
                 </TableRow>
               ) : (
                 questionsReport.data.map((question) => (
-                  <TableRow key={question.qid}>
+                  <TableRow key={question.qid || question.id} className="hover:bg-muted/30">
                     <TableCell className="font-medium">
-                      {question.question}
+                      <div className="max-w-md">
+                        <p className="truncate" title={question.question}>
+                          {question.question}
+                        </p>
+                        {question.answer && (
+                          <p className="text-sm text-muted-foreground truncate mt-1" title={question.answer}>
+                            {question.answer}
+                          </p>
+                        )}
+                      </div>
                     </TableCell>
-                    <TableCell>{question.user_id}</TableCell>
-                    <TableCell>{question.session_id}</TableCell>
-                    {/* <TableCell>{question.channel}</TableCell> */}
-                    <TableCell>{formatDate(question.dateAsked)}</TableCell>
+                    <TableCell>
+                      <code className="relative rounded bg-muted px-[0.3rem] py-[0.2rem] font-mono text-sm">
+                        {question.user_id}
+                      </code>
+                    </TableCell>
+                    <TableCell>
+                      <code className="relative rounded bg-muted px-[0.3rem] py-[0.2rem] font-mono text-xs">
+                        {question.session_id.substring(0, 8)}...
+                      </code>
+                    </TableCell>
+                    <TableCell>{formatDate(question.dateAsked || question.created_at)}</TableCell>
                     {/* <TableCell>
-                      {question.hasVoiceInput ? (
-                        <Mic className="h-4 w-4 text-primary" />
-                      ) : null}
+                      <span className="inline-flex items-center rounded-full bg-primary/10 px-2.5 py-0.5 text-xs font-medium text-primary">
+                        {question.channel || 'N/A'}
+                      </span>
                     </TableCell> */}
                     <TableCell>
-                      {question.reaction === "thumbs-up" ? (
-                        <ThumbsUp className="h-4 w-4 text-green-500" />
-                      ) : question.reaction === "thumbs-down" ? (
-                        <ThumbsDown className="h-4 w-4 text-red-500" />
+                      {question.reaction === "thumbs-up" || question.reaction === "like" ? (
+                        <div className="flex items-center gap-1">
+                          <ThumbsUp className="h-4 w-4 text-green-500" />
+                          <span className="text-xs text-green-700">Like</span>
+                        </div>
+                      ) : question.reaction === "thumbs-down" || question.reaction === "dislike" ? (
+                        <div className="flex items-center gap-1">
+                          <ThumbsDown className="h-4 w-4 text-red-500" />
+                          <span className="text-xs text-red-700">Dislike</span>
+                        </div>
+                      ) : question.reaction ? (
+                        <span className="inline-flex items-center rounded-full bg-secondary px-2 py-1 text-xs font-medium text-secondary-foreground">
+                          {question.reaction}
+                        </span>
                       ) : (
-                        question.reaction
+                        <span className="text-muted-foreground">—</span>
                       )}
                     </TableCell>
                   </TableRow>
@@ -278,7 +410,7 @@ const QuestionsReport = () => {
         )}
       </div>
 
-      {questionsReport && questionsReport.data.length > 0 && (
+      {questionsReport && questionsReport.data.length > 0 && questionsReport.totalPages > 1 && (
         <TablePagination
           currentPage={page}
           totalPages={questionsReport.totalPages}

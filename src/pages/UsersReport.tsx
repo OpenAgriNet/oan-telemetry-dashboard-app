@@ -1,8 +1,16 @@
 import React, { useState } from "react";
 import { useQuery } from "@tanstack/react-query";
-import { generateUserReport, fetchUsers } from "@/services/api";
+import { 
+  fetchUsers, 
+  fetchUserStats,
+  fetchSessions,
+  fetchFeedback,
+  type UserPaginationParams,
+  type PaginationParams,
+  type UserStatsResponse
+} from "@/services/api";
 import DateRangePicker from "@/components/dashboard/DateRangePicker";
-import { API_CONFIG } from "@/config/environment";
+import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import {
   Select,
   SelectContent,
@@ -21,7 +29,17 @@ import {
   TableRow,
 } from "@/components/ui/table";
 import { format } from "date-fns";
-import { Search } from "lucide-react";
+import { 
+  Search, 
+  RefreshCw, 
+  AlertCircle, 
+  Users, 
+  MessageSquare, 
+  Activity,
+  ThumbsUp,
+  ThumbsDown,
+  TrendingUp 
+} from "lucide-react";
 import TablePagination from "@/components/TablePagination";
 
 const UsersReport = () => {
@@ -34,171 +52,505 @@ const UsersReport = () => {
   const [page, setPage] = useState(1);
   const pageSize = 10;
 
-  const {
-    data: usersResponse = { data: [], total: 0, totalPages: 0 },
-    isLoading,
-    refetch,
-  } = useQuery({
-    queryKey: [
-      "users",
-      selectedUser,
-      dateRange.from?.toISOString(),
-      dateRange.to?.toISOString(),
-      searchQuery,
-      page,
-      pageSize
-    ],
-    queryFn: async () => {
-      const response = await fetch(`${API_CONFIG.SERVER_URL}/users`);
-      const result = await response.json();
-      
-      if (!result.success) {
-        throw new Error('Failed to fetch users');
-      }
+  // Reset page when filters change
+  const resetPage = () => setPage(1);
 
-      // Filter users based on selected filters
-      let filteredUsers = result.data;
-      
-      if (selectedUser && selectedUser !== 'all') {
-        filteredUsers = filteredUsers.filter(user => user.username === selectedUser);
-      }
-      
-      if (dateRange.from || dateRange.to) {
-        filteredUsers = filteredUsers.filter(user => {
-          const userDate = new Date(user.createdAt);
-          const from = dateRange.from || new Date(0);
-          const to = dateRange.to || new Date(8640000000000000);
-          return userDate >= from && userDate <= to;
-        });
-      }
-      
-      if (searchQuery) {
-        const searchLower = searchQuery.toLowerCase();
-        filteredUsers = filteredUsers.filter(user => 
-          user.username.toLowerCase().includes(searchLower) ||
-          user.id.toLowerCase().includes(searchLower)
-        );
-      }
-
-      // Apply pagination
-      const start = (page - 1) * pageSize;
-      const end = start + pageSize;
-      const paginatedUsers = filteredUsers.slice(start, end);
-
-      return {
-        data: paginatedUsers,
-        total: filteredUsers.length,
-        page,
-        pageSize,
-        totalPages: Math.ceil(filteredUsers.length / pageSize)
-      };
-    },
-  });
-
-  const paginatedUsers = usersResponse.data;
-
-  const formatDate = (dateString: string) => {
-    if (!dateString) return "N/A";
-    return format(new Date(dateString), "MMM dd, yyyy hh:mm a");
+  const handleUserChange = (userId: string) => {
+    setSelectedUser(userId);
+    resetPage();
   };
 
-  const handleApplyFilters = () => {
-    refetch();
+  const handleSearchChange = (query: string) => {
+    setSearchQuery(query);
+    resetPage();
+  };
+
+  const handleDateRangeChange = (newDateRange: {
+    from: Date | undefined;
+    to: Date | undefined;
+  }) => {
+    setDateRange(newDateRange);
+    resetPage();
   };
 
   const handleResetFilters = () => {
     setSelectedUser("all");
     setDateRange({ from: undefined, to: undefined });
     setSearchQuery("");
+    setPage(1);
   };
+
+  // Fetch user statistics - Using fallback approach since /users/stats might be broken
+  const { data: userStats, isLoading: isLoadingStats, error: statsError } = useQuery({
+    queryKey: ['user-stats-fallback', dateRange.from?.toISOString(), dateRange.to?.toISOString()],
+    queryFn: async () => {
+      console.log('Calculating user stats from existing endpoints...');
+      
+      try {
+        const statsParams: PaginationParams = {};
+
+        // Add date range filter
+        if (dateRange.from) {
+          const fromDate = new Date(dateRange.from);
+          fromDate.setHours(0, 0, 0, 0);
+          statsParams.startDate = fromDate.toISOString();
+        }
+
+        if (dateRange.to) {
+          const toDate = new Date(dateRange.to);
+          toDate.setHours(23, 59, 59, 999);
+          statsParams.endDate = toDate.toISOString();
+        } else if (dateRange.from) {
+          const toDate = new Date(dateRange.from);
+          toDate.setHours(23, 59, 59, 999);
+          statsParams.endDate = toDate.toISOString();
+        }
+
+        // First try the official stats endpoint
+        try {
+          const result = await fetchUserStats(statsParams);
+          console.log('Official user stats result:', result);
+          if (result.totalUsers > 0 || result.totalSessions > 0 || result.totalQuestions > 0) {
+            return result;
+          }
+        } catch (error) {
+          console.warn('Official stats endpoint failed, using fallback:', error);
+        }
+
+        // Fallback: Calculate stats from other endpoints
+        console.log('Using fallback calculation...');
+        
+        // Get users data to calculate user stats
+        const usersResponse = await fetchUsers({ 
+          limit: 10000, // Large limit to get all users
+          ...statsParams 
+        });
+        
+        // Get sessions data for session count
+        const sessionsResponse = await fetchSessions({ 
+          limit: 10000, 
+          ...statsParams 
+        });
+        
+        // Get feedback data for satisfaction metrics
+        const feedbackResponse = await fetchFeedback({ 
+          limit: 10000, 
+          ...statsParams 
+        });
+
+        // Calculate statistics
+        const totalUsers = usersResponse.total;
+        const totalSessions = sessionsResponse.total;
+        const totalQuestions = usersResponse.data.reduce((sum, user) => sum + (user.totalQuestions || 0), 0);
+        const totalFeedback = feedbackResponse.total;
+        const totalLikes = feedbackResponse.data.filter(fb => fb.rating === 'like').length;
+        const totalDislikes = feedbackResponse.data.filter(fb => fb.rating === 'dislike').length;
+
+        const calculatedStats = {
+          totalUsers,
+          totalSessions,
+          totalQuestions,
+          totalFeedback,
+          totalLikes,
+          totalDislikes,
+          avgSessionDuration: 0, // Can't calculate without session duration data
+          dailyActivity: [] // Would need more complex calculation
+        };
+
+        console.log('Calculated user stats:', calculatedStats);
+        return calculatedStats;
+        
+      } catch (error) {
+        console.error('Failed to calculate user stats:', error);
+        throw error;
+      }
+    },
+    staleTime: 30 * 1000, // Reduce cache time for debugging
+    retry: 2,
+    retryDelay: 1000,
+  });
+
+  // Set default values if stats are loading or errored
+  const finalUserStats = userStats || {
+    totalUsers: 0,
+    totalSessions: 0,
+    totalQuestions: 0,
+    totalFeedback: 0,
+    totalLikes: 0,
+    totalDislikes: 0,
+    avgSessionDuration: 0,
+    dailyActivity: []
+  };
+
+  // Log stats error if any
+  if (statsError) {
+    console.error('User stats error:', statsError);
+  }
+
+  // Fetch users with server-side pagination and filtering
+  const {
+    data: usersResponse = { data: [], total: 0, totalPages: 0 },
+    isLoading,
+    error,
+    refetch,
+  } = useQuery({
+    queryKey: [
+      "users",
+      searchQuery,
+      dateRange.from?.toISOString(),
+      dateRange.to?.toISOString(),
+      selectedUser,
+      page,
+      pageSize
+    ],
+    queryFn: async () => {
+      const params: UserPaginationParams = {
+        page,
+        limit: pageSize,
+      };
+
+      // Add search filter
+      if (searchQuery.trim()) {
+        params.search = searchQuery.trim();
+      }
+
+      // Add date range filter
+      if (dateRange.from) {
+        const fromDate = new Date(dateRange.from);
+        fromDate.setHours(0, 0, 0, 0);
+        params.startDate = fromDate.toISOString();
+      }
+
+      if (dateRange.to) {
+        const toDate = new Date(dateRange.to);
+        toDate.setHours(23, 59, 59, 999);
+        params.endDate = toDate.toISOString();
+      } else if (dateRange.from) {
+        const toDate = new Date(dateRange.from);
+        toDate.setHours(23, 59, 59, 999);
+        params.endDate = toDate.toISOString();
+      }
+
+      console.log('Fetching users with params:', params);
+      const result = await fetchUsers(params);
+      
+      // Apply user filter client-side if needed
+      let filteredData = result.data;
+      if (selectedUser !== 'all') {
+        filteredData = result.data.filter(user => 
+          user.username === selectedUser || user.id === selectedUser
+        );
+      }
+
+      return {
+        ...result,
+        data: filteredData,
+        total: selectedUser !== 'all' ? filteredData.length : result.total,
+        totalPages: selectedUser !== 'all' ? Math.ceil(filteredData.length / pageSize) : result.totalPages
+      };
+    },
+    refetchOnWindowFocus: false,
+    retry: 3,
+    retryDelay: (attemptIndex) => Math.min(1000 * 2 ** attemptIndex, 30000),
+  });
+
+  // Fetch all users for the filter dropdown
+  const { data: allUsersResponse = { data: [] }, isLoading: isLoadingAllUsers } = useQuery({
+    queryKey: ["all-users-for-filter"],
+    queryFn: () => fetchUsers({ limit: 1000 } as UserPaginationParams),
+    staleTime: 5 * 60 * 1000, // Cache for 5 minutes
+  });
+
+  const allUsers = allUsersResponse.data;
+  const paginatedUsers = usersResponse.data;
+
+  const formatDate = (dateString: string) => {
+    if (!dateString) return "N/A";
+    try {
+      const date = new Date(dateString);
+      if (isNaN(date.getTime())) return "N/A";
+      return format(date, "MMM dd, yyyy hh:mm a");
+    } catch (error) {
+      console.warn('Error formatting date:', dateString, error);
+      return "N/A";
+    }
+  };
+
+  const formatDuration = (seconds: number) => {
+    if (!seconds || isNaN(seconds)) return "N/A";
+    const hours = Math.floor(seconds / 3600);
+    const minutes = Math.floor((seconds % 3600) / 60);
+    if (hours > 0) {
+      return `${hours}h ${minutes}m`;
+    }
+    return `${minutes}m`;
+  };
+
+  const handleApplyFilters = () => {
+    refetch();
+  };
+
+  // Show error state
+  if (error) {
+    return (
+      <div className="space-y-6">
+        <div className="flex items-center justify-between">
+          <h1 className="text-2xl font-bold tracking-tight">Users Report</h1>
+        </div>
+        <div className="flex justify-center items-center p-8 bg-destructive/10 border border-destructive/20 rounded-lg">
+          <div className="text-center">
+            <AlertCircle className="h-12 w-12 text-destructive mx-auto mb-4" />
+            <p className="text-destructive font-medium mb-2">Error loading users data</p>
+            <p className="text-destructive/80 text-sm mb-4">{error.message}</p>
+            <Button onClick={() => refetch()} variant="outline" size="sm">
+              <RefreshCw className="h-4 w-4 mr-2" />
+              Retry
+            </Button>
+          </div>
+        </div>
+      </div>
+    );
+  }
 
   return (
     <div className="space-y-6">
       <div className="flex items-center justify-between">
         <h1 className="text-2xl font-bold tracking-tight">Users Report</h1>
+        <Button onClick={handleApplyFilters} disabled={isLoading} variant="outline">
+          <RefreshCw className={`h-4 w-4 mr-2 ${isLoading ? 'animate-spin' : ''}`} />
+          Refresh
+        </Button>
       </div>
 
-      <div className="grid gap-4 md:grid-cols-1 lg:grid-cols-2">
-        <div>
-          <Select value={selectedUser} onValueChange={setSelectedUser}>
-            <SelectTrigger>
-              <SelectValue placeholder="All Users" />
-            </SelectTrigger>
-            <SelectContent>
-              <SelectItem value="all">All Users</SelectItem>
-              {usersResponse.data.map((user) => (
-                <SelectItem key={user.id} value={user.username}>
-                  {user.username || `User ${user.id}`}
-                </SelectItem>
-              ))}
-            </SelectContent>
-          </Select>
-        </div>
-        {/* <div>
-          <DateRangePicker dateRange={dateRange} setDateRange={setDateRange} />
-        </div> */}
-        <div className="flex gap-2">
-          <div className="relative flex-1">
-            <Search className="absolute left-2.5 top-2.5 h-4 w-4 text-muted-foreground" />
-            <Input
-              type="search"
-              placeholder="Search by username or ID..."
-              className="pl-8"
-              value={searchQuery}
-              onChange={(e) => setSearchQuery(e.target.value)}
-            />
-          </div>
-          <Button onClick={handleApplyFilters}>Apply</Button>
-          <Button variant="outline" onClick={handleResetFilters}>
-            Reset
-          </Button>
-        </div>
+      <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-4">
+        <Card>
+          <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
+            <CardTitle className="text-sm font-medium">Total Users</CardTitle>
+            <Users className="h-4 w-4 text-muted-foreground" />
+          </CardHeader>
+          <CardContent>
+            <div className="text-2xl font-bold">{finalUserStats.totalUsers}</div>
+            <p className="text-xs text-muted-foreground">
+              {dateRange.from || dateRange.to ? "Filtered period" : "All time"}
+            </p>
+          </CardContent>
+        </Card>
+
+        <Card>
+          <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
+            <CardTitle className="text-sm font-medium">Total Sessions</CardTitle>
+            <Activity className="h-4 w-4 text-muted-foreground" />
+          </CardHeader>
+          <CardContent>
+            <div className="text-2xl font-bold">{finalUserStats.totalSessions}</div>
+            <p className="text-xs text-muted-foreground">
+              {finalUserStats.totalUsers > 0 
+                ? `${Math.round(finalUserStats.totalSessions / finalUserStats.totalUsers)} avg per user`
+                : "No data"
+              }
+            </p>
+          </CardContent>
+        </Card>
+
+        <Card>
+          <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
+            <CardTitle className="text-sm font-medium">Total Questions</CardTitle>
+            <MessageSquare className="h-4 w-4 text-muted-foreground" />
+          </CardHeader>
+          <CardContent>
+            <div className="text-2xl font-bold">{finalUserStats.totalQuestions}</div>
+            <p className="text-xs text-muted-foreground">
+              {finalUserStats.totalSessions > 0 
+                ? `${Math.round(finalUserStats.totalQuestions / finalUserStats.totalSessions)} avg per session`
+                : "No data"
+              }
+            </p>
+          </CardContent>
+        </Card>
+
+        {/* <Card>
+          <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
+            <CardTitle className="text-sm font-medium">User Satisfaction</CardTitle>
+            <TrendingUp className="h-4 w-4 text-muted-foreground" />
+          </CardHeader>
+          <CardContent>
+            <div className="text-2xl font-bold">
+              {finalUserStats.totalFeedback > 0 
+                ? `${Math.round((finalUserStats.totalLikes / finalUserStats.totalFeedback) * 100)}%`
+                : "N/A"
+              }
+            </div>
+            <p className="text-xs text-muted-foreground">
+              {finalUserStats.totalLikes} likes, {finalUserStats.totalDislikes} dislikes
+            </p>
+          </CardContent>
+        </Card> */}
       </div>
 
-      <div className="border rounded-md">
-        {isLoading ? (
-          <div className="flex justify-center items-center p-8">
-            <p>Loading user data...</p>
-          </div>
-        ) : (
-          <Table>
-            <TableHeader>
-              <TableRow>
-                <TableHead>User ID</TableHead>
-                <TableHead>Username</TableHead>
-                <TableHead className="text-right">Sessions</TableHead>
-                <TableHead>Latest Session</TableHead>
-              </TableRow>
-            </TableHeader>
-            <TableBody>
-              {paginatedUsers.length === 0 ? (
-                <TableRow>
-                  <TableCell colSpan={4} className="text-center">
-                    No data found for the selected filters.
-                  </TableCell>
-                </TableRow>
-              ) : (
-                paginatedUsers.map((user, idx) => (
-                  <TableRow key={user.id || idx}>
-                    <TableCell className="font-medium">{user.id}</TableCell>
-                    <TableCell>{user.username}</TableCell>
-                    <TableCell className="text-right">
-                      {user.sessions}
-                    </TableCell>
-                    <TableCell>{formatDate(user.latestSession)}</TableCell>
+      <Card>
+        <CardHeader>
+          <CardTitle>User Activity</CardTitle>
+          <CardDescription>User accounts with advanced filtering and search</CardDescription>
+        </CardHeader>
+        <CardContent>
+          <div className="space-y-4">
+            <div className="grid gap-4 md:grid-cols-1 lg:grid-cols-3">
+              <div>
+                <Select value={selectedUser} onValueChange={handleUserChange} disabled={isLoadingAllUsers}>
+                  <SelectTrigger>
+                    <SelectValue placeholder={isLoadingAllUsers ? "Loading users..." : "All Users"} />
+                  </SelectTrigger>
+                  <SelectContent>
+                    <SelectItem value="all">All Users</SelectItem>
+                    {allUsers.map((user) => (
+                      <SelectItem key={user.id} value={user.username || user.id}>
+                        {user.username || `User ${user.id}`}
+                      </SelectItem>
+                    ))}
+                  </SelectContent>
+                </Select>
+              </div>
+              <div>
+                <DateRangePicker dateRange={dateRange} setDateRange={handleDateRangeChange} />
+              </div>
+              <div className="flex gap-2">
+                <div className="relative flex-1">
+                  <Search className="absolute left-2.5 top-2.5 h-4 w-4 text-muted-foreground" />
+                  <Input
+                    type="search"
+                    placeholder="Search by username..."
+                    className="pl-8"
+                    value={searchQuery}
+                    onChange={(e) => handleSearchChange(e.target.value)}
+                    maxLength={1000}
+                  />
+                </div>
+              </div>
+            </div>
+
+            <div className="flex gap-2">
+              <Button onClick={handleApplyFilters} disabled={isLoading}>
+                {isLoading ? (
+                  <>
+                    <RefreshCw className="h-4 w-4 mr-2 animate-spin" />
+                    Loading...
+                  </>
+                ) : (
+                  <>
+                    Apply Filters
+                  </>
+                )}
+              </Button>
+              <Button variant="outline" onClick={handleResetFilters} disabled={isLoading}>
+                Reset Filters
+              </Button>
+            </div>
+
+            <div className="bg-muted/50 p-3 rounded-lg border">
+              <p className="text-sm font-medium">
+                Total Users: {usersResponse.total || 0}
+                {usersResponse.total > 0 && (
+                  <span className="text-muted-foreground ml-2">
+                    (Page {page} of {usersResponse.totalPages})
+                  </span>
+                )}
+              </p>
+            </div>
+
+            {isLoading ? (
+              <div className="flex justify-center items-center p-12 bg-muted/30 rounded-lg">
+                <div className="text-center">
+                  <RefreshCw className="h-8 w-8 animate-spin mx-auto mb-3 text-muted-foreground" />
+                  <p className="text-muted-foreground">Loading users data...</p>
+                </div>
+              </div>
+            ) : usersResponse.total === 0 ? (
+              <div className="text-center py-12">
+                <Users className="h-12 w-12 text-muted-foreground mx-auto mb-4" />
+                <p className="text-muted-foreground font-medium mb-2">No users found</p>
+                <p className="text-sm text-muted-foreground/80 mb-4">
+                  {(searchQuery || selectedUser !== 'all' || dateRange.from || dateRange.to) 
+                    ? 'Try adjusting your filters to see more results.'
+                    : 'No users are available in the database.'
+                  }
+                </p>
+                {(searchQuery || selectedUser !== 'all' || dateRange.from || dateRange.to) && (
+                  <Button variant="outline" onClick={handleResetFilters} size="sm">
+                    Clear all filters
+                  </Button>
+                )}
+              </div>
+            ) : paginatedUsers.length === 0 ? (
+              <div className="text-center py-8">
+                <p className="text-muted-foreground">No users match your current filters</p>
+                <Button variant="outline" onClick={handleResetFilters} size="sm" className="mt-2">
+                  Clear filters
+                </Button>
+              </div>
+            ) : (
+              <Table>
+                <TableHeader>
+                  <TableRow>
+                    <TableHead>Username</TableHead>
+                    <TableHead className="text-right">Sessions</TableHead>
+                    <TableHead className="text-right">Questions</TableHead>
+                    <TableHead className="text-right">Feedback</TableHead>
+                    <TableHead>Latest Activity</TableHead>
                   </TableRow>
-                ))
-              )}
-            </TableBody>
-          </Table>
-        )}
-      </div>
-
-      <TablePagination 
-        currentPage={page}
-        totalPages={usersResponse.totalPages}
-        onPageChange={setPage}
-      />
+                </TableHeader>
+                <TableBody>
+                  {paginatedUsers.map((user, idx) => (
+                    <TableRow key={user.id || idx} className="hover:bg-muted/30">
+                      <TableCell className="font-medium">
+                        <code className="relative rounded bg-muted px-[0.3rem] py-[0.2rem] font-mono text-sm">
+                          {user.username}
+                        </code>
+                      </TableCell>
+                      <TableCell className="text-right">
+                        <span className="inline-flex items-center rounded-full bg-primary/10 px-2.5 py-0.5 text-xs font-medium text-primary">
+                          {user.sessions || user.totalSessions || 0}
+                        </span>
+                      </TableCell>
+                      <TableCell className="text-right">
+                        <span className="inline-flex items-center rounded-full bg-secondary/10 px-2.5 py-0.5 text-xs font-medium text-secondary-foreground">
+                          {user.totalQuestions || 0}
+                        </span>
+                      </TableCell>
+                      <TableCell className="text-right">
+                        <div className="flex items-center justify-end gap-1">
+                          {(user.feedbackCount || 0) > 0 ? (
+                            <>
+                              <div className="flex items-center gap-1">
+                                <ThumbsUp className="h-3 w-3 text-green-500" />
+                                <span className="text-xs">{user.likes || 0}</span>
+                              </div>
+                              <div className="flex items-center gap-1">
+                                <ThumbsDown className="h-3 w-3 text-red-500" />
+                                <span className="text-xs">{user.dislikes || 0}</span>
+                              </div>
+                            </>
+                          ) : (
+                            <span className="text-xs text-muted-foreground">No feedback</span>
+                          )}
+                        </div>
+                      </TableCell>
+                      <TableCell>{formatDate(user.latestSession || user.lastActivity || "")}</TableCell>
+                    </TableRow>
+                  ))}
+                </TableBody>
+              </Table>
+            )}
+            
+            {paginatedUsers.length > 0 && usersResponse.totalPages > 1 && (
+              <TablePagination 
+                currentPage={page}
+                totalPages={usersResponse.totalPages}
+                onPageChange={setPage}
+              />
+            )}
+          </div>
+        </CardContent>
+      </Card>
     </div>
   );
 };

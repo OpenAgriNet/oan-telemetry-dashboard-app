@@ -13,9 +13,13 @@ import {
   MessageCircle,
   Calendar,
   ThumbsUp,
+  ThumbsDown,
   Languages,
+  RefreshCw,
+  AlertCircle,
 } from "lucide-react";
 import { format } from "date-fns";
+import { Button } from "@/components/ui/button";
 import { fetchFeedbackById, fetchTranslation } from "@/services/api";
 import users from "@/data/users.json";
 import sessions from "@/data/sessions.json";
@@ -28,12 +32,18 @@ import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 const FeedbackDetails = () => {
   const { feedbackId } = useParams();
   const navigate = useNavigate();
-  const [viewMode, setViewMode] = useState<"markdown" | "raw">("markdown");
 
-  const { data: feedback, isLoading: isFeedbackLoading } = useQuery({
+  const { 
+    data: feedback, 
+    isLoading: isFeedbackLoading,
+    error,
+    refetch 
+  } = useQuery({
     queryKey: ["feedback", feedbackId],
     queryFn: () => fetchFeedbackById(feedbackId || ""),
     enabled: !!feedbackId,
+    retry: 3,
+    retryDelay: (attemptIndex) => Math.min(1000 * 2 ** attemptIndex, 30000),
   });
 
   const { data: translation } = useQuery({
@@ -159,24 +169,79 @@ const FeedbackDetails = () => {
     ? sessions.find((s) => s.sessionId === feedback.sessionId)
     : null;
 
-  if (isFeedbackLoading) {
-    return <div>Loading...</div>;
-  }
-
-  if (!feedback) {
-    return <div>Feedback not found</div>;
-  }
-
   const handleSessionClick = () => {
     if (session) {
       navigate(`/sessions/${session.sessionId}`);
     }
   };
 
+  // Show loading state
+  if (isFeedbackLoading) {
+    return (
+      <div className="space-y-6">
+        <div className="flex items-center justify-between">
+          <h1 className="text-2xl font-bold tracking-tight">Feedback Details</h1>
+        </div>
+        <div className="flex justify-center items-center p-12 bg-muted/30 rounded-lg">
+          <div className="text-center">
+            <RefreshCw className="h-8 w-8 animate-spin mx-auto mb-3 text-muted-foreground" />
+            <p className="text-muted-foreground">Loading feedback details...</p>
+          </div>
+        </div>
+      </div>
+    );
+  }
+
+  // Show error state
+  if (error) {
+    return (
+      <div className="space-y-6">
+        <div className="flex items-center justify-between">
+          <h1 className="text-2xl font-bold tracking-tight">Feedback Details</h1>
+        </div>
+        <div className="flex justify-center items-center p-8 bg-destructive/10 border border-destructive/20 rounded-lg">
+          <div className="text-center">
+            <AlertCircle className="h-12 w-12 text-destructive mx-auto mb-4" />
+            <p className="text-destructive font-medium mb-2">Error loading feedback details</p>
+            <p className="text-destructive/80 text-sm mb-4">{error.message}</p>
+            <Button onClick={() => refetch()} variant="outline" size="sm">
+              <RefreshCw className="h-4 w-4 mr-2" />
+              Retry
+            </Button>
+          </div>
+        </div>
+      </div>
+    );
+  }
+
+  // Show not found state
+  if (!feedback) {
+    return (
+      <div className="space-y-6">
+        <div className="flex items-center justify-between">
+          <h1 className="text-2xl font-bold tracking-tight">Feedback Details</h1>
+        </div>
+        <div className="text-center py-12">
+          <MessageCircle className="h-12 w-12 text-muted-foreground mx-auto mb-4" />
+          <p className="text-muted-foreground font-medium mb-2">Feedback not found</p>
+          <p className="text-sm text-muted-foreground/80 mb-4">
+            The feedback you're looking for doesn't exist or has been removed.
+          </p>
+          <Button onClick={() => navigate('/feedback')} variant="outline">
+            Back to Feedback
+          </Button>
+        </div>
+      </div>
+    );
+  }
+
   return (
     <div className="space-y-6">
       <div className="flex items-center justify-between">
         <h1 className="text-2xl font-bold tracking-tight">Feedback Details</h1>
+        <Button onClick={() => navigate('/feedback')} variant="outline">
+          Back to Feedback
+        </Button>
       </div>
 
       <div className="grid gap-4 md:grid-cols-4">
@@ -186,43 +251,65 @@ const FeedbackDetails = () => {
             <User className="h-4 w-4 text-muted-foreground" />
           </CardHeader>
           <CardContent>
-            <div className="text-2xl font-bold">
-              {user?.name || "Unknown User"}
+            <div className="text-lg font-bold">
+              <code className="relative rounded bg-muted px-[0.3rem] py-[0.2rem] font-mono text-sm">
+                {user?.name || feedback.user || "Unknown User"}
+              </code>
             </div>
           </CardContent>
         </Card>
 
         <Card>
           <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-            <CardTitle className="text-sm font-medium">Session Date</CardTitle>
+            <CardTitle className="text-sm font-medium">Feedback Date</CardTitle>
             <Calendar className="h-4 w-4 text-muted-foreground" />
           </CardHeader>
           <CardContent>
-            <div className="text-2xl font-bold">
+            <div className="text-lg font-bold">
               {format(new Date(feedback.date), "MMM dd, yyyy")}
             </div>
           </CardContent>
         </Card>
 
-        {/* <Card>
+        <Card>
           <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
             <CardTitle className="text-sm font-medium">Rating</CardTitle>
-            <ThumbsUp className="h-4 w-4 text-muted-foreground" />
+            {feedback.rating === "like" ? (
+              <ThumbsUp className="h-4 w-4 text-green-600" />
+            ) : (
+              <ThumbsDown className="h-4 w-4 text-red-600" />
+            )}
           </CardHeader>
           <CardContent>
-            <div className="text-2xl font-bold">{feedback.rating}/5</div>
+            <div className="flex items-center gap-2">
+              {feedback.rating === "like" ? (
+                <>
+                  <ThumbsUp className="h-5 w-5 text-green-500" />
+                  <span className="text-lg font-bold text-green-600">Like</span>
+                </>
+              ) : (
+                <>
+                  <ThumbsDown className="h-5 w-5 text-red-500" />
+                  <span className="text-lg font-bold text-red-600">Dislike</span>
+                </>
+              )}
+            </div>
           </CardContent>
         </Card>
 
         <Card>
           <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-            <CardTitle className="text-sm font-medium">Session Questions</CardTitle>
+            <CardTitle className="text-sm font-medium">Session</CardTitle>
             <MessageCircle className="h-4 w-4 text-muted-foreground" />
           </CardHeader>
           <CardContent>
-            <div className="text-2xl font-bold">{session?.numQuestions || 0}</div>
+            <div className="text-sm">
+              <code className="relative rounded bg-muted px-[0.3rem] py-[0.2rem] font-mono text-xs">
+                {feedback.sessionId ? feedback.sessionId.substring(0, 8) + '...' : 'N/A'}
+              </code>
+            </div>
           </CardContent>
-        </Card> */}
+        </Card>
       </div>
 
       <Card>
@@ -232,7 +319,7 @@ const FeedbackDetails = () => {
         </CardHeader>
         <CardContent className="space-y-6">
           <div>
-            <h3 className="font-medium mb-2">Feedback</h3>
+            <h3 className="font-medium mb-2">User Feedback</h3>
             <div className="p-4 rounded-lg border border-border bg-card">
               <p className="text-foreground">
                 {feedback.feedback}
@@ -252,13 +339,16 @@ const FeedbackDetails = () => {
           </div>
           <div
             className={`p-4 rounded-lg border border-border bg-card ${
-              session ? "cursor-pointer hover:bg-muted transition-colors" : ""
+              session ? "cursor-pointer hover:bg-muted/50 transition-colors" : ""
             }`}
             onClick={session ? handleSessionClick : undefined}
           >
             <div className="flex items-center gap-2 mb-2">
               <MessageCircle className="h-4 w-4" />
-              <h3 className="font-medium">Session Question</h3>
+              <h3 className="font-medium">Original Question</h3>
+              {session && (
+                <span className="text-xs text-muted-foreground">(Click to view session)</span>
+              )}
             </div>
             <p className="text-foreground">{feedback.question}</p>
             {translation?.questionMarathi && (
@@ -276,7 +366,7 @@ const FeedbackDetails = () => {
 
           <div className="space-y-4">
             <div>
-              <h3 className="font-medium mb-2">Response</h3>
+              <h3 className="font-medium mb-2">AI Response</h3>
               <div className="p-4 rounded-lg border border-border bg-card">
                 <Tabs defaultValue="markdown" className="mt-0">
                   <TabsList>
