@@ -552,9 +552,10 @@ const UsersReport = () => {
                       Latest Activity{<SortIndicator columnKey="latestSession" />}
                     </TableHead>
                     <TableHead 
-                      className="text-right cursor-pointer hover:bg-muted/50"
+                      className="cursor-pointer hover:bg-muted/50"
+                      onClick={() => handleSort('latestSession')}
                     >
-                      Latest Session
+                      Latest Session{<SortIndicator columnKey="latestSession" />}
                     </TableHead>
                   </TableRow>
                 </TableHeader>
