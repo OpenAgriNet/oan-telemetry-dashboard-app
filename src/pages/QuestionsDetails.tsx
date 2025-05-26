@@ -17,6 +17,7 @@ import {
   Languages,
   RefreshCw,
   AlertCircle,
+  Circle,
 } from "lucide-react";
 import { format } from "date-fns";
 import { Button } from "@/components/ui/button";
@@ -270,32 +271,34 @@ const QuestionDetails = () => {
             </div>
           </CardContent>
         </Card>
-
-        <Card>
-          <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-            <CardTitle className="text-sm font-medium">Rating</CardTitle>
-            {question?.reaction === "like" ? (
-              <ThumbsUp className="h-4 w-4 text-green-600" />
-            ) : (
-              <ThumbsDown className="h-4 w-4 text-red-600" />
-            )}
-          </CardHeader>
-          <CardContent>
-            <div className="flex items-center gap-2">
+        
+        {question?.reaction !== "neutral" && (
+          <Card>
+            <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
+              <CardTitle className="text-sm font-medium">Rating</CardTitle>
               {question?.reaction === "like" ? (
-                <>
-                  <ThumbsUp className="h-5 w-5 text-green-500" />
-                  <span className="text-lg font-bold text-green-600">Like</span>
-                </>
+                <ThumbsUp className="h-4 w-4 text-green-600" />
               ) : (
-                <>
-                  <ThumbsDown className="h-5 w-5 text-red-500" />
-                  <span className="text-lg font-bold text-red-600">Dislike</span>
-                </>
+                <ThumbsDown className="h-4 w-4 text-red-600" />
               )}
-            </div>
-          </CardContent>
-        </Card>
+            </CardHeader>
+            <CardContent>
+              <div className="flex items-center gap-2">
+                {question?.reaction === "like" ? (
+                  <>
+                    <ThumbsUp className="h-5 w-5 text-green-500" />
+                    <span className="text-lg font-bold text-green-600">Like</span>
+                  </>
+                ) : (
+                  <>
+                    <ThumbsDown className="h-5 w-5 text-red-500" />
+                    <span className="text-lg font-bold text-red-600">Dislike</span>
+                  </>
+                )}
+              </div>
+            </CardContent>
+          </Card>
+        )}
 
         <Card>
           <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
