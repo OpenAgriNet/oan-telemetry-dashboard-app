@@ -15,6 +15,7 @@ export interface User {
   totalSessions?: number;
   firstActivity?: string;
   lastActivity?: string;
+  sessionId?: string;
   feedbackCount?: number;
   likes?: number;
   dislikes?: number;
@@ -354,6 +355,7 @@ export interface UserResponse {
   firstTimestamp: string;
   channelsUsed?: number;
   channels?: string[];
+  sessionId?: string;
 }
 
 // User statistics from getUserStats endpoint
@@ -417,6 +419,7 @@ export const fetchUsers = async (params: UserPaginationParams = {}): Promise<Pag
       totalSessions: item.sessions,
       firstActivity: item.firstSession,
       lastActivity: item.lastActivity,
+      sessionId: item.sessionId,
       feedbackCount: item.feedbackCount,
       likes: item.likes,
       dislikes: item.dislikes

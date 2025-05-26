@@ -9,6 +9,7 @@ import {
   type PaginationParams,
   type UserStatsResponse
 } from "@/services/api";
+import { useNavigate } from "react-router-dom";
 import { useDateFilter } from "@/contexts/DateFilterContext";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import {
@@ -43,7 +44,6 @@ import {
 import TablePagination from "@/components/TablePagination";
 import { exportToCSV, formatUtcDateWithPMCorrection, formatUTCToIST } from "@/lib/utils";
 import { fetchAllPages } from "@/services/api";
-
 // Add these types near the top of the file
 type SortDirection = 'asc' | 'desc' | null;
 type SortConfig = {
@@ -56,6 +56,7 @@ const UsersReport = () => {
   const [selectedUser, setSelectedUser] = useState<string>("all");
   const [searchQuery, setSearchQuery] = useState<string>("");
   const [page, setPage] = useState(1);
+  const navigate = useNavigate();
   const pageSize = 10;
 
   // Reset page when filters change
@@ -310,6 +311,13 @@ const UsersReport = () => {
     return ' ↕';
   };
 
+  const handleSessionClick = (sessionId: string) => {
+    console.log('Session ID:', sessionId);
+    const SessionId = sessionId;
+    // Add your logic here to handlne the session click
+    navigate(`/sessions/${SessionId}`);
+  };
+
   // Show error state
   if (error) {
     return (
@@ -543,6 +551,11 @@ const UsersReport = () => {
                     >
                       Latest Activity{<SortIndicator columnKey="latestSession" />}
                     </TableHead>
+                    <TableHead 
+                      className="text-right cursor-pointer hover:bg-muted/50"
+                    >
+                      Latest Session
+                    </TableHead>
                   </TableRow>
                 </TableHeader>
                 <TableBody>
@@ -582,6 +595,16 @@ const UsersReport = () => {
                         </div>
                       </TableCell>
                       <TableCell>{formatUTCToIST(user.latestSession || user.lastActivity || "")}</TableCell>
+                      <TableCell>
+                      <button
+                          onClick={() => handleSessionClick(user.sessionId)}
+                          className="text-primary hover:underline"
+                        >
+                          <code className="relative rounded bg-muted px-[0.3rem] py-[0.2rem] font-mono text-xs">
+                            {user.sessionId?.substring(0, 8)}...
+                          </code>
+                        </button>
+                      </TableCell>
                     </TableRow>
                   ))}
                 </TableBody>
