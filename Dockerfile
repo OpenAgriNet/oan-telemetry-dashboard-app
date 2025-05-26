@@ -1,31 +1,16 @@
-# Stage 1: Build the application
-FROM node:18-alpine AS builder
-
-WORKDIR /app
-
-# Copy package.json and package-lock.json
-COPY package*.json ./
-
-# Install dependencies using npm ci
-RUN npm ci
-
-# Copy the rest of the application code
-COPY . .
-
-# Build the application
+# Stage 1: Build
+FROM node:18-alpine AS build
+WORKDIR /usr/local/app
+COPY ./ /usr/local/app/
+RUN npm install
 RUN npm run build
 
-# Stage 2: Serve the application with Nginx
-FROM nginx:stable-alpine AS server
-
-# Copy the built application from the builder stage
-COPY --from=builder /app/dist /usr/share/nginx/html
-
-# Copy nginx configuration if you have a custom one
-# COPY nginx.conf /etc/nginx/conf.d/default.conf
-
-# Expose port 80
-EXPOSE 80
-
-# Start Nginx
+# Stage 2: Serve
+FROM nginx:alpine
+WORKDIR /usr/share/nginx/html
+COPY --from=build /usr/local/app/dist .
+# Add nginx config for SPA routing
+RUN rm /etc/nginx/conf.d/default.conf
+COPY nginx.conf /etc/nginx/conf.d/default.conf
+EXPOSE 8881
 CMD ["nginx", "-g", "daemon off;"] 
