@@ -68,6 +68,10 @@ const QuestionsReport = () => {
   };
   const handleSessionClick = (sessionId: string) => {
     navigate(`/sessions/${sessionId}`);
+
+  };
+  const handleQuestionClick = (id: string) => {
+    navigate(`/questions/${id}`);
   };
 
   // Fetch users with search parameter if needed
@@ -397,9 +401,14 @@ const QuestionsReport = () => {
                   <TableRow key={`${question.qid || question.id || 'question'}-${index}`} className="hover:bg-muted/30">
                     <TableCell className="font-medium">
                       <div className="max-w-md">
-                        <p className="truncate" title={question.question}>
+                        <button
+                          className="truncate text-left text-primary hover:underline bg-transparent border-none p-0 m-0 w-full"
+                          title={question.question}
+                          onClick={() => handleQuestionClick(question.id)}
+                          type="button"
+                        >
                           {question.question}
-                        </p>
+                        </button>
                         {question.answer && (
                           <p className="text-sm text-muted-foreground truncate mt-1" title={question.answer}>
                             {question.answer}

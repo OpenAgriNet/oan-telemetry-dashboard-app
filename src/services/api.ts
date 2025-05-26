@@ -782,7 +782,7 @@ export const fetchQuestionById = async (id: string): Promise<Question | null> =>
     if (!result.success) {
       return null;
     }
-
+ console.log("result.data",result.data)
     return result.data;
   } catch (error) {
     console.error('Error fetching question by ID:', error);

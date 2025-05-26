@@ -18,6 +18,7 @@ import FeedbackDetails from "./pages/FeedbackDetails";
 import Content from "./pages/Content";
 import ServiceStatus from "./pages/ServiceStatus";
 import { useKeycloak } from "@react-keycloak/web";
+import QuestionsDetails from "./pages/QuestionsDetails";
 
 const queryClient = new QueryClient({
   defaultOptions: {
@@ -72,6 +73,11 @@ const App = () => {
               <Route path="/questions" element={
                 <Layout>
                   <QuestionsReport />
+                </Layout>
+              } />
+              <Route path="/questions/:id" element={
+                <Layout>
+                  <QuestionsDetails />
                 </Layout>
               } />
               <Route path="/analytics" element={
