@@ -30,7 +30,7 @@ import {
 import { Mic, Search, ThumbsUp, ThumbsDown, RefreshCw, AlertCircle, Download } from "lucide-react";
 import { useDateFilter } from "@/contexts/DateFilterContext";
 import { exportToCSV, formatUtcDateWithPMCorrection } from "@/lib/utils";
-
+import { useNavigate } from "react-router-dom";
 const QuestionsReport = () => {
   const { dateRange } = useDateFilter();
   const [selectedUser, setSelectedUser] = useState<string>("all");
@@ -39,6 +39,7 @@ const QuestionsReport = () => {
   const [page, setPage] = useState(1);
   const pageSize = 10;
   const [sortConfig, setSortConfig] = useState({ key: 'dateAsked', direction: 'desc' });
+  const navigate = useNavigate();
 
   // Reset page when filters change
   const resetPage = () => setPage(1);
@@ -64,6 +65,9 @@ const QuestionsReport = () => {
     setSelectedSession("all");
     setSearchQuery("");
     setPage(1);
+  };
+  const handleSessionClick = (sessionId: string) => {
+    navigate(`/sessions/${sessionId}`);
   };
 
   // Fetch users with search parameter if needed
@@ -406,9 +410,14 @@ const QuestionsReport = () => {
                       </code>
                     </TableCell>
                     <TableCell>
-                      <code className="relative rounded bg-muted px-[0.3rem] py-[0.2rem] font-mono text-xs">
-                        {question.session_id.substring(0, 8)}...
-                      </code>
+                    <button
+                          onClick={() => handleSessionClick(question.session_id)}
+                          className="text-primary hover:underline"
+                        >
+                          <code className="relative rounded bg-muted px-[0.3rem] py-[0.2rem] font-mono text-xs">
+                            {question.session_id.substring(0, 8)}...
+                          </code>
+                        </button>
                     </TableCell>
                     <TableCell>{formatUtcDateWithPMCorrection(question.dateAsked || question.created_at, [7])}</TableCell>
                     {/* <TableCell>
