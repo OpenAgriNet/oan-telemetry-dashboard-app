@@ -31,7 +31,7 @@ import {
 } from "@/components/ui/table";
 import { Search, RefreshCw, AlertCircle, Users, MessageSquare, Activity, Download } from "lucide-react";
 import TablePagination from "@/components/TablePagination";
-import { exportToCSV, formatUtcDateWithPMCorrection } from "@/lib/utils";
+import { exportToCSV, formatUtcDateWithPMCorrection, formatUTCToIST } from "@/lib/utils";
 import { fetchAllPages } from "@/services/api";
 
 const SessionsReport = () => {
@@ -362,7 +362,10 @@ const SessionsReport = () => {
                   params.endDate = toDate.toISOString();
                 }
                 const allSessions = await fetchAllPages(fetchSessions, params);
-                exportToCSV(allSessions, [
+                exportToCSV(allSessions.map(session => ({
+                  ...session,
+                  sessionTime: formatUTCToIST(session.sessionTime)
+                })), [
                   { key: 'sessionId', header: 'Session ID' },
                   { key: 'username', header: 'User' },
                   { key: 'questionCount', header: 'Questions' },
@@ -456,7 +459,7 @@ const SessionsReport = () => {
                           {session.questionCount}
                         </span>
                       </TableCell>
-                      <TableCell>{formatUtcDateWithPMCorrection(session.sessionTime, [7])}</TableCell>
+                      <TableCell>{formatUTCToIST(session.sessionTime)}</TableCell>
                     </TableRow>
                   ))}
                 </TableBody>

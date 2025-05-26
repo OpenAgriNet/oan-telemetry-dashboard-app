@@ -41,7 +41,7 @@ import {
   Download 
 } from "lucide-react";
 import TablePagination from "@/components/TablePagination";
-import { exportToCSV, formatUtcDateWithPMCorrection } from "@/lib/utils";
+import { exportToCSV, formatUtcDateWithPMCorrection, formatUTCToIST } from "@/lib/utils";
 import { fetchAllPages } from "@/services/api";
 
 // Add these types near the top of the file
@@ -446,9 +446,13 @@ const UsersReport = () => {
                 }
                 const allUsers = await fetchAllPages(fetchUsers, params);
                 // Client-side user filter if needed
-                const filtered = selectedUser !== "all"
+                const filtered = (selectedUser !== "all"
                   ? allUsers.filter(user => user.username === selectedUser || user.id === selectedUser)
-                  : allUsers;
+                  : allUsers
+                ).map(user => ({
+                  ...user,
+                  latestSession: formatUTCToIST(user.latestSession || user.lastActivity || "")
+                }));
                 exportToCSV(filtered, [
                   { key: 'username', header: 'Username' },
                   { key: 'sessions', header: 'Sessions' },
@@ -577,7 +581,7 @@ const UsersReport = () => {
                           )}
                         </div>
                       </TableCell>
-                      <TableCell>{formatUtcDateWithPMCorrection(user.latestSession || user.lastActivity || "", [7])}</TableCell>
+                      <TableCell>{formatUTCToIST(user.latestSession || user.lastActivity || "")}</TableCell>
                     </TableRow>
                   ))}
                 </TableBody>

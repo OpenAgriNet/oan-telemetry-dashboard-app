@@ -37,27 +37,37 @@ export function exportToCSV<T extends Record<string, unknown>>(
 }
 
 /**
- * Converts a UTC date string or Date object to IST (UTC+5:30) and returns a Date object representing that time in IST.
+ * Converts a UTC date string or Date object to a proper UTC Date object.
+ * This ensures consistent UTC parsing regardless of input format.
  * @param date UTC date string or Date object
- * @returns Date object representing the time in IST
+ * @returns Date object representing the UTC time
  */
-export function convertUTCToIST(date: string | Date): Date {
-  let utcDate: Date;
-  
+export function parseAsUTC(date: string | Date): Date {
   if (typeof date === 'string') {
     // Handle different date string formats and ensure they are treated as UTC
     if (date.includes('Z') || date.includes('+') || date.includes('-', 10)) {
       // String already has timezone info
-      utcDate = new Date(date);
+      return new Date(date);
     } else {
       // String without timezone info - treat as UTC by appending 'Z'
-      utcDate = new Date(date + (date.includes('T') ? 'Z' : 'T00:00:00Z'));
+      return new Date(date + (date.includes('T') ? 'Z' : 'T00:00:00Z'));
     }
   } else {
-    utcDate = new Date(date.getTime());
+    return new Date(date.getTime());
   }
+}
 
-  // IST is UTC+5:30 (330 minutes ahead of UTC)
+/**
+ * Converts a UTC date string or Date object to IST (UTC+5:30) and returns a Date object representing that time in IST.
+ * NOTE: This function returns a Date object with IST time but still in UTC representation.
+ * For proper timezone display, use formatInTimeZone or formatUTCToIST instead.
+ * @param date UTC date string or Date object
+ * @returns Date object with IST time (but in UTC representation)
+ */
+export function convertUTCToIST(date: string | Date): Date {
+  const utcDate = parseAsUTC(date);
+  
+  // IST is UTC+5:30 (330 minutes or 19800000 milliseconds ahead of UTC)
   const istDate = new Date(utcDate.getTime() + (5.5 * 60 * 60 * 1000));
   return istDate;
 }
@@ -65,7 +75,7 @@ export function convertUTCToIST(date: string | Date): Date {
 /**
  * Formats a UTC date string to IST with optional PM correction.
  * 
- * @param dateString The UTC date string from the backend (e.g., "2025-05-22T07:16:47" or "2025-05-22T07:16:47Z").
+ * @param dateString The UTC date string from the backend (e.g., "2025-01-10T07:16:47" or "2025-01-10T07:16:47Z").
  * @param pmCorrectionHoursAM An array of UTC hours (0-11) that should be shifted by +12 hours to convert AM to PM.
  *                            Example: [7] means if the UTC hour is 7 AM, treat it as 7 PM instead.
  * @param targetTimeZone The IANA timezone string for the output (default: 'Asia/Kolkata' for IST).
@@ -81,16 +91,8 @@ export function formatUtcDateWithPMCorrection(
   if (!dateString) return "N/A";
 
   try {
-    let utcDate: Date;
-    
     // Parse the date string as UTC
-    if (dateString.includes('Z') || dateString.includes('+') || dateString.includes('-', 10)) {
-      // String already has timezone info
-      utcDate = new Date(dateString);
-    } else {
-      // String without timezone info - treat as UTC by appending 'Z'
-      utcDate = new Date(dateString + (dateString.includes('T') ? 'Z' : 'T00:00:00Z'));
-    }
+    let utcDate = parseAsUTC(dateString);
 
     // Check if the date is valid
     if (isNaN(utcDate.getTime())) {
@@ -103,7 +105,8 @@ export function formatUtcDateWithPMCorrection(
       utcDate = addHours(utcDate, 12);
     }
 
-    // Format the date in the target timezone
+    // Format the UTC date directly to the target timezone using formatInTimeZone
+    // This properly handles the timezone conversion
     return formatInTimeZone(utcDate, targetTimeZone, outputFormat);
 
   } catch (error) {

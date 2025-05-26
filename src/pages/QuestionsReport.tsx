@@ -29,7 +29,7 @@ import {
 } from "@/components/ui/table";
 import { Mic, Search, ThumbsUp, ThumbsDown, RefreshCw, AlertCircle, Download } from "lucide-react";
 import { useDateFilter } from "@/contexts/DateFilterContext";
-import { exportToCSV, formatUtcDateWithPMCorrection } from "@/lib/utils";
+import { exportToCSV, formatUtcDateWithPMCorrection, formatUTCToIST } from "@/lib/utils";
 import { useNavigate } from "react-router-dom";
 const QuestionsReport = () => {
   const { dateRange } = useDateFilter();
@@ -246,7 +246,10 @@ const QuestionsReport = () => {
 
       // Use the reusable exportToCSV utility
       exportToCSV<Question>(
-        allQuestions,
+        allQuestions.map(q => ({
+          ...q,
+          dateAsked: formatUTCToIST(q.dateAsked || q.created_at)
+        })),
         [
           { key: 'question', header: 'Question' },
           { key: 'answer', header: 'Answer' },
@@ -419,7 +422,7 @@ const QuestionsReport = () => {
                           </code>
                         </button>
                     </TableCell>
-                    <TableCell>{formatUtcDateWithPMCorrection(question.dateAsked || question.created_at, [7])}</TableCell>
+                    <TableCell>{formatUTCToIST(question.dateAsked || question.created_at)}</TableCell>
                     {/* <TableCell>
                       <span className="inline-flex items-center rounded-full bg-primary/10 px-2.5 py-0.5 text-xs font-medium text-primary">
                         {question.channel || 'N/A'}
