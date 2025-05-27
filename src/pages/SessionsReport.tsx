@@ -437,7 +437,7 @@ const SessionsReport = () => {
                   </TableRow>
                 </TableHeader>
                 <TableBody>
-                  {sessionReport.data.map((session, idx) => (
+                  {sessionReport.data.filter(session => session.questionCount > 0).map((session, idx) => (
                     <TableRow key={session.sessionId || idx} className="hover:bg-muted/30">
                       <TableCell className="font-medium">
                         <button
