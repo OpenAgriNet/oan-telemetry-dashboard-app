@@ -84,6 +84,7 @@ export interface Feedback {
   feedback: string;
   sessionId?: string;
   userId?: string;
+  timestamp?: string;
   [key: string]: unknown;
 }
 
@@ -1144,6 +1145,7 @@ export const fetchFeedbackBySessionId = async (sessionId: string): Promise<Feedb
     const transformedData: Feedback[] = result.data.map((item: FeedbackSessionAPIResponse) => ({
       id: item.id,
       date: item.date || item.timestamp || new Date().toISOString(),
+      timestamp: item.timestamp,
       question: item.question || "",
       answer: item.answer || "",
       user: item.user || "Unknown",
