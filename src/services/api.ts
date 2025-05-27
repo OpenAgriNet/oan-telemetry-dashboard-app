@@ -1,5 +1,6 @@
 import React from 'react';
 import { API_CONFIG } from '../config/environment';
+import dailyMetrics from '../data/dailyMetrics.json';
 
 // API Base URL
 const { SERVER_URL } = API_CONFIG;
@@ -981,7 +982,7 @@ export const fetchDailyMetrics = async (): Promise<DailyMetric[]> => {
   // This would be replaced with a proper API call
   const delay = (ms: number) => new Promise(resolve => setTimeout(resolve, ms));
   await delay(350);
-  return []; // Return empty array until proper endpoint is implemented
+  return dailyMetrics; // Return empty array until proper endpoint is implemented
 };
 
 export const fetchTranslation = async (feedbackId: string): Promise<Translation | undefined> => {
