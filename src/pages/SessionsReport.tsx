@@ -2,7 +2,7 @@ import React, { useState } from "react";
 import { useQuery } from "@tanstack/react-query";
 import { 
   fetchSessions, 
-  fetchSessionStats,
+  fetchBasicSessionStats,
   fetchUsers, 
   type SessionPaginationParams, 
   type UserPaginationParams,

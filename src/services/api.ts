@@ -136,6 +136,7 @@ export interface PaginationParams {
   search?: string;
   startDate?: string;
   endDate?: string;
+  granularity?: string;
 }
 
 export interface UserPaginationParams extends PaginationParams {
@@ -684,7 +685,7 @@ export const fetchSessionsByUserId = async (userId: string, params: SessionPagin
 };
 
 // Get session statistics
-export const fetchSessionStats = async (params: PaginationParams = {}): Promise<{
+export const fetchBasicSessionStats = async (params: PaginationParams = {}): Promise<{
   totalSessions: number;
   totalQuestions: number;
   totalUsers: number;
@@ -974,6 +975,288 @@ export const fetchFeedbackStats = async (params: PaginationParams = {}): Promise
       totalFeedback: 0,
       totalLikes: 0,
       totalDislikes: 0
+    };
+  }
+};
+
+// Get comprehensive session statistics
+export const fetchSessionStats = async (params: PaginationParams = {}): Promise<{
+  totalSessions: number;
+  uniqueUsers: number;
+  totalQuestions: number;
+  avgQuestionsPerSession: number;
+  avgSessionDuration: number;
+  maxSessionDuration: number;
+  minSessionDuration: number;
+  dailyActivity: Array<{
+    date: string;
+    sessionsCount: number;
+    uniqueUsersCount: number;
+    questionsCount: number;
+  }>;
+  channelBreakdown: Array<{
+    channel: string;
+    sessionsCount: number;
+    questionsCount: number;
+  }>;
+}> => {
+  try {
+    const { startDate, endDate, granularity } = params;
+    
+    const queryParams = buildQueryParams({
+      startDate: startDate || '',
+      endDate: endDate || '',
+      granularity: granularity || ''
+    });
+
+    const url = `${SERVER_URL}/sessions/stats${queryParams ? `?${queryParams}` : ''}`;
+    console.log('Fetching session stats with URL:', url);
+
+    const response = await fetch(url);
+    
+    if (!response.ok) {
+      throw new Error(`HTTP error! status: ${response.status}`);
+    }
+    
+    const result = await response.json();
+    
+    if (!result.success) {
+      throw new Error('Failed to fetch session stats');
+    }
+
+    return result.data;
+  } catch (error) {
+    console.error('Error fetching session stats:', error);
+    return {
+      totalSessions: 0,
+      uniqueUsers: 0,
+      totalQuestions: 0,
+      avgQuestionsPerSession: 0,
+      avgSessionDuration: 0,
+      maxSessionDuration: 0,
+      minSessionDuration: 0,
+      dailyActivity: [],
+      channelBreakdown: []
+    };
+  }
+};
+
+// Get comprehensive question statistics
+export const fetchQuestionStats = async (params: PaginationParams = {}): Promise<{
+  totalQuestions: number;
+  uniqueUsers: number;
+  uniqueSessions: number;
+  uniqueChannels: number;
+  avgQuestionLength: number;
+  avgAnswerLength: number;
+  dailyActivity: Array<{
+    date: string;
+    questionsCount: number;
+    uniqueUsersCount: number;
+    uniqueSessionsCount: number;
+    avgQuestionLength: number;
+    avgAnswerLength: number;
+  }>;
+  channelBreakdown: Array<{
+    channel: string;
+    questionsCount: number;
+    uniqueUsers: number;
+    uniqueSessions: number;
+    avgQuestionLength: number;
+  }>;
+  hourlyDistribution: Array<{
+    hour: number;
+    questionsCount: number;
+  }>;
+}> => {
+  try {
+    const { startDate, endDate, granularity } = params;
+    
+    const queryParams = buildQueryParams({
+      startDate: startDate || '',
+      endDate: endDate || '',
+      granularity: granularity || ''
+    });
+
+    const url = `${SERVER_URL}/questions/stats${queryParams ? `?${queryParams}` : ''}`;
+    console.log('Fetching question stats with URL:', url);
+
+    const response = await fetch(url);
+    
+    if (!response.ok) {
+      throw new Error(`HTTP error! status: ${response.status}`);
+    }
+    
+    const result = await response.json();
+    
+    if (!result.success) {
+      throw new Error('Failed to fetch question stats');
+    }
+
+    return result.data;
+  } catch (error) {
+    console.error('Error fetching question stats:', error);
+    return {
+      totalQuestions: 0,
+      uniqueUsers: 0,
+      uniqueSessions: 0,
+      uniqueChannels: 0,
+      avgQuestionLength: 0,
+      avgAnswerLength: 0,
+      dailyActivity: [],
+      channelBreakdown: [],
+      hourlyDistribution: []
+    };
+  }
+};
+
+// Get comprehensive feedback statistics (new endpoint)
+export const fetchComprehensiveFeedbackStats = async (params: PaginationParams = {}): Promise<{
+  totalFeedback: number;
+  totalLikes: number;
+  totalDislikes: number;
+  uniqueUsers: number;
+  uniqueSessions: number;
+  satisfactionRate: number;
+  avgFeedbackLength: number;
+  dailyActivity: Array<{
+    date: string;
+    feedbackCount: number;
+    likesCount: number;
+    dislikesCount: number;
+    uniqueUsersCount: number;
+    satisfactionRate: number;
+  }>;
+  channelBreakdown: Array<{
+    channel: string;
+    feedbackCount: number;
+    likesCount: number;
+    dislikesCount: number;
+    uniqueUsers: number;
+    satisfactionRate: number;
+  }>;
+  topFeedbackUsers: Array<{
+    userId: string;
+    feedbackCount: number;
+    likesCount: number;
+    dislikesCount: number;
+  }>;
+}> => {
+  try {
+    const { startDate, endDate, granularity } = params;
+    
+    const queryParams = buildQueryParams({
+      startDate: startDate || '',
+      endDate: endDate || '',
+      granularity: granularity || ''
+    });
+
+    const url = `${SERVER_URL}/feedback/stats${queryParams ? `?${queryParams}` : ''}`;
+    console.log('Fetching comprehensive feedback stats with URL:', url);
+
+    const response = await fetch(url);
+    
+    if (!response.ok) {
+      throw new Error(`HTTP error! status: ${response.status}`);
+    }
+    
+    const result = await response.json();
+    
+    if (!result.success) {
+      throw new Error('Failed to fetch comprehensive feedback stats');
+    }
+
+    return result.data;
+  } catch (error) {
+    console.error('Error fetching comprehensive feedback stats:', error);
+    return {
+      totalFeedback: 0,
+      totalLikes: 0,
+      totalDislikes: 0,
+      uniqueUsers: 0,
+      uniqueSessions: 0,
+      satisfactionRate: 0,
+      avgFeedbackLength: 0,
+      dailyActivity: [],
+      channelBreakdown: [],
+      topFeedbackUsers: []
+    };
+  }
+};
+
+// Get comprehensive dashboard statistics
+export const fetchDashboardStats = async (params: PaginationParams = {}): Promise<{
+  totalUsers: number;
+  totalSessions: number;
+  totalQuestions: number;
+  totalFeedback: number;
+  totalLikes: number;
+  totalDislikes: number;
+  satisfactionRate: number;
+  engagementRate: number;
+  avgQuestionsPerUser: number;
+  avgQuestionsPerSession: number;
+  avgSessionDuration: number;
+  avgQuestionLength: number;
+  avgAnswerLength: number;
+  uniqueChannels: number;
+  recentTrends: Array<{
+    date: string;
+    users: number;
+    sessions: number;
+    questions: number;
+  }>;
+  topChannels: Array<{
+    channel: string;
+    users: number;
+    sessions: number;
+    questions: number;
+  }>;
+}> => {
+  try {
+    const { startDate, endDate, granularity } = params;
+    
+    const queryParams = buildQueryParams({
+      startDate: startDate || '',
+      endDate: endDate || '',
+      granularity: granularity || ''
+    });
+
+    const url = `${SERVER_URL}/dashboard/stats${queryParams ? `?${queryParams}` : ''}`;
+    console.log('Fetching dashboard stats with URL:', url);
+
+    const response = await fetch(url);
+    
+    if (!response.ok) {
+      throw new Error(`HTTP error! status: ${response.status}`);
+    }
+    
+    const result = await response.json();
+    
+    if (!result.success) {
+      throw new Error('Failed to fetch dashboard stats');
+    }
+
+    return result.data;
+  } catch (error) {
+    console.error('Error fetching dashboard stats:', error);
+    return {
+      totalUsers: 0,
+      totalSessions: 0,
+      totalQuestions: 0,
+      totalFeedback: 0,
+      totalLikes: 0,
+      totalDislikes: 0,
+      satisfactionRate: 0,
+      engagementRate: 0,
+      avgQuestionsPerUser: 0,
+      avgQuestionsPerSession: 0,
+      avgSessionDuration: 0,
+      avgQuestionLength: 0,
+      avgAnswerLength: 0,
+      uniqueChannels: 0,
+      recentTrends: [],
+      topChannels: []
     };
   }
 };

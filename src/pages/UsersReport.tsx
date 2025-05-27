@@ -5,6 +5,8 @@ import {
   fetchUserStats,
   fetchSessions,
   fetchFeedback,
+  fetchQuestionStats,
+  fetchSessionStats,
   type UserPaginationParams,
   type PaginationParams,
   type UserStatsResponse
@@ -98,11 +100,11 @@ const UsersReport = () => {
     return key === 'username';
   };
 
-  // Fetch user statistics - Using fallback approach since /users/stats might be broken
+  // Fetch user statistics - Using question stats and session stats endpoints for authoritative counts
   const { data: userStats, isLoading: isLoadingStats, error: statsError } = useQuery({
-    queryKey: ['user-stats-fallback', dateRange.from?.toISOString(), dateRange.to?.toISOString()],
+    queryKey: ['user-stats-comprehensive', dateRange.from?.toISOString(), dateRange.to?.toISOString()],
     queryFn: async () => {
-      console.log('Calculating user stats from existing endpoints...');
+      console.log('Calculating user stats using authoritative stats endpoints...');
       
       try {
         const statsParams: PaginationParams = {};
@@ -123,20 +125,14 @@ const UsersReport = () => {
           toDate.setHours(23, 59, 59, 999);
           statsParams.endDate = toDate.toISOString();
         }
-        // Calculate stats from other endpoints
-        console.log('Using fallback calculation...');
+
+        console.log('Users Report: Using authoritative stats endpoints for all counts');
         
-        // Get users data to calculate user stats
-        const usersResponse = await fetchUsers({ 
-          limit: 10000, // Large limit to get all users
-          ...statsParams 
-        });
-        
-        // Get sessions data for session count
-        const sessionsResponse = await fetchSessions({ 
-          limit: 10000, 
-          ...statsParams 
-        });
+        // Get authoritative stats from dedicated endpoints
+        const [questionStats, sessionStats] = await Promise.all([
+          fetchQuestionStats(statsParams),
+          fetchSessionStats(statsParams)
+        ]);
         
         // Get feedback data for satisfaction metrics
         const feedbackResponse = await fetchFeedback({ 
@@ -144,10 +140,10 @@ const UsersReport = () => {
           ...statsParams 
         });
 
-        // Calculate statistics
-        const totalUsers = usersResponse.total;
-        const totalSessions = sessionsResponse.total;
-        const totalQuestions = usersResponse.data.reduce((sum, user) => sum + (user.totalQuestions || 0), 0);
+        // Use authoritative stats endpoints as the source of truth
+        const totalUsers = questionStats.uniqueUsers || sessionStats.uniqueUsers;
+        const totalSessions = sessionStats.totalSessions; // Authoritative session count
+        const totalQuestions = questionStats.totalQuestions; // Authoritative question count
         const totalFeedback = feedbackResponse.total;
         const totalLikes = feedbackResponse.data.filter(fb => fb.rating === 'like').length;
         const totalDislikes = feedbackResponse.data.filter(fb => fb.rating === 'dislike').length;
@@ -159,11 +155,11 @@ const UsersReport = () => {
           totalFeedback,
           totalLikes,
           totalDislikes,
-          avgSessionDuration: 0, // Can't calculate without session duration data
-          dailyActivity: [] // Would need more complex calculation
+          avgSessionDuration: sessionStats.avgSessionDuration || 0,
+          dailyActivity: questionStats.dailyActivity || sessionStats.dailyActivity || []
         };
 
-        console.log('Calculated user stats:', calculatedStats);
+        console.log('Users Report calculated stats:', calculatedStats);
         return calculatedStats;
         
       } catch (error) {
@@ -171,7 +167,7 @@ const UsersReport = () => {
         throw error;
       }
     },
-    staleTime: 30 * 1000, // Reduce cache time for debugging
+    staleTime: 30 * 1000,
     retry: 2,
     retryDelay: 1000,
   });
