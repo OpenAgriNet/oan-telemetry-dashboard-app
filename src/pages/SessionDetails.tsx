@@ -32,6 +32,65 @@ import {
   type Question,
   type Feedback
 } from "@/services/api";
+import { formatUTCToIST } from "@/lib/utils";
+
+// Helper function to get a safe ISO string from question data
+function getQuestionTimestampISO(question: Question): string {
+  // 1. question.ets (often epoch milliseconds)
+  if (question.ets) {
+    const etsValue = question.ets;
+    // Try parsing as number first (if it's string or number)
+    const etsNumber = Number(etsValue);
+    if (!isNaN(etsNumber) && etsNumber !== 0) { // Added etsNumber !== 0 to avoid epoch 0 if it's truly 0
+      const d = new Date(etsNumber);
+      if (!isNaN(d.getTime())) return d.toISOString();
+    }
+    // If etsValue was a string and not numeric, or if Number(etsValue) was NaN/0, try parsing etsValue as a date string
+    if (typeof etsValue === 'string') {
+        const d = new Date(etsValue);
+        if (!isNaN(d.getTime())) return d.toISOString();
+    }
+  }
+  // 2. question.dateAsked (likely a date string)
+  if (question.dateAsked) {
+    const d = new Date(question.dateAsked);
+    if (!isNaN(d.getTime())) return d.toISOString();
+  }
+  // 3. question.created_at (likely a date string)
+  if (question.created_at) {
+    const d = new Date(question.created_at);
+    if (!isNaN(d.getTime())) return d.toISOString();
+  }
+  // Fallback
+  console.warn(`Invalid or missing timestamp for question ID ${question.id}. Defaulting to current time.`);
+  return new Date().toISOString();
+}
+
+// Helper function to get a safe ISO string from feedback data
+function getFeedbackTimestampISO(feedback: Feedback): string {
+  // Prefer feedback.timestamp if present
+  if (feedback.timestamp) {
+    const tsNum = Number(feedback.timestamp);
+    if (!isNaN(tsNum) && tsNum > 1000000000000) {
+      const d = new Date(tsNum);
+      if (!isNaN(d.getTime())) return d.toISOString();
+    }
+    // Try as ISO string
+    const d = new Date(feedback.timestamp);
+    if (!isNaN(d.getTime())) return d.toISOString();
+  }
+  // fallback to date
+  if (feedback.date) {
+    const dateNum = Number(feedback.date);
+    if (!isNaN(dateNum) && dateNum > 1000000000000) {
+      const d = new Date(dateNum);
+      if (!isNaN(d.getTime())) return d.toISOString();
+    }
+    const d = new Date(feedback.date);
+    if (!isNaN(d.getTime())) return d.toISOString();
+  }
+  return new Date().toISOString();
+}
 
 const SessionDetails = () => {
   const { sessionId } = useParams();
@@ -108,7 +167,7 @@ const SessionDetails = () => {
       events.push({
         id: `q-${question.id}`,
         type: 'question',
-        timestamp: question.dateAsked || question.created_at || question.ets || new Date().toISOString(),
+        timestamp: getQuestionTimestampISO(question),
         content: question.question,
         metadata: { 
           channel: question.channel,
@@ -123,7 +182,7 @@ const SessionDetails = () => {
         events.push({
           id: `a-${question.id}`,
           type: 'answer',
-          timestamp: question.dateAsked || question.created_at || question.ets || new Date().toISOString(),
+          timestamp: getQuestionTimestampISO(question), // Answer uses the same timestamp as its question
           content: question.answer,
           metadata: { 
             reaction: question.reaction,
@@ -139,7 +198,7 @@ const SessionDetails = () => {
       events.push({
         id: `f-${feedback.id}`,
         type: 'feedback',
-        timestamp: feedback.date || new Date().toISOString(),
+        timestamp: getFeedbackTimestampISO(feedback),
         content: feedback.feedback || `User ${feedback.rating} this response`,
         metadata: { 
           feedbackType: feedback.rating,
@@ -174,9 +233,11 @@ const SessionDetails = () => {
 
   const formatTimestamp = (timestamp: string) => {
     try {
-      return format(new Date(timestamp), "HH:mm:ss");
+      // Assuming timestamp is a valid ISO 8601 string (UTC)
+      return formatUTCToIST(timestamp, "HH:mm:ss zzz");
     } catch (error) {
-      return "00:00:00";
+      console.warn("Error formatting timestamp to IST:", error, "Input:", timestamp);
+      return "00:00:00 (IST)"; // Fallback with timezone indication
     }
   };
 
@@ -497,7 +558,7 @@ const SessionDetails = () => {
                       {feedback.rating}
                     </span>
                     <span className="text-xs text-muted-foreground ml-auto">
-                      {formatTimestamp(feedback.date)}
+                      {formatTimestamp(getFeedbackTimestampISO(feedback))}
                     </span>
                   </div>
                   <p className="text-sm">{feedback.feedback}</p>

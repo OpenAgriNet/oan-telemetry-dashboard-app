@@ -169,10 +169,11 @@ const FeedbackDetails = () => {
     ? sessions.find((s) => s.sessionId === feedback.sessionId)
     : null;
 
-  const handleSessionClick = () => {
-    if (session) {
-      navigate(`/sessions/${session.sessionId}`);
-    }
+  const handleSessionClick = (sessionId: string) => {
+    console.log('Session ID:', sessionId);
+    const SessionId = sessionId;
+    // Add your logic here to handlne the session click
+    navigate(`/sessions/${SessionId}`);
   };
 
   // Show loading state
@@ -304,9 +305,18 @@ const FeedbackDetails = () => {
           </CardHeader>
           <CardContent>
             <div className="text-sm">
-              <code className="relative rounded bg-muted px-[0.3rem] py-[0.2rem] font-mono text-xs">
-                {feedback.sessionId ? feedback.sessionId.substring(0, 8) + '...' : 'N/A'}
-              </code>
+              {feedback.sessionId ? (
+                <button
+                  onClick={() => handleSessionClick(feedback.sessionId)}
+                  className="text-primary hover:underline"
+                >
+                  <code className="relative rounded bg-muted px-[0.3rem] py-[0.2rem] font-mono text-xs">
+                    {feedback.sessionId.substring(0, 8) + '...'}
+                  </code>
+                </button>
+              ) : (
+                <code className="relative rounded bg-muted px-[0.3rem] py-[0.2rem] font-mono text-xs">N/A</code>
+              )}
             </div>
           </CardContent>
         </Card>
@@ -341,7 +351,7 @@ const FeedbackDetails = () => {
             className={`p-4 rounded-lg border border-border bg-card ${
               session ? "cursor-pointer hover:bg-muted/50 transition-colors" : ""
             }`}
-            onClick={session ? handleSessionClick : undefined}
+            onClick={session ? () => handleSessionClick(session.sessionId) : undefined}
           >
             <div className="flex items-center gap-2 mb-2">
               <MessageCircle className="h-4 w-4" />

@@ -190,25 +190,13 @@ const Layout: React.FC<LayoutProps> = ({ children }) => {
         <div className="container mx-auto">
           {/* Header with Global Date Filter and User Profile */}
           <div className="flex justify-between items-center p-6 border-b mb-2 mt-2">
-            <div className="flex items-center gap-8">
+            <div className="flex items-center gap-4">
               <div className="flex items-center gap-2">
                 <CalendarIcon className="h-4 w-4 text-muted-foreground" />
-                <span className="text-sm font-medium text-muted-foreground">Global Filter:</span>
+                <span className="text-base font-medium">Filter:</span>
               </div>
-              <div className="flex items-center gap-8">
-                <div className="w-auto">
-                  <DateRangePicker dateRange={dateRange} setDateRange={setDateRange} />
-                </div>
-                {(dateRange.from || dateRange.to) && (
-                  <Button
-                    variant="outline"
-                    size="sm"
-                    onClick={resetDateRange}
-                    className="h-8 px-3 font-medium ml-4"
-                  >
-                    Reset
-                  </Button>
-                )}
+              <div className="flex items-center gap-2">
+                <DateRangePicker dateRange={dateRange} setDateRange={setDateRange} />
               </div>
             </div>
             
