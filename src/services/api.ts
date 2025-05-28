@@ -1676,3 +1676,113 @@ export const fetchSessionsGraph = async (params: PaginationParams = {}): Promise
     };
   }
 };
+
+// Get feedback graph data for time-series visualization
+export const fetchFeedbackGraph = async (params: PaginationParams = {}): Promise<{
+  data: Array<{
+    date: string;
+    timestamp: number;
+    feedbackCount: number;
+    likesCount: number;
+    dislikesCount: number;
+    uniqueUsersCount: number;
+    uniqueSessionsCount: number;
+    uniqueChannelsCount: number;
+    avgFeedbackLength: number;
+    avgQuestionLength: number;
+    avgAnswerLength: number;
+    satisfactionRate: number;
+    hour?: number;
+    week?: string;
+    month?: string;
+  }>;
+  metadata: {
+    granularity: string;
+    totalDataPoints: number;
+    dateRange: {
+      start: string | null;
+      end: string | null;
+    };
+    summary: {
+      totalFeedback: number;
+      totalLikes: number;
+      totalDislikes: number;
+      totalUniqueUsers: number;
+      avgFeedbackPerPeriod: number;
+      overallSatisfactionRate: number;
+      peakActivity: {
+        date: string | null;
+        feedbackCount: number;
+      };
+    };
+  };
+  filters: {
+    search: string;
+    startDate: string | null;
+    endDate: string | null;
+    granularity: string;
+    appliedStartTimestamp: number | null;
+    appliedEndTimestamp: number | null;
+  };
+}> => {
+  try {
+    const { startDate, endDate, granularity, search } = params;
+    
+    const queryParams = buildQueryParams({
+      startDate: startDate || '',
+      endDate: endDate || '',
+      granularity: granularity || 'daily',
+      search: search || ''
+    });
+
+    const url = `${SERVER_URL}/feedback/graph${queryParams ? `?${queryParams}` : ''}`;
+    console.log('Fetching feedback graph data with URL:', url);
+
+    const response = await fetch(url);
+    
+    if (!response.ok) {
+      throw new Error(`HTTP error! status: ${response.status}`);
+    }
+    
+    const result = await response.json();
+    
+    if (!result.success) {
+      throw new Error('Failed to fetch feedback graph data');
+    }
+
+    return result;
+  } catch (error) {
+    console.error('Error fetching feedback graph data:', error);
+    return {
+      data: [],
+      metadata: {
+        granularity: 'daily',
+        totalDataPoints: 0,
+        dateRange: {
+          start: null,
+          end: null
+        },
+        summary: {
+          totalFeedback: 0,
+          totalLikes: 0,
+          totalDislikes: 0,
+          totalUniqueUsers: 0,
+          avgFeedbackPerPeriod: 0,
+          overallSatisfactionRate: 0,
+          peakActivity: {
+            date: null,
+            feedbackCount: 0
+          }
+        }
+      },
+      filters: {
+        search: '',
+        startDate: null,
+        endDate: null,
+        granularity: 'daily',
+        appliedStartTimestamp: null,
+        appliedEndTimestamp: null
+      }
+    };
+  }
+};

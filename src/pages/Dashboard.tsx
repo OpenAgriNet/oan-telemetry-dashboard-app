@@ -6,6 +6,7 @@ import {
   fetchSessionStats,
   fetchSessionsGraph,
   fetchComprehensiveFeedbackStats,
+  fetchFeedbackGraph,
   fetchDashboardStats,
   type PaginationParams,
 } from "@/services/api";
@@ -108,7 +109,16 @@ const Dashboard = () => {
     queryFn: () => fetchComprehensiveFeedbackStats(buildApiParams()),
   });
 
-  const isLoading = isLoadingDashboardStats || isLoadingQuestionStats || isLoadingQuestionsGraph || isLoadingSessionStats || isLoadingSessionsGraph || isLoadingFeedbackStats;
+  // Fetch feedback graph data for time-series visualization
+  const {
+    data: feedbackGraphData,
+    isLoading: isLoadingFeedbackGraph,
+  } = useQuery({
+    queryKey: ["feedback-graph", dateRange.from?.toISOString(), dateRange.to?.toISOString(), timeGranularity],
+    queryFn: () => fetchFeedbackGraph(buildApiParams()),
+  });
+
+  const isLoading = isLoadingDashboardStats || isLoadingQuestionStats || isLoadingQuestionsGraph || isLoadingSessionStats || isLoadingSessionsGraph || isLoadingFeedbackStats || isLoadingFeedbackGraph;
 
   // Helper function to get the appropriate x-axis key based on granularity
   const getXAxisKey = () => {
@@ -305,18 +315,55 @@ const Dashboard = () => {
             </div>
           </TabsContent>
           <TabsContent value="feedback">
-            <TrendChart
-              title="Feedback Activity"
-              description={`${timeGranularity === 'daily' ? 'Daily' : 'Hourly'} feedback count`}
-              data={timeGranularity === 'daily' 
-                ? (feedbackStats?.dailyActivity || [])
-                : transformHourlyData(feedbackStats?.dailyActivity || [])
-              }
-              dataKey="feedbackCount"
-              type={chartType}
-              color="#ec4899"
-              xAxisKey={getXAxisKey()}
-            />
+            <div className="space-y-4">
+              <TrendChart
+                title="Feedback Activity Over Time"
+                description={`${timeGranularity === 'daily' ? 'Daily' : 'Hourly'} feedback count - Powered by Feedback Graph API`}
+                data={feedbackGraphData?.data || feedbackStats?.dailyActivity || transformHourlyData(feedbackStats?.dailyActivity || [])}
+                dataKey="feedbackCount"
+                type={chartType}
+                color="#ec4899"
+                xAxisKey={getXAxisKey()}
+              />
+              
+              {/* Feedback Graph Metadata Card */}
+              {feedbackGraphData && (
+                <Card className="card-gradient">
+                  <CardHeader>
+                    <CardTitle>Feedback Graph Statistics</CardTitle>
+                  </CardHeader>
+                  <CardContent>
+                    <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-4">
+                      <div className="space-y-1">
+                        <p className="text-sm text-muted-foreground">Total Data Points</p>
+                        <p className="text-2xl font-bold">{feedbackGraphData.metadata.totalDataPoints}</p>
+                      </div>
+                      <div className="space-y-1">
+                        <p className="text-sm text-muted-foreground">Avg Feedback/Period</p>
+                        <p className="text-2xl font-bold">{feedbackGraphData.metadata.summary.avgFeedbackPerPeriod}</p>
+                      </div>
+                      <div className="space-y-1">
+                        <p className="text-sm text-muted-foreground">Satisfaction Rate</p>
+                        <p className="text-lg font-bold">{feedbackGraphData.metadata.summary.overallSatisfactionRate}%</p>
+                        <p className="text-xs text-muted-foreground">{feedbackGraphData.metadata.summary.totalLikes} likes / {feedbackGraphData.metadata.summary.totalDislikes} dislikes</p>
+                      </div>
+                      <div className="space-y-1">
+                        <p className="text-sm text-muted-foreground">Peak Activity</p>
+                        <p className="text-lg font-bold">{feedbackGraphData.metadata.summary.peakActivity.feedbackCount} feedback</p>
+                        <p className="text-xs text-muted-foreground">on {feedbackGraphData.metadata.summary.peakActivity.date}</p>
+                      </div>
+                      <div className="space-y-1">
+                        <p className="text-sm text-muted-foreground">Date Range</p>
+                        <p className="text-sm font-medium">
+                          {feedbackGraphData.metadata.dateRange.start} to {feedbackGraphData.metadata.dateRange.end}
+                        </p>
+                        <p className="text-xs text-muted-foreground">Granularity: {feedbackGraphData.metadata.granularity}</p>
+                      </div>
+                    </div>
+                  </CardContent>
+                </Card>
+              )}
+            </div>
           </TabsContent>
         </Tabs>
       </div>
