@@ -1572,3 +1572,107 @@ export const fetchQuestionsGraph = async (params: PaginationParams = {}): Promis
     };
   }
 };
+
+// Get sessions graph data for time-series visualization
+export const fetchSessionsGraph = async (params: PaginationParams = {}): Promise<{
+  data: Array<{
+    date: string;
+    timestamp: number;
+    sessionsCount: number;
+    uniqueUsersCount: number;
+    uniqueSessionIdsCount: number;
+    questionsCount: number;
+    feedbackCount: number;
+    errorsCount: number;
+    avgQuestionsPerSession: number;
+    avgFeedbackPerSession: number;
+    hour?: number;
+    week?: string;
+    month?: string;
+  }>;
+  metadata: {
+    granularity: string;
+    totalDataPoints: number;
+    dateRange: {
+      start: string | null;
+      end: string | null;
+    };
+    summary: {
+      totalSessions: number;
+      totalQuestions: number;
+      totalUsers: number;
+      avgSessionsPerPeriod: number;
+      peakActivity: {
+        date: string | null;
+        sessionsCount: number;
+      };
+    };
+  };
+  filters: {
+    search: string;
+    startDate: string | null;
+    endDate: string | null;
+    granularity: string;
+    appliedStartTimestamp: number | null;
+    appliedEndTimestamp: number | null;
+  };
+}> => {
+  try {
+    const { startDate, endDate, granularity, search } = params;
+    
+    const queryParams = buildQueryParams({
+      startDate: startDate || '',
+      endDate: endDate || '',
+      granularity: granularity || 'daily',
+      search: search || ''
+    });
+
+    const url = `${SERVER_URL}/sessions/graph${queryParams ? `?${queryParams}` : ''}`;
+    console.log('Fetching sessions graph data with URL:', url);
+
+    const response = await fetch(url);
+    
+    if (!response.ok) {
+      throw new Error(`HTTP error! status: ${response.status}`);
+    }
+    
+    const result = await response.json();
+    
+    if (!result.success) {
+      throw new Error('Failed to fetch sessions graph data');
+    }
+
+    return result;
+  } catch (error) {
+    console.error('Error fetching sessions graph data:', error);
+    return {
+      data: [],
+      metadata: {
+        granularity: 'daily',
+        totalDataPoints: 0,
+        dateRange: {
+          start: null,
+          end: null
+        },
+        summary: {
+          totalSessions: 0,
+          totalQuestions: 0,
+          totalUsers: 0,
+          avgSessionsPerPeriod: 0,
+          peakActivity: {
+            date: null,
+            sessionsCount: 0
+          }
+        }
+      },
+      filters: {
+        search: '',
+        startDate: null,
+        endDate: null,
+        granularity: 'daily',
+        appliedStartTimestamp: null,
+        appliedEndTimestamp: null
+      }
+    };
+  }
+};

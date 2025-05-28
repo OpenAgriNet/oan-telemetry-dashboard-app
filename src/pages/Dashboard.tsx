@@ -4,6 +4,7 @@ import {
   fetchQuestionStats,
   fetchQuestionsGraph,
   fetchSessionStats,
+  fetchSessionsGraph,
   fetchComprehensiveFeedbackStats,
   fetchDashboardStats,
   type PaginationParams,
@@ -89,6 +90,15 @@ const Dashboard = () => {
     queryFn: () => fetchSessionStats(buildApiParams()),
   });
 
+  // Fetch sessions graph data for time-series visualization
+  const {
+    data: sessionsGraphData,
+    isLoading: isLoadingSessionsGraph,
+  } = useQuery({
+    queryKey: ["sessions-graph", dateRange.from?.toISOString(), dateRange.to?.toISOString(), timeGranularity],
+    queryFn: () => fetchSessionsGraph(buildApiParams()),
+  });
+
   // Fetch comprehensive feedback statistics
   const {
     data: feedbackStats,
@@ -98,7 +108,7 @@ const Dashboard = () => {
     queryFn: () => fetchComprehensiveFeedbackStats(buildApiParams()),
   });
 
-  const isLoading = isLoadingDashboardStats || isLoadingQuestionStats || isLoadingQuestionsGraph || isLoadingSessionStats || isLoadingFeedbackStats;
+  const isLoading = isLoadingDashboardStats || isLoadingQuestionStats || isLoadingQuestionsGraph || isLoadingSessionStats || isLoadingSessionsGraph || isLoadingFeedbackStats;
 
   // Helper function to get the appropriate x-axis key based on granularity
   const getXAxisKey = () => {
@@ -109,15 +119,17 @@ const Dashboard = () => {
   const transformHourlyData = (data: Array<{ hour?: number; date?: string; timestamp?: string; [key: string]: unknown }>) => {
     if (!data || !Array.isArray(data)) return [];
     
-    if (timeGranularity === 'hourly') {
-      // If we have hourly distribution data, transform it to the expected format
-      return data.map(item => ({
-        ...item,
-        hour: item.hour || item.date || item.timestamp,
-      }));
-    }
-    
-    return data;
+    return data.map(item => ({
+      ...item,
+      // For hourly data, ensure we have a proper hour field
+      hour: item.hour !== undefined 
+        ? item.hour 
+        : (typeof item.date === 'string' && item.date.includes(' ') 
+          ? parseInt(item.date.split(' ')[1]?.split(':')[0] || '0') 
+          : 0),
+      // Keep date as is for x-axis labeling
+      date: item.date || `Hour ${item.hour || 0}`,
+    }));
   };
 
   return (
@@ -193,9 +205,9 @@ const Dashboard = () => {
               description={`${timeGranularity === 'daily' ? 'Daily' : 'Hourly'} unique users`}
               data={timeGranularity === 'daily' 
                 ? (dashboardStats?.recentTrends || sessionStats?.dailyActivity || questionStats?.dailyActivity || [])
-                : transformHourlyData(questionStats?.hourlyDistribution || [])
+                : (questionsGraphData?.data || sessionStats?.dailyActivity || transformHourlyData(questionStats?.hourlyDistribution || []))
               }
-              dataKey={timeGranularity === 'daily' ? 'uniqueUsersCount' : 'questionsCount'}
+              dataKey={timeGranularity === 'daily' ? 'uniqueUsersCount' : 'uniqueUsersCount'}
               type={chartType}
               xAxisKey={getXAxisKey()}
             />
@@ -205,10 +217,7 @@ const Dashboard = () => {
               <TrendChart
                 title="Questions Asked Over Time"
                 description={`${timeGranularity === 'daily' ? 'Daily' : 'Hourly'} questions count - Powered by Questions Graph API`}
-                data={timeGranularity === 'daily' 
-                  ? (questionsGraphData?.data || questionStats?.dailyActivity || [])
-                  : transformHourlyData(questionStats?.hourlyDistribution || [])
-                }
+                data={questionsGraphData?.data || questionStats?.dailyActivity || transformHourlyData(questionStats?.hourlyDistribution || [])}
                 dataKey="questionsCount"
                 type={chartType}
                 color="hsl(var(--primary))"
@@ -250,18 +259,50 @@ const Dashboard = () => {
             </div>
           </TabsContent>
           <TabsContent value="sessions">
-            <TrendChart
-              title="Session Activity"
-              description={`${timeGranularity === 'daily' ? 'Daily' : 'Hourly'} sessions count`}
-              data={timeGranularity === 'daily' 
-                ? (sessionStats?.dailyActivity || [])
-                : transformHourlyData(sessionStats?.dailyActivity || [])
-              }
-              dataKey="sessionsCount"
-              type={chartType}
-              color="#10b981"
-              xAxisKey={getXAxisKey()}
-            />
+            <div className="space-y-4">
+              <TrendChart
+                title="Session Activity Over Time"
+                description={`${timeGranularity === 'daily' ? 'Daily' : 'Hourly'} sessions count - Powered by Sessions Graph API`}
+                data={sessionsGraphData?.data || sessionStats?.dailyActivity || transformHourlyData(sessionStats?.dailyActivity || [])}
+                dataKey="sessionsCount"
+                type={chartType}
+                color="#10b981"
+                xAxisKey={getXAxisKey()}
+              />
+              
+              {/* Sessions Graph Metadata Card */}
+              {sessionsGraphData && (
+                <Card className="card-gradient">
+                  <CardHeader>
+                    <CardTitle>Sessions Graph Statistics</CardTitle>
+                  </CardHeader>
+                  <CardContent>
+                    <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-4">
+                      <div className="space-y-1">
+                        <p className="text-sm text-muted-foreground">Total Data Points</p>
+                        <p className="text-2xl font-bold">{sessionsGraphData.metadata.totalDataPoints}</p>
+                      </div>
+                      <div className="space-y-1">
+                        <p className="text-sm text-muted-foreground">Avg Sessions/Period</p>
+                        <p className="text-2xl font-bold">{sessionsGraphData.metadata.summary.avgSessionsPerPeriod}</p>
+                      </div>
+                      <div className="space-y-1">
+                        <p className="text-sm text-muted-foreground">Peak Activity</p>
+                        <p className="text-lg font-bold">{sessionsGraphData.metadata.summary.peakActivity.sessionsCount} sessions</p>
+                        <p className="text-xs text-muted-foreground">on {sessionsGraphData.metadata.summary.peakActivity.date}</p>
+                      </div>
+                      <div className="space-y-1">
+                        <p className="text-sm text-muted-foreground">Date Range</p>
+                        <p className="text-sm font-medium">
+                          {sessionsGraphData.metadata.dateRange.start} to {sessionsGraphData.metadata.dateRange.end}
+                        </p>
+                        <p className="text-xs text-muted-foreground">Granularity: {sessionsGraphData.metadata.granularity}</p>
+                      </div>
+                    </div>
+                  </CardContent>
+                </Card>
+              )}
+            </div>
           </TabsContent>
           <TabsContent value="feedback">
             <TrendChart
