@@ -450,7 +450,7 @@ export const fetchUserByUsername = async (username: string, params: PaginationPa
       endDate: endDate || ''
     });
 
-    const response = await fetch(`${SERVER_URL}/users/${username}?${queryParams}`);
+    const response = await fetch(`${SERVER_URL}/users/name/${username}?${queryParams}`);
     
     if (!response.ok) {
       if (response.status === 404) {
