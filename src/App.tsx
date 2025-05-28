@@ -15,6 +15,8 @@ import NotFound from "./pages/NotFound";
 import SessionDetails from "./pages/SessionDetails";
 import Feedback from "./pages/Feedback";
 import FeedbackDetails from "./pages/FeedbackDetails";
+import Errors from "./pages/Errors";
+import ErrorDetails from "./pages/ErrorDetails";
 import Content from "./pages/Content";
 import ServiceStatus from "./pages/ServiceStatus";
 import { useKeycloak } from "@react-keycloak/web";
@@ -110,6 +112,16 @@ const App = () => {
                   <ServiceStatus />
                 </Layout>
               } />
+              {/* <Route path="/errors" element={
+                <Layout>
+                  <Errors />
+                </Layout>
+              } />
+              <Route path="/errors/:errorId" element={
+                <Layout>
+                  <ErrorDetails />
+                </Layout>
+              } /> */}
               <Route path="*" element={<NotFound />} />
             </Routes>
           </BrowserRouter>

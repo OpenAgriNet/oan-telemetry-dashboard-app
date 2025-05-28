@@ -20,6 +20,7 @@ import {
   CalendarIcon,
   RotateCcw,
   ClipboardCheck,
+  AlertTriangle,
 } from "lucide-react";
 import {
   DropdownMenu,
@@ -80,6 +81,11 @@ const Layout: React.FC<LayoutProps> = ({ children }) => {
       path: "/feedback",
       icon: <ClipboardCheck size={20} />,
     },
+    // {
+    //   name: "Errors",
+    //   path: "/errors",
+    //   icon: <AlertTriangle size={20} />,
+    // },
     // {
     //   name: "Service Status",
     //   path: "/service-status",

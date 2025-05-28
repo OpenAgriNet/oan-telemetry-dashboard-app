@@ -340,11 +340,21 @@ const Dashboard = () => {
             <div className="space-y-4">
               <TrendChart
                 title="Feedback Activity Over Time"
-                description={`${timeGranularity === 'daily' ? 'Daily' : 'Hourly'} feedback count - Powered by Feedback Graph API`}
+                description={`${timeGranularity === 'daily' ? 'Daily' : 'Hourly'} likes and dislikes - Powered by Feedback Graph API`}
                 data={feedbackGraphData?.data || feedbackStats?.dailyActivity || transformHourlyData(feedbackStats?.dailyActivity || [])}
-                dataKey="feedbackCount"
+                dataKey={[
+                  { 
+                    dataKey: "likesCount", 
+                    color: "#10b981", 
+                    name: "Likes" 
+                  },
+                  { 
+                    dataKey: "dislikesCount", 
+                    color: "#ef4444", 
+                    name: "Dislikes" 
+                  }
+                ]}
                 type={chartType}
-                color="#ec4899"
                 xAxisKey={getXAxisKey()}
               />
               

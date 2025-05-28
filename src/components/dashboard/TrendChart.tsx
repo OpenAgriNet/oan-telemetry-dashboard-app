@@ -19,11 +19,17 @@ XAxis,
 YAxis,
 } from "recharts";
 
+interface DataSeriesConfig {
+  dataKey: string;
+  color?: string;
+  name?: string;
+}
+
 interface TrendChartProps {
 title: string;
 description?: string;
 data: Record<string, unknown>[];
-dataKey: string;
+dataKey: string | DataSeriesConfig[]; // Support both single and multiple series
 type?: "line" | "bar" | "area";
 color?: string;
 xAxisKey?: string;
@@ -38,6 +44,12 @@ type = "line",
 color = "var(--primary)",
 xAxisKey = "date",
 }) => {
+// Determine if we're dealing with multiple series
+const isMultipleSeries = Array.isArray(dataKey);
+const seriesConfig: DataSeriesConfig[] = isMultipleSeries 
+  ? dataKey as DataSeriesConfig[]
+  : [{ dataKey: dataKey as string, color, name: dataKey as string }];
+
 // Format timestamp for hourly data if needed
 const formatXAxis = (tickItem: string | number) => {
   if (tickItem === null || tickItem === undefined) return "";
@@ -74,6 +86,7 @@ const CustomTooltip = ({ active, payload, label }: {
     value: unknown; 
     name?: string; 
     color?: string; 
+    dataKey?: string;
   }>; 
   label?: string | number; 
 }) => {
@@ -122,7 +135,7 @@ const CustomTooltip = ({ active, payload, label }: {
         )}
         {payload.map((entry, index: number) => (
           <p key={index} style={{ color: entry.color }} className="text-sm">
-            {`${entry.name || dataKey}: ${entry.value}`}
+            {`${entry.name || entry.dataKey}: ${entry.value}`}
           </p>
         ))}
       </div>
@@ -135,6 +148,7 @@ const CustomTooltip = ({ active, payload, label }: {
 console.log('TrendChart data:', data);
 console.log('xAxisKey:', xAxisKey);
 console.log('dataKey:', dataKey);
+console.log('seriesConfig:', seriesConfig);
 
   // Check if we have data to display
   const hasData = data && data.length > 0;
@@ -170,11 +184,15 @@ axisLine={false}
 tickFormatter={(value) => `${value}`}
 />
 <Tooltip content={<CustomTooltip />} />
+{seriesConfig.map((series, index) => (
 <Bar
-dataKey={dataKey}
-fill={color}
+key={series.dataKey}
+dataKey={series.dataKey}
+fill={series.color || `hsl(${index * 60}, 70%, 50%)`}
 radius={[4, 4, 0, 0]}
+name={series.name || series.dataKey}
 />
+))}
 </BarChart>
 </ResponsiveContainer>
 );
@@ -199,12 +217,16 @@ axisLine={false}
 tickFormatter={(value) => `${value}`}
 />
 <Tooltip content={<CustomTooltip />} />
+{seriesConfig.map((series, index) => (
 <Area
+key={series.dataKey}
 type="monotone"
-dataKey={dataKey}
-stroke={color}
-fill={`${color}33`}
+dataKey={series.dataKey}
+stroke={series.color || `hsl(${index * 60}, 70%, 50%)`}
+fill={`${series.color || `hsl(${index * 60}, 70%, 50%)`}33`}
+name={series.name || series.dataKey}
 />
+))}
 </AreaChart>
 </ResponsiveContainer>
 );
@@ -230,14 +252,18 @@ axisLine={false}
 tickFormatter={(value) => `${value}`}
 />
 <Tooltip content={<CustomTooltip />} />
+{seriesConfig.map((series, index) => (
 <Line
+key={series.dataKey}
 type="monotone"
-dataKey={dataKey}
-stroke={color}
+dataKey={series.dataKey}
+stroke={series.color || `hsl(${index * 60}, 70%, 50%)`}
 strokeWidth={2}
 dot={{ r: 4 }}
 activeDot={{ r: 6 }}
+name={series.name || series.dataKey}
 />
+))}
 </LineChart>
 </ResponsiveContainer>
 );

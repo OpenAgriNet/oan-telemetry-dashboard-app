@@ -28,9 +28,11 @@ import {
   fetchSessionById, 
   fetchQuestionsBySessionId,
   fetchFeedbackBySessionId,
+  fetchErrorsBySessionId,
   type SessionDetail,
   type Question,
-  type Feedback
+  type Feedback,
+  type ErrorDetail
 } from "@/services/api";
 import { formatUTCToIST } from "@/lib/utils";
 
@@ -92,6 +94,57 @@ function getFeedbackTimestampISO(feedback: Feedback): string {
   return new Date().toISOString();
 }
 
+// Helper function to get a safe ISO string from error data
+function getErrorTimestampISO(error: ErrorDetail): string {
+  // 1. Try error.fullDate first (UTC ISO string from backend)
+  if (error.fullDate) {
+    const d = new Date(error.fullDate);
+    if (!isNaN(d.getTime())) return d.toISOString();
+  }
+  
+  // 2. Try error.lastOccurrence (UTC ISO string from backend)
+  if (error.lastOccurrence) {
+    const d = new Date(error.lastOccurrence);
+    if (!isNaN(d.getTime())) return d.toISOString();
+  }
+  
+  // 3. Try any timestamp-like properties that might be UTC
+  const timestampProps = ['ets', 'created_at', 'timestamp'];
+  for (const prop of timestampProps) {
+    if (error[prop]) {
+      const value = error[prop];
+      // Try as number (epoch milliseconds)
+      const numValue = Number(value);
+      if (!isNaN(numValue) && numValue > 1000000000000) {
+        const d = new Date(numValue);
+        if (!isNaN(d.getTime())) return d.toISOString();
+      }
+      // Try as ISO string
+      const d = new Date(value as string);
+      if (!isNaN(d.getTime())) return d.toISOString();
+    }
+  }
+  
+  // 4. Last resort: try error.date + error.time (IST formatted by backend)
+  if (error.date && error.time) {
+    try {
+      // Create a combined date string - this is a best effort fallback
+      // The backend formats these in IST, so we'll just use them as-is for chronological order
+      const combinedDateTime = `${error.date} ${error.time}`;
+      const d = new Date(combinedDateTime);
+      if (!isNaN(d.getTime())) {
+        // Return as-is - while not perfectly UTC, it will maintain chronological order
+        return d.toISOString();
+      }
+    } catch (err) {
+      console.warn(`Error parsing date/time combination: ${error.date} ${error.time}`, err);
+    }
+  }
+  
+  console.warn(`Invalid or missing timestamp for error ID ${error.id}. Defaulting to current time.`);
+  return new Date().toISOString();
+}
+
 const SessionDetails = () => {
   const { sessionId } = useParams();
   const navigate = useNavigate();
@@ -138,8 +191,22 @@ const SessionDetails = () => {
     retryDelay: (attemptIndex) => Math.min(1000 * 2 ** attemptIndex, 30000),
   });
 
-  const isLoading = isLoadingSession || isLoadingQuestions || isLoadingFeedback;
-  const error = sessionError || questionsError || feedbackError;
+  // Fetch errors for this session
+  const { 
+    data: sessionErrors = [], 
+    isLoading: isLoadingErrors,
+    error: errorsError,
+    refetch: refetchErrors
+  } = useQuery({
+    queryKey: ["sessionErrors", sessionId],
+    queryFn: () => fetchErrorsBySessionId(sessionId || ""),
+    enabled: !!sessionId,
+    retry: 3,
+    retryDelay: (attemptIndex) => Math.min(1000 * 2 ** attemptIndex, 30000),
+  });
+
+  const isLoading = isLoadingSession || isLoadingQuestions || isLoadingFeedback || isLoadingErrors;
+  const error = sessionError || questionsError || feedbackError || errorsError;
 
   // Create chronological conversation flow
   const conversationFlow = React.useMemo(() => {
@@ -156,6 +223,8 @@ const SessionDetails = () => {
         feedbackType?: string;
         user?: string;
         relatedQuestionId?: string | number;
+        errorType?: string;
+        environment?: string;
       };
     }
 
@@ -208,6 +277,22 @@ const SessionDetails = () => {
       });
     });
 
+    // Add error events
+    sessionErrors.forEach((error: ErrorDetail) => {
+      events.push({
+        id: `e-${error.id}`,
+        type: 'error',
+        timestamp: getErrorTimestampISO(error),
+        content: error.errorMessage || 'System error occurred',
+        metadata: { 
+          errorType: error.errorType,
+          environment: error.environment,
+          user: error.userId,
+          questionId: error.questionId
+        }
+      });
+    });
+
     // Add errors from session details if available
     // if (sessionDetail?.errors) {
     //   sessionDetail.errors.forEach((error) => {
@@ -229,11 +314,11 @@ const SessionDetails = () => {
       const timeB = new Date(b.timestamp).getTime();
       return timeA - timeB;
     });
-  }, [sessionDetail, sessionQuestions, sessionFeedback]);
+  }, [sessionDetail, sessionQuestions, sessionFeedback, sessionErrors]);
 
   const formatTimestamp = (timestamp: string) => {
     try {
-      // Assuming timestamp is a valid ISO 8601 string (UTC)
+      // Use the utility function to format UTC timestamp to IST
       return formatUTCToIST(timestamp, "HH:mm:ss zzz");
     } catch (error) {
       console.warn("Error formatting timestamp to IST:", error, "Input:", timestamp);
@@ -254,6 +339,8 @@ const SessionDetails = () => {
       feedbackType?: string;
       user?: string;
       relatedQuestionId?: string | number;
+      errorType?: string;
+      environment?: string;
     };
   }, index: number) => {
     const isUser = event.type === 'question';
@@ -294,6 +381,23 @@ const SessionDetails = () => {
               {event.content}
             </div>
             
+            {/* {isSystem && event.metadata && (
+              <div className="mt-2 space-y-1">
+                {event.metadata.errorType && (
+                  <div className="flex items-center gap-1 text-xs">
+                    <span className="font-medium text-destructive">Type:</span>
+                    <span className="opacity-70">{event.metadata.errorType}</span>
+                  </div>
+                )}
+                {event.metadata.environment && (
+                  <div className="flex items-center gap-1 text-xs">
+                    <span className="font-medium text-destructive">Environment:</span>
+                    <span className="opacity-70">{event.metadata.environment}</span>
+                  </div>
+                )}
+              </div>
+            )}
+             */}
             {isFeedback && event.metadata?.feedbackType && (
               <div className="mt-2 flex items-center gap-1 text-xs">
                 {event.metadata.feedbackType === 'like' ? (
@@ -307,7 +411,7 @@ const SessionDetails = () => {
               </div>
             )}
             
-            {event.metadata?.reaction && !isFeedback && (
+            {event.metadata?.reaction && !isFeedback && !isSystem && (
               <div className="mt-2 flex items-center gap-1 text-xs">
                 {event.metadata.reaction === 'like' ? (
                   <ThumbsUp className="w-3 h-3 text-green-500" />
@@ -392,7 +496,7 @@ const SessionDetails = () => {
             <AlertCircle className="h-12 w-12 text-destructive mx-auto mb-4" />
             <p className="text-destructive font-medium mb-2">Error loading session data</p>
             <p className="text-destructive/80 text-sm mb-4">
-              {sessionError?.message || questionsError?.message || feedbackError?.message}
+              {sessionError?.message || questionsError?.message || feedbackError?.message || errorsError?.message}
             </p>
             <div className="flex gap-2 justify-center">
               <Button onClick={() => refetchSession()} variant="outline" size="sm">
@@ -407,6 +511,10 @@ const SessionDetails = () => {
                 <RefreshCw className="h-4 w-4 mr-2" />
                 Retry Feedback
               </Button>
+              {/* <Button onClick={() => refetchErrors()} variant="outline" size="sm">
+                <RefreshCw className="h-4 w-4 mr-2" />
+                Retry Errors
+              </Button> */}
             </div>
           </div>
         </div>
@@ -442,6 +550,7 @@ const SessionDetails = () => {
   const sessionUsername = sessionDetail?.username || sessionQuestions[0]?.user_id || "Unknown User";
   const totalQuestions = sessionQuestions.length;
   const totalFeedback = sessionFeedback.length;
+  const totalErrors = sessionErrors.length;
 
   return (
     <div className="space-y-6">
@@ -495,7 +604,6 @@ const SessionDetails = () => {
           </p>
           </CardContent>
         </Card>
-
         <Card>
           <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
           <CardTitle className="text-sm font-medium">Session ID</CardTitle>
@@ -509,7 +617,34 @@ const SessionDetails = () => {
           </div>
           </CardContent>
         </Card>
+{/* 
+        <Card>
+          <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
+          <CardTitle className="text-sm font-medium">Errors</CardTitle>
+          <AlertTriangle className="h-4 w-4 text-muted-foreground" />
+          </CardHeader>
+          <CardContent>
+          <div className="text-2xl font-bold">{totalErrors}</div>
+          <p className="text-xs text-muted-foreground">
+            system errors
+          </p>
+          </CardContent>
+        </Card> */}
       </div>
+
+      {/* <Card>
+        <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
+        <CardTitle className="text-sm font-medium">Session ID</CardTitle>
+        <Activity className="h-4 w-4 text-muted-foreground" />
+        </CardHeader>
+        <CardContent>
+        <div className="text-sm">
+          <code className="relative rounded bg-muted px-[0.3rem] py-[0.2rem] font-mono text-xs break-all">
+            {sessionId}
+          </code>
+        </div>
+        </CardContent>
+      </Card> */}
 
       <Card>
         <CardHeader>
@@ -568,6 +703,49 @@ const SessionDetails = () => {
           </CardContent>
         </Card>
       )}
+
+      {/* {totalErrors > 0 && sessionErrors.length > 0 && (
+        <Card>
+          <CardHeader>
+            <CardTitle className="text-lg">System Errors</CardTitle>
+            <CardDescription>Errors that occurred during this session</CardDescription>
+          </CardHeader>
+          <CardContent>
+            <div className="space-y-3">
+              {sessionErrors.map((error) => (
+                <div 
+                  key={error.id} 
+                  className="p-3 rounded-lg border border-destructive/20 bg-destructive/5"
+                >
+                  <div className="flex items-center gap-2 mb-2">
+                    <AlertTriangle className="h-4 w-4 text-destructive" />
+                    <span className="text-sm font-medium">
+                      {error.errorType || 'System Error'}
+                    </span>
+                    <span className="text-xs text-muted-foreground ml-auto">
+                      {formatTimestamp(getErrorTimestampISO(error))}
+                    </span>
+                  </div>
+                  <p className="text-sm text-destructive/80 mb-2">{error.errorMessage}</p>
+                  {(error.environment || error.userId || error.questionId) && (
+                    <div className="text-xs text-muted-foreground space-y-1">
+                      {error.environment && (
+                        <div>Environment: <span className="font-mono">{error.environment}</span></div>
+                      )}
+                      {error.userId && (
+                        <div>User: <span className="font-mono">{error.userId}</span></div>
+                      )}
+                      {error.questionId && (
+                        <div>Question ID: <span className="font-mono">{error.questionId}</span></div>
+                      )}
+                    </div>
+                  )}
+                </div>
+              ))}
+            </div>
+          </CardContent>
+        </Card>
+      )} */}
     </div>
   );
 };

@@ -1469,6 +1469,31 @@ export const fetchFeedbackBySessionId = async (sessionId: string): Promise<Feedb
   }
 };
 
+export const fetchErrorsBySessionId = async (sessionId: string): Promise<ErrorDetail[]> => {
+  try {
+    console.log('Fetching errors for session:', sessionId);
+    
+    const response = await fetch(`${SERVER_URL}/errors/session/${sessionId}`);
+    
+    if (!response.ok) {
+      throw new Error(`HTTP error! status: ${response.status}`);
+    }
+    
+    const result = await response.json();
+    
+    if (!result.data || !Array.isArray(result.data)) {
+      console.warn('Errors API returned invalid data format for session:', sessionId);
+      return [];
+    }
+
+    return result.data;
+  } catch (error) {
+    console.error('Error fetching errors by session ID:', error);
+    // Return empty array instead of throwing to prevent breaking the session details page
+    return [];
+  }
+};
+
 /**
  * Fetch all pages of a paginated API and return the combined data array.
  * @param fetchFn The paginated fetch function (e.g., fetchQuestions)
@@ -1807,6 +1832,207 @@ export const fetchFeedbackGraph = async (params: PaginationParams = {}): Promise
         appliedStartTimestamp: null,
         appliedEndTimestamp: null
       }
+    };
+  }
+};
+
+// Error-related types
+export interface ErrorDetail {
+  id: string;
+  errorType: string;
+  errorMessage: string;
+  errorStack?: string;
+  userId?: string;
+  sessionId?: string;
+  questionId?: string;
+  endpoint?: string;
+  method?: string;
+  statusCode?: number;
+  requestData?: unknown;
+  userAgent?: string;
+  ipAddress?: string;
+  date: string;
+  time: string;
+  fullDate: string;
+  resolved: boolean;
+  resolvedAt?: string;
+  resolvedBy?: string;
+  errorCount: number;
+  lastOccurrence?: string;
+  environment?: string;
+  [key: string]: unknown;
+}
+
+export interface ErrorPaginationParams extends PaginationParams {
+  errorType?: string;
+}
+
+export interface ErrorAPIResponse {
+  data: ErrorDetail[];
+  pagination: {
+    currentPage: number;
+    totalPages: number;
+    totalCount: number;
+    hasNextPage: boolean;
+    hasPreviousPage: boolean;
+  };
+  total: number;
+}
+
+export interface ErrorStatsResponse {
+  totalErrors: number;
+  unresolvedErrors: number;
+  resolvedErrors: number;
+  criticalErrors: number;
+  avgErrorCount: number;
+}
+
+export interface ErrorGraphResponse {
+  data: Array<{
+    date: string;
+    errorCount: number;
+    criticalCount: number;
+    unresolvedCount: number;
+  }>;
+}
+
+// Error API Functions
+
+// Get all errors with pagination
+export const fetchErrors = async (params: ErrorPaginationParams = {}): Promise<PaginatedResponse<ErrorDetail>> => {
+  try {
+    const { page = 1, limit = 10, search = '', startDate, endDate, errorType = '' } = params;
+    
+    const queryParams = buildQueryParams({
+      page: page.toString(),
+      limit: limit.toString(),
+      search: search || '',
+      startDate: startDate || '',
+      endDate: endDate || '',
+      errorType: errorType || ''
+    });
+
+    const url = `${SERVER_URL}/errors${queryParams ? `?${queryParams}` : ''}`;
+    console.log('Fetching errors with URL:', url);
+
+    const response = await fetch(url);
+    
+    if (!response.ok) {
+      throw new Error(`HTTP error! status: ${response.status}`);
+    }
+    
+    const result: ErrorAPIResponse = await response.json();
+    
+    console.log('Error API response:', result);
+    
+    return {
+      data: result.data,
+      total: result.total,
+      page: result.pagination.currentPage,
+      pageSize: limit,
+      totalPages: result.pagination.totalPages
+    };
+  } catch (error) {
+    console.error('Error fetching errors:', error);
+    return {
+      data: [],
+      total: 0,
+      page: 1,
+      pageSize: 10,
+      totalPages: 0
+    };
+  }
+};
+
+// Get error by ID
+export const fetchErrorById = async (id: string): Promise<ErrorDetail | null> => {
+  try {
+    const url = `${SERVER_URL}/errors/id/${id}`;
+    console.log('Fetching error by ID with URL:', url);
+
+    const response = await fetch(url);
+    
+    if (!response.ok) {
+      if (response.status === 404) {
+        return null;
+      }
+      throw new Error(`HTTP error! status: ${response.status}`);
+    }
+    
+    const result = await response.json();
+    return result.data;
+  } catch (error) {
+    console.error('Error fetching error by ID:', error);
+    return null;
+  }
+};
+
+// Get error statistics
+export const fetchErrorStats = async (params: PaginationParams = {}): Promise<ErrorStatsResponse> => {
+  try {
+    const { search = '', startDate, endDate } = params;
+    
+    const queryParams = buildQueryParams({
+      search: search || '',
+      startDate: startDate || '',
+      endDate: endDate || ''
+    });
+
+    const url = `${SERVER_URL}/errors/stats${queryParams ? `?${queryParams}` : ''}`;
+    console.log('Fetching error stats with URL:', url);
+
+    const response = await fetch(url);
+    
+    if (!response.ok) {
+      throw new Error(`HTTP error! status: ${response.status}`);
+    }
+    
+    const result: ErrorStatsResponse = await response.json();
+    
+    console.log('Error stats response:', result);
+    
+    return result;
+  } catch (error) {
+    console.error('Error fetching error statistics:', error);
+    return {
+      totalErrors: 0,
+      unresolvedErrors: 0,
+      resolvedErrors: 0,
+      criticalErrors: 0,
+      avgErrorCount: 0
+    };
+  }
+};
+
+// Get error graph data for time-series visualization
+export const fetchErrorGraph = async (params: PaginationParams = {}): Promise<ErrorGraphResponse> => {
+  try {
+    const { startDate, endDate, granularity = 'day' } = params;
+    
+    const queryParams = buildQueryParams({
+      startDate: startDate || '',
+      endDate: endDate || '',
+      granularity: granularity || 'day'
+    });
+
+    const url = `${SERVER_URL}/errors/graph${queryParams ? `?${queryParams}` : ''}`;
+    console.log('Fetching error graph data with URL:', url);
+
+    const response = await fetch(url);
+    
+    if (!response.ok) {
+      throw new Error(`HTTP error! status: ${response.status}`);
+    }
+    
+    const result: ErrorGraphResponse = await response.json();
+    
+    console.log('Error graph response:', result);
+    
+    return result;
+  } catch (error) {
+    console.error('Error fetching error graph data:', error);
+    return {
+      data: []
     };
   }
 };
