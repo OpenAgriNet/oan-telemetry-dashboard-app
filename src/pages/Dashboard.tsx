@@ -9,6 +9,8 @@ import {
   fetchFeedbackGraph,
   fetchDashboardStats,
   type PaginationParams,
+  fetchUsersGraph,
+  fetchUserStats,
 } from "@/services/api";
 import { useDateFilter } from "@/contexts/DateFilterContext";
 import MetricCard from "@/components/dashboard/MetricCard";
@@ -28,6 +30,7 @@ import {
   LineChart,
 } from "lucide-react";
 import { ToggleGroup, ToggleGroupItem } from "@/components/ui/toggle-group";
+import { Stats } from "fs";
 
 const Dashboard = () => {
   const { dateRange } = useDateFilter();
@@ -98,6 +101,15 @@ const Dashboard = () => {
   } = useQuery({
     queryKey: ["sessions-graph", dateRange.from?.toISOString(), dateRange.to?.toISOString(), timeGranularity],
     queryFn: () => fetchSessionsGraph(buildApiParams()),
+    });
+
+  // Fetch users graph data for time-series visualization
+  const {
+    data: usersGraphData,
+    isLoading: isLoadingUsersGraph,
+  } = useQuery({
+    queryKey: ["users-graph", dateRange.from?.toISOString(), dateRange.to?.toISOString(), timeGranularity],
+    queryFn: () => fetchUsersGraph(buildApiParams()),
   });
 
   // Fetch comprehensive feedback statistics
@@ -107,6 +119,15 @@ const Dashboard = () => {
   } = useQuery({
     queryKey: ["comprehensive-feedback-stats", dateRange.from?.toISOString(), dateRange.to?.toISOString(), timeGranularity],
     queryFn: () => fetchComprehensiveFeedbackStats(buildApiParams()),
+  });
+
+  // Fetch users statistics
+  const {
+    data: userStats,
+    isLoading: isLoadingUserStats,
+  } = useQuery({
+    queryKey: ["users-stats", dateRange.from?.toISOString(), dateRange.to?.toISOString(), timeGranularity], 
+    queryFn: () => fetchUserStats(buildApiParams()),
   });
 
   // Fetch feedback graph data for time-series visualization
@@ -151,7 +172,7 @@ const Dashboard = () => {
       <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-4">
         <MetricCard
           title="Unique Users"
-          value={dashboardStats?.totalUsers || questionStats?.uniqueUsers || sessionStats?.uniqueUsers || 0}
+          value={dashboardStats?.totalUsers || questionStats?.uniqueUsers || sessionStats?.uniqueUsers || userStats?.totalUsers || 0}
           icon={<User size={16} />}
           description="Total unique users"
         />
@@ -210,15 +231,16 @@ const Dashboard = () => {
             <TabsTrigger value="feedback">Feedback</TabsTrigger>
           </TabsList>
           <TabsContent value="users">
-            <TrendChart
+          <TrendChart
               title="User Activity"
               description={`${timeGranularity === 'daily' ? 'Daily' : 'Hourly'} unique users`}
               data={timeGranularity === 'daily' 
-                ? (dashboardStats?.recentTrends || sessionStats?.dailyActivity || questionStats?.dailyActivity || [])
-                : (questionsGraphData?.data || sessionStats?.dailyActivity || transformHourlyData(questionStats?.hourlyDistribution || []))
+                ? (usersGraphData?.data || userStats?.dailyActivity || [])
+                : transformHourlyData( usersGraphData?.data || userStats?.dailyActivity || [])
               }
-              dataKey={timeGranularity === 'daily' ? 'uniqueUsersCount' : 'uniqueUsersCount'}
+              dataKey="uniqueUsersCount"
               type={chartType}
+              color="hsl(var(--primary))" 
               xAxisKey={getXAxisKey()}
             />
           </TabsContent>

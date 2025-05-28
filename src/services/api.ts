@@ -377,6 +377,28 @@ export interface UserStatsResponse {
   }>;
 }
 
+// For users graph data (time series)
+export interface UsersGraphDataPoint {
+  date: string;
+  hour?: number;
+  uniqueUsersCount: number;
+  [key: string]: any;
+}
+
+export interface UsersGraphResponse {
+  data: UsersGraphDataPoint[];
+  metadata: {
+    granularity: string;
+    totalDataPoints: number;
+    dateRange: { start: string | null; end: string | null };
+    summary: {
+      totalUniqueUsers: number;
+      peakActivity: { date: string | null; uniqueUsersCount: number };
+    };
+  };
+  filters: any;
+}
+
 // Users API - Updated to match actual backend controller
 export const fetchUsers = async (params: UserPaginationParams = {}): Promise<PaginatedResponse<User>> => {
   try {
@@ -1066,6 +1088,7 @@ export const fetchQuestionStats = async (params: PaginationParams = {}): Promise
   }>;
   hourlyDistribution: Array<{
     hour: number;
+    uniqueUsersCount: number;
     questionsCount: number;
   }>;
 }> => {
@@ -1528,6 +1551,7 @@ export const fetchQuestionsGraph = async (params: PaginationParams = {}): Promis
     console.log('Fetching questions graph data with URL:', url);
 
     const response = await fetch(url);
+
     
     if (!response.ok) {
       throw new Error(`HTTP error! status: ${response.status}`);
@@ -1772,6 +1796,65 @@ export const fetchFeedbackGraph = async (params: PaginationParams = {}): Promise
           peakActivity: {
             date: null,
             feedbackCount: 0
+          }
+        }
+      },
+      filters: {
+        search: '',
+        startDate: null,
+        endDate: null,
+        granularity: 'daily',
+        appliedStartTimestamp: null,
+        appliedEndTimestamp: null
+      }
+    };
+  }
+};
+
+export const fetchUsersGraph = async (params: PaginationParams = {}): Promise<UsersGraphResponse> => {
+  try {
+    const { startDate, endDate, granularity, search } = params;
+    
+    const queryParams = buildQueryParams({
+      startDate: startDate || '',
+      endDate: endDate || '',
+      granularity: granularity || 'daily',
+      search: search || ''
+    });
+
+    const url = `${SERVER_URL}/userss/graph-user${queryParams ? `?${queryParams}` : ''}`;
+    console.log('Fetching users graph data with URL:', url);
+
+    const response = await fetch(url);
+
+    
+    if (!response.ok) {
+      throw new Error(`HTTP error! status: ${response.status}`);
+    }
+    
+    const result = await response.json();
+    
+    if (!result.success) {
+      throw new Error('Failed to fetch users graph data');
+    }
+
+    return result;
+  } catch (error) {
+    console.error('Error fetching users graph data:', error);
+    return {
+      data: [],
+      metadata: {
+        granularity: 'daily',
+        totalDataPoints: 0,
+        dateRange: {
+          start: null,
+          end: null
+        },
+        summary: {
+          totalUniqueUsers: 0,
+          peakActivity: {
+            date: null,
+            uniqueUsersCount: 0
           }
         }
       },
