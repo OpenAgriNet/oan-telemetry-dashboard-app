@@ -1472,3 +1472,103 @@ export async function fetchAllPages<T, P extends { page?: number; limit?: number
   }
   return allData;
 }
+
+// Get questions graph data for time-series visualization
+export const fetchQuestionsGraph = async (params: PaginationParams = {}): Promise<{
+  data: Array<{
+    date: string;
+    timestamp: number;
+    questionsCount: number;
+    uniqueUsersCount: number;
+    uniqueSessionsCount: number;
+    uniqueChannelsCount: number;
+    avgQuestionLength: number;
+    avgAnswerLength: number;
+    hour?: number;
+    week?: string;
+    month?: string;
+  }>;
+  metadata: {
+    granularity: string;
+    totalDataPoints: number;
+    dateRange: {
+      start: string | null;
+      end: string | null;
+    };
+    summary: {
+      totalQuestions: number;
+      totalUniqueUsers: number;
+      avgQuestionsPerPeriod: number;
+      peakActivity: {
+        date: string | null;
+        questionsCount: number;
+      };
+    };
+  };
+  filters: {
+    search: string;
+    startDate: string | null;
+    endDate: string | null;
+    granularity: string;
+    appliedStartTimestamp: number | null;
+    appliedEndTimestamp: number | null;
+  };
+}> => {
+  try {
+    const { startDate, endDate, granularity, search } = params;
+    
+    const queryParams = buildQueryParams({
+      startDate: startDate || '',
+      endDate: endDate || '',
+      granularity: granularity || 'daily',
+      search: search || ''
+    });
+
+    const url = `${SERVER_URL}/questions/graph${queryParams ? `?${queryParams}` : ''}`;
+    console.log('Fetching questions graph data with URL:', url);
+
+    const response = await fetch(url);
+    
+    if (!response.ok) {
+      throw new Error(`HTTP error! status: ${response.status}`);
+    }
+    
+    const result = await response.json();
+    
+    if (!result.success) {
+      throw new Error('Failed to fetch questions graph data');
+    }
+
+    return result;
+  } catch (error) {
+    console.error('Error fetching questions graph data:', error);
+    return {
+      data: [],
+      metadata: {
+        granularity: 'daily',
+        totalDataPoints: 0,
+        dateRange: {
+          start: null,
+          end: null
+        },
+        summary: {
+          totalQuestions: 0,
+          totalUniqueUsers: 0,
+          avgQuestionsPerPeriod: 0,
+          peakActivity: {
+            date: null,
+            questionsCount: 0
+          }
+        }
+      },
+      filters: {
+        search: '',
+        startDate: null,
+        endDate: null,
+        granularity: 'daily',
+        appliedStartTimestamp: null,
+        appliedEndTimestamp: null
+      }
+    };
+  }
+};

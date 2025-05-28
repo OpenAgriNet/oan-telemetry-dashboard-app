@@ -2,6 +2,7 @@ import React, { useState } from "react";
 import { useQuery } from "@tanstack/react-query";
 import {
   fetchQuestionStats,
+  fetchQuestionsGraph,
   fetchSessionStats,
   fetchComprehensiveFeedbackStats,
   fetchDashboardStats,
@@ -70,6 +71,15 @@ const Dashboard = () => {
     queryFn: () => fetchQuestionStats(buildApiParams()),
   });
 
+  // Fetch questions graph data for time-series visualization
+  const {
+    data: questionsGraphData,
+    isLoading: isLoadingQuestionsGraph,
+  } = useQuery({
+    queryKey: ["questions-graph", dateRange.from?.toISOString(), dateRange.to?.toISOString(), timeGranularity],
+    queryFn: () => fetchQuestionsGraph(buildApiParams()),
+  });
+
   // Fetch session statistics
   const {
     data: sessionStats,
@@ -88,7 +98,7 @@ const Dashboard = () => {
     queryFn: () => fetchComprehensiveFeedbackStats(buildApiParams()),
   });
 
-  const isLoading = isLoadingDashboardStats || isLoadingQuestionStats || isLoadingSessionStats || isLoadingFeedbackStats;
+  const isLoading = isLoadingDashboardStats || isLoadingQuestionStats || isLoadingQuestionsGraph || isLoadingSessionStats || isLoadingFeedbackStats;
 
   // Helper function to get the appropriate x-axis key based on granularity
   const getXAxisKey = () => {
@@ -191,18 +201,53 @@ const Dashboard = () => {
             />
           </TabsContent>
           <TabsContent value="questions">
-            <TrendChart
-              title="Questions Asked"
-              description={`${timeGranularity === 'daily' ? 'Daily' : 'Hourly'} questions count`}
-              data={timeGranularity === 'daily' 
-                ? (questionStats?.dailyActivity || [])
-                : transformHourlyData(questionStats?.hourlyDistribution || [])
-              }
-              dataKey="questionsCount"
-              type={chartType}
-              color="hsl(var(--primary))"
-              xAxisKey={getXAxisKey()}
-            />
+            <div className="space-y-4">
+              <TrendChart
+                title="Questions Asked Over Time"
+                description={`${timeGranularity === 'daily' ? 'Daily' : 'Hourly'} questions count - Powered by Questions Graph API`}
+                data={timeGranularity === 'daily' 
+                  ? (questionsGraphData?.data || questionStats?.dailyActivity || [])
+                  : transformHourlyData(questionStats?.hourlyDistribution || [])
+                }
+                dataKey="questionsCount"
+                type={chartType}
+                color="hsl(var(--primary))"
+                xAxisKey={getXAxisKey()}
+              />
+              
+              {/* Questions Graph Metadata Card */}
+              {questionsGraphData && (
+                <Card className="card-gradient">
+                  <CardHeader>
+                    <CardTitle>Questions Graph Statistics</CardTitle>
+                  </CardHeader>
+                  <CardContent>
+                    <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-4">
+                      <div className="space-y-1">
+                        <p className="text-sm text-muted-foreground">Total Data Points</p>
+                        <p className="text-2xl font-bold">{questionsGraphData.metadata.totalDataPoints}</p>
+                      </div>
+                      <div className="space-y-1">
+                        <p className="text-sm text-muted-foreground">Avg Questions/Period</p>
+                        <p className="text-2xl font-bold">{questionsGraphData.metadata.summary.avgQuestionsPerPeriod}</p>
+                      </div>
+                      <div className="space-y-1">
+                        <p className="text-sm text-muted-foreground">Peak Activity</p>
+                        <p className="text-lg font-bold">{questionsGraphData.metadata.summary.peakActivity.questionsCount} questions</p>
+                        <p className="text-xs text-muted-foreground">on {questionsGraphData.metadata.summary.peakActivity.date}</p>
+                      </div>
+                      <div className="space-y-1">
+                        <p className="text-sm text-muted-foreground">Date Range</p>
+                        <p className="text-sm font-medium">
+                          {questionsGraphData.metadata.dateRange.start} to {questionsGraphData.metadata.dateRange.end}
+                        </p>
+                        <p className="text-xs text-muted-foreground">Granularity: {questionsGraphData.metadata.granularity}</p>
+                      </div>
+                    </div>
+                  </CardContent>
+                </Card>
+              )}
+            </div>
           </TabsContent>
           <TabsContent value="sessions">
             <TrendChart
