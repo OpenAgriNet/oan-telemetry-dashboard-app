@@ -45,11 +45,11 @@ const Layout: React.FC<LayoutProps> = ({ children }) => {
   };
 
   const navItems = [
-    // {
-    //   name: "Dashboard",
-    //   path: "/",
-    //   icon: <LayoutDashboard size={20} />,
-    // },
+    {
+      name: "Dashboard",
+      path: "/",
+      icon: <LayoutDashboard size={20} />,
+    },
     {
       name: "Users",
       path: "/users",
