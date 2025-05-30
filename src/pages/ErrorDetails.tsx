@@ -13,10 +13,13 @@ import {
   RefreshCw,
   MessageSquare
 } from "lucide-react";
+import { useKeycloak } from "@react-keycloak/web";
+import { isSuperAdmin } from "@/utils/roleUtils";
 import { fetchErrorById } from "@/services/api";
 
 const ErrorDetails = () => {
   const { errorId } = useParams<{ errorId: string }>();
+  const { keycloak } = useKeycloak();
 
   const { 
     data: errorDetail, 
@@ -29,6 +32,29 @@ const ErrorDetails = () => {
     retry: 3,
     retryDelay: (attemptIndex) => Math.min(1000 * 2 ** attemptIndex, 30000),
   });
+
+  // Check if user has super-admin role (after all hooks)
+  if (!isSuperAdmin(keycloak)) {
+    return (
+      <div className="space-y-6">
+        <div className="flex items-center gap-4">
+          <Link to="/errors">
+            <Button variant="outline" size="sm">
+              <ArrowLeft className="h-4 w-4 mr-2" />
+              Back to Errors
+            </Button>
+          </Link>
+        </div>
+        <div className="flex justify-center items-center p-8 bg-destructive/10 border border-destructive/20 rounded-lg">
+          <div className="text-center">
+            <AlertTriangle className="h-12 w-12 text-destructive mx-auto mb-4" />
+            <p className="text-destructive font-medium mb-2">Access Denied</p>
+            <p className="text-destructive/80 text-sm">You don't have permission to access this page. Only super-admin users can view error details.</p>
+          </div>
+        </div>
+      </div>
+    );
+  }
 
   if (isLoading) {
     return (
@@ -111,7 +137,7 @@ const ErrorDetails = () => {
               <div>
                 <label className="text-sm font-medium text-muted-foreground">Channel</label>
                 <div className="mt-1">
-                  <Badge variant="outline">{errorDetail.channel}</Badge>
+                  <Badge variant="outline">{String(errorDetail.channel)}</Badge>
                 </div>
               </div>
             )}

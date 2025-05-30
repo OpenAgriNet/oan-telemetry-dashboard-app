@@ -21,6 +21,7 @@ import Content from "./pages/Content";
 import ServiceStatus from "./pages/ServiceStatus";
 import { useKeycloak } from "@react-keycloak/web";
 import QuestionsDetails from "./pages/QuestionsDetails";
+import { isSuperAdmin } from "@/utils/roleUtils";
 
 const queryClient = new QueryClient({
   defaultOptions: {
@@ -43,6 +44,10 @@ const App = () => {
   if (!keycloak.authenticated) {
     return null;
   }
+
+  // Check if current user is super admin
+  const isSuper = isSuperAdmin(keycloak);
+
   return (
   <QueryClientProvider client={queryClient}>
     <ThemeProvider>
@@ -112,16 +117,21 @@ const App = () => {
                   <ServiceStatus />
                 </Layout>
               } />
-              {/* <Route path="/errors" element={
-                <Layout>
-                  <Errors />
-                </Layout>
-              } />
-              <Route path="/errors/:errorId" element={
-                <Layout>
-                  <ErrorDetails />
-                </Layout>
-              } /> */}
+              {/* Conditionally render error routes for super-admin users only */}
+              {isSuper && (
+                <>
+                  <Route path="/errors" element={
+                    <Layout>
+                      <Errors />
+                    </Layout>
+                  } />
+                  <Route path="/errors/:errorId" element={
+                    <Layout>
+                      <ErrorDetails />
+                    </Layout>
+                  } />
+                </>
+              )}
               <Route path="*" element={<NotFound />} />
             </Routes>
           </BrowserRouter>

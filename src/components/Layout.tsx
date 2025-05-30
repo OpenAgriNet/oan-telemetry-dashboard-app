@@ -5,6 +5,7 @@ import { useDateFilter } from "@/contexts/DateFilterContext";
 import { Button } from "@/components/ui/button";
 import { useKeycloak } from "@react-keycloak/web";
 import DateRangePicker from "@/components/dashboard/DateRangePicker";
+import { isSuperAdmin } from "@/utils/roleUtils";
 import {
   BarChart3,
   Users,
@@ -45,6 +46,9 @@ const Layout: React.FC<LayoutProps> = ({ children }) => {
     keycloak.logout();
   };
 
+  // Check if current user is super admin
+  const isSuper = isSuperAdmin(keycloak);
+
   const navItems = [
     {
       name: "Dashboard",
@@ -81,11 +85,16 @@ const Layout: React.FC<LayoutProps> = ({ children }) => {
       path: "/feedback",
       icon: <ClipboardCheck size={20} />,
     },
-    // {
-    //   name: "Errors",
-    //   path: "/errors",
-    //   icon: <AlertTriangle size={20} />,
-    // },
+    // Conditionally add Errors menu item for super-admin users only
+    ...(isSuper
+      ? [
+          {
+            name: "Errors",
+            path: "/errors",
+            icon: <AlertTriangle size={20} />,
+          },
+        ]
+      : []),
     // {
     //   name: "Service Status",
     //   path: "/service-status",
