@@ -217,13 +217,13 @@ const Layout: React.FC<LayoutProps> = ({ children }) => {
             
             <DropdownMenu>
               {/* <DropdownMenuTrigger asChild> */}
-                <Button variant="ghost" className="relative h-10 w-10 rounded-full">
+                {/* <Button variant="ghost" className="relative h-10 w-10 rounded-full">
                   <Avatar>
                     <AvatarFallback>
                       <UserRound className="h-6 w-6" />
                     </AvatarFallback>
                   </Avatar>
-                </Button>
+                </Button> */}
               {/* </DropdownMenuTrigger> */}
               {/* <DropdownMenuContent className="w-56" align="end">
                 <DropdownMenuItem className="flex items-center">
