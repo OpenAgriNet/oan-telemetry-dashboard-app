@@ -35,6 +35,8 @@ import {
   type ErrorDetail
 } from "@/services/api";
 import { formatUTCToIST } from "@/lib/utils";
+import { useKeycloak } from "@react-keycloak/web";
+import { isSuperAdmin } from "@/utils/roleUtils";
 
 // Helper function to get a safe ISO string from question data
 function getQuestionTimestampISO(question: Question): string {
@@ -148,6 +150,10 @@ function getErrorTimestampISO(error: ErrorDetail): string {
 const SessionDetails = () => {
   const { sessionId } = useParams();
   const navigate = useNavigate();
+  const { keycloak } = useKeycloak();
+  
+  // Check if current user is super admin
+  const isSuper = isSuperAdmin(keycloak);
 
   // Fetch session details
   const { 
@@ -191,7 +197,7 @@ const SessionDetails = () => {
     retryDelay: (attemptIndex) => Math.min(1000 * 2 ** attemptIndex, 30000),
   });
 
-  // Fetch errors for this session
+  // Fetch errors for this session (only for super admins)
   const { 
     data: sessionErrors = [], 
     isLoading: isLoadingErrors,
@@ -200,13 +206,13 @@ const SessionDetails = () => {
   } = useQuery({
     queryKey: ["sessionErrors", sessionId],
     queryFn: () => fetchErrorsBySessionId(sessionId || ""),
-    enabled: !!sessionId,
+    enabled: !!sessionId && isSuper,
     retry: 3,
     retryDelay: (attemptIndex) => Math.min(1000 * 2 ** attemptIndex, 30000),
   });
 
-  const isLoading = isLoadingSession || isLoadingQuestions || isLoadingFeedback || isLoadingErrors;
-  const error = sessionError || questionsError || feedbackError || errorsError;
+  const isLoading = isLoadingSession || isLoadingQuestions || isLoadingFeedback || (isSuper && isLoadingErrors);
+  const error = sessionError || questionsError || feedbackError || (isSuper && errorsError);
 
   // Create chronological conversation flow
   const conversationFlow = React.useMemo(() => {
@@ -277,36 +283,23 @@ const SessionDetails = () => {
       });
     });
 
-    // Add error events
-    sessionErrors.forEach((error: ErrorDetail) => {
-      events.push({
-        id: `e-${error.id}`,
-        type: 'error',
-        timestamp: getErrorTimestampISO(error),
-        content: error.errorMessage || 'System error occurred',
-        metadata: { 
-          errorType: error.errorType,
-          environment: error.environment,
-          user: error.userId,
-          questionId: error.questionId
-        }
+    // Add error events (only for super admins)
+    if (isSuper) {
+      sessionErrors.forEach((error: ErrorDetail) => {
+        events.push({
+          id: `e-${error.id}`,
+          type: 'error',
+          timestamp: getErrorTimestampISO(error),
+          content: error.errorMessage || 'System error occurred',
+          metadata: { 
+            errorType: error.errorType,
+            environment: error.environment,
+            user: error.userId,
+            questionId: error.questionId
+          }
+        });
       });
-    });
-
-    // Add errors from session details if available
-    // if (sessionDetail?.errors) {
-    //   sessionDetail.errors.forEach((error) => {
-    //     events.push({
-    //       id: `e-${error.id}`,
-    //       type: 'error',
-    //       timestamp: error.timestamp,
-    //       content: 'System error occurred',
-    //       metadata: { 
-    //         channel: error.channel 
-    //       }
-    //     });
-    //   });
-    // } // TODO errors are not being returned from the API
+    }
 
     // Sort by timestamp
     return events.sort((a, b) => {
@@ -314,7 +307,7 @@ const SessionDetails = () => {
       const timeB = new Date(b.timestamp).getTime();
       return timeA - timeB;
     });
-  }, [sessionDetail, sessionQuestions, sessionFeedback, sessionErrors]);
+  }, [sessionDetail, sessionQuestions, sessionFeedback, sessionErrors, isSuper]);
 
   const formatTimestamp = (timestamp: string) => {
     try {
@@ -381,7 +374,7 @@ const SessionDetails = () => {
               {event.content}
             </div>
             
-            {/* {isSystem && event.metadata && (
+            {isSystem && event.metadata && (
               <div className="mt-2 space-y-1">
                 {event.metadata.errorType && (
                   <div className="flex items-center gap-1 text-xs">
@@ -397,7 +390,7 @@ const SessionDetails = () => {
                 )}
               </div>
             )}
-             */}
+            
             {isFeedback && event.metadata?.feedbackType && (
               <div className="mt-2 flex items-center gap-1 text-xs">
                 {event.metadata.feedbackType === 'like' ? (
@@ -496,7 +489,7 @@ const SessionDetails = () => {
             <AlertCircle className="h-12 w-12 text-destructive mx-auto mb-4" />
             <p className="text-destructive font-medium mb-2">Error loading session data</p>
             <p className="text-destructive/80 text-sm mb-4">
-              {sessionError?.message || questionsError?.message || feedbackError?.message || errorsError?.message}
+              {sessionError?.message || questionsError?.message || feedbackError?.message || (isSuper && errorsError?.message)}
             </p>
             <div className="flex gap-2 justify-center">
               <Button onClick={() => refetchSession()} variant="outline" size="sm">
@@ -511,10 +504,12 @@ const SessionDetails = () => {
                 <RefreshCw className="h-4 w-4 mr-2" />
                 Retry Feedback
               </Button>
-              {/* <Button onClick={() => refetchErrors()} variant="outline" size="sm">
-                <RefreshCw className="h-4 w-4 mr-2" />
-                Retry Errors
-              </Button> */}
+              {isSuper && (
+                <Button onClick={() => refetchErrors()} variant="outline" size="sm">
+                  <RefreshCw className="h-4 w-4 mr-2" />
+                  Retry Errors
+                </Button>
+              )}
             </div>
           </div>
         </div>
@@ -564,7 +559,7 @@ const SessionDetails = () => {
         </Button>
       </div>
 
-      <div className="grid gap-4 md:grid-cols-4">
+      <div className={`grid gap-4 ${isSuper ? 'md:grid-cols-5' : 'md:grid-cols-4'}`}>
         <Card>
           <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
             <CardTitle className="text-sm font-medium">User</CardTitle>
@@ -604,6 +599,7 @@ const SessionDetails = () => {
           </p>
           </CardContent>
         </Card>
+        
         <Card>
           <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
           <CardTitle className="text-sm font-medium">Session ID</CardTitle>
@@ -617,34 +613,22 @@ const SessionDetails = () => {
           </div>
           </CardContent>
         </Card>
-{/* 
-        <Card>
-          <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-          <CardTitle className="text-sm font-medium">Errors</CardTitle>
-          <AlertTriangle className="h-4 w-4 text-muted-foreground" />
-          </CardHeader>
-          <CardContent>
-          <div className="text-2xl font-bold">{totalErrors}</div>
-          <p className="text-xs text-muted-foreground">
-            system errors
-          </p>
-          </CardContent>
-        </Card> */}
-      </div>
 
-      {/* <Card>
-        <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-        <CardTitle className="text-sm font-medium">Session ID</CardTitle>
-        <Activity className="h-4 w-4 text-muted-foreground" />
-        </CardHeader>
-        <CardContent>
-        <div className="text-sm">
-          <code className="relative rounded bg-muted px-[0.3rem] py-[0.2rem] font-mono text-xs break-all">
-            {sessionId}
-          </code>
-        </div>
-        </CardContent>
-      </Card> */}
+        {isSuper && (
+          <Card>
+            <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
+            <CardTitle className="text-sm font-medium">Errors</CardTitle>
+            <AlertTriangle className="h-4 w-4 text-muted-foreground" />
+            </CardHeader>
+            <CardContent>
+            <div className="text-2xl font-bold">{totalErrors}</div>
+            <p className="text-xs text-muted-foreground">
+              system errors
+            </p>
+            </CardContent>
+          </Card>
+        )}
+      </div>
 
       <Card>
         <CardHeader>
@@ -704,7 +688,7 @@ const SessionDetails = () => {
         </Card>
       )}
 
-      {/* {totalErrors > 0 && sessionErrors.length > 0 && (
+      {isSuper && totalErrors > 0 && sessionErrors.length > 0 && (
         <Card>
           <CardHeader>
             <CardTitle className="text-lg">System Errors</CardTitle>
@@ -745,7 +729,7 @@ const SessionDetails = () => {
             </div>
           </CardContent>
         </Card>
-      )} */}
+      )}
     </div>
   );
 };
