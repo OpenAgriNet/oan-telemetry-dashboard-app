@@ -382,7 +382,7 @@ export interface UsersGraphDataPoint {
   date: string;
   hour?: number;
   uniqueUsersCount: number;
-  [key: string]: any;
+  [key: string]: string | number | undefined;
 }
 
 export interface UsersGraphResponse {
@@ -396,8 +396,108 @@ export interface UsersGraphResponse {
       peakActivity: { date: string | null; uniqueUsersCount: number };
     };
   };
-  filters: any;
+  filters: {
+    search: string;
+    startDate: string | null;
+    endDate: string | null;
+    granularity: string;
+    appliedStartTimestamp: number | null;
+    appliedEndTimestamp: number | null;
+  };
 }
+
+// Health Check Types
+export interface HealthDependency {
+  status: "healthy" | "unhealthy" | "degraded";
+  latency_ms: number;
+}
+
+export interface HealthResponse {
+  app: {
+    name: string;
+    version: string;
+    environment: string;
+    uptime_seconds: number;
+  };
+  dependencies: {
+    [key: string]: HealthDependency;
+  };
+}
+
+export interface ServiceHealth {
+  name: string;
+  status: "operational" | "degraded" | "outage" | "unknown";
+  health?: HealthResponse;
+  error?: string;
+  responseTime?: number;
+  lastChecked: string;
+}
+
+// Health Check API
+export const fetchHealthStatus = async (url: string): Promise<ServiceHealth> => {
+  const startTime = Date.now();
+  
+  try {
+    const controller = new AbortController();
+    const timeoutId = setTimeout(() => controller.abort(), 10000); // 10 second timeout
+
+    const response = await fetch(url, {
+      method: 'GET',
+      headers: {
+        'Accept': 'application/json',
+        'Content-Type': 'application/json',
+      },
+      signal: controller.signal
+    });
+
+    clearTimeout(timeoutId);
+    const responseTime = Date.now() - startTime;
+
+    if (!response.ok) {
+      throw new Error(`HTTP ${response.status}: ${response.statusText}`);
+    }
+
+    const health: HealthResponse = await response.json();
+    
+    // Map health status to our status type
+    let status: "operational" | "degraded" | "outage" = "operational";
+    
+    // Check dependencies for overall status
+    const dependencyStatuses = Object.values(health.dependencies || {});
+    const hasUnhealthy = dependencyStatuses.some(dep => dep.status === "unhealthy");
+    const hasDegraded = dependencyStatuses.some(dep => dep.status === "degraded");
+    
+    if (hasUnhealthy) {
+      status = "outage";
+    } else if (hasDegraded) {
+      status = "degraded";
+    }
+
+    return {
+      name: health.app?.name || "Unknown Service",
+      status,
+      health,
+      responseTime,
+      lastChecked: new Date().toISOString()
+    };
+
+  } catch (error) {
+    const responseTime = Date.now() - startTime;
+    
+    return {
+      name: "Unknown Service",
+      status: "outage",
+      error: error instanceof Error ? error.message : "Unknown error",
+      responseTime,
+      lastChecked: new Date().toISOString()
+    };
+  }
+};
+
+// Fetch Sunbird VA API Health
+export const fetchSunbirdVAHealth = async (): Promise<ServiceHealth> => {
+  return fetchHealthStatus("https://prodaskvistaar.mahapocra.gov.in/api/health");
+};
 
 // Users API - Updated to match actual backend controller
 export const fetchUsers = async (params: UserPaginationParams = {}): Promise<PaginatedResponse<User>> => {

@@ -19,6 +19,7 @@ import Errors from "./pages/Errors";
 import ErrorDetails from "./pages/ErrorDetails";
 import Content from "./pages/Content";
 import ServiceStatus from "./pages/ServiceStatus";
+import HealthMonitor from "./pages/HealthMonitor";
 import { useKeycloak } from "@react-keycloak/web";
 import QuestionsDetails from "./pages/QuestionsDetails";
 import { isSuperAdmin } from "@/utils/roleUtils";
@@ -115,6 +116,11 @@ const App = () => {
               <Route path="/service-status" element={
                 <Layout>
                   <ServiceStatus />
+                </Layout>
+              } />
+              <Route path="/health-monitor" element={
+                <Layout>
+                  <HealthMonitor />
                 </Layout>
               } />
               {/* Conditionally render error routes for super-admin users only */}

@@ -95,6 +95,11 @@ const Layout: React.FC<LayoutProps> = ({ children }) => {
           },
         ]
       : []),
+    {
+      name: "Health Monitor",
+      path: "/health-monitor",
+      icon: <Activity size={20} />,
+    },
     // {
     //   name: "Service Status",
     //   path: "/service-status",
