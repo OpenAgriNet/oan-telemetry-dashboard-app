@@ -39,6 +39,14 @@ const StatusBadge: React.FC<StatusBadgeProps> = ({
           icon: <XCircle size={size === "sm" ? 14 : size === "md" ? 18 : 22} />,
           text: "Outage"
         };
+      default:
+        // Fallback for unknown status
+        return {
+          bgColor: "bg-gray-100 dark:bg-gray-900/20",
+          textColor: "text-gray-700 dark:text-gray-400",
+          icon: <AlertTriangle size={size === "sm" ? 14 : size === "md" ? 18 : 22} />,
+          text: "Unknown"
+        };
     }
   };
 

@@ -118,11 +118,11 @@ const App = () => {
                   <ServiceStatus />
                 </Layout>
               } />
-              <Route path="/health-monitor" element={
+              {/* <Route path="/health-monitor" element={
                 <Layout>
                   <HealthMonitor />
                 </Layout>
-              } />
+              } /> */}
               {/* Conditionally render error routes for super-admin users only */}
               {isSuper && (
                 <>
