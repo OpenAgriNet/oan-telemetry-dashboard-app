@@ -304,7 +304,15 @@ export const fetchEndpointTrends = async (
       headers: createHeaders(),
     });
     if (!response.ok) {
-      throw new Error(`HTTP error! status: ${response.status}`);
+      // Log the error but don't throw for 500 errors since trends are optional
+      console.warn(`Trends API failed for endpoint ${endpointId}: ${response.status}`);
+      return {
+        endpointId,
+        trends: [],
+        resolution,
+        startDate: startDate || '',
+        endDate: endDate || ''
+      };
     }
     const result = await response.json();
     console.log(`Trends API response for ${endpointId}:`, result);
@@ -344,9 +352,10 @@ export const fetchEndpointTrends = async (
       endDate: endDate || ''
     };
   } catch (error) {
-    console.error(`Error fetching trends for endpoint ${endpointId}:`, error);
+    // Silent error handling for trends - they're optional
+    console.warn(`Error fetching trends for endpoint ${endpointId}:`, error);
     
-    // Return empty trends on error - UI will show grey blocks
+    // Return empty trends on error - UI will show fallback display
     return {
       endpointId,
       trends: [],

@@ -10,11 +10,13 @@ import type { EndpointStats, TrendDataPoint, LatestStatusUpdate } from '@/servic
 interface StatusPageProps {
   period?: string;
   className?: string;
+  enableTrends?: boolean;
 }
 
 const StatusPage: React.FC<StatusPageProps> = ({ 
   period = '30d',
-  className 
+  className,
+  enableTrends = false
 }) => {
   const { 
     systemStats, 
@@ -24,7 +26,7 @@ const StatusPage: React.FC<StatusPageProps> = ({
     isLoading,
     isError,
     error
-  } = useStatusPageData(period);
+  } = useStatusPageData(period, enableTrends);
 
   // Group endpoints by type
   const { uiEndpoints, apiEndpoints } = useMemo(() => {

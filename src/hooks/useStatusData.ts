@@ -57,7 +57,7 @@ export const useEndpointTrends = (
     enabled,
     staleTime: 5 * 60 * 1000, // 5 minutes
     refetchInterval: 10 * 60 * 1000, // 10 minutes
-    retry: 2,
+    retry: 1, // Reduced retry count for trends since they're failing
   });
 };
 
@@ -66,15 +66,17 @@ export const useMultipleEndpointTrends = (
   endpoints: EndpointStats[],
   resolution: 'hour' | 'day' | 'week' = 'day',
   startDate?: string,
-  endDate?: string
+  endDate?: string,
+  enabled: boolean = false // DISABLED BY DEFAULT to prevent 500 errors
 ) => {
   return useQueries({
     queries: endpoints.map((endpoint) => ({
       queryKey: statusQueryKeys.trends(endpoint.id, resolution, startDate, endDate),
       queryFn: () => fetchEndpointTrends(endpoint.id, resolution, startDate, endDate),
+      enabled: enabled, // Only fetch if explicitly enabled
       staleTime: 5 * 60 * 1000, // 5 minutes
       refetchInterval: 10 * 60 * 1000, // 10 minutes
-      retry: 2,
+      retry: 1, // Reduced retry count for trends since they're failing
     })),
   });
 };
@@ -91,17 +93,18 @@ export const useLatestStatus = () => {
 };
 
 // Combined hook for the entire status page
-export const useStatusPageData = (period: string = '30d') => {
+export const useStatusPageData = (period: string = '30d', enableTrends: boolean = false) => {
   const systemStats = useSystemStats();
   const dashboardStats = useDashboardStats(period);
   const latestStatus = useLatestStatus();
 
-  // Get trends for all endpoints once dashboard data is loaded
+  // Get trends for all endpoints once dashboard data is loaded (DISABLED BY DEFAULT)
   const trendsQueries = useMultipleEndpointTrends(
     dashboardStats.data?.endpoints || [],
     'day',
     undefined,
-    undefined
+    undefined,
+    enableTrends // Only fetch trends if explicitly enabled
   );
 
   return {
