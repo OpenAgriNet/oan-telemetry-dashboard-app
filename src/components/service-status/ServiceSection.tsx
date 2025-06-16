@@ -96,7 +96,7 @@ const ServiceSection: React.FC<ServiceSectionProps> = ({
         {/* Column Headers */}
         <div className="flex items-center gap-4 py-2 px-4 border-b bg-muted/50 text-xs font-medium text-muted-foreground">
           <div className="flex-shrink-0 w-4">Status</div>
-          <div className="flex-shrink-0 w-48">Service</div>
+          <div className="flex-shrink-0 w-48 ml-6">Service</div>
           <div className="flex-1 text-center">30-day history</div>
           <div className="flex-shrink-0 text-right w-20">Uptime</div>
           <div className="flex-shrink-0 text-right w-20">Response</div>
