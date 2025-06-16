@@ -193,20 +193,7 @@ const StatusPage: React.FC<StatusPageProps> = ({
         </div>
       )}
 
-      {/* Footer Info */}
-      <div className="text-center text-sm text-muted-foreground py-4 border-t">
-        <div className="flex items-center justify-center gap-6">
-          <div>
-            Status updates every 45 seconds
-          </div>
-          <div>
-            History data refreshes every 10 minutes
-          </div>
-          <div>
-            Monitoring period: {period}
-          </div>
-        </div>
-      </div>
+
     </div>
   );
 };

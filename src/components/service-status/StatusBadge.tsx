@@ -52,14 +52,14 @@ const StatusBadge: React.FC<StatusBadgeProps> = ({
 
   const config = getStatusConfig(status);
   const sizeClasses = {
-    sm: "text-xs py-0.5 px-1.5",
-    md: "text-sm py-1 px-2",
-    lg: "text-base py-1.5 px-3"
+    sm: "text-xs py-1 px-4",
+    md: "text-sm py-1.5 px-5",
+    lg: "text-base py-2 px-6"
   };
 
   return (
     <div className={cn(
-      "inline-flex items-center gap-1.5 rounded-full font-medium",
+      "inline-flex items-center gap-1.5 rounded-lg font-medium",
       config.bgColor,
       config.textColor,
       sizeClasses[size]

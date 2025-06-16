@@ -87,9 +87,7 @@ const ServiceSection: React.FC<ServiceSectionProps> = ({
               <span>{stats.outage} down</span>
             </div>
           )}
-          <div className="text-muted-foreground">
-            Avg: {(stats.avgUptime || 0).toFixed(1)}% uptime
-          </div>
+
         </div>
       </div>
 

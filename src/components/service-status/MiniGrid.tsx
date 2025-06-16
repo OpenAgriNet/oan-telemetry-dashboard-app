@@ -89,12 +89,36 @@ const MiniGrid: React.FC<MiniGridProps> = ({
     return `${(responseTime || 0).toFixed(0)}ms`;
   };
 
-  const getBlockColor = (dataPoint: ExtendedTrendDataPoint, isLoading: boolean, error: Error | null) => {
-    if (error) return 'bg-gray-400'; // Error state
-    if (isLoading || !dataPoint.date) return 'bg-gray-300'; // Loading or no data
-    if (dataPoint.isBeforeMonitoring) return 'bg-gray-200'; // Before monitoring started
-    if (dataPoint.uptimePercentage === 0) return 'bg-blue-400'; // No data for this day
-    return getStatusColor(dataPoint.uptimePercentage);
+  const getBlockStyles = (dataPoint: ExtendedTrendDataPoint, isLoading: boolean, error: Error | null) => {
+    let color = 'bg-gray-300';
+    const height = 'h-6'; // Same height for all bars
+    
+    if (error) {
+      color = 'bg-gray-400';
+    } else if (isLoading || !dataPoint.date) {
+      color = 'bg-gray-300';
+    } else if (dataPoint.isBeforeMonitoring) {
+      color = 'bg-gray-200';
+    } else if (dataPoint.uptimePercentage === 0) {
+      color = 'bg-blue-400';
+    } else {
+      // Enhanced color scheme - same height, different colors
+      if (dataPoint.uptimePercentage === 100) {
+        color = 'bg-emerald-500';
+      } else if (dataPoint.uptimePercentage >= 99) {
+        color = 'bg-green-400';
+      } else if (dataPoint.uptimePercentage >= 95) {
+        color = 'bg-yellow-400';
+      } else if (dataPoint.uptimePercentage >= 90) {
+        color = 'bg-amber-400';
+      } else if (dataPoint.uptimePercentage >= 80) {
+        color = 'bg-orange-500';
+      } else {
+        color = 'bg-red-500';
+      }
+    }
+    
+    return { color, height };
   };
 
   const getTooltipContent = (dataPoint: ExtendedTrendDataPoint, isLoading: boolean, error: Error | null) => {
@@ -115,24 +139,28 @@ const MiniGrid: React.FC<MiniGridProps> = ({
   };
 
   return (
-    <div className={cn("flex items-center gap-0.5", className)}>
+    <div className={cn("flex items-end gap-[3px] h-8", className)}>
       <TooltipProvider>
-        {normalizedData.map((dataPoint, index) => (
-          <Tooltip key={`${dataPoint.date}-${index}`} delayDuration={0}>
-            <TooltipTrigger asChild>
-              <div 
-                className={cn(
-                  "w-3 h-3 rounded-sm transition-colors duration-200 hover:scale-110",
-                  getBlockColor(dataPoint, isLoading, error)
-                )}
-                aria-label={`Status for ${dataPoint.date || 'unknown date'}`}
-              />
-            </TooltipTrigger>
-            <TooltipContent side="top" className="max-w-xs">
-              {getTooltipContent(dataPoint, isLoading, error)}
-            </TooltipContent>
-          </Tooltip>
-        ))}
+        {normalizedData.map((dataPoint, index) => {
+          const { color, height } = getBlockStyles(dataPoint, isLoading, error);
+          return (
+            <Tooltip key={`${dataPoint.date}-${index}`} delayDuration={0}>
+              <TooltipTrigger asChild>
+                <div 
+                  className={cn(
+                    "w-2 rounded-sm transition-all duration-200 hover:scale-110 hover:opacity-80",
+                    color,
+                    height
+                  )}
+                  aria-label={`Status for ${dataPoint.date || 'unknown date'}`}
+                />
+              </TooltipTrigger>
+              <TooltipContent side="top" className="max-w-xs">
+                {getTooltipContent(dataPoint, isLoading, error)}
+              </TooltipContent>
+            </Tooltip>
+          );
+        })}
       </TooltipProvider>
     </div>
   );

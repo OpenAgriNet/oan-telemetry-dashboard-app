@@ -113,10 +113,10 @@ const EndpointRow: React.FC<EndpointRowProps> = ({
             <TooltipTrigger asChild>
               <div className="cursor-help">
                 <div className="text-sm font-medium flex items-center justify-end gap-1">
-                  {formatUptime(endpoint.uptimePercentage || 0)}
-                  {endpoint.failedChecks && endpoint.failedChecks > 0 && (
+                  <span>{formatUptime(endpoint.uptimePercentage || 0)}</span>
+                  {endpoint.failedChecks && endpoint.failedChecks > 0 ? (
                     <Info className="h-3 w-3 text-orange-500" />
-                  )}
+                  ) : null}
                 </div>
                 <div className="text-xs text-muted-foreground">
                   {endpoint.totalChecks 
@@ -129,16 +129,16 @@ const EndpointRow: React.FC<EndpointRowProps> = ({
             <TooltipContent side="top" className="max-w-xs">
               <div className="text-sm">
                 <div className="font-medium">Uptime: {formatUptime(endpoint.uptimePercentage || 0)}</div>
-                <div>Total checks: {endpoint.totalChecks || 0}</div>
-                <div>Successful: {endpoint.successfulChecks || 0}</div>
-                <div>Failed: {endpoint.failedChecks || 0}</div>
+                <div>Total checks: <span>{endpoint.totalChecks || 0}</span></div>
+                <div>Successful: <span>{endpoint.successfulChecks || 0}</span></div>
+                <div>Failed: <span>{endpoint.failedChecks || 0}</span></div>
                 {endpoint.failedChecks === 0 && endpoint.totalChecks && endpoint.totalChecks > 0 ? (
                   <div className="text-xs text-green-400 mt-1">
                     ✓ No downtime recorded
                   </div>
-                ) : endpoint.failedChecks && endpoint.failedChecks > 0 ? (
+                ) : (endpoint.failedChecks || 0) > 0 ? (
                   <div className="text-xs text-orange-400 mt-1">
-                    ⚠ {endpoint.failedChecks} failed check{endpoint.failedChecks > 1 ? 's' : ''} recorded
+                    ⚠ {endpoint.failedChecks} failed check{(endpoint.failedChecks || 0) > 1 ? 's' : ''} recorded
                   </div>
                 ) : (
                   <div className="text-xs text-muted-foreground mt-1">

@@ -415,10 +415,10 @@ export const fetchLatestStatus = async (): Promise<LatestResponse> => {
 
 // Utility functions
 export const getStatusColor = (uptime: number): string => {
-  if (uptime === 100) return 'bg-green-500';   // Perfect uptime (no failures)
-  if (uptime >= 95) return 'bg-orange-400';    // Some downtime but acceptable
-  if (uptime >= 80) return 'bg-orange-500';    // More significant downtime
-  return 'bg-red-500';                         // Critical downtime
+  if (uptime === 100) return 'bg-emerald-500'; // Perfect uptime - bright green
+  if (uptime >= 95) return 'bg-yellow-400';    // Good uptime - bright yellow  
+  if (uptime >= 80) return 'bg-orange-500';    // Some issues - orange
+  return 'bg-red-500';                         // Critical downtime - red
 };
 
 export const getStatusFromUptime = (uptime: number): 'operational' | 'degraded' | 'outage' => {
