@@ -16,8 +16,8 @@ export const statusQueryKeys = {
   all: ['status'] as const,
   system: () => [...statusQueryKeys.all, 'system'] as const,
   dashboard: (period: string) => [...statusQueryKeys.all, 'dashboard', period] as const,
-  trends: (endpointId: string, resolution: string, startDate?: string, endDate?: string) => 
-    [...statusQueryKeys.all, 'trends', endpointId, resolution, startDate, endDate] as const,
+  trends: (endpointId: string, resolution: string, period?: string) => 
+    [...statusQueryKeys.all, 'trends', endpointId, resolution, period] as const,
   latest: () => [...statusQueryKeys.all, 'latest'] as const,
 };
 
@@ -47,13 +47,12 @@ export const useDashboardStats = (period: string = '30d') => {
 export const useEndpointTrends = (
   endpointId: string,
   resolution: 'hour' | 'day' | 'week' = 'day',
-  startDate?: string,
-  endDate?: string,
+  period: string = '30d',
   enabled: boolean = true
 ) => {
   return useQuery({
-    queryKey: statusQueryKeys.trends(endpointId, resolution, startDate, endDate),
-    queryFn: () => fetchEndpointTrends(endpointId, resolution, startDate, endDate),
+    queryKey: statusQueryKeys.trends(endpointId, resolution, period),
+    queryFn: () => fetchEndpointTrends(endpointId, resolution, period),
     enabled,
     staleTime: 5 * 60 * 1000, // 5 minutes
     refetchInterval: 10 * 60 * 1000, // 10 minutes
@@ -65,14 +64,13 @@ export const useEndpointTrends = (
 export const useMultipleEndpointTrends = (
   endpoints: EndpointStats[],
   resolution: 'hour' | 'day' | 'week' = 'day',
-  startDate?: string,
-  endDate?: string,
-  enabled: boolean = false // DISABLED BY DEFAULT to prevent 500 errors
+  period: string = '30d',
+  enabled: boolean = true // ENABLED BY DEFAULT to show historical data
 ) => {
   return useQueries({
     queries: endpoints.map((endpoint) => ({
-      queryKey: statusQueryKeys.trends(endpoint.id, resolution, startDate, endDate),
-      queryFn: () => fetchEndpointTrends(endpoint.id, resolution, startDate, endDate),
+      queryKey: statusQueryKeys.trends(endpoint.id, resolution, period),
+      queryFn: () => fetchEndpointTrends(endpoint.id, resolution, period),
       enabled: enabled, // Only fetch if explicitly enabled
       staleTime: 5 * 60 * 1000, // 5 minutes
       refetchInterval: 10 * 60 * 1000, // 10 minutes
@@ -102,8 +100,7 @@ export const useStatusPageData = (period: string = '30d', enableTrends: boolean 
   const trendsQueries = useMultipleEndpointTrends(
     dashboardStats.data?.endpoints || [],
     'day',
-    undefined,
-    undefined,
+    period,
     enableTrends // Only fetch trends if explicitly enabled
   );
 

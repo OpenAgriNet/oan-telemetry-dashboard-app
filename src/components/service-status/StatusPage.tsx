@@ -16,7 +16,7 @@ interface StatusPageProps {
 const StatusPage: React.FC<StatusPageProps> = ({ 
   period = '30d',
   className,
-  enableTrends = false
+  enableTrends = true
 }) => {
   const { 
     systemStats, 

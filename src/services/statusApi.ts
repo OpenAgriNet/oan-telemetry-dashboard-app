@@ -290,14 +290,31 @@ export const fetchDashboardStats = async (period: string = '30d'): Promise<Dashb
 export const fetchEndpointTrends = async (
   endpointId: string,
   resolution: 'hour' | 'day' | 'week' = 'day',
-  startDate?: string,
-  endDate?: string
+  period: string = '30d'
 ): Promise<TrendsResponse> => {
   try {
+    // Calculate date range based on period
+    const now = new Date();
+    let startDate: Date;
+    
+    switch (period) {
+      case '7d':
+        startDate = new Date(now.getTime() - 7 * 24 * 60 * 60 * 1000);
+        break;
+      case '30d':
+        startDate = new Date(now.getTime() - 30 * 24 * 60 * 60 * 1000);
+        break;
+      case '90d':
+        startDate = new Date(now.getTime() - 90 * 24 * 60 * 60 * 1000);
+        break;
+      default:
+        startDate = new Date(now.getTime() - 30 * 24 * 60 * 60 * 1000);
+    }
+
     const params = new URLSearchParams({
       resolution,
-      ...(startDate && { start_date: startDate }),
-      ...(endDate && { end_date: endDate })
+      start_date: startDate.toISOString(),
+      end_date: now.toISOString()
     });
     
     const response = await fetch(`${WATCHTOWER_BASE_URL}/stats/endpoints/${endpointId}/trends?${params}`, {
@@ -310,8 +327,8 @@ export const fetchEndpointTrends = async (
         endpointId,
         trends: [],
         resolution,
-        startDate: startDate || '',
-        endDate: endDate || ''
+        startDate: startDate.toISOString().split('T')[0],
+        endDate: now.toISOString().split('T')[0]
       };
     }
     const result = await response.json();
@@ -324,11 +341,11 @@ export const fetchEndpointTrends = async (
       
       // Map trends data to our format
       const mappedTrends: TrendDataPoint[] = trends.map((trend: Record<string, unknown>) => {
-        const uptimePercentage = Number(trend.uptime_percentage || 0);
+        const uptimePercentage = Number(trend.uptimePercentage || 0);
         return {
-          date: String(trend.date || ''),
+          date: String(trend.timestamp || ''),
           uptimePercentage,
-          avgResponseTime: Number(trend.avg_response_time || 0),
+          avgResponseTime: Number(trend.avgResponseTime || 0),
           status: uptimePercentage >= 99 ? 'operational' : 
                   uptimePercentage >= 90 ? 'degraded' : 'outage'
         };
@@ -338,8 +355,8 @@ export const fetchEndpointTrends = async (
         endpointId,
         trends: mappedTrends,
         resolution: data.resolution || resolution,
-        startDate: data.periodStart || startDate || '',
-        endDate: data.periodEnd || endDate || ''
+        startDate: data.periodStart || startDate.toISOString().split('T')[0],
+        endDate: data.periodEnd || now.toISOString().split('T')[0]
       };
     }
     
@@ -348,8 +365,8 @@ export const fetchEndpointTrends = async (
       endpointId,
       trends: [],
       resolution,
-      startDate: startDate || '',
-      endDate: endDate || ''
+      startDate: startDate.toISOString().split('T')[0],
+      endDate: now.toISOString().split('T')[0]
     };
   } catch (error) {
     // Silent error handling for trends - they're optional
@@ -360,8 +377,8 @@ export const fetchEndpointTrends = async (
       endpointId,
       trends: [],
       resolution,
-      startDate: startDate || '',
-      endDate: endDate || ''
+      startDate: '',
+      endDate: ''
     };
   }
 };
@@ -377,40 +394,25 @@ export const fetchLatestStatus = async (): Promise<LatestResponse> => {
     const result = await response.json();
     
     // Map the actual API response to our LatestResponse interface
-    const data = result.data || [];
+    const data = result.data || {};
+    const updates: LatestStatusUpdate[] = data.updates || [];
     
-    const updates: LatestStatusUpdate[] = data.map((item: {
-      endpoint?: Record<string, unknown>;
-      latestStatus?: Record<string, unknown>;
-    }) => {
-      const endpoint = item.endpoint || {};
-      const latestStatus = item.latestStatus || {};
-      
-      // Map status from API format to our format
-      const mapStatus = (status: string): 'operational' | 'degraded' | 'outage' => {
-        switch (status?.toLowerCase()) {
-          case 'up':
-            return 'operational';
-          case 'down':
-            return 'outage';
-          case 'degraded':
-            return 'degraded';
-          default:
-            return 'outage';
-        }
-      };
-      
-      return {
-        endpointId: String(endpoint.id || ''),
-        status: mapStatus(String(latestStatus.status || '')),
-        responseTime: Number(latestStatus.response_time || 0),
-        timestamp: String(latestStatus.checked_at || new Date().toISOString())
-      };
-    });
+    // The updates are already in the correct format from our backend
+    const mappedUpdates: LatestStatusUpdate[] = updates.map((update: {
+      endpointId: string;
+      status: string;
+      responseTime: number;
+      timestamp: string;
+    }) => ({
+      endpointId: update.endpointId,
+      status: update.status as 'operational' | 'degraded' | 'outage',
+      responseTime: update.responseTime,
+      timestamp: update.timestamp
+    }));
     
     return {
-      updates,
-      timestamp: result.timestamp || new Date().toISOString()
+      updates: mappedUpdates,
+      timestamp: data.timestamp || result.timestamp || new Date().toISOString()
     };
   } catch (error) {
     console.error('Error fetching latest status:', error);

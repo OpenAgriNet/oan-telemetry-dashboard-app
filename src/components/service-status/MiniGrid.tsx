@@ -6,6 +6,7 @@ import type { TrendDataPoint } from '@/services/statusApi';
 
 interface ExtendedTrendDataPoint extends TrendDataPoint {
   isBeforeMonitoring?: boolean;
+  hasData?: boolean;
 }
 
 interface MiniGridProps {
@@ -27,57 +28,65 @@ const MiniGrid: React.FC<MiniGridProps> = ({
   currentUptime = 100,
   serviceCreatedAt
 }) => {
-  // Generate blocks based on actual monitoring period
-  const generateMonitoringBlocks = (count: number = 30) => {
-    const blocks = [];
+  
+  // Use the actual trends data
+  const actualTrends = trends;
+  
+  // Generate exactly 30 days going backwards from today (IST timezone)
+  const generateLast30Days = () => {
+    const blocks: ExtendedTrendDataPoint[] = [];
     const now = new Date();
-    const serviceStart = serviceCreatedAt ? new Date(serviceCreatedAt) : null;
     
     // Generate 30 days going backwards from today
-    for (let i = count - 1; i >= 0; i--) {
+    for (let i = 29; i >= 0; i--) {
       const date = new Date(now);
       date.setDate(date.getDate() - i);
       
-      // Check if this date is before service monitoring started
-      const isBeforeMonitoring = serviceStart && date < serviceStart;
-      const isMonitoringDay = serviceStart && date >= serviceStart;
+      // Create date key in the same format as backend: YYYY-MM-DD
+      const dateKey = date.toISOString().slice(0, 10);
       
-             const status: 'operational' | 'degraded' | 'outage' = isBeforeMonitoring ? 'operational' : currentStatus;
-       
-       blocks.push({
-         date: date.toISOString().split('T')[0],
-         uptimePercentage: isBeforeMonitoring ? 0 : (isMonitoringDay ? currentUptime : 0),
-         avgResponseTime: 0,
-         status,
-         isBeforeMonitoring
-       });
+      // Check if we have trend data for this date
+      const trendData = actualTrends.find(trend => {
+        if (!trend.date) return false;
+        // Extract date part from the trend data (handles both ISO strings and date-only strings)
+        const trendDateKey = new Date(trend.date).toISOString().slice(0, 10);
+        return trendDateKey === dateKey;
+      });
+      
+      if (trendData) {
+        // We have actual data for this day
+        const position = 29 - i;
+        blocks.push({
+          ...trendData,
+          hasData: true,
+          isBeforeMonitoring: false
+        });
+      } else {
+        // No data for this day - show as "no data"
+        blocks.push({
+          date: date.toISOString(),
+          uptimePercentage: 0,
+          avgResponseTime: 0,
+          status: 'operational',
+          hasData: false,
+          isBeforeMonitoring: false
+        });
+      }
     }
     
     return blocks;
   };
 
-  // Use trends data or fallback to monitoring blocks
-  const displayData = trends.length > 0 ? trends : generateMonitoringBlocks();
-  
-  // Ensure we have exactly 30 blocks (pad or trim as needed)
-  const normalizedData = displayData.slice(-30).concat(
-    Array.from({ length: Math.max(0, 30 - displayData.length) }, () => ({
-      date: '',
-      uptimePercentage: 0,
-      avgResponseTime: 0,
-      status: 'operational' as const
-    }))
-  ).slice(0, 30);
+  // Always use the 30-day generated data
+  const normalizedData = generateLast30Days();
 
   const formatDate = (dateString: string) => {
     if (!dateString) return 'No data';
     const date = new Date(dateString);
-    // Use IST timezone for display
     return date.toLocaleDateString('en-IN', { 
       month: 'short', 
       day: 'numeric',
-      year: 'numeric',
-      timeZone: 'Asia/Kolkata'
+      year: 'numeric'
     });
   };
 
@@ -95,14 +104,13 @@ const MiniGrid: React.FC<MiniGridProps> = ({
     
     if (error) {
       color = 'bg-gray-400';
-    } else if (isLoading || !dataPoint.date) {
-      color = 'bg-gray-300';
-    } else if (dataPoint.isBeforeMonitoring) {
-      color = 'bg-gray-200';
-    } else if (dataPoint.uptimePercentage === 0) {
-      color = 'bg-blue-400';
+    } else if (isLoading) {
+      color = 'bg-gray-300 animate-pulse';
+    } else if (!dataPoint.hasData) {
+      // No data available - show as white/light grey
+      color = 'bg-gray-200 border border-gray-300';
     } else {
-      // Enhanced color scheme - same height, different colors
+      // We have actual data - use uptime-based colors
       if (dataPoint.uptimePercentage === 100) {
         color = 'bg-emerald-500';
       } else if (dataPoint.uptimePercentage >= 99) {
@@ -125,12 +133,21 @@ const MiniGrid: React.FC<MiniGridProps> = ({
     if (error) return 'History unavailable';
     if (isLoading) return 'Loading...';
     if (!dataPoint.date) return 'No data available';
-    if (dataPoint.isBeforeMonitoring) return `${formatDate(dataPoint.date)} - Before monitoring started`;
-    if (dataPoint.uptimePercentage === 0) return `${formatDate(dataPoint.date)} - No data for this day`;
+    
+    const formattedDate = formatDate(dataPoint.date);
+    
+    if (!dataPoint.hasData) {
+      return (
+        <div className="text-sm">
+          <div className="font-medium">{formattedDate}</div>
+          <div className="text-gray-400">No data available</div>
+        </div>
+      );
+    }
     
     return (
       <div className="text-sm">
-        <div className="font-medium">{formatDate(dataPoint.date)}</div>
+        <div className="font-medium">{formattedDate}</div>
         <div>Uptime: {formatUptime(dataPoint.uptimePercentage)}</div>
         <div>Avg Response: {formatResponseTime(dataPoint.avgResponseTime)}</div>
         <div className="capitalize">Status: {dataPoint.status}</div>
@@ -166,4 +183,4 @@ const MiniGrid: React.FC<MiniGridProps> = ({
   );
 };
 
-export default MiniGrid; 
+export default MiniGrid;
