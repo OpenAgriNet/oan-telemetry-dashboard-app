@@ -1,118 +1,119 @@
-# Service Status Components
+# Status Dashboard Implementation
 
-This directory contains React components for displaying service status information from a Watchtower monitoring API.
+This directory contains the implementation of the Watchtower status dashboard as specified in the requirements.
+
+## Architecture
+
+The status dashboard follows the planned architecture:
+
+```
+<StatusPage>
+  <SystemBanner />          // overall up/down status
+  <ServiceSection title="UI Services">
+      <EndpointRow />       // 2× for UI endpoints
+  </ServiceSection>
+  <ServiceSection title="API Services">
+      <EndpointRow />       // 3× for API endpoints
+  </ServiceSection>
+</StatusPage>
+```
 
 ## Components
 
 ### StatusPage
-Main page component that displays the overall system status and individual service monitoring.
-
-**Props:**
-- `period?: string` - Time period for stats (default: '30d')
-- `className?: string` - Additional CSS classes
-- `enableTrends?: boolean` - Enable trends fetching (default: false)
+- Main orchestrator component
+- Handles data fetching and state management
+- Groups endpoints by type (UI vs API)
+- Provides refresh functionality
 
 ### SystemBanner
-Displays overall system health status.
+- Displays overall system status (green/orange/red banner)
+- Shows total uptime percentage and service counts
+- Uses data from `/api/v1/stats/system`
 
-### ServiceSection  
-Groups and displays services by type (UI vs API services).
+### ServiceSection
+- Groups endpoints by type (UI or API services)
+- Shows section-level statistics
+- Renders column headers and endpoint rows
 
 ### EndpointRow
-Individual service row showing:
-- Status badge (operational/degraded/outage)
-- Service name and URL
-- 30-day status history (MiniGrid)
-- Uptime percentage
-- Average response time
-- Last checked timestamp
+- Individual endpoint status display
+- Shows colored status dot, name, 30-day history, uptime %, response time
+- Integrates with MiniGrid for trend visualization
 
 ### MiniGrid
-30-day status visualization using colored blocks. Each block represents one day:
-- **Green (emerald-500)**: 100% uptime
-- **Light Green (green-400)**: 99%+ uptime  
-- **Yellow (yellow-400)**: 95-99% uptime
-- **Amber (amber-400)**: 90-95% uptime
-- **Orange (orange-500)**: 80-90% uptime
-- **Red (red-500)**: <80% uptime
-- **Gray (gray-200)**: Before monitoring started
-- **Blue (blue-400)**: No data for that day
-
-### StatusBadge
-Circular status indicator with optional text.
-
-### ServiceStatusBar
-Compact status bar for external use.
-
-## API Integration
-
-The components integrate with the Watchtower monitoring API:
-
-### Working Endpoints
-- `GET /stats/system` - System overview
-- `GET /stats/dashboard` - Service details and statistics  
-- `GET /stats/latest` - Latest status updates
-
-### Trends API Issue
-**⚠️ Important:** The trends API endpoints are currently returning 500 errors:
-- `GET /stats/endpoints/{id}/trends` - Returns `{"success":false,"error":"Failed to retrieve response time trends"}`
-
-**Solution:** Trends fetching is **disabled by default** to prevent console errors and failed requests. The UI gracefully falls back to:
-- Generating placeholder blocks based on service creation date
-- Using current status and uptime for color coding
-- Showing "No data" tooltips for days without monitoring data
-
-### Enabling Trends (if API gets fixed)
-To re-enable trends fetching:
-
-```tsx
-<StatusPage enableTrends={true} />
-```
-
-Or set the default in `useStatusPageData` hook.
+- Renders 30 small colored blocks representing daily status
+- Uses canvas-like grid with tooltips
+- Color algorithm: green (≥99%), orange (≥90%), red (<90%)
 
 ## Data Flow
 
-1. **Dashboard Load**: Fetches system stats and service list
-2. **Status Updates**: Polls for latest status changes every 45 seconds
-3. **Trends (Optional)**: Fetches 30-day history per endpoint (disabled)
-4. **Error Handling**: Graceful fallbacks for all API failures
+### Initial Load
+1. `StatusPage` mounts and triggers data fetching
+2. Parallel calls to:
+   - `/api/v1/stats/system` (system banner)
+   - `/api/v1/stats/dashboard?period=30d` (endpoint list)
+3. Once endpoints are loaded, parallel calls to:
+   - `/api/v1/stats/endpoints/:id/trends?resolution=day` (for each endpoint)
+
+### Live Updates
+- `/api/v1/stats/latest` polled every 45 seconds
+- Updates only the colored status dots (lightweight)
+- Dashboard data cached for 30 seconds, trends for 5 minutes
+
+## Configuration
+
+### Environment Variables
+```bash
+VITE_WATCHTOWER_BASE_URL=http://localhost:3000/api/v1
+VITE_WATCHTOWER_JWT=your_jwt_token_here
+```
+
+### Development Seeds
+The `endpointSeeds.json` file contains mock endpoint IDs for development:
+- 2 UI endpoints
+- 3 API endpoints
 
 ## Error Handling
 
-- **System/Dashboard Errors**: Shows error message with retry button
-- **Trends Errors**: Silent fallback to generated blocks
-- **Network Issues**: Automatic retries with exponential backoff
+- **Trends call fails**: Shows grey blocks with "history unavailable" tooltip
+- **uptime_percentage = 0**: Blue dot with "Just added" label
+- **Endpoint inactive**: 50% opacity with "Monitoring paused" annotation
+- **Network errors**: Graceful fallbacks with retry logic
 
-## Usage Example
+## Styling
+
+- Uses Tailwind CSS with shadcn/ui components
+- Grid of 30 boxes: `w-3 h-3` squares with `gap-0.5`
+- Responsive layout with proper spacing
+- Dark/light theme support
+
+## Performance
+
+- React Query handles caching and background revalidation
+- Parallel API calls using `useQueries`
+- Optimized re-renders with proper memoization
+- Lightweight polling for status updates
+
+## Usage
 
 ```tsx
 import StatusPage from '@/components/service-status/StatusPage';
 
-// Basic usage (trends disabled)
+// Basic usage
 <StatusPage />
 
 // With custom period
 <StatusPage period="7d" />
-
-// Enable trends (if API is working)
-<StatusPage enableTrends={true} />
 ```
 
-## Configuration
+## API Endpoints
 
-API settings are in `src/config/environment.ts`:
+The implementation expects these Watchtower API endpoints:
 
-```typescript
-export const WATCHTOWER_CONFIG = {
-  BASE_URL: 'https://proddashbaordvistaar.mahapocra.gov.in/api',
-  JWT_TOKEN: 'your-jwt-token'
-};
-```
+1. `GET /api/v1/stats/system` - Overall system statistics
+2. `GET /api/v1/stats/dashboard?period=30d` - Endpoint list with stats
+3. `GET /api/v1/stats/endpoints/:id/trends?resolution=day` - Historical trends
+4. `GET /api/v1/stats/latest` - Latest status updates
 
-## Dependencies
-
-- **TanStack Query**: Data fetching and caching
-- **Lucide React**: Icons
-- **Tailwind CSS**: Styling
-- **Radix UI**: Tooltip component 
+All endpoints support JWT authentication via `Authorization: Bearer <token>` header. 
