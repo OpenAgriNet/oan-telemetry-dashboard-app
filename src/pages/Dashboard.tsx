@@ -30,7 +30,7 @@ import {
   LineChart,
 } from "lucide-react";
 import { ToggleGroup, ToggleGroupItem } from "@/components/ui/toggle-group";
-import { Stats } from "fs";
+import { formatUTCToIST } from "@/lib/utils";
 
 const Dashboard = () => {
   const { dateRange } = useDateFilter();
@@ -233,7 +233,7 @@ const Dashboard = () => {
           <TabsContent value="users">
           <TrendChart
               title="User Activity"
-              description={`${timeGranularity === 'daily' ? 'Daily' : 'Hourly'} unique users`}
+              description={`${timeGranularity === 'daily' ? 'Daily' : 'Hourly'} unique users (IST)`}
               data={timeGranularity === 'daily' 
                 ? (usersGraphData?.data || userStats?.dailyActivity || [])
                 : transformHourlyData( usersGraphData?.data || userStats?.dailyActivity || [])
@@ -248,7 +248,7 @@ const Dashboard = () => {
             <div className="space-y-4">
               <TrendChart
                 title="Questions Asked Over Time"
-                description={`${timeGranularity === 'daily' ? 'Daily' : 'Hourly'} questions count - Powered by Questions Graph API`}
+                description={`${timeGranularity === 'daily' ? 'Daily' : 'Hourly'} questions count (IST) - Powered by Questions Graph API`}
                 data={questionsGraphData?.data || questionStats?.dailyActivity || transformHourlyData(questionStats?.hourlyDistribution || [])}
                 dataKey="questionsCount"
                 type={chartType}
@@ -275,12 +275,12 @@ const Dashboard = () => {
                       <div className="space-y-1">
                         <p className="text-sm text-muted-foreground">Peak Activity</p>
                         <p className="text-lg font-bold">{questionsGraphData.metadata.summary.peakActivity.questionsCount} questions</p>
-                        <p className="text-xs text-muted-foreground">on {questionsGraphData.metadata.summary.peakActivity.date}</p>
+                        <p className="text-xs text-muted-foreground">on {formatUTCToIST(questionsGraphData.metadata.summary.peakActivity.date, "MMM dd, yyyy")}</p>
                       </div>
                       <div className="space-y-1">
-                        <p className="text-sm text-muted-foreground">Date Range</p>
+                        <p className="text-sm text-muted-foreground">Date Range (IST)</p>
                         <p className="text-sm font-medium">
-                          {questionsGraphData.metadata.dateRange.start} to {questionsGraphData.metadata.dateRange.end}
+                          {formatUTCToIST(questionsGraphData.metadata.dateRange.start, "MMM dd, yyyy")} to {formatUTCToIST(questionsGraphData.metadata.dateRange.end, "MMM dd, yyyy")}
                         </p>
                         <p className="text-xs text-muted-foreground">Granularity: {questionsGraphData.metadata.granularity}</p>
                       </div>
@@ -294,7 +294,7 @@ const Dashboard = () => {
             <div className="space-y-4">
               <TrendChart
                 title="Session Activity Over Time"
-                description={`${timeGranularity === 'daily' ? 'Daily' : 'Hourly'} sessions count - Powered by Sessions Graph API`}
+                description={`${timeGranularity === 'daily' ? 'Daily' : 'Hourly'} sessions count (IST) - Powered by Sessions Graph API`}
                 data={sessionsGraphData?.data || sessionStats?.dailyActivity || transformHourlyData(sessionStats?.dailyActivity || [])}
                 dataKey="sessionsCount"
                 type={chartType}
@@ -321,12 +321,12 @@ const Dashboard = () => {
                       <div className="space-y-1">
                         <p className="text-sm text-muted-foreground">Peak Activity</p>
                         <p className="text-lg font-bold">{sessionsGraphData.metadata.summary.peakActivity.sessionsCount} sessions</p>
-                        <p className="text-xs text-muted-foreground">on {sessionsGraphData.metadata.summary.peakActivity.date}</p>
+                        <p className="text-xs text-muted-foreground">on {formatUTCToIST(sessionsGraphData.metadata.summary.peakActivity.date, "MMM dd, yyyy")}</p>
                       </div>
                       <div className="space-y-1">
-                        <p className="text-sm text-muted-foreground">Date Range</p>
+                        <p className="text-sm text-muted-foreground">Date Range (IST)</p>
                         <p className="text-sm font-medium">
-                          {sessionsGraphData.metadata.dateRange.start} to {sessionsGraphData.metadata.dateRange.end}
+                          {formatUTCToIST(sessionsGraphData.metadata.dateRange.start, "MMM dd, yyyy")} to {formatUTCToIST(sessionsGraphData.metadata.dateRange.end, "MMM dd, yyyy")}
                         </p>
                         <p className="text-xs text-muted-foreground">Granularity: {sessionsGraphData.metadata.granularity}</p>
                       </div>
@@ -340,7 +340,7 @@ const Dashboard = () => {
             <div className="space-y-4">
               <TrendChart
                 title="Feedback Activity Over Time"
-                description={`${timeGranularity === 'daily' ? 'Daily' : 'Hourly'} likes and dislikes - Powered by Feedback Graph API`}
+                description={`${timeGranularity === 'daily' ? 'Daily' : 'Hourly'} likes and dislikes (IST) - Powered by Feedback Graph API`}
                 data={feedbackGraphData?.data || feedbackStats?.dailyActivity || transformHourlyData(feedbackStats?.dailyActivity || [])}
                 dataKey={[
                   { 
@@ -382,12 +382,12 @@ const Dashboard = () => {
                       <div className="space-y-1">
                         <p className="text-sm text-muted-foreground">Peak Activity</p>
                         <p className="text-lg font-bold">{feedbackGraphData.metadata.summary.peakActivity.feedbackCount} feedback</p>
-                        <p className="text-xs text-muted-foreground">on {feedbackGraphData.metadata.summary.peakActivity.date}</p>
+                        <p className="text-xs text-muted-foreground">on {formatUTCToIST(feedbackGraphData.metadata.summary.peakActivity.date, "MMM dd, yyyy")}</p>
                       </div>
                       <div className="space-y-1">
-                        <p className="text-sm text-muted-foreground">Date Range</p>
+                        <p className="text-sm text-muted-foreground">Date Range (IST)</p>
                         <p className="text-sm font-medium">
-                          {feedbackGraphData.metadata.dateRange.start} to {feedbackGraphData.metadata.dateRange.end}
+                          {formatUTCToIST(feedbackGraphData.metadata.dateRange.start, "MMM dd, yyyy")} to {formatUTCToIST(feedbackGraphData.metadata.dateRange.end, "MMM dd, yyyy")}
                         </p>
                         <p className="text-xs text-muted-foreground">Granularity: {feedbackGraphData.metadata.granularity}</p>
                       </div>

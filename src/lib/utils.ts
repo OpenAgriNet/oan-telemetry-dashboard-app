@@ -139,3 +139,86 @@ export function formatUTCToIST(
 ): string {
   return formatUtcDateWithPMCorrection(dateString, [], 'Asia/Kolkata', outputFormat);
 }
+
+/**
+ * Format a date/timestamp for chart X-axis display in IST
+ * @param tickItem The date string, timestamp, or hour number from chart data
+ * @param isHourly Whether this is hourly data (uses hour numbers)
+ * @returns Formatted string for X-axis display
+ */
+export function formatChartXAxisToIST(tickItem: string | number, isHourly: boolean = false): string {
+  if (tickItem === null || tickItem === undefined) return "";
+
+  try {
+    // Convert to string if it's a number
+    const tickStr = String(tickItem);
+    
+    // If it's a number (hour), format it as hour display
+    if (isHourly && (typeof tickItem === 'number' || /^\d+$/.test(tickStr))) {
+      const hour = parseInt(tickStr);
+      return `${hour}:00`;
+    }
+    
+    // Check if this is a timestamp (hourly data) with date string
+    if (tickStr.includes('T') || tickStr.includes(' ')) {
+      // This is likely an ISO timestamp or has hour information
+      return formatUTCToIST(tickStr, "MMM dd");
+    }
+    
+    // For daily data, try to format as date
+    if (!isHourly) {
+      return formatUTCToIST(tickStr, "MMM dd");
+    }
+    
+    return tickStr;
+  } catch (error) {
+    console.error('Error formatting X axis tick:', error, tickItem);
+    return String(tickItem);
+  }
+}
+
+/**
+ * Format tooltip date/time information for charts in IST
+ * @param data The data object from chart tooltip
+ * @param label The label from chart
+ * @param isHourly Whether this is hourly data
+ * @returns Object with formatted label and timestamp info
+ */
+export function formatChartTooltipToIST(
+  data: Record<string, unknown>, 
+  label: string | number,
+  isHourly: boolean = false
+): { formattedLabel: string; timestampInfo: string } {
+  let formattedLabel = String(label);
+  let timestampInfo = '';
+  
+  try {
+    // Check if we have timestamp data
+    if (data.timestamp) {
+      const date = new Date(parseInt(String(data.timestamp)));
+      timestampInfo = formatInTimeZone(date, 'Asia/Kolkata', "MMM dd, yyyy hh:mm a");
+    } else if (data.date) {
+      // Try to parse the date string and convert to IST
+      const dateStr = String(data.date);
+      timestampInfo = formatUTCToIST(dateStr, "MMM dd, yyyy hh:mm a");
+    }
+    
+    // For hourly data, show the hour more clearly
+    if (isHourly && typeof label === 'number') {
+      formattedLabel = `Hour ${label}:00`;
+      // If we have a date context, add it in IST
+      if (data.date && !String(data.date).includes('Hour')) {
+        const baseDate = parseAsUTC(String(data.date));
+        baseDate.setUTCHours(label, 0, 0, 0);
+        timestampInfo = formatInTimeZone(baseDate, 'Asia/Kolkata', "MMM dd, yyyy hh:mm a");
+      }
+    } else if (!isHourly && data.date) {
+      // For daily data, format the label as well
+      formattedLabel = formatUTCToIST(String(data.date), "MMM dd, yyyy");
+    }
+  } catch (error) {
+    console.warn('Error formatting tooltip timestamp:', error);
+  }
+  
+  return { formattedLabel, timestampInfo };
+}

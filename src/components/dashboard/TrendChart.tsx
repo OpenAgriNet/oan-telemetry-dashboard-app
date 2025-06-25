@@ -18,6 +18,7 @@ Tooltip,
 XAxis,
 YAxis,
 } from "recharts";
+import { formatChartXAxisToIST, formatChartTooltipToIST } from "@/lib/utils";
 
 interface DataSeriesConfig {
   dataKey: string;
@@ -50,35 +51,13 @@ const seriesConfig: DataSeriesConfig[] = isMultipleSeries
   ? dataKey as DataSeriesConfig[]
   : [{ dataKey: dataKey as string, color, name: dataKey as string }];
 
-// Format timestamp for hourly data if needed
+// Format timestamp for hourly data if needed - now using IST
 const formatXAxis = (tickItem: string | number) => {
-  if (tickItem === null || tickItem === undefined) return "";
-
-  try {
-    // Convert to string if it's a number
-    const tickStr = String(tickItem);
-    
-    // If it's a number (hour), format it as hour display
-    if (typeof tickItem === 'number' || /^\d+$/.test(tickStr)) {
-      const hour = parseInt(tickStr);
-      return `${hour}:00`;
-    }
-    
-    // Check if this is a timestamp (hourly data) with date string
-    if (tickStr.includes('T') || tickStr.includes(' ')) {
-      // This is likely an ISO timestamp or has hour information
-      const date = new Date(tickStr);
-      return `${date.getHours()}:00`;
-    }
-    
-    return tickStr;
-  } catch (error) {
-    console.error('Error formatting X axis tick:', error, tickItem);
-    return String(tickItem);
-  }
+  const isHourly = xAxisKey === 'hour';
+  return formatChartXAxisToIST(tickItem, isHourly);
 };
 
-// Custom tooltip formatter to show timestamps and values
+// Custom tooltip formatter to show timestamps and values in IST
 const CustomTooltip = ({ active, payload, label }: { 
   active?: boolean; 
   payload?: Array<{ 
@@ -92,46 +71,16 @@ const CustomTooltip = ({ active, payload, label }: {
 }) => {
   if (active && payload && payload.length) {
     const data = payload[0].payload;
+    const isHourly = xAxisKey === 'hour';
     
-    // Format the label based on the data type
-    let formattedLabel = String(label);
-    let timestampInfo = '';
-    
-    try {
-      // Check if we have timestamp data
-      if (data.timestamp) {
-        const date = new Date(parseInt(String(data.timestamp)));
-        timestampInfo = date.toLocaleString();
-      } else if (data.date) {
-        // Try to parse the date string
-        const dateStr = String(data.date);
-        if (dateStr.includes('T') || dateStr.includes(' ')) {
-          const date = new Date(dateStr);
-          timestampInfo = date.toLocaleString();
-        } else {
-          timestampInfo = dateStr;
-        }
-      }
-      
-      // For hourly data, show the hour more clearly
-      if (xAxisKey === 'hour' && typeof label === 'number') {
-        formattedLabel = `Hour ${label}:00`;
-        // If we have a date context, add it
-        if (data.date && !String(data.date).includes('Hour')) {
-          const baseDate = new Date(String(data.date));
-          baseDate.setHours(label, 0, 0, 0);
-          timestampInfo = baseDate.toLocaleString();
-        }
-      }
-    } catch (error) {
-      console.warn('Error formatting tooltip timestamp:', error);
-    }
+    // Use the IST formatting utility
+    const { formattedLabel, timestampInfo } = formatChartTooltipToIST(data, label, isHourly);
     
     return (
       <div className="bg-background border border-border rounded-lg p-3 shadow-lg">
         <p className="font-semibold text-foreground">{formattedLabel}</p>
         {timestampInfo && (
-          <p className="text-sm text-muted-foreground mb-2">{timestampInfo}</p>
+          <p className="text-sm text-muted-foreground mb-2">{timestampInfo} (IST)</p>
         )}
         {payload.map((entry, index: number) => (
           <p key={index} style={{ color: entry.color }} className="text-sm">
