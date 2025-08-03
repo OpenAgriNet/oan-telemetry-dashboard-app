@@ -153,10 +153,19 @@ export function formatChartXAxisToIST(tickItem: string | number, isHourly: boole
     // Convert to string if it's a number
     const tickStr = String(tickItem);
     
-    // If it's a number (hour), format it as hour display
+    // If it's a number (hour), format it as hour display in IST
     if (isHourly && (typeof tickItem === 'number' || /^\d+$/.test(tickStr))) {
-      const hour = parseInt(tickStr);
-      return `${hour}:00`;
+      const utcHour = parseInt(tickStr);
+      // Convert UTC hour to IST hour (UTC+5:30)
+      let istHour = (utcHour + 5.5) % 24;
+      const minutes = istHour % 1 === 0.5 ? 30 : 0;
+      istHour = Math.floor(istHour);
+      
+      // Convert to 12-hour format
+      const period = istHour >= 12 ? 'PM' : 'AM';
+      const displayHour = istHour === 0 ? 12 : istHour > 12 ? istHour - 12 : istHour;
+      
+      return `${displayHour}:${minutes.toString().padStart(2, '0')} ${period}`;
     }
     
     // Check if this is a timestamp (hourly data) with date string
@@ -205,11 +214,24 @@ export function formatChartTooltipToIST(
     
     // For hourly data, show the hour more clearly
     if (isHourly && typeof label === 'number') {
-      formattedLabel = `Hour ${label}:00`;
+      // Convert UTC hour to IST hour (UTC+5:30)
+      const utcHour = label;
+      let istHour = (utcHour + 5.5) % 24;
+      const minutes = istHour % 1 === 0.5 ? 30 : 0;
+      istHour = Math.floor(istHour);
+      
+      // Convert to 12-hour format
+      const period = istHour >= 12 ? 'PM' : 'AM';
+      const displayHour = istHour === 0 ? 12 : istHour > 12 ? istHour - 12 : istHour;
+      
+      formattedLabel = `${displayHour}:${minutes.toString().padStart(2, '0')} ${period} IST`;
+      
       // If we have a date context, add it in IST
       if (data.date && !String(data.date).includes('Hour')) {
         const baseDate = parseAsUTC(String(data.date));
-        baseDate.setUTCHours(label, 0, 0, 0);
+        // Create the UTC timestamp for this hour
+        baseDate.setUTCHours(utcHour, 0, 0, 0);
+        // Format it properly to IST
         timestampInfo = formatInTimeZone(baseDate, 'Asia/Kolkata', "MMM dd, yyyy hh:mm a");
       }
     } else if (!isHourly && data.date) {
