@@ -506,8 +506,10 @@ export const fetchUsers = async (params: UserPaginationParams = {}): Promise<Pag
       page = DEFAULT_PAGE,
       limit = DEFAULT_LIMIT,
       search,
-      startDate,
-      endDate
+  startDate,
+  endDate,
+  sortKey,
+  sortDirection
     } = params;
 
     const queryParams = buildQueryParams({
@@ -515,12 +517,20 @@ export const fetchUsers = async (params: UserPaginationParams = {}): Promise<Pag
       limit,
       search: search || '',
       startDate: startDate || '',
-      endDate: endDate || ''
+  endDate: endDate || '',
+  // Map client sortKey to server sortBy param name
+  sortBy: sortKey || '',
+  sortDirection: sortDirection || ''
     });
 
-    console.log('Fetching users with URL:', `${SERVER_URL}/users?${queryParams}`);
+  console.log('Fetching users with URL:', `${SERVER_URL}/users?${queryParams}`);
 
-    const response = await fetch(`${SERVER_URL}/users?${queryParams}`);
+  // Add a timeout to prevent extremely long waits
+  const controller = new AbortController();
+  const timeoutId = setTimeout(() => controller.abort(), 10000); // 10s timeout
+
+  const response = await fetch(`${SERVER_URL}/users?${queryParams}`, { signal: controller.signal });
+  clearTimeout(timeoutId);
     
     if (!response.ok) {
       throw new Error(`HTTP error! status: ${response.status}`);
@@ -559,6 +569,10 @@ export const fetchUsers = async (params: UserPaginationParams = {}): Promise<Pag
     };
   } catch (error) {
     console.error('Error fetching users:', error);
+    // Normalize abort error message for the UI
+    if (error instanceof Error && error.name === 'AbortError') {
+      throw new Error('Request timed out while fetching users');
+    }
     throw error;
   }
 };

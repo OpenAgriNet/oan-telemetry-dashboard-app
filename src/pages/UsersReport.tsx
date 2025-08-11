@@ -2,25 +2,12 @@ import React, { useState } from "react";
 import { useQuery } from "@tanstack/react-query";
 import { 
   fetchUsers, 
-  fetchUserStats,
-  fetchSessions,
-  fetchFeedback,
-  fetchQuestionStats,
-  fetchSessionStats,
-  type UserPaginationParams,
-  type PaginationParams,
-  type UserStatsResponse
+  type UserPaginationParams
 } from "@/services/api";
 import { useNavigate } from "react-router-dom";
 import { useDateFilter } from "@/contexts/DateFilterContext";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
-import {
-  Select,
-  SelectContent,
-  SelectItem,
-  SelectTrigger,
-  SelectValue,
-} from "@/components/ui/select";
+// Removed unused Select components
 import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
 import {
@@ -36,15 +23,12 @@ import {
   RefreshCw, 
   AlertCircle, 
   Users, 
-  MessageSquare, 
-  Activity,
   ThumbsUp,
   ThumbsDown,
-  TrendingUp ,
   Download 
 } from "lucide-react";
 import TablePagination from "@/components/TablePagination";
-import { exportToCSV, formatUtcDateWithPMCorrection, formatUTCToIST } from "@/lib/utils";
+import { exportToCSV, formatUTCToIST } from "@/lib/utils";
 import { fetchAllPages } from "@/services/api";
 // Add these types near the top of the file
 type SortDirection = 'asc' | 'desc' | null;
@@ -69,8 +53,10 @@ const UsersReport = () => {
     resetPage();
   };
 
+  // Debounce search to reduce API calls
+  const [pendingSearch, setPendingSearch] = useState<string>("");
   const handleSearchChange = (query: string) => {
-    setSearchQuery(query);
+    setPendingSearch(query);
     resetPage();
   };
 
@@ -100,94 +86,7 @@ const UsersReport = () => {
     return key === 'username';
   };
 
-  // Fetch user statistics - Using question stats and session stats endpoints for authoritative counts
-  const { data: userStats, isLoading: isLoadingStats, error: statsError } = useQuery({
-    queryKey: ['user-stats-comprehensive', dateRange.from?.toISOString(), dateRange.to?.toISOString()],
-    queryFn: async () => {
-      console.log('Calculating user stats using authoritative stats endpoints...');
-      
-      try {
-        const statsParams: PaginationParams = {};
-
-        // Add date range filter
-        if (dateRange.from) {
-          const fromDate = new Date(dateRange.from);
-          fromDate.setHours(0, 0, 0, 0);
-          statsParams.startDate = fromDate.toISOString();
-        }
-
-        if (dateRange.to) {
-          const toDate = new Date(dateRange.to);
-          toDate.setHours(23, 59, 59, 999);
-          statsParams.endDate = toDate.toISOString();
-        } else if (dateRange.from) {
-          const toDate = new Date(dateRange.from);
-          toDate.setHours(23, 59, 59, 999);
-          statsParams.endDate = toDate.toISOString();
-        }
-
-        console.log('Users Report: Using authoritative stats endpoints for all counts');
-        
-        // Get authoritative stats from dedicated endpoints
-        const [questionStats, sessionStats] = await Promise.all([
-          fetchQuestionStats(statsParams),
-          fetchSessionStats(statsParams)
-        ]);
-        
-        // Get feedback data for satisfaction metrics
-        const feedbackResponse = await fetchFeedback({ 
-          limit: 10000, 
-          ...statsParams 
-        });
-
-        // Use authoritative stats endpoints as the source of truth
-        const totalUsers = questionStats.uniqueUsers || sessionStats.uniqueUsers;
-        const totalSessions = sessionStats.totalSessions; // Authoritative session count
-        const totalQuestions = questionStats.totalQuestions; // Authoritative question count
-        const totalFeedback = feedbackResponse.total;
-        const totalLikes = feedbackResponse.data.filter(fb => fb.rating === 'like').length;
-        const totalDislikes = feedbackResponse.data.filter(fb => fb.rating === 'dislike').length;
-
-        const calculatedStats = {
-          totalUsers,
-          totalSessions,
-          totalQuestions,
-          totalFeedback,
-          totalLikes,
-          totalDislikes,
-          avgSessionDuration: sessionStats.avgSessionDuration || 0,
-          dailyActivity: questionStats.dailyActivity || sessionStats.dailyActivity || []
-        };
-
-        console.log('Users Report calculated stats:', calculatedStats);
-        return calculatedStats;
-        
-      } catch (error) {
-        console.error('Failed to calculate user stats:', error);
-        throw error;
-      }
-    },
-    staleTime: 30 * 1000,
-    retry: 2,
-    retryDelay: 1000,
-  });
-
-  // Set default values if stats are loading or errored
-  const finalUserStats = userStats || {
-    totalUsers: 0,
-    totalSessions: 0,
-    totalQuestions: 0,
-    totalFeedback: 0,
-    totalLikes: 0,
-    totalDislikes: 0,
-    avgSessionDuration: 0,
-    dailyActivity: []
-  };
-
-  // Log stats error if any
-  if (statsError) {
-    console.error('User stats error:', statsError);
-  }
+  // Removed stats query and summary cards
 
   // Fetch users with server-side pagination and filtering
   const {
@@ -198,14 +97,16 @@ const UsersReport = () => {
   } = useQuery({
     queryKey: [
       "users",
+      // Only include debounced search in key
       searchQuery,
       dateRange.from?.toISOString(),
       dateRange.to?.toISOString(),
       selectedUser,
       page,
       pageSize,
-      sortConfig.key,
-      sortConfig.direction
+      // Only include backend-sortable sort in key to avoid refetches on client-only sorts
+      isBackendSortable(sortConfig.key) ? sortConfig.key : 'client-sort',
+      isBackendSortable(sortConfig.key) ? sortConfig.direction : 'client-direction'
     ],
     queryFn: async () => {
       const params: UserPaginationParams = {
@@ -271,29 +172,26 @@ const UsersReport = () => {
       };
     },
     refetchOnWindowFocus: false,
-    retry: 3,
-    retryDelay: (attemptIndex) => Math.min(1000 * 2 ** attemptIndex, 30000),
+    // Keep old page data while fetching the next
+    placeholderData: (prev) => prev,
+    staleTime: 30 * 1000,
+    gcTime: 5 * 60 * 1000,
+    // Don't refetch immediately on mount if we already have data
+    refetchOnMount: false,
+      retry: 1,
+      retryDelay: (attemptIndex) => Math.min(1000 * 2 ** attemptIndex, 30000),
   });
 
-  // Fetch all users for the filter dropdown
-  const { data: allUsersResponse = { data: [] }, isLoading: isLoadingAllUsers } = useQuery({
-    queryKey: ["all-users-for-filter"],
-    queryFn: () => fetchUsers({ limit: 1000 } as UserPaginationParams),
-    staleTime: 5 * 60 * 1000, // Cache for 5 minutes
-  });
-
-  const allUsers = allUsersResponse.data;
+  // Removed unused all-users-for-filter query to prevent extra API call on init
   const paginatedUsers = usersResponse.data;
 
-  const formatDuration = (seconds: number) => {
-    if (!seconds || isNaN(seconds)) return "N/A";
-    const hours = Math.floor(seconds / 3600);
-    const minutes = Math.floor((seconds % 3600) / 60);
-    if (hours > 0) {
-      return `${hours}h ${minutes}m`;
-    }
-    return `${minutes}m`;
-  };
+  // Apply debouncing effect for search input
+  React.useEffect(() => {
+    const id = setTimeout(() => setSearchQuery(pendingSearch), 350);
+    return () => clearTimeout(id);
+  }, [pendingSearch]);
+
+  // No-op
 
   const handleApplyFilters = () => {
     refetch();
@@ -348,68 +246,7 @@ const UsersReport = () => {
         </div>
       </div>
 
-      <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-4">
-        <Card>
-          <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-            <CardTitle className="text-sm font-medium">Total Users</CardTitle>
-            <Users className="h-4 w-4 text-muted-foreground" />
-          </CardHeader>
-          <CardContent>
-            {isLoadingStats ? (
-              <div className="h-8 w-24 bg-muted animate-pulse rounded mb-2" />
-            ) : (
-              <div className="text-2xl font-bold">{finalUserStats.totalUsers}</div>
-            )}
-            <p className="text-xs text-muted-foreground">
-              {dateRange.from || dateRange.to ? "Filtered period" : "All time"}
-            </p>
-          </CardContent>
-        </Card>
-
-        <Card>
-          <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-            <CardTitle className="text-sm font-medium">Total Sessions</CardTitle>
-            <Activity className="h-4 w-4 text-muted-foreground" />
-          </CardHeader>
-          <CardContent>
-            {isLoadingStats ? (
-              <div className="h-8 w-24 bg-muted animate-pulse rounded mb-2" />
-            ) : (
-              <div className="text-2xl font-bold">{finalUserStats.totalSessions}</div>
-            )}
-            <p className="text-xs text-muted-foreground">
-              {isLoadingStats ? (
-                <span className="h-4 w-16 bg-muted animate-pulse rounded inline-block" />
-              ) : finalUserStats.totalUsers > 0 
-                ? `${Math.round(finalUserStats.totalSessions / finalUserStats.totalUsers)} avg per user`
-                : "No data"
-              }
-            </p>
-          </CardContent>
-        </Card>
-
-        <Card>
-          <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-            <CardTitle className="text-sm font-medium">Total Questions</CardTitle>
-            <MessageSquare className="h-4 w-4 text-muted-foreground" />
-          </CardHeader>
-          <CardContent>
-            {isLoadingStats ? (
-              <div className="h-8 w-24 bg-muted animate-pulse rounded mb-2" />
-            ) : (
-              <div className="text-2xl font-bold">{finalUserStats.totalQuestions}</div>
-            )}
-            <p className="text-xs text-muted-foreground">
-              {isLoadingStats ? (
-                <span className="h-4 w-16 bg-muted animate-pulse rounded inline-block" />
-              ) : finalUserStats.totalSessions > 0 
-                ? `${Math.round(finalUserStats.totalQuestions / finalUserStats.totalSessions)} avg per session`
-                : "No data"
-              }
-            </p>
-          </CardContent>
-        </Card>
-      </div>
+  {/* Removed summary metrics cards */}
 
       <Card>
         <CardHeader>
@@ -425,7 +262,7 @@ const UsersReport = () => {
                   type="search"
                   placeholder="Search by username..."
                   className="pl-8"
-                  value={searchQuery}
+                  value={pendingSearch}
                   onChange={(e) => handleSearchChange(e.target.value)}
                   maxLength={1000}
                 />
