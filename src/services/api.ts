@@ -370,6 +370,9 @@ export interface UserStatsResponse {
   totalLikes: number;
   totalDislikes: number;
   avgSessionDuration: number;
+  newUsers: number;
+  returningUsers: number;
+  activeCumulative: number;
   dailyActivity: Array<{
     date: string;
     activeUsers: number;
@@ -653,7 +656,12 @@ export const fetchUserStats = async (params: PaginationParams = {}): Promise<Use
     }
 
     console.log('User stats data:', result.data);
-    return result.data;
+    return {
+      ...result.data,
+      newUsers: result.data.newUsers || 0,
+      returningUsers: result.data.returningUsers || 0,
+      activeCumulative: result.data.activeCumulative || 0
+    };
   } catch (error) {
     console.error('Error fetching user stats:', error);
     // Return default values on error
@@ -665,6 +673,9 @@ export const fetchUserStats = async (params: PaginationParams = {}): Promise<Use
       totalLikes: 0,
       totalDislikes: 0,
       avgSessionDuration: 0,
+      newUsers: 0,
+      returningUsers: 0,
+      activeCumulative: 0,
       dailyActivity: []
     };
   }

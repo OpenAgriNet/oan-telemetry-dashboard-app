@@ -28,7 +28,18 @@ const DateRangePicker: React.FC<DateRangePickerProps> = ({
   setDateRange,
 }) => {
   const [isCalendarOpen, setIsCalendarOpen] = React.useState(false);
-  const [selectedOption, setSelectedOption] = React.useState("custom");
+  const [selectedOption, setSelectedOption] = React.useState("last30");
+  const hasInitialized = React.useRef(false);
+
+  // Set default to last 30 days on component mount
+  React.useEffect(() => {
+    if (!hasInitialized.current && !dateRange.from && !dateRange.to) {
+      const today = new Date();
+      today.setHours(23, 59, 59, 999);
+      setDateRange({ from: subDays(today, 29), to: today });
+      hasInitialized.current = true;
+    }
+  }, [dateRange.from, dateRange.to, setDateRange]);
 
   const formatDateRange = () => {
     if (!dateRange.from || !dateRange.to) return "Select date range";
@@ -51,6 +62,9 @@ const DateRangePicker: React.FC<DateRangePickerProps> = ({
       case "last30":
         setDateRange({ from: subDays(today, 29), to: today });
         break;
+      case "alltime":
+        setDateRange({ from: undefined, to: undefined });
+        break;
       case "custom":
         setIsCalendarOpen(true);
         break;
@@ -59,8 +73,11 @@ const DateRangePicker: React.FC<DateRangePickerProps> = ({
   };
 
   const handleReset = () => {
-    setDateRange({ from: undefined, to: undefined });
-    setSelectedOption("custom");
+    // Reset to last 30 days instead of clearing
+    const today = new Date();
+    today.setHours(23, 59, 59, 999);
+    setDateRange({ from: subDays(today, 29), to: today });
+    setSelectedOption("last30");
   };
 
   return (
@@ -114,7 +131,7 @@ const DateRangePicker: React.FC<DateRangePickerProps> = ({
               size="sm"
               onClick={() => {
                 setDateRange({ from: undefined, to: undefined });
-                setSelectedOption("custom");
+                setSelectedOption("alltime");
                 setIsCalendarOpen(false);
               }}
             >
@@ -144,6 +161,7 @@ const DateRangePicker: React.FC<DateRangePickerProps> = ({
             {selectedOption === "today" && "Today"}
             {selectedOption === "last7" && "Last 7 days"}
             {selectedOption === "last30" && "Last 30 days"}
+            {selectedOption === "alltime" && "All time"}
             {selectedOption === "custom" && "Custom"}
             <ChevronDown className="ml-2 h-4 w-4" />
           </Button>
@@ -157,6 +175,9 @@ const DateRangePicker: React.FC<DateRangePickerProps> = ({
           </DropdownMenuItem>
           <DropdownMenuItem onClick={() => handleQuickSelect("last30")}>
             Last 30 days
+          </DropdownMenuItem>
+          <DropdownMenuItem onClick={() => handleQuickSelect("alltime")}>
+            All time
           </DropdownMenuItem>
           <DropdownMenuItem onClick={() => handleQuickSelect("custom")}>
             Custom

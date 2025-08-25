@@ -2,7 +2,9 @@ import React, { useState } from "react";
 import { useQuery } from "@tanstack/react-query";
 import { 
   fetchUsers, 
-  type UserPaginationParams
+  fetchUserStats,
+  type UserPaginationParams,
+  type UserStatsResponse
 } from "@/services/api";
 import { useNavigate } from "react-router-dom";
 import { useDateFilter } from "@/contexts/DateFilterContext";
@@ -25,7 +27,9 @@ import {
   Users, 
   ThumbsUp,
   ThumbsDown,
-  Download 
+  Download,
+  UserPlus,
+  UserCheck
 } from "lucide-react";
 import TablePagination from "@/components/TablePagination";
 import { exportToCSV, formatUTCToIST } from "@/lib/utils";
@@ -182,6 +186,65 @@ const UsersReport = () => {
       retryDelay: (attemptIndex) => Math.min(1000 * 2 ** attemptIndex, 30000),
   });
 
+  // Fetch user stats with date filter applied
+  const {
+    data: userStats = {
+      totalUsers: 0,
+      totalSessions: 0,
+      totalQuestions: 0,
+      totalFeedback: 0,
+      totalLikes: 0,
+      totalDislikes: 0,
+      avgSessionDuration: 0,
+      newUsers: 0,
+      returningUsers: 0,
+      activeCumulative: 0,
+      dailyActivity: []
+    } as UserStatsResponse,
+    isLoading: isStatsLoading,
+    error: statsError,
+  } = useQuery({
+    queryKey: [
+      "user-stats",
+      dateRange.from?.toISOString() || "all-time-start",
+      dateRange.to?.toISOString() || "all-time-end",
+    ],
+    queryFn: async () => {
+      const params: { startDate?: string; endDate?: string } = {};
+
+      // Add date range filter
+      if (dateRange.from) {
+        const fromDate = new Date(dateRange.from);
+        fromDate.setHours(0, 0, 0, 0);
+        params.startDate = fromDate.toISOString();
+      } else {
+        // For all-time data, send a very early start date to ensure backend gets all data
+        const allTimeStartDate = new Date('2020-01-01');
+        allTimeStartDate.setHours(0, 0, 0, 0);
+        params.startDate = allTimeStartDate.toISOString();
+      }
+
+      if (dateRange.to) {
+        const toDate = new Date(dateRange.to);
+        toDate.setHours(23, 59, 59, 999);
+        params.endDate = toDate.toISOString();
+      } else if (dateRange.from) {
+        const toDate = new Date(dateRange.from);
+        toDate.setHours(23, 59, 59, 999);
+        params.endDate = toDate.toISOString();
+      }
+      // When no dates are selected, don't send endDate to get all-time data
+
+      return await fetchUserStats(params);
+    },
+    refetchOnWindowFocus: false,
+    staleTime: 30 * 1000,
+    gcTime: 5 * 60 * 1000,
+    refetchOnMount: false,
+    retry: 1,
+    retryDelay: (attemptIndex) => Math.min(1000 * 2 ** attemptIndex, 30000),
+  });
+
   // Removed unused all-users-for-filter query to prevent extra API call on init
   const paginatedUsers = usersResponse.data;
 
@@ -213,7 +276,7 @@ const UsersReport = () => {
   };
 
   // Show error state
-  if (error) {
+  if (error || statsError) {
     return (
       <div className="space-y-6">
         <div className="flex items-center justify-between">
@@ -223,7 +286,7 @@ const UsersReport = () => {
           <div className="text-center">
             <AlertCircle className="h-12 w-12 text-destructive mx-auto mb-4" />
             <p className="text-destructive font-medium mb-2">Error loading users data</p>
-            <p className="text-destructive/80 text-sm mb-4">{error.message}</p>
+            <p className="text-destructive/80 text-sm mb-4">{(error || statsError)?.message}</p>
             <Button onClick={() => refetch()} variant="outline" size="sm">
               <RefreshCw className="h-4 w-4 mr-2" />
               Retry
@@ -246,7 +309,65 @@ const UsersReport = () => {
         </div>
       </div>
 
-  {/* Removed summary metrics cards */}
+      {/* User Stats Metric Cards */}
+      <div className="grid gap-4 md:grid-cols-3">
+        <Card>
+          <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
+            <CardTitle className="text-sm font-medium">New Users</CardTitle>
+            <UserPlus className="h-4 w-4 text-muted-foreground" />
+          </CardHeader>
+          <CardContent>
+            <div className="text-2xl font-bold">
+              {isStatsLoading ? (
+                <div className="h-8 w-16 bg-muted animate-pulse rounded" />
+              ) : (
+                userStats.newUsers.toLocaleString()
+              )}
+            </div>
+            <p className="text-xs text-muted-foreground">
+            first-time active users
+            </p>
+          </CardContent>
+        </Card>
+
+        <Card>
+          <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
+            <CardTitle className="text-sm font-medium">Returning Users</CardTitle>
+            <UserCheck className="h-4 w-4 text-muted-foreground" />
+          </CardHeader>
+          <CardContent>
+            <div className="text-2xl font-bold">
+              {isStatsLoading ? (
+                <div className="h-8 w-16 bg-muted animate-pulse rounded" />
+              ) : (
+                userStats.returningUsers.toLocaleString()
+              )}
+            </div>
+            <p className="text-xs text-muted-foreground">
+              active users with prior activity
+            </p>
+          </CardContent>
+        </Card>
+
+        <Card>
+          <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
+            <CardTitle className="text-sm font-medium">Total Active</CardTitle>
+            <Users className="h-4 w-4 text-muted-foreground" />
+          </CardHeader>
+          <CardContent>
+            <div className="text-2xl font-bold">
+              {isStatsLoading ? (
+                <div className="h-8 w-16 bg-muted animate-pulse rounded" />
+              ) : (
+                userStats.activeCumulative.toLocaleString()
+              )}
+            </div>
+            <p className="text-xs text-muted-foreground">
+              unique active users (New + Returning)
+            </p>
+          </CardContent>
+        </Card>
+      </div>
 
       <Card>
         <CardHeader>
