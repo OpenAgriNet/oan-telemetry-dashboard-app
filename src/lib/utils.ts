@@ -7,6 +7,62 @@ export function cn(...inputs: ClassValue[]) {
   return twMerge(clsx(inputs))
 }
 
+// Unified date range utility for consistent API parameter building
+export interface DateRangeParams {
+  startDate?: string;
+  endDate?: string;
+}
+
+export interface DateRangeOptions {
+  // Whether to include a default start date when no dates are provided
+  includeDefaultStart?: boolean;
+  // Default start date to use (defaults to '2020-01-01')
+  defaultStartDate?: string;
+  // Additional parameters to include (like granularity)
+  additionalParams?: Record<string, string | undefined>;
+}
+
+export function buildDateRangeParams(
+  dateRange: { from?: Date; to?: Date },
+  options: DateRangeOptions = {}
+): DateRangeParams & Record<string, string | undefined> {
+  const params: DateRangeParams & Record<string, string | undefined> = {};
+  
+  const {
+    includeDefaultStart = false,
+    defaultStartDate = '2020-01-01',
+    additionalParams = {}
+  } = options;
+
+  // Handle start date
+  if (dateRange.from) {
+    const fromDate = new Date(dateRange.from);
+    fromDate.setHours(0, 0, 0, 0);
+    params.startDate = fromDate.toISOString();
+  } else if (includeDefaultStart) {
+    // For all-time data, send a very early start date to ensure backend gets all data
+    const allTimeStartDate = new Date(defaultStartDate);
+    allTimeStartDate.setHours(0, 0, 0, 0);
+    params.startDate = allTimeStartDate.toISOString();
+  }
+
+  // Handle end date
+  if (dateRange.to) {
+    const toDate = new Date(dateRange.to);
+    toDate.setHours(23, 59, 59, 999);
+    params.endDate = toDate.toISOString();
+  } else if (dateRange.from) {
+    // If only start date is provided, set end date to the same day (single day selection)
+    const toDate = new Date(dateRange.from);
+    toDate.setHours(23, 59, 59, 999);
+    params.endDate = toDate.toISOString();
+  }
+  // When no dates are selected, don't send endDate to get all-time data
+
+  // Add any additional parameters
+  return { ...params, ...additionalParams };
+}
+
 /**
  * Export an array of objects to CSV and trigger a download.
  * @param data Array of objects to export

@@ -32,7 +32,7 @@ import {
   UserCheck
 } from "lucide-react";
 import TablePagination from "@/components/TablePagination";
-import { exportToCSV, formatUTCToIST } from "@/lib/utils";
+import { exportToCSV, formatUTCToIST, buildDateRangeParams } from "@/lib/utils";
 import { fetchAllPages } from "@/services/api";
 // Add these types near the top of the file
 type SortDirection = 'asc' | 'desc' | null;
@@ -127,22 +127,10 @@ const UsersReport = () => {
         params.search = searchQuery.trim();
       }
 
-      // Add date range filter
-      if (dateRange.from) {
-        const fromDate = new Date(dateRange.from);
-        fromDate.setHours(0, 0, 0, 0);
-        params.startDate = fromDate.toISOString();
-      }
-
-      if (dateRange.to) {
-        const toDate = new Date(dateRange.to);
-        toDate.setHours(23, 59, 59, 999);
-        params.endDate = toDate.toISOString();
-      } else if (dateRange.from) {
-        const toDate = new Date(dateRange.from);
-        toDate.setHours(23, 59, 59, 999);
-        params.endDate = toDate.toISOString();
-      }
+      // Add date range filter using unified utility
+      const dateParams = buildDateRangeParams(dateRange);
+      if (dateParams.startDate) params.startDate = dateParams.startDate;
+      if (dateParams.endDate) params.endDate = dateParams.endDate;
 
       const result = await fetchUsers(params);
       let filteredData = result.data;
@@ -210,30 +198,11 @@ const UsersReport = () => {
       dateRange.to?.toISOString() || "all-time-end",
     ],
     queryFn: async () => {
-      const params: { startDate?: string; endDate?: string } = {};
-
-      // Add date range filter
-      if (dateRange.from) {
-        const fromDate = new Date(dateRange.from);
-        fromDate.setHours(0, 0, 0, 0);
-        params.startDate = fromDate.toISOString();
-      } else {
-        // For all-time data, send a very early start date to ensure backend gets all data
-        const allTimeStartDate = new Date('2020-01-01');
-        allTimeStartDate.setHours(0, 0, 0, 0);
-        params.startDate = allTimeStartDate.toISOString();
-      }
-
-      if (dateRange.to) {
-        const toDate = new Date(dateRange.to);
-        toDate.setHours(23, 59, 59, 999);
-        params.endDate = toDate.toISOString();
-      } else if (dateRange.from) {
-        const toDate = new Date(dateRange.from);
-        toDate.setHours(23, 59, 59, 999);
-        params.endDate = toDate.toISOString();
-      }
-      // When no dates are selected, don't send endDate to get all-time data
+      // Use unified date range utility with default start date for user stats
+      const params = buildDateRangeParams(dateRange, {
+        includeDefaultStart: true,
+        defaultStartDate: '2020-01-01'
+      });
 
       return await fetchUserStats(params);
     },
@@ -389,23 +358,15 @@ const UsersReport = () => {
                 />
               </div>
               <Button onClick={async () => {
-                // Build params for all filters
+                // Build params for all filters using unified utility
                 const params: UserPaginationParams = {};
                 if (searchQuery.trim()) params.search = searchQuery.trim();
-                if (dateRange.from) {
-                  const fromDate = new Date(dateRange.from);
-                  fromDate.setHours(0, 0, 0, 0);
-                  params.startDate = fromDate.toISOString();
-                }
-                if (dateRange.to) {
-                  const toDate = new Date(dateRange.to);
-                  toDate.setHours(23, 59, 59, 999);
-                  params.endDate = toDate.toISOString();
-                } else if (dateRange.from) {
-                  const toDate = new Date(dateRange.from);
-                  toDate.setHours(23, 59, 59, 999);
-                  params.endDate = toDate.toISOString();
-                }
+                
+                // Add date range filter using unified utility
+                const dateParams = buildDateRangeParams(dateRange);
+                if (dateParams.startDate) params.startDate = dateParams.startDate;
+                if (dateParams.endDate) params.endDate = dateParams.endDate;
+                
                 const allUsers = await fetchAllPages(fetchUsers, params);
                 // Client-side user filter if needed
                 const filtered = (selectedUser !== "all"

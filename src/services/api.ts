@@ -384,7 +384,9 @@ export interface UserStatsResponse {
 export interface UsersGraphDataPoint {
   date: string;
   hour?: number;
-  uniqueUsersCount: number;
+  newUsers?: number;
+  returningUsers?: number;
+  uniqueUsersCount?: number;
   [key: string]: string | number | undefined;
 }
 
@@ -395,8 +397,12 @@ export interface UsersGraphResponse {
     totalDataPoints: number;
     dateRange: { start: string | null; end: string | null };
     summary: {
-      totalUniqueUsers: number;
-      peakActivity: { date: string | null; uniqueUsersCount: number };
+      totalNewUsers?: number;
+      totalReturningUsers?: number;
+      totalUniqueUsers?: number;
+      peakNewUsersActivity?: { date: string | null; newUsers: number };
+      peakReturningUsersActivity?: { date: string | null; returningUsers: number };
+      peakActivity?: { date: string | null; uniqueUsersCount: number };
     };
   };
   filters: {

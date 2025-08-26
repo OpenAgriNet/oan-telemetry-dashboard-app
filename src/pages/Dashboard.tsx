@@ -30,7 +30,7 @@ import {
   LineChart,
 } from "lucide-react";
 import { ToggleGroup, ToggleGroupItem } from "@/components/ui/toggle-group";
-import { formatUTCToIST } from "@/lib/utils";
+import { formatUTCToIST, buildDateRangeParams } from "@/lib/utils";
 
 const Dashboard = () => {
   const { dateRange } = useDateFilter();
@@ -41,39 +41,50 @@ const Dashboard = () => {
   // State to track time granularity (daily or hourly)
   const [timeGranularity, setTimeGranularity] = useState<"daily" | "hourly">("daily");
 
-  // Helper function to build API params
+  // Helper function to build API params using unified date range utility
   const buildApiParams = (): { startDate?: string; endDate?: string; granularity?: string } => {
-    const params: { startDate?: string; endDate?: string; granularity?: string } = {};
-    if (dateRange.from) {
-      const fromDate = new Date(dateRange.from);
-      fromDate.setHours(0, 0, 0, 0);
-      params.startDate = fromDate.toISOString();
-    }
-    if (dateRange.to) {
-      const toDate = new Date(dateRange.to);
-      toDate.setHours(23, 59, 59, 999);
-      params.endDate = toDate.toISOString();
-    }
-    params.granularity = timeGranularity;
-    return params;
+    return buildDateRangeParams(dateRange, {
+      additionalParams: {
+        granularity: timeGranularity
+      }
+    });
   };
 
-  // Fetch comprehensive dashboard statistics
+  // Fetch comprehensive dashboard statistics (using same date logic as user stats)
   const {
     data: dashboardStats,
     isLoading: isLoadingDashboardStats,
   } = useQuery({
     queryKey: ["dashboard-stats", dateRange.from?.toISOString(), dateRange.to?.toISOString(), timeGranularity],
-    queryFn: () => fetchDashboardStats(buildApiParams()),
+    queryFn: () => {
+      // Use unified date range utility with default start date for consistency with user stats
+      const params = buildDateRangeParams(dateRange, {
+        includeDefaultStart: true,
+        defaultStartDate: '2020-01-01',
+        additionalParams: {
+          granularity: timeGranularity
+        }
+      });
+      return fetchDashboardStats(params);
+    },
   });
 
-  // Fetch question statistics
+  // Fetch question statistics (using consistent date logic)
   const {
     data: questionStats,
     isLoading: isLoadingQuestionStats,
   } = useQuery({
     queryKey: ["question-stats", dateRange.from?.toISOString(), dateRange.to?.toISOString(), timeGranularity],
-    queryFn: () => fetchQuestionStats(buildApiParams()),
+    queryFn: () => {
+      const params = buildDateRangeParams(dateRange, {
+        includeDefaultStart: true,
+        defaultStartDate: '2020-01-01',
+        additionalParams: {
+          granularity: timeGranularity
+        }
+      });
+      return fetchQuestionStats(params);
+    },
   });
 
   // Fetch questions graph data for time-series visualization
@@ -82,16 +93,34 @@ const Dashboard = () => {
     isLoading: isLoadingQuestionsGraph,
   } = useQuery({
     queryKey: ["questions-graph", dateRange.from?.toISOString(), dateRange.to?.toISOString(), timeGranularity],
-    queryFn: () => fetchQuestionsGraph(buildApiParams()),
+    queryFn: () => {
+      const params = buildDateRangeParams(dateRange, {
+        includeDefaultStart: true,
+        defaultStartDate: '2020-01-01',
+        additionalParams: {
+          granularity: timeGranularity
+        }
+      });
+      return fetchQuestionsGraph(params);
+    },
   });
 
-  // Fetch session statistics
+  // Fetch session statistics (using consistent date logic)
   const {
     data: sessionStats,
     isLoading: isLoadingSessionStats,
   } = useQuery({
     queryKey: ["session-stats", dateRange.from?.toISOString(), dateRange.to?.toISOString(), timeGranularity],
-    queryFn: () => fetchSessionStats(buildApiParams()),
+    queryFn: () => {
+      const params = buildDateRangeParams(dateRange, {
+        includeDefaultStart: true,
+        defaultStartDate: '2020-01-01',
+        additionalParams: {
+          granularity: timeGranularity
+        }
+      });
+      return fetchSessionStats(params);
+    },
   });
 
   // Fetch sessions graph data for time-series visualization
@@ -100,7 +129,16 @@ const Dashboard = () => {
     isLoading: isLoadingSessionsGraph,
   } = useQuery({
     queryKey: ["sessions-graph", dateRange.from?.toISOString(), dateRange.to?.toISOString(), timeGranularity],
-    queryFn: () => fetchSessionsGraph(buildApiParams()),
+    queryFn: () => {
+      const params = buildDateRangeParams(dateRange, {
+        includeDefaultStart: true,
+        defaultStartDate: '2020-01-01',
+        additionalParams: {
+          granularity: timeGranularity
+        }
+      });
+      return fetchSessionsGraph(params);
+    },
     });
 
   // Fetch users graph data for time-series visualization
@@ -109,16 +147,34 @@ const Dashboard = () => {
     isLoading: isLoadingUsersGraph,
   } = useQuery({
     queryKey: ["users-graph", dateRange.from?.toISOString(), dateRange.to?.toISOString(), timeGranularity],
-    queryFn: () => fetchUsersGraph(buildApiParams()),
+    queryFn: () => {
+      const params = buildDateRangeParams(dateRange, {
+        includeDefaultStart: true,
+        defaultStartDate: '2020-01-01',
+        additionalParams: {
+          granularity: timeGranularity
+        }
+      });
+      return fetchUsersGraph(params);
+    },
   });
 
-  // Fetch comprehensive feedback statistics
+  // Fetch comprehensive feedback statistics (using consistent date logic)
   const {
     data: feedbackStats,
     isLoading: isLoadingFeedbackStats,
   } = useQuery({
     queryKey: ["comprehensive-feedback-stats", dateRange.from?.toISOString(), dateRange.to?.toISOString(), timeGranularity],
-    queryFn: () => fetchComprehensiveFeedbackStats(buildApiParams()),
+    queryFn: () => {
+      const params = buildDateRangeParams(dateRange, {
+        includeDefaultStart: true,
+        defaultStartDate: '2020-01-01',
+        additionalParams: {
+          granularity: timeGranularity
+        }
+      });
+      return fetchComprehensiveFeedbackStats(params);
+    },
   });
 
   // Fetch users statistics
@@ -127,7 +183,17 @@ const Dashboard = () => {
     isLoading: isLoadingUserStats,
   } = useQuery({
     queryKey: ["users-stats", dateRange.from?.toISOString(), dateRange.to?.toISOString(), timeGranularity], 
-    queryFn: () => fetchUserStats(buildApiParams()),
+    queryFn: () => {
+      // Use unified date range utility with default start date for user stats consistency
+      const params = buildDateRangeParams(dateRange, {
+        includeDefaultStart: true,
+        defaultStartDate: '2020-01-01',
+        additionalParams: {
+          granularity: timeGranularity
+        }
+      });
+      return fetchUserStats(params);
+    },
   });
 
   // Fetch feedback graph data for time-series visualization
@@ -136,7 +202,16 @@ const Dashboard = () => {
     isLoading: isLoadingFeedbackGraph,
   } = useQuery({
     queryKey: ["feedback-graph", dateRange.from?.toISOString(), dateRange.to?.toISOString(), timeGranularity],
-    queryFn: () => fetchFeedbackGraph(buildApiParams()),
+    queryFn: () => {
+      const params = buildDateRangeParams(dateRange, {
+        includeDefaultStart: true,
+        defaultStartDate: '2020-01-01',
+        additionalParams: {
+          granularity: timeGranularity
+        }
+      });
+      return fetchFeedbackGraph(params);
+    },
   });
 
   const isLoading = isLoadingDashboardStats || isLoadingQuestionStats || isLoadingQuestionsGraph || isLoadingSessionStats || isLoadingSessionsGraph || isLoadingFeedbackStats || isLoadingFeedbackGraph;
@@ -163,6 +238,16 @@ const Dashboard = () => {
     }));
   };
 
+  // Helper function to add total unique users to the data
+  const transformUsersData = (data: Array<{ newUsers?: number; returningUsers?: number; [key: string]: unknown }>) => {
+    if (!data || !Array.isArray(data)) return [];
+    
+    return data.map(item => ({
+      ...item,
+      totalUniqueUsers: (item.newUsers || 0) + (item.returningUsers || 0)
+    }));
+  };
+
   return (
     <div className="space-y-6">
       <div className="flex items-center justify-between">
@@ -172,7 +257,7 @@ const Dashboard = () => {
       <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-4">
         <MetricCard
           title="Unique Users"
-          value={dashboardStats?.totalUsers || questionStats?.uniqueUsers || sessionStats?.uniqueUsers || userStats?.totalUsers || 0}
+          value={dashboardStats?.totalUsers || userStats?.totalUsers || 0}
           icon={<User size={16} />}
           description="Total unique users"
         />
@@ -233,14 +318,34 @@ const Dashboard = () => {
           <TabsContent value="users">
           <TrendChart
               title="User Activity"
-              description={`${timeGranularity === 'daily' ? 'Daily' : 'Hourly'} unique users (IST)`}
+              description={`${timeGranularity === 'daily' ? 'Daily' : 'Hourly'} new vs returning vs total unique users (IST)`}
               data={timeGranularity === 'daily' 
-                ? (usersGraphData?.data || userStats?.dailyActivity || [])
-                : transformHourlyData( usersGraphData?.data || userStats?.dailyActivity || [])
+                ? transformUsersData(usersGraphData?.data || userStats?.dailyActivity || [])
+                : transformUsersData(transformHourlyData( usersGraphData?.data || userStats?.dailyActivity || []))
               }
-              dataKey="uniqueUsersCount"
+              dataKey={[
+                { 
+                  dataKey: 'newUsers', 
+                  color: '#3b82f6', 
+                  name: 'New Users',
+                  strokeDasharray: '5 5',
+                  fillOpacity: 0.3
+                },
+                { 
+                  dataKey: 'returningUsers', 
+                  color: '#10b981', 
+                  name: 'Returning Users',
+                  strokeDasharray: '5 5',
+                  fillOpacity: 0.3
+                },
+                { 
+                  dataKey: 'totalUniqueUsers', 
+                  color: 'hsl(var(--foreground))', 
+                  name: 'Total Active Users',
+                  fillOpacity: 1
+                }
+              ]}
               type={chartType}
-              color="hsl(var(--primary))" 
               xAxisKey={getXAxisKey()}
             />
           </TabsContent>

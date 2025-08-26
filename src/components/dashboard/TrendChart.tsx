@@ -24,6 +24,8 @@ interface DataSeriesConfig {
   dataKey: string;
   color?: string;
   name?: string;
+  strokeDasharray?: string;
+  fillOpacity?: number;
 }
 
 interface TrendChartProps {
@@ -93,11 +95,7 @@ const CustomTooltip = ({ active, payload, label }: {
   return null;
 };
 
-// Add console logs for debugging
-console.log('TrendChart data:', data);
-console.log('xAxisKey:', xAxisKey);
-console.log('dataKey:', dataKey);
-console.log('seriesConfig:', seriesConfig);
+
 
   // Check if we have data to display
   const hasData = data && data.length > 0;
@@ -138,6 +136,7 @@ tickFormatter={(value) => `${value}`}
 key={series.dataKey}
 dataKey={series.dataKey}
 fill={series.color || `hsl(${index * 60}, 70%, 50%)`}
+fillOpacity={series.fillOpacity !== undefined ? series.fillOpacity : 1}
 radius={[4, 4, 0, 0]}
 name={series.name || series.dataKey}
 />
@@ -172,7 +171,9 @@ key={series.dataKey}
 type="monotone"
 dataKey={series.dataKey}
 stroke={series.color || `hsl(${index * 60}, 70%, 50%)`}
+strokeDasharray={series.strokeDasharray}
 fill={`${series.color || `hsl(${index * 60}, 70%, 50%)`}33`}
+fillOpacity={series.fillOpacity !== undefined ? series.fillOpacity : 0.2}
 name={series.name || series.dataKey}
 />
 ))}
@@ -208,6 +209,7 @@ type="monotone"
 dataKey={series.dataKey}
 stroke={series.color || `hsl(${index * 60}, 70%, 50%)`}
 strokeWidth={2}
+strokeDasharray={series.strokeDasharray}
 dot={{ r: 4 }}
 activeDot={{ r: 6 }}
 name={series.name || series.dataKey}
