@@ -22,44 +22,57 @@ export interface DateRangeOptions {
   additionalParams?: Record<string, string | undefined>;
 }
 
+/**
+ * Build date range params. Previous implementation tried to normalise to IST which
+ * resulted in startDate appearing as previous day (e.g. Aug 27 -> Aug 26 18:30:00Z).
+ * For API expectations that treat the incoming ISO strictly by its UTC calendar day,
+ * we now default to sending the exact selected calendar day boundaries in UTC
+ * (00:00:00.000Z to 23:59:59.999Z) so the network tab shows the same dates picked.
+ *
+ * If you still need IST aligned windows you can pass alignToIST: true.
+ */
 export function buildDateRangeParams(
   dateRange: { from?: Date; to?: Date },
-  options: DateRangeOptions = {}
+  options: DateRangeOptions & { alignToIST?: boolean } = {}
 ): DateRangeParams & Record<string, string | undefined> {
   const params: DateRangeParams & Record<string, string | undefined> = {};
-  
+
   const {
     includeDefaultStart = false,
     defaultStartDate = '2020-01-01',
-    additionalParams = {}
+    additionalParams = {},
+    alignToIST = false
   } = options;
 
-  // Handle start date
+  const buildBoundary = (
+    base: Date,
+    end: boolean
+  ) => {
+    const year = base.getFullYear();
+    const month = base.getMonth();
+    const day = base.getDate();
+    if (alignToIST) {
+      // Recreate old behaviour (IST window converted to UTC)
+      const istString = `${year}-${String(month + 1).padStart(2, '0')}-${String(day).padStart(2, '0')}T${end ? '23:59:59.999' : '00:00:00.000'}+05:30`;
+      return new Date(istString).toISOString();
+    }
+    // Pure UTC boundaries
+    const utcDate = new Date(Date.UTC(year, month, day, end ? 23 : 0, end ? 59 : 0, end ? 59 : 0, end ? 999 : 0));
+    return utcDate.toISOString();
+  };
+
   if (dateRange.from) {
-    const fromDate = new Date(dateRange.from);
-    fromDate.setHours(0, 0, 0, 0);
-    params.startDate = fromDate.toISOString();
+    params.startDate = buildBoundary(new Date(dateRange.from), false);
   } else if (includeDefaultStart) {
-    // For all-time data, send a very early start date to ensure backend gets all data
-    const allTimeStartDate = new Date(defaultStartDate);
-    allTimeStartDate.setHours(0, 0, 0, 0);
-    params.startDate = allTimeStartDate.toISOString();
+    params.startDate = buildBoundary(new Date(defaultStartDate), false);
   }
 
-  // Handle end date
   if (dateRange.to) {
-    const toDate = new Date(dateRange.to);
-    toDate.setHours(23, 59, 59, 999);
-    params.endDate = toDate.toISOString();
+    params.endDate = buildBoundary(new Date(dateRange.to), true);
   } else if (dateRange.from) {
-    // If only start date is provided, set end date to the same day (single day selection)
-    const toDate = new Date(dateRange.from);
-    toDate.setHours(23, 59, 59, 999);
-    params.endDate = toDate.toISOString();
+    params.endDate = buildBoundary(new Date(dateRange.from), true);
   }
-  // When no dates are selected, don't send endDate to get all-time data
 
-  // Add any additional parameters
   return { ...params, ...additionalParams };
 }
 
@@ -261,11 +274,16 @@ export function formatChartTooltipToIST(
     // Check if we have timestamp data
     if (data.timestamp) {
       const date = new Date(parseInt(String(data.timestamp)));
-      timestampInfo = formatInTimeZone(date, 'Asia/Kolkata', "MMM dd, yyyy hh:mm a");
+      // For hourly view keep time, for daily omit time
+      timestampInfo = isHourly
+        ? formatInTimeZone(date, 'Asia/Kolkata', "MMM dd, yyyy hh:mm a")
+        : formatInTimeZone(date, 'Asia/Kolkata', "MMM dd, yyyy");
     } else if (data.date) {
       // Try to parse the date string and convert to IST
       const dateStr = String(data.date);
-      timestampInfo = formatUTCToIST(dateStr, "MMM dd, yyyy hh:mm a");
+      timestampInfo = isHourly
+        ? formatUTCToIST(dateStr, "MMM dd, yyyy hh:mm a")
+        : formatUTCToIST(dateStr, "MMM dd, yyyy");
     }
     
     // For hourly data, show the hour more clearly
@@ -291,8 +309,11 @@ export function formatChartTooltipToIST(
         timestampInfo = formatInTimeZone(baseDate, 'Asia/Kolkata', "MMM dd, yyyy hh:mm a");
       }
     } else if (!isHourly && data.date) {
-      // For daily data, format the label as well
+      // For daily data, format the label as well (date only)
       formattedLabel = formatUTCToIST(String(data.date), "MMM dd, yyyy");
+      // Avoid duplicate line showing same date twice – we already put date in formattedLabel
+      // so clear timestampInfo for daily to hide second line
+      timestampInfo = '';
     }
   } catch (error) {
     console.warn('Error formatting tooltip timestamp:', error);

@@ -43,11 +43,13 @@ const Dashboard = () => {
 
   // Helper function to build API params using unified date range utility
   const buildApiParams = (): { startDate?: string; endDate?: string; granularity?: string } => {
-    return buildDateRangeParams(dateRange, {
+    const params = buildDateRangeParams(dateRange, {
       additionalParams: {
         granularity: timeGranularity
-      }
+      },
+      alignToIST: false
     });
+    return params;
   };
 
   // Fetch comprehensive dashboard statistics (using same date logic as user stats)
@@ -63,7 +65,8 @@ const Dashboard = () => {
         defaultStartDate: '2020-01-01',
         additionalParams: {
           granularity: timeGranularity
-        }
+        },
+        alignToIST: false
       });
       return fetchDashboardStats(params);
     },
@@ -81,7 +84,8 @@ const Dashboard = () => {
         defaultStartDate: '2020-01-01',
         additionalParams: {
           granularity: timeGranularity
-        }
+        },
+        alignToIST: false
       });
       return fetchQuestionStats(params);
     },
@@ -99,7 +103,8 @@ const Dashboard = () => {
         defaultStartDate: '2020-01-01',
         additionalParams: {
           granularity: timeGranularity
-        }
+        },
+        alignToIST: false
       });
       return fetchQuestionsGraph(params);
     },
@@ -117,7 +122,8 @@ const Dashboard = () => {
         defaultStartDate: '2020-01-01',
         additionalParams: {
           granularity: timeGranularity
-        }
+        },
+        alignToIST: false
       });
       return fetchSessionStats(params);
     },
@@ -135,7 +141,8 @@ const Dashboard = () => {
         defaultStartDate: '2020-01-01',
         additionalParams: {
           granularity: timeGranularity
-        }
+        },
+        alignToIST: false
       });
       return fetchSessionsGraph(params);
     },
@@ -153,7 +160,8 @@ const Dashboard = () => {
         defaultStartDate: '2020-01-01',
         additionalParams: {
           granularity: timeGranularity
-        }
+        },
+        alignToIST: false
       });
       return fetchUsersGraph(params);
     },
@@ -171,7 +179,8 @@ const Dashboard = () => {
         defaultStartDate: '2020-01-01',
         additionalParams: {
           granularity: timeGranularity
-        }
+        },
+        alignToIST: false
       });
       return fetchComprehensiveFeedbackStats(params);
     },
