@@ -104,6 +104,7 @@ const EndpointRow: React.FC<EndpointRowProps> = ({
           currentStatus={currentStatus}
           currentUptime={endpoint.uptimePercentage}
           serviceCreatedAt={endpoint.createdAt} // When monitoring started
+          endpointType={endpoint.type}
         />
       </div>
 
@@ -129,7 +130,7 @@ const EndpointRow: React.FC<EndpointRowProps> = ({
             </TooltipTrigger>
             <TooltipContent side="top" className="max-w-xs">
               <div className="text-sm">
-                <div className="font-medium">Uptime: {formatUptime(endpoint.uptimePercentage || 0)}</div>
+                <div className="font-medium">{endpoint.type === 'api' ? 'Coverage' : 'Uptime'}: {formatUptime(endpoint.uptimePercentage || 0)}</div>
                 <div>Total checks: <span>{endpoint.totalChecks || 0}</span></div>
                 <div>Successful: <span>{endpoint.successfulChecks || 0}</span></div>
                 <div>Failed: <span>{endpoint.failedChecks || 0}</span></div>

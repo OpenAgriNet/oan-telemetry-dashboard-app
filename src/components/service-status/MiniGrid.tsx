@@ -17,6 +17,7 @@ interface MiniGridProps {
   currentStatus?: 'operational' | 'degraded' | 'outage';
   currentUptime?: number;
   serviceCreatedAt?: string; // When the service monitoring started
+  endpointType?: 'ui' | 'api'; // Distinguish network endpoints for custom thresholds/labels
 }
 
 const MiniGrid: React.FC<MiniGridProps> = ({ 
@@ -26,7 +27,8 @@ const MiniGrid: React.FC<MiniGridProps> = ({
   className,
   currentStatus = 'operational',
   currentUptime = 100,
-  serviceCreatedAt
+  serviceCreatedAt,
+  endpointType = 'ui'
 }) => {
   
   // Use the actual trends data
@@ -110,19 +112,44 @@ const MiniGrid: React.FC<MiniGridProps> = ({
       // No data available - show as white/light grey
       color = 'bg-gray-200 border border-gray-300';
     } else {
-      // We have actual data - use uptime-based colors
-      if (dataPoint.uptimePercentage === 100) {
-        color = 'bg-emerald-500';
-      } else if (dataPoint.uptimePercentage >= 99) {
-        color = 'bg-green-400';
-      } else if (dataPoint.uptimePercentage >= 95) {
-        color = 'bg-yellow-400';
-      } else if (dataPoint.uptimePercentage >= 90) {
-        color = 'bg-amber-400';
-      } else if (dataPoint.uptimePercentage >= 80) {
-        color = 'bg-orange-500';
+      // We have actual data - use uptime/coverage based colors.
+      if (endpointType === 'api') {
+        // Revised custom thresholds for network endpoints (coverage):
+        // 100% -> emerald
+        // >=90% and <100% -> green
+        // >80% and <90% -> yellow
+        // >70% and <=80% -> orange
+        // >50% and <=70% -> amber
+        // <=50% -> red
+        const v = dataPoint.uptimePercentage;
+        if (v === 100) {
+          color = 'bg-emerald-500';
+        } else if (v >= 90) {
+          color = 'bg-green-400';
+        } else if (v > 80) {
+          color = 'bg-yellow-400';
+        } else if (v > 70) {
+          color = 'bg-orange-500';
+        } else if (v > 50) {
+          color = 'bg-amber-400';
+        } else {
+          color = 'bg-red-500';
+        }
       } else {
-        color = 'bg-red-500';
+        // Existing thresholds for non-network endpoints (UI etc.)
+        if (dataPoint.uptimePercentage === 100) {
+          color = 'bg-emerald-500';
+        } else if (dataPoint.uptimePercentage >= 99) {
+          color = 'bg-green-400';
+        } else if (dataPoint.uptimePercentage >= 95) {
+          color = 'bg-yellow-400';
+        } else if (dataPoint.uptimePercentage >= 90) {
+          color = 'bg-amber-400';
+        } else if (dataPoint.uptimePercentage >= 80) {
+          color = 'bg-orange-500';
+        } else {
+          color = 'bg-red-500';
+        }
       }
     }
     
@@ -145,12 +172,15 @@ const MiniGrid: React.FC<MiniGridProps> = ({
       );
     }
     
+    const label = endpointType === 'api' ? 'Coverage' : 'Uptime';
+    // Map outage to 'No data' only for api endpoints per requirements
+    const statusLabel = endpointType === 'api' && dataPoint.status === 'outage' ? 'No data' : dataPoint.status;
     return (
       <div className="text-sm">
         <div className="font-medium">{formattedDate}</div>
-        <div>Uptime: {formatUptime(dataPoint.uptimePercentage)}</div>
+        <div>{label}: {formatUptime(dataPoint.uptimePercentage)}</div>
         <div>Avg Response: {formatResponseTime(dataPoint.avgResponseTime)}</div>
-        <div className="capitalize">Status: {dataPoint.status}</div>
+        <div className="capitalize">Status: {statusLabel}</div>
       </div>
     );
   };
