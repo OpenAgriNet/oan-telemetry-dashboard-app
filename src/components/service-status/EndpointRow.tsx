@@ -11,7 +11,7 @@ interface EndpointRowProps {
   trends?: TrendDataPoint[];
   trendsLoading?: boolean;
   trendsError?: Error | null;
-  latestUpdate?: LatestStatusUpdate;
+  latestUpdate?: LatestStatusUpdate; // kept for potential future use but not used for response time now
   className?: string;
   inactive?: boolean;
 }
@@ -27,7 +27,8 @@ const EndpointRow: React.FC<EndpointRowProps> = ({
 }) => {
   // Use latest update if available, otherwise use endpoint's latest status
   const currentStatus = latestUpdate?.status || endpoint.latestStatus?.status || endpoint.status;
-  const currentResponseTime = latestUpdate?.responseTime || endpoint.latestStatus?.responseTime || endpoint.avgResponseTime;
+  // Always use the averaged response time supplied by API mapping.
+  const chosenResponseTime: number = endpoint.avgResponseTime || 0;
 
   const formatResponseTime = (responseTime: number) => {
     return `${(responseTime || 0).toFixed(0)}ms`;
@@ -156,12 +157,10 @@ const EndpointRow: React.FC<EndpointRowProps> = ({
         <div className="flex items-center justify-end gap-1">
           <Clock className="h-3 w-3 text-muted-foreground" />
           <span className="text-sm font-medium">
-            {formatResponseTime(currentResponseTime || 0)}
+            {formatResponseTime(chosenResponseTime || 0)}
           </span>
         </div>
-        <div className="text-xs text-muted-foreground">
-          avg response
-        </div>
+  <div className="text-xs text-muted-foreground">avg response</div>
       </div>
 
       {/* Last Checked */}

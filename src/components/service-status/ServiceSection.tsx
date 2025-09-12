@@ -1,6 +1,6 @@
 import React from 'react';
 import { cn } from '@/lib/utils';
-import { Server, Globe, Loader2 } from 'lucide-react';
+import { Server, Globe, Share2 } from 'lucide-react';
 import EndpointRow from './EndpointRow';
 import type { EndpointStats, TrendDataPoint, LatestStatusUpdate } from '@/services/statusApi';
 
@@ -11,8 +11,9 @@ interface ServiceSectionProps {
   trendsLoading?: { [endpointId: string]: boolean };
   trendsErrors?: { [endpointId: string]: Error | null };
   latestUpdates?: { [endpointId: string]: LatestStatusUpdate };
-  type?: 'ui' | 'api';
+  type?: 'ui' | 'api' | 'network';
   className?: string;
+  responseMetricStrategy?: 'auto' | 'latest' | 'average';
 }
 
 const ServiceSection: React.FC<ServiceSectionProps> = ({
@@ -23,18 +24,21 @@ const ServiceSection: React.FC<ServiceSectionProps> = ({
   trendsErrors = {},
   latestUpdates = {},
   type,
-  className
+  className,
+  responseMetricStrategy = 'auto'
 }) => {
   if (endpoints.length === 0) {
     return null;
   }
 
-  const getSectionIcon = (type?: 'ui' | 'api') => {
+  const getSectionIcon = (type?: 'ui' | 'api' | 'network') => {
     switch (type) {
       case 'ui':
         return <Globe className="h-5 w-5" />;
       case 'api':
         return <Server className="h-5 w-5" />;
+      case 'network':
+        return <Share2 className="h-5 w-5" />;
       default:
         return <Server className="h-5 w-5" />;
     }
@@ -113,6 +117,7 @@ const ServiceSection: React.FC<ServiceSectionProps> = ({
               trendsLoading={trendsLoading[endpoint.id]}
               trendsError={trendsErrors[endpoint.id]}
               latestUpdate={latestUpdates[endpoint.id]}
+              responseMetricStrategy={responseMetricStrategy}
               className={index === endpoints.length - 1 ? "border-b-0" : ""}
             />
           ))}

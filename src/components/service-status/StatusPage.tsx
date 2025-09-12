@@ -28,24 +28,30 @@ const StatusPage: React.FC<StatusPageProps> = ({
     error
   } = useStatusPageData(period, enableTrends);
 
-  // Group endpoints by type
-  const { uiEndpoints, apiEndpoints } = useMemo(() => {
+  // Group endpoints by type including dedicated network endpoints (by URL pattern)
+  const { uiEndpoints, apiEndpoints, networkEndpoints } = useMemo(() => {
     const endpoints = dashboardStats.data?.endpoints || [];
-    
-    const uiEndpoints = endpoints.filter(endpoint => 
+
+    const networkEndpoints = endpoints.filter(endpoint =>
+      (endpoint.url || '').includes('/network-health') || endpoint.tags?.includes('network')
+    );
+
+    const remaining = endpoints.filter(e => !networkEndpoints.includes(e));
+
+    const uiEndpoints = remaining.filter(endpoint => 
       endpoint.type === 'ui' || 
       endpoint.tags?.includes('frontend') ||
       endpoint.tags?.includes('ui')
     );
     
-    const apiEndpoints = endpoints.filter(endpoint => 
+    const apiEndpoints = remaining.filter(endpoint => 
       endpoint.type === 'api' || 
       endpoint.tags?.includes('backend') ||
       endpoint.tags?.includes('api') ||
       (!endpoint.type && !uiEndpoints.includes(endpoint)) // fallback for untyped endpoints
     );
 
-    return { uiEndpoints, apiEndpoints };
+    return { uiEndpoints, apiEndpoints, networkEndpoints };
   }, [dashboardStats.data?.endpoints]);
 
   // Process trends data from parallel queries
@@ -166,6 +172,7 @@ const StatusPage: React.FC<StatusPageProps> = ({
               trendsLoading={trendsLoading}
               trendsErrors={trendsErrors}
               latestUpdates={latestUpdates}
+              responseMetricStrategy="auto"
             />
           )}
 
@@ -179,11 +186,26 @@ const StatusPage: React.FC<StatusPageProps> = ({
               trendsLoading={trendsLoading}
               trendsErrors={trendsErrors}
               latestUpdates={latestUpdates}
+              responseMetricStrategy="auto"
+            />
+          )}
+
+          {/* Network Endpoints Section */}
+          {networkEndpoints.length > 0 && (
+            <ServiceSection
+              title="Network Endpoints"
+              type="network"
+              endpoints={networkEndpoints}
+              trendsData={trendsData}
+              trendsLoading={trendsLoading}
+              trendsErrors={trendsErrors}
+              latestUpdates={latestUpdates}
+              responseMetricStrategy="latest"
             />
           )}
 
           {/* Empty State */}
-          {uiEndpoints.length === 0 && apiEndpoints.length === 0 && (
+          {uiEndpoints.length === 0 && apiEndpoints.length === 0 && networkEndpoints.length === 0 && (
             <div className="text-center py-12">
               <Calendar className="h-12 w-12 mx-auto mb-4 text-muted-foreground" />
               <div className="text-lg font-medium mb-2">No services configured</div>

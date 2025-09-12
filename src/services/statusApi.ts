@@ -13,6 +13,8 @@ export interface SystemStats {
   overallUptimePercentage: number;
   status: 'operational' | 'degraded' | 'outage';
   message: string;
+  // Added: overall average response time across all endpoints (ms)
+  overallAvgResponseTime?: number;
 }
 
 export interface EndpointStats {
@@ -95,7 +97,6 @@ export const fetchSystemStats = async (): Promise<SystemStats> => {
       throw new Error(`HTTP error! status: ${response.status}`);
     }
     const result = await response.json();
-    console.log('System stats API response:', result);
     
     // Map the actual API response to our SystemStats interface
     const data = result.data;
@@ -153,7 +154,6 @@ export const fetchDashboardStats = async (period: string = '30d'): Promise<Dashb
       throw new Error(`HTTP error! status: ${response.status}`);
     }
     const result = await response.json();
-    console.log('Dashboard API response:', result);
     
     // Map the actual API response to our DashboardResponse interface
     const data = result.data;
@@ -161,7 +161,7 @@ export const fetchDashboardStats = async (period: string = '30d'): Promise<Dashb
     const endpointsData = data.endpoints || [];
     
     // Map endpoints to our EndpointStats interface
-    const endpoints: EndpointStats[] = endpointsData.map((item: {
+  const endpoints: EndpointStats[] = endpointsData.map((item: {
       endpoint?: Record<string, unknown>;
       stats?: Record<string, unknown>;
       latestStatus?: Record<string, unknown>;
@@ -199,7 +199,7 @@ export const fetchDashboardStats = async (period: string = '30d'): Promise<Dashb
       }
       // If there are failures, use the actual calculated uptime percentage
       
-      const endpointData = {
+      const endpointData: EndpointStats = {
         id: String(endpoint.id || ''),
         name: String(endpoint.name || 'Unknown Service'),
         url: String(endpoint.url || ''),
@@ -218,7 +218,7 @@ export const fetchDashboardStats = async (period: string = '30d'): Promise<Dashb
         totalChecks,
         successfulChecks,
         failedChecks: Number(stats.failed_checks || 0),
-        createdAt: String(endpoint.created_at || '')
+  createdAt: String(endpoint.created_at || '')
       };
       
       return endpointData;
@@ -248,6 +248,10 @@ export const fetchDashboardStats = async (period: string = '30d'): Promise<Dashb
       message = "All systems operational (limited monitoring data)";
     }
     
+    // Compute overall average response time (average of endpoint averages, ignoring zeros)
+    const avgValues = endpoints.map(e => e.avgResponseTime).filter(v => v > 0);
+    const overallAvgResponseTime = avgValues.length ? Math.round(avgValues.reduce((a,b)=>a+b,0) / avgValues.length) : 0;
+
     const systemStats: SystemStats = {
       totalEndpoints,
       operationalCount: upEndpoints,
@@ -255,7 +259,8 @@ export const fetchDashboardStats = async (period: string = '30d'): Promise<Dashb
       outageCount: downEndpoints,
       overallUptimePercentage: overallUptime,
       status,
-      message
+      message,
+      overallAvgResponseTime
     };
     
     const dashboardResponse = {
@@ -265,7 +270,6 @@ export const fetchDashboardStats = async (period: string = '30d'): Promise<Dashb
       lastUpdated: result.timestamp || new Date().toISOString()
     };
     
-    console.log('Mapped dashboard response:', dashboardResponse);
     return dashboardResponse;
   } catch (error) {
     console.error('Error fetching dashboard stats:', error);
@@ -332,7 +336,6 @@ export const fetchEndpointTrends = async (
       };
     }
     const result = await response.json();
-    console.log(`Trends API response for ${endpointId}:`, result);
     
     // Map the actual API response structure
     if (result.success && result.data) {
