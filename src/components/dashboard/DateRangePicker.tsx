@@ -28,15 +28,15 @@ const DateRangePicker: React.FC<DateRangePickerProps> = ({
   setDateRange,
 }) => {
   const [isCalendarOpen, setIsCalendarOpen] = React.useState(false);
-  const [selectedOption, setSelectedOption] = React.useState("last30");
+  const [selectedOption, setSelectedOption] = React.useState("last7");
   const hasInitialized = React.useRef(false);
 
-  // Set default to last 30 days on component mount
+  // Set default to last 7 days on component mount
   React.useEffect(() => {
     if (!hasInitialized.current && !dateRange.from && !dateRange.to) {
       const today = new Date();
       today.setHours(23, 59, 59, 999);
-      setDateRange({ from: subDays(today, 29), to: today });
+      setDateRange({ from: subDays(today, 6), to: today });
       hasInitialized.current = true;
     }
   }, [dateRange.from, dateRange.to, setDateRange]);
@@ -73,11 +73,11 @@ const DateRangePicker: React.FC<DateRangePickerProps> = ({
   };
 
   const handleReset = () => {
-    // Reset to last 30 days instead of clearing
+    // Reset to last 7 days instead of clearing
     const today = new Date();
     today.setHours(23, 59, 59, 999);
-    setDateRange({ from: subDays(today, 29), to: today });
-    setSelectedOption("last30");
+    setDateRange({ from: subDays(today, 6), to: today });
+    setSelectedOption("last7");
   };
 
   return (

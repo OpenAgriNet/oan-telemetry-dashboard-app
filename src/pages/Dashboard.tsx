@@ -5,15 +5,15 @@ import {
   fetchQuestionsGraph,
   fetchSessionStats,
   fetchSessionsGraph,
-  fetchComprehensiveFeedbackStats,
+  fetchFeedbackStats,
   fetchFeedbackGraph,
-  fetchDashboardStats,
-  type PaginationParams,
-  fetchUsersGraph,
   fetchUserStats,
+  fetchUsersGraph,
+  type PaginationParams,
 } from "@/services/api";
 import { useDateFilter } from "@/contexts/DateFilterContext";
 import MetricCard from "@/components/dashboard/MetricCard";
+import LoadingMetricCard from "@/components/dashboard/LoadingMetricCard";
 import TrendChart from "@/components/dashboard/TrendChart";
 import {
   Tabs,
@@ -51,26 +51,6 @@ const Dashboard = () => {
     });
     return params;
   };
-
-  // Fetch comprehensive dashboard statistics (using same date logic as user stats)
-  const {
-    data: dashboardStats,
-    isLoading: isLoadingDashboardStats,
-  } = useQuery({
-    queryKey: ["dashboard-stats", dateRange.from?.toISOString(), dateRange.to?.toISOString(), timeGranularity],
-    queryFn: () => {
-      // Use unified date range utility with default start date for consistency with user stats
-      const params = buildDateRangeParams(dateRange, {
-        includeDefaultStart: true,
-        defaultStartDate: '2020-01-01',
-        additionalParams: {
-          granularity: timeGranularity
-        },
-        alignToIST: false
-      });
-      return fetchDashboardStats(params);
-    },
-  });
 
   // Fetch question statistics (using consistent date logic)
   const {
@@ -167,12 +147,12 @@ const Dashboard = () => {
     },
   });
 
-  // Fetch comprehensive feedback statistics (using consistent date logic)
+  // Fetch feedback statistics (using consistent date logic)
   const {
     data: feedbackStats,
     isLoading: isLoadingFeedbackStats,
   } = useQuery({
-    queryKey: ["comprehensive-feedback-stats", dateRange.from?.toISOString(), dateRange.to?.toISOString(), timeGranularity],
+    queryKey: ["feedback-stats", dateRange.from?.toISOString(), dateRange.to?.toISOString(), timeGranularity],
     queryFn: () => {
       const params = buildDateRangeParams(dateRange, {
         includeDefaultStart: true,
@@ -182,7 +162,7 @@ const Dashboard = () => {
         },
         alignToIST: false
       });
-      return fetchComprehensiveFeedbackStats(params);
+      return fetchFeedbackStats(params);
     },
   });
 
@@ -223,7 +203,7 @@ const Dashboard = () => {
     },
   });
 
-  const isLoading = isLoadingDashboardStats || isLoadingQuestionStats || isLoadingQuestionsGraph || isLoadingSessionStats || isLoadingSessionsGraph || isLoadingFeedbackStats || isLoadingFeedbackGraph;
+  const isLoading = isLoadingQuestionStats || isLoadingQuestionsGraph || isLoadingSessionStats || isLoadingSessionsGraph || isLoadingFeedbackStats || isLoadingFeedbackGraph || isLoadingUserStats || isLoadingUsersGraph;
 
   // Helper function to get the appropriate x-axis key based on granularity
   const getXAxisKey = () => {
@@ -264,30 +244,43 @@ const Dashboard = () => {
       </div>
 
       <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-4">
-        <MetricCard
-          title="Unique Users"
-          value={dashboardStats?.totalUsers || userStats?.totalUsers || 0}
-          icon={<User size={16} />}
-          description="Total unique users"
-        />
-        <MetricCard
-          title="Total Sessions"
-          value={dashboardStats?.totalSessions || sessionStats?.totalSessions || 0}
-          icon={<MessageSquare size={16} />}
-          description="Total user sessions"
-        />
-        <MetricCard
-          title="Questions Asked"
-          value={dashboardStats?.totalQuestions || questionStats?.totalQuestions || 0}
-          icon={<MessageSquare size={16} />}
-          description="Total questions"
-        />
-        <MetricCard
-          title="Feedback Collected"
-          value={dashboardStats?.totalFeedback || feedbackStats?.totalFeedback || 0}
-          icon={<ThumbsUp size={16} />}
-          description={`${((dashboardStats?.satisfactionRate || feedbackStats?.satisfactionRate || 0)).toFixed(1)}% satisfaction rate`}
-        />
+        {isLoadingUserStats || isLoadingQuestionStats || isLoadingSessionStats || isLoadingFeedbackStats ? (
+          <>
+            <LoadingMetricCard icon={<User size={16} />} />
+            <LoadingMetricCard icon={<MessageSquare size={16} />} />
+            <LoadingMetricCard icon={<MessageSquare size={16} />} />
+            <LoadingMetricCard icon={<ThumbsUp size={16} />} />
+          </>
+        ) : (
+          <>
+            <MetricCard
+              title="Unique Users"
+              value={userStats?.totalUsers || 0}
+              icon={<User size={16} />}
+              description="Total unique users"
+            />
+            <MetricCard
+              title="Total Sessions"
+              value={sessionStats?.totalSessions || 0}
+              icon={<MessageSquare size={16} />}
+              description="Total user sessions"
+            />
+            <MetricCard
+              title="Questions Asked"
+              value={questionStats?.totalQuestions || 0}
+              icon={<MessageSquare size={16} />}
+              description="Total questions"
+            />
+            <MetricCard
+              title="Feedback Collected"
+              value={feedbackStats?.totalFeedback || 0}
+              icon={<ThumbsUp size={16} />}
+              description={`${(feedbackStats?.totalLikes && feedbackStats?.totalFeedback 
+                ? ((feedbackStats.totalLikes / feedbackStats.totalFeedback) * 100).toFixed(1) 
+                : 0)}% positive feedback`}
+            />
+          </>
+        )}
       </div>
 
       <Card className="card-gradient">
@@ -329,8 +322,8 @@ const Dashboard = () => {
               title="User Activity"
               description={`${timeGranularity === 'daily' ? 'Daily' : 'Hourly'} new vs returning vs total unique users (IST)`}
               data={timeGranularity === 'daily' 
-                ? transformUsersData(usersGraphData?.data || userStats?.dailyActivity || [])
-                : transformUsersData(transformHourlyData( usersGraphData?.data || userStats?.dailyActivity || []))
+                ? transformUsersData(usersGraphData?.data || [])
+                : transformUsersData(transformHourlyData(usersGraphData?.data || []))
               }
               dataKey={[
                 { 
@@ -455,7 +448,7 @@ const Dashboard = () => {
               <TrendChart
                 title="Feedback Activity Over Time"
                 description={`${timeGranularity === 'daily' ? 'Daily' : 'Hourly'} likes and dislikes (IST) - Powered by Feedback Graph API`}
-                data={feedbackGraphData?.data || feedbackStats?.dailyActivity || transformHourlyData(feedbackStats?.dailyActivity || [])}
+                data={feedbackGraphData?.data || []}
                 dataKey={[
                   { 
                     dataKey: "likesCount", 

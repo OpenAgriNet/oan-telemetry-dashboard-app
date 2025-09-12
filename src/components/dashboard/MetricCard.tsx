@@ -45,9 +45,9 @@ const MetricCard: React.FC<MetricCardProps> = ({
         </div>
       </CardHeader>
       <CardContent>
-        <div className="text-2xl font-bold">{title}</div>
+        <div className="text-2xl font-bold">{typeof value === 'number' ? value.toLocaleString() : value}</div>
         <p className="mt-1 text-sm text-muted-foreground">
-          {value}
+          {title}
           {trend && (
             <span className={`ml-2 ${getTrendColor()}`}>
               {getTrendArrow()} {Math.abs(trend)}%
