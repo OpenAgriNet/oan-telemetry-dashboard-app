@@ -1,5 +1,5 @@
 import React, { useState } from "react";
-import { Link } from "react-router-dom";
+import { Link, useSearchParams } from "react-router-dom";
 import { useQuery } from "@tanstack/react-query";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
@@ -22,15 +22,29 @@ import TablePagination from "@/components/TablePagination";
 import { exportToCSV } from "@/lib/utils";
 
 const FeedbackPage = () => {
+  const [searchParams, setSearchParams] = useSearchParams();
+  const { dateRange } = useDateFilter();
+  
+  // Get pagination state from URL params
+  const page = parseInt(searchParams.get('page') || '1', 10);
+  const pageSize = 10;
+  
   const [searchTerm, setSearchTerm] = useState("");
   const [selectedUser, setSelectedUser] = useState("all");
-  const { dateRange } = useDateFilter();
-  const [page, setPage] = useState(1);
-  const pageSize = 10;
   const [sortConfig, setSortConfig] = useState({ key: 'date', direction: 'desc' });
 
   // Reset page when filters change
-  const resetPage = () => setPage(1);
+  const resetPage = () => {
+    const newParams = new URLSearchParams(searchParams);
+    newParams.set('page', '1');
+    setSearchParams(newParams);
+  };
+
+  const handlePageChange = (newPage: number) => {
+    const newParams = new URLSearchParams(searchParams);
+    newParams.set('page', newPage.toString());
+    setSearchParams(newParams);
+  };
 
   const handleSearchChange = (value: string) => {
     setSearchTerm(value);
@@ -45,7 +59,9 @@ const FeedbackPage = () => {
   const handleResetFilters = () => {
     setSearchTerm("");
     setSelectedUser("all");
-    setPage(1);
+    const newParams = new URLSearchParams();
+    newParams.set('page', '1');
+    setSearchParams(newParams);
   };
 
   const handleSort = (key) => {
@@ -451,7 +467,7 @@ const FeedbackPage = () => {
               <TablePagination
                 currentPage={page}
                 totalPages={feedbackResponse.totalPages}
-                onPageChange={setPage}
+                onPageChange={handlePageChange}
               />
             )}
           </div>

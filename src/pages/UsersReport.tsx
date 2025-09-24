@@ -6,7 +6,7 @@ import {
   type UserPaginationParams,
   type UserStatsResponse
 } from "@/services/api";
-import { useNavigate } from "react-router-dom";
+import { useNavigate, useSearchParams } from "react-router-dom";
 import { useDateFilter } from "@/contexts/DateFilterContext";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 // Removed unused Select components
@@ -43,14 +43,28 @@ type SortConfig = {
 
 const UsersReport = () => {
   const { dateRange } = useDateFilter();
+  const navigate = useNavigate();
+  const [searchParams, setSearchParams] = useSearchParams();
+  
+  // Get pagination state from URL params
+  const page = parseInt(searchParams.get('page') || '1', 10);
+  const pageSize = 10;
+  
   const [selectedUser, setSelectedUser] = useState<string>("all");
   const [searchQuery, setSearchQuery] = useState<string>("");
-  const [page, setPage] = useState(1);
-  const navigate = useNavigate();
-  const pageSize = 10;
 
   // Reset page when filters change
-  const resetPage = () => setPage(1);
+  const resetPage = () => {
+    const newParams = new URLSearchParams(searchParams);
+    newParams.set('page', '1');
+    setSearchParams(newParams);
+  };
+
+  const handlePageChange = (newPage: number) => {
+    const newParams = new URLSearchParams(searchParams);
+    newParams.set('page', newPage.toString());
+    setSearchParams(newParams);
+  };
 
   const handleUserChange = (userId: string) => {
     setSelectedUser(userId);
@@ -67,7 +81,9 @@ const UsersReport = () => {
   const handleResetFilters = () => {
     setSelectedUser("all");
     setSearchQuery("");
-    setPage(1);
+    const newParams = new URLSearchParams();
+    newParams.set('page', '1');
+    setSearchParams(newParams);
   };
 
   // Add new state for sorting
@@ -531,7 +547,7 @@ const UsersReport = () => {
               <TablePagination 
                 currentPage={page}
                 totalPages={usersResponse.totalPages}
-                onPageChange={setPage}
+                onPageChange={handlePageChange}
               />
             )}
           </div>

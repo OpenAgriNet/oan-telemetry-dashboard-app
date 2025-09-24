@@ -30,19 +30,33 @@ import {
 import { Mic, Search, ThumbsUp, ThumbsDown, RefreshCw, AlertCircle, Download } from "lucide-react";
 import { useDateFilter } from "@/contexts/DateFilterContext";
 import { exportToCSV, formatUtcDateWithPMCorrection, formatUTCToIST } from "@/lib/utils";
-import { useNavigate } from "react-router-dom";
+import { useNavigate, useSearchParams } from "react-router-dom";
 const QuestionsReport = () => {
   const { dateRange } = useDateFilter();
+  const navigate = useNavigate();
+  const [searchParams, setSearchParams] = useSearchParams();
+  
+  // Get pagination state from URL params
+  const page = parseInt(searchParams.get('page') || '1', 10);
+  const pageSize = 10;
+  
   const [selectedUser, setSelectedUser] = useState<string>("all");
   const [selectedSession, setSelectedSession] = useState<string>("all");
   const [searchQuery, setSearchQuery] = useState<string>("");
-  const [page, setPage] = useState(1);
-  const pageSize = 10;
   const [sortConfig, setSortConfig] = useState({ key: 'dateAsked', direction: 'desc' });
-  const navigate = useNavigate();
 
   // Reset page when filters change
-  const resetPage = () => setPage(1);
+  const resetPage = () => {
+    const newParams = new URLSearchParams(searchParams);
+    newParams.set('page', '1');
+    setSearchParams(newParams);
+  };
+
+  const handlePageChange = (newPage: number) => {
+    const newParams = new URLSearchParams(searchParams);
+    newParams.set('page', newPage.toString());
+    setSearchParams(newParams);
+  };
 
   const handleUserChange = (userId: string) => {
     setSelectedUser(userId);
@@ -64,7 +78,9 @@ const QuestionsReport = () => {
     setSelectedUser("all");
     setSelectedSession("all");
     setSearchQuery("");
-    setPage(1);
+    const newParams = new URLSearchParams();
+    newParams.set('page', '1');
+    setSearchParams(newParams);
   };
   const handleSessionClick = (sessionId: string) => {
     navigate(`/sessions/${sessionId}`);
@@ -468,7 +484,7 @@ const QuestionsReport = () => {
         <TablePagination
           currentPage={page}
           totalPages={questionsReport.totalPages}
-          onPageChange={setPage}
+          onPageChange={handlePageChange}
         />
       )}
     </div>
