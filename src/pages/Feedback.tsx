@@ -1,73 +1,285 @@
-
 import React, { useState } from "react";
-import { Link } from "react-router-dom";
+import { Link, useSearchParams } from "react-router-dom";
 import { useQuery } from "@tanstack/react-query";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
-import { MessageSquare, ThumbsUp, Search } from "lucide-react";
+import { MessageSquare, ThumbsUp, ThumbsDown, Search, RefreshCw, AlertCircle } from "lucide-react";
 import { format } from "date-fns";
 import { Input } from "@/components/ui/input";
-import DateRangePicker from "@/components/dashboard/DateRangePicker";
+import { Button } from "@/components/ui/button";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
-import { fetchFeedback, fetchUsers, type Feedback } from "@/services/api";
+import { useDateFilter } from "@/contexts/DateFilterContext";
+import { 
+  fetchFeedback, 
+  fetchFeedbackStats, 
+  fetchUsers, 
+  type PaginationParams, 
+  type UserPaginationParams,
+  fetchAllPages
+} from "@/services/api";
+import { Download } from "lucide-react";
 import TablePagination from "@/components/TablePagination";
-import users from "@/data/users.json";
+import { exportToCSV } from "@/lib/utils";
 
 const FeedbackPage = () => {
+  const [searchParams, setSearchParams] = useSearchParams();
+  const { dateRange } = useDateFilter();
+  
+  // Get pagination state from URL params
+  const page = parseInt(searchParams.get('page') || '1', 10);
+  const pageSize = 10;
+  
   const [searchTerm, setSearchTerm] = useState("");
   const [selectedUser, setSelectedUser] = useState("all");
-  const [dateRange, setDateRange] = useState<{ from: Date | undefined; to: Date | undefined }>({
-    from: undefined,
-    to: undefined,
-  });
-  const [page, setPage] = useState(1);
-  const pageSize = 10;
+  const [sortConfig, setSortConfig] = useState({ key: 'date', direction: 'desc' });
 
-  const { data: feedbackResponse = { data: [], totalPages: 0 } } = useQuery({
-    queryKey: ['feedback', page, pageSize],
-    queryFn: () => fetchFeedback({ page, pageSize })
+  // Reset page when filters change
+  const resetPage = () => {
+    const newParams = new URLSearchParams(searchParams);
+    newParams.set('page', '1');
+    setSearchParams(newParams);
+  };
+
+  const handlePageChange = (newPage: number) => {
+    const newParams = new URLSearchParams(searchParams);
+    newParams.set('page', newPage.toString());
+    setSearchParams(newParams);
+  };
+
+  const handleSearchChange = (value: string) => {
+    setSearchTerm(value);
+    resetPage();
+  };
+
+  const handleUserChange = (value: string) => {
+    setSelectedUser(value);
+    resetPage();
+  };
+
+  const handleResetFilters = () => {
+    setSearchTerm("");
+    setSelectedUser("all");
+    const newParams = new URLSearchParams();
+    newParams.set('page', '1');
+    setSearchParams(newParams);
+  };
+
+  const handleSort = (key) => {
+    setSortConfig((current) => ({
+      key,
+      direction: current.key === key && current.direction === 'asc' ? 'desc' : 'asc'
+    }));
+  };
+
+  const SortIndicator = ({ columnKey }) => {
+    if (sortConfig.key === columnKey) {
+      return sortConfig.direction === 'asc' ? ' ↑' : ' ↓';
+    }
+    return ' ↕';
+  };
+
+  // Fetch users for the filter dropdown
+  const { data: usersResponse = { data: [] }, isLoading: isLoadingUsers } = useQuery({
+    queryKey: ["users-for-feedback-filter"],
+    queryFn: () => fetchUsers({ limit: 1000 } as UserPaginationParams),
+    staleTime: 5 * 60 * 1000, // Cache for 5 minutes
   });
 
-  const filteredFeedback = feedbackResponse.data.filter((feedback) => {
-    const matchesSearch = feedback.questionText.toLowerCase().includes(searchTerm.toLowerCase()) ||
-      feedback.feedback.toLowerCase().includes(searchTerm.toLowerCase());
-    
-    const matchesUser = selectedUser === "all" || feedback.userId === selectedUser;
-    
-    const matchesDate = !dateRange.from || !dateRange.to || (
-      new Date(feedback.timestamp) >= dateRange.from &&
-      new Date(feedback.timestamp) <= dateRange.to
+  // Fetch feedback statistics
+  const { data: feedbackStats = { totalFeedback: 0, totalLikes: 0, totalDislikes: 0 }, isLoading: isLoadingStats } = useQuery({
+    queryKey: ['feedback-stats', dateRange.from?.toISOString(), dateRange.to?.toISOString()],
+    queryFn: async () => {
+      const statsParams: PaginationParams = {};
+
+      // Add date range filter for stats
+      if (dateRange.from) {
+        const fromDate = new Date(dateRange.from);
+        fromDate.setHours(0, 0, 0, 0);
+        statsParams.startDate = fromDate.toISOString();
+      }
+
+      if (dateRange.to) {
+        const toDate = new Date(dateRange.to);
+        toDate.setHours(23, 59, 59, 999);
+        statsParams.endDate = toDate.toISOString();
+      } else if (dateRange.from) {
+        const toDate = new Date(dateRange.from);
+        toDate.setHours(23, 59, 59, 999);
+        statsParams.endDate = toDate.toISOString();
+      }
+
+      return fetchFeedbackStats(statsParams);
+    },
+    staleTime: 2 * 60 * 1000, // Cache for 2 minutes
+  });
+
+  // Fetch feedback with server-side pagination and filtering
+  const { 
+    data: feedbackResponse = { data: [], total: 0, totalPages: 0 }, 
+    isLoading,
+    error,
+    refetch 
+  } = useQuery({
+    queryKey: [
+      'feedback', 
+      page, 
+      pageSize, 
+      searchTerm, 
+      selectedUser, 
+      dateRange.from?.toISOString(), 
+      dateRange.to?.toISOString(),
+      sortConfig.key,
+      sortConfig.direction
+    ],
+    queryFn: async () => {
+      const params: PaginationParams = {
+        page,
+        limit: pageSize,
+      };
+
+      // Add search filter
+      if (searchTerm.trim()) {
+        params.search = searchTerm.trim();
+      }
+
+      // Add date range filter
+      if (dateRange.from) {
+        const fromDate = new Date(dateRange.from);
+        fromDate.setHours(0, 0, 0, 0);
+        params.startDate = fromDate.toISOString();
+      }
+
+      if (dateRange.to) {
+        const toDate = new Date(dateRange.to);
+        toDate.setHours(23, 59, 59, 999);
+        params.endDate = toDate.toISOString();
+      } else if (dateRange.from) {
+        const toDate = new Date(dateRange.from);
+        toDate.setHours(23, 59, 59, 999);
+        params.endDate = toDate.toISOString();
+      }
+
+      console.log('Fetching feedback with params:', params);
+      const result = await fetchFeedback(params);
+      
+      // Client-side sorting
+      const sortedData = [...result.data].sort((a, b) => {
+        let aValue = a[sortConfig.key] ?? '';
+        let bValue = b[sortConfig.key] ?? '';
+        if (sortConfig.key === 'date') {
+          aValue = new Date(String(aValue)).getTime();
+          bValue = new Date(String(bValue)).getTime();
+        }
+        if (aValue < bValue) return sortConfig.direction === 'asc' ? -1 : 1;
+        if (aValue > bValue) return sortConfig.direction === 'asc' ? 1 : -1;
+        return 0;
+      });
+      return { ...result, data: sortedData };
+    },
+    refetchOnWindowFocus: false,
+    retry: 3,
+    retryDelay: (attemptIndex) => Math.min(1000 * 2 ** attemptIndex, 30000),
+  });
+
+  const users = usersResponse.data;
+
+  const handleApplyFilters = () => {
+    refetch();
+  };
+
+  // Show error state
+  if (error) {
+    return (
+      <div className="space-y-6">
+        <div className="flex items-center justify-between">
+          <h1 className="text-2xl font-bold tracking-tight">User Feedback</h1>
+        </div>
+        <div className="flex justify-center items-center p-8 bg-destructive/10 border border-destructive/20 rounded-lg">
+          <div className="text-center">
+            <AlertCircle className="h-12 w-12 text-destructive mx-auto mb-4" />
+            <p className="text-destructive font-medium mb-2">Error loading feedback data</p>
+            <p className="text-destructive/80 text-sm mb-4">{error.message}</p>
+            <Button onClick={() => refetch()} variant="outline" size="sm">
+              <RefreshCw className="h-4 w-4 mr-2" />
+              Retry
+            </Button>
+          </div>
+        </div>
+      </div>
     );
-
-    return matchesSearch && matchesUser && matchesDate;
-  });
+  }
 
   return (
     <div className="space-y-6">
       <div className="flex items-center justify-between">
         <h1 className="text-2xl font-bold tracking-tight">User Feedback</h1>
+        <div className="flex gap-2">
+          <Button onClick={handleApplyFilters} disabled={isLoading} variant="outline">
+            <RefreshCw className={`h-4 w-4 mr-2 ${isLoading ? 'animate-spin' : ''}`} />
+            Refresh
+          </Button>
+        </div>
       </div>
 
-      <div className="grid gap-4 md:grid-cols-2">
+      <div className="grid gap-4 md:grid-cols-3">
         <Card>
           <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
             <CardTitle className="text-sm font-medium">Total Feedback</CardTitle>
             <MessageSquare className="h-4 w-4 text-muted-foreground" />
           </CardHeader>
           <CardContent>
-            <div className="text-2xl font-bold">{filteredFeedback.length}</div>
+            {isLoadingStats ? (
+              <div className="h-8 w-24 bg-muted animate-pulse rounded mb-2" />
+            ) : (
+              <div className="text-2xl font-bold">{feedbackStats.totalFeedback}</div>
+            )}
+            <p className="text-xs text-muted-foreground">
+              {dateRange.from || dateRange.to ? "Filtered period" : "All time"}
+            </p>
           </CardContent>
         </Card>
 
         <Card>
           <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-            <CardTitle className="text-sm font-medium">Average Rating</CardTitle>
-            <ThumbsUp className="h-4 w-4 text-muted-foreground" />
+            <CardTitle className="text-sm font-medium">Total Likes</CardTitle>
+            <ThumbsUp className="h-4 w-4 text-green-600" />
           </CardHeader>
           <CardContent>
-            <div className="text-2xl font-bold">
-              {(filteredFeedback.reduce((acc, fb) => acc + fb.rating, 0) / filteredFeedback.length || 0).toFixed(1)}
-            </div>
+            {isLoadingStats ? (
+              <div className="h-8 w-24 bg-muted animate-pulse rounded mb-2" />
+            ) : (
+              <div className="text-2xl font-bold text-green-600">{feedbackStats.totalLikes}</div>
+            )}
+            <p className="text-xs text-muted-foreground">
+              {isLoadingStats ? (
+                <span className="h-4 w-16 bg-muted animate-pulse rounded inline-block" />
+              ) : feedbackStats.totalFeedback > 0 
+                ? `${Math.round((feedbackStats.totalLikes / feedbackStats.totalFeedback) * 100)}% positive`
+                : "No data"
+              }
+            </p>
+          </CardContent>
+        </Card>
+
+        <Card>
+          <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
+            <CardTitle className="text-sm font-medium">Total Dislikes</CardTitle>
+            <ThumbsDown className="h-4 w-4 text-red-600" />
+          </CardHeader>
+          <CardContent>
+            {isLoadingStats ? (
+              <div className="h-8 w-24 bg-muted animate-pulse rounded mb-2" />
+            ) : (
+              <div className="text-2xl font-bold text-red-600">{feedbackStats.totalDislikes}</div>
+            )}
+            <p className="text-xs text-muted-foreground">
+              {isLoadingStats ? (
+                <span className="h-4 w-16 bg-muted animate-pulse rounded inline-block" />
+              ) : feedbackStats.totalFeedback > 0 
+                ? `${Math.round((feedbackStats.totalDislikes / feedbackStats.totalFeedback) * 100)}% negative`
+                : "No data"
+              }
+            </p>
           </CardContent>
         </Card>
       </div>
@@ -75,86 +287,189 @@ const FeedbackPage = () => {
       <Card>
         <CardHeader>
           <CardTitle>Recent Feedback</CardTitle>
-          <CardDescription>User feedback across all sessions</CardDescription>
+          <CardDescription>User feedback across all sessions with advanced filtering</CardDescription>
         </CardHeader>
         <CardContent>
           <div className="space-y-4">
-            <div className="flex flex-col gap-4 md:flex-row">
-              <div className="flex items-center gap-2 md:w-1/3">
-                <Search className="h-4 w-4 text-muted-foreground" />
+            <div className="flex gap-4 items-center justify-between">
+              <div className="relative flex-1 max-w-md">
+                <Search className="h-4 w-4 absolute left-2.5 top-2.5 text-muted-foreground" />
                 <Input
-                  placeholder="Search questions or feedback..."
+                  placeholder="Search questions, feedback or users..."
                   value={searchTerm}
-                  onChange={(e) => setSearchTerm(e.target.value)}
-                  className="flex-1"
+                  onChange={(e) => handleSearchChange(e.target.value)}
+                  className="pl-8"
+                  maxLength={1000}
                 />
               </div>
-              <div className="md:w-1/3">
-                <Select value={selectedUser} onValueChange={setSelectedUser}>
-                  <SelectTrigger>
-                    <SelectValue placeholder="Select User" />
-                  </SelectTrigger>
-                  <SelectContent>
-                    <SelectItem value="all">All Users</SelectItem>
-                    {users.map((user) => (
-                      <SelectItem key={user.id} value={user.id}>
-                        {user.name}
-                      </SelectItem>
-                    ))}
-                  </SelectContent>
-                </Select>
-              </div>
-              <div className="md:w-1/3">
-                <DateRangePicker dateRange={dateRange} setDateRange={setDateRange} />
-              </div>
+              <Button onClick={async () => {
+                // Build params for all filters
+                const params: PaginationParams = {};
+                if (searchTerm.trim()) params.search = searchTerm.trim();
+                if (dateRange.from) {
+                  const fromDate = new Date(dateRange.from);
+                  fromDate.setHours(0, 0, 0, 0);
+                  params.startDate = fromDate.toISOString();
+                }
+                if (dateRange.to) {
+                  const toDate = new Date(dateRange.to);
+                  toDate.setHours(23, 59, 59, 999);
+                  params.endDate = toDate.toISOString();
+                } else if (dateRange.from) {
+                  const toDate = new Date(dateRange.from);
+                  toDate.setHours(23, 59, 59, 999);
+                  params.endDate = toDate.toISOString();
+                }
+                const allFeedback = await fetchAllPages(fetchFeedback, params);
+                // Client-side user filter if needed
+                const filtered = selectedUser !== "all"
+                  ? allFeedback.filter(fb => fb.userId === selectedUser || fb.user === selectedUser)
+                  : allFeedback;
+                exportToCSV(filtered, [
+                  { key: 'date', header: 'Date' },
+                  { key: 'user', header: 'User' },
+                  { key: 'question', header: 'Question' },
+                  { key: 'answer', header: 'Answer' },
+                  { key: 'rating', header: 'Rating' },
+                  { key: 'feedback', header: 'Feedback' },
+                  { key: 'sessionId', header: 'Session ID' },
+                ], 'feedback_report.csv');
+              }} disabled={isLoading} variant="outline">
+                <Download className="h-4 w-4 mr-2" />
+                Download as CSV
+              </Button>
             </div>
 
-            <Table>
-              <TableHeader>
-                <TableRow>
-                  <TableHead>Date</TableHead>
-                  <TableHead>User</TableHead>
-                  <TableHead>Question</TableHead>
-                  <TableHead>Rating</TableHead>
-                  <TableHead>Feedback</TableHead>
-                  <TableHead>Details</TableHead>
-                </TableRow>
-              </TableHeader>
-              <TableBody>
-                {filteredFeedback.map((feedback) => {
-                  const user = users.find(u => u.id === feedback.userId);
-                  return (
-                    <TableRow key={feedback.id}>
+            <div className="bg-muted/50 p-3 rounded-lg border">
+              <p className="text-sm font-medium">
+                Total Results: {feedbackResponse.total || 0}
+                {feedbackResponse.total > 0 && (
+                  <span className="text-muted-foreground ml-2">
+                    (Page {page} of {feedbackResponse.totalPages})
+                  </span>
+                )}
+              </p>
+            </div>
+
+            {isLoading ? (
+              <div className="flex justify-center items-center p-12 bg-muted/30 rounded-lg">
+                <div className="text-center">
+                  <RefreshCw className="h-8 w-8 animate-spin mx-auto mb-3 text-muted-foreground" />
+                  <p className="text-muted-foreground">Loading feedback data...</p>
+                </div>
+              </div>
+            ) : feedbackResponse.total === 0 ? (
+              <div className="text-center py-12">
+                <MessageSquare className="h-12 w-12 text-muted-foreground mx-auto mb-4" />
+                <p className="text-muted-foreground font-medium mb-2">No feedback found</p>
+                <p className="text-sm text-muted-foreground/80 mb-4">
+                  {(searchTerm || selectedUser !== 'all' || dateRange.from || dateRange.to) 
+                    ? 'Try adjusting your filters to see more results.'
+                    : 'No feedback is available in the database.'
+                  }
+                </p>
+                {(searchTerm || selectedUser !== 'all' || dateRange.from || dateRange.to) && (
+                  <Button variant="outline" onClick={handleResetFilters} size="sm">
+                    Clear all filters
+                  </Button>
+                )}
+              </div>
+            ) : feedbackResponse.data.length === 0 ? (
+              <div className="text-center py-8">
+                <p className="text-muted-foreground">No feedback matches your current filters</p>
+                <Button variant="outline" onClick={handleResetFilters} size="sm" className="mt-2">
+                  Clear filters
+                </Button>
+              </div>
+            ) : (
+              <Table>
+                <TableHeader>
+                  <TableRow>
+                    <TableHead className="cursor-pointer hover:bg-muted/50" onClick={() => handleSort('date')}>
+                      Date<SortIndicator columnKey="date" />
+                    </TableHead>
+                    <TableHead className="cursor-pointer hover:bg-muted/50" onClick={() => handleSort('user')}>
+                      User<SortIndicator columnKey="user" />
+                    </TableHead>
+                    <TableHead className="cursor-pointer hover:bg-muted/50" onClick={() => handleSort('question')}>
+                      Question<SortIndicator columnKey="question" />
+                    </TableHead>
+                    <TableHead className="cursor-pointer hover:bg-muted/50" onClick={() => handleSort('answer')}>
+                      Answer<SortIndicator columnKey="answer" />
+                    </TableHead>
+                    <TableHead className="cursor-pointer hover:bg-muted/50" onClick={() => handleSort('rating')}>
+                      Rating<SortIndicator columnKey="rating" />
+                    </TableHead>
+                    <TableHead className="cursor-pointer hover:bg-muted/50" onClick={() => handleSort('feedback')}>
+                      Feedback<SortIndicator columnKey="feedback" />
+                    </TableHead>
+                    <TableHead>Details</TableHead>
+                  </TableRow>
+                </TableHeader>
+                <TableBody>
+                  {feedbackResponse.data.map((feedback, index) => (
+                    <TableRow key={`${feedback.id}-${index}`} className="hover:bg-muted/30">
                       <TableCell>
-                        {format(new Date(feedback.timestamp), "MMM dd, yyyy")}
+                        {format(new Date(feedback.date), "MMM dd, yyyy")}
                       </TableCell>
-                      <TableCell>{user?.name || "Unknown"}</TableCell>
-                      <TableCell className="max-w-[200px] truncate">
-                        {feedback.questionText}
+                      <TableCell>
+                        <code className="relative rounded bg-muted px-[0.3rem] py-[0.2rem] font-mono text-sm">
+                          {feedback.user || feedback.userId || "Unknown"}
+                        </code>
                       </TableCell>
-                      <TableCell>{feedback.rating}/5</TableCell>
-                      <TableCell className="max-w-[200px] truncate">
-                        {feedback.feedback}
+                      <TableCell className="max-w-[200px]">
+                        <div className="truncate" title={feedback.question}>
+                          {feedback.question}
+                        </div>
+                      </TableCell>
+                      <TableCell className="max-w-[200px]">
+                        <div className="truncate" title={feedback.answer}>
+                          {feedback.answer}
+                        </div>
+                      </TableCell>
+                      <TableCell>
+                        {feedback.rating === "like" ? (
+                          <div className="flex items-center gap-1">
+                            <ThumbsUp className="h-4 w-4 text-green-500" />
+                            <span className="text-xs text-green-700">Like</span>
+                          </div>
+                        ) : feedback.rating === "dislike" ? (
+                          <div className="flex items-center gap-1">
+                            <ThumbsDown className="h-4 w-4 text-red-500" />
+                            <span className="text-xs text-red-700">Dislike</span>
+                          </div>
+                        ) : (
+                          <span className="inline-flex items-center rounded-full bg-secondary px-2 py-1 text-xs font-medium text-secondary-foreground">
+                            {feedback.rating}
+                          </span>
+                        )}
+                      </TableCell>
+                      <TableCell className="max-w-[200px]">
+                        <div className="truncate" title={feedback.feedback}>
+                          {feedback.feedback}
+                        </div>
                       </TableCell>
                       <TableCell>
                         <Link
                           to={`/feedback/${feedback.id}`}
-                          className="text-blue-500 hover:underline"
+                          className="text-primary hover:underline"
                         >
                           View Details
                         </Link>
                       </TableCell>
                     </TableRow>
-                  );
-                })}
-              </TableBody>
-            </Table>
+                  ))}
+                </TableBody>
+              </Table>
+            )}
             
-            <TablePagination
-              currentPage={page}
-              totalPages={feedbackResponse.totalPages}
-              onPageChange={setPage}
-            />
+            {feedbackResponse.data.length > 0 && feedbackResponse.totalPages > 1 && (
+              <TablePagination
+                currentPage={page}
+                totalPages={feedbackResponse.totalPages}
+                onPageChange={handlePageChange}
+              />
+            )}
           </div>
         </CardContent>
       </Card>

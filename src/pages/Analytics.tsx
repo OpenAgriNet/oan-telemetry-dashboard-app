@@ -58,7 +58,10 @@ const Analytics = () => {
                 <TrendChart
                   title="Daily Users"
                   description="Unique user logins per day"
-                  data={filteredMetrics}
+                  data={filteredMetrics.map((metric) => ({
+                    ...metric,
+                    uniqueLogins: metric.uniqueLogins || 0,
+                  }))}
                   dataKey="uniqueLogins"
                   type="line"
                 />
@@ -81,7 +84,10 @@ const Analytics = () => {
                 <TrendChart
                   title="Questions Per Day"
                   description="Total questions asked daily"
-                  data={filteredMetrics}
+                  data={filteredMetrics.map((metric) => ({
+                    ...metric,
+                    questionsAsked: metric.questionsAsked || 0,
+                  }))}
                   dataKey="questionsAsked"
                   type="bar"
                 />
@@ -119,7 +125,10 @@ const Analytics = () => {
                 <TrendChart
                   title="Desktop Users"
                   description="Daily desktop users"
-                  data={filteredMetrics}
+                  data={filteredMetrics.map((metric) => ({
+                    ...metric,
+                    desktopUsers: metric.desktopUsers || 0,
+                  }))}
                   dataKey="desktopUsers"
                   type="line"
                   color="#38bdf8"
@@ -131,7 +140,10 @@ const Analytics = () => {
                 <TrendChart
                   title="Reactions"
                   description="Daily reactions collected"
-                  data={filteredMetrics}
+                  data={filteredMetrics.map((metric) => ({
+                    ...metric,
+                    reactionsCollected: metric.reactionsCollected || 0,
+                  }))}
                   dataKey="reactionsCollected"
                   type="area"
                   color="#ec4899"
@@ -139,7 +151,10 @@ const Analytics = () => {
                 <TrendChart
                   title="Voice Inputs"
                   description="Daily voice commands"
-                  data={filteredMetrics}
+                  data={filteredMetrics.map((metric) => ({
+                    ...metric,
+                    voiceInputs: metric.voiceInputs || 0,
+                  }))}
                   dataKey="voiceInputs"
                   type="line"
                   color="#f97316"

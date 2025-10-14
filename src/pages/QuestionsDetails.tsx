@@ -17,10 +17,11 @@ import {
   Languages,
   RefreshCw,
   AlertCircle,
+  Circle,
 } from "lucide-react";
 import { format } from "date-fns";
 import { Button } from "@/components/ui/button";
-import { fetchFeedbackById, fetchTranslation } from "@/services/api";
+import { fetchFeedbackById, fetchQuestionById, fetchTranslation } from "@/services/api";
 import users from "@/data/users.json";
 import sessions from "@/data/sessions.json";
 import ReactMarkdown from "react-markdown";
@@ -29,27 +30,27 @@ import rehypeRaw from "rehype-raw";
 import type { Components } from "react-markdown";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 
-const FeedbackDetails = () => {
-  const { feedbackId } = useParams();
+const QuestionDetails = () => {
+  const { id } = useParams(); 
   const navigate = useNavigate();
 
   const { 
-    data: feedback, 
-    isLoading: isFeedbackLoading,
+    data: question, 
+    isLoading: isQuestionLoading,
     error,
     refetch 
   } = useQuery({
-    queryKey: ["feedback", feedbackId],
-    queryFn: () => fetchFeedbackById(feedbackId || ""),
-    enabled: !!feedbackId,
+    queryKey: ["question", id],
+    queryFn: () => fetchQuestionById(id || ""),
+    enabled: !!id,
     retry: 3,
     retryDelay: (attemptIndex) => Math.min(1000 * 2 ** attemptIndex, 30000),
   });
 
   const { data: translation } = useQuery({
-    queryKey: ["translation", feedbackId],
-    queryFn: () => fetchTranslation(feedbackId || ""),
-    enabled: !!feedbackId,
+    queryKey: ["translation", id],
+    queryFn: () => fetchTranslation(id || ""),
+    enabled: !!id,
   });
 
   const markdownComponents: Components = {
@@ -158,26 +159,25 @@ const FeedbackDetails = () => {
   };
 
   // Try to find user in local data, but use API userId as fallback
-  const user = feedback
-    ? users.find((u) => u.id === feedback.userId) || {
-        id: feedback.userId,
-        name: feedback.userId,
-      }
+  const user = question
+    ? users.find((u) => u.id === question.userId) || {
+        id: question.userId,
+        name: question.userId,
+      }     
     : null;
 
-  const session = feedback
-    ? sessions.find((s) => s.sessionId === feedback.sessionId)
+  const session = question
+    ? sessions.find((s) => s.sessionId === question.session_id)
     : null;
 
-  const handleSessionClick = (sessionId: string) => {
-    console.log('Session ID:', sessionId);
-    const SessionId = sessionId;
-    // Add your logic here to handlne the session click
-    navigate(`/sessions/${SessionId}`);
+  const handleSessionClick = () => {
+    if (session) {
+      navigate(`/sessions/${question?.session_id}`);
+    }
   };
 
   // Show loading state
-  if (isFeedbackLoading) {
+  if (isQuestionLoading) {
     return (
       <div className="space-y-6">
         <div className="flex items-center justify-between">
@@ -198,12 +198,12 @@ const FeedbackDetails = () => {
     return (
       <div className="space-y-6">
         <div className="flex items-center justify-between">
-          <h1 className="text-2xl font-bold tracking-tight">Feedback Details</h1>
+          <h1 className="text-2xl font-bold tracking-tight">Question Details</h1>
         </div>
         <div className="flex justify-center items-center p-8 bg-destructive/10 border border-destructive/20 rounded-lg">
           <div className="text-center">
             <AlertCircle className="h-12 w-12 text-destructive mx-auto mb-4" />
-            <p className="text-destructive font-medium mb-2">Error loading feedback details</p>
+            <p className="text-destructive font-medium mb-2">Error loading question details</p>
             <p className="text-destructive/80 text-sm mb-4">{error.message}</p>
             <Button onClick={() => refetch()} variant="outline" size="sm">
               <RefreshCw className="h-4 w-4 mr-2" />
@@ -216,7 +216,7 @@ const FeedbackDetails = () => {
   }
 
   // Show not found state
-  if (!feedback) {
+  if (!question) {      
     return (
       <div className="space-y-6">
         <div className="flex items-center justify-between">
@@ -224,12 +224,12 @@ const FeedbackDetails = () => {
         </div>
         <div className="text-center py-12">
           <MessageCircle className="h-12 w-12 text-muted-foreground mx-auto mb-4" />
-          <p className="text-muted-foreground font-medium mb-2">Feedback not found</p>
+          <p className="text-muted-foreground font-medium mb-2">Question not found</p>
           <p className="text-sm text-muted-foreground/80 mb-4">
-            The feedback you're looking for doesn't exist or has been removed.
+            The question you're looking for doesn't exist or has been removed.
           </p>
-          <Button onClick={() => navigate('/feedback')} variant="outline">
-            Back to Feedback
+          <Button onClick={() => navigate('/questions')} variant="outline">
+            Back to Questions
           </Button>
         </div>
       </div>
@@ -239,9 +239,9 @@ const FeedbackDetails = () => {
   return (
     <div className="space-y-6">
       <div className="flex items-center justify-between">
-        <h1 className="text-2xl font-bold tracking-tight">Feedback Details</h1>
-        <Button onClick={() => navigate('/feedback')} variant="outline">
-          Back to Feedback
+        <h1 className="text-2xl font-bold tracking-tight">Question Details</h1>
+        <Button onClick={() => navigate('/questions')} variant="outline">
+          Back to Questions
         </Button>
       </div>
 
@@ -254,7 +254,7 @@ const FeedbackDetails = () => {
           <CardContent>
             <div className="text-lg font-bold">
               <code className="relative rounded bg-muted px-[0.3rem] py-[0.2rem] font-mono text-sm">
-                {user?.name || feedback.user || "Unknown User"}
+                {question?.user_id || "Unknown User"}    
               </code>
             </div>
           </CardContent>
@@ -262,41 +262,43 @@ const FeedbackDetails = () => {
 
         <Card>
           <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-            <CardTitle className="text-sm font-medium">Feedback Date</CardTitle>
+            <CardTitle className="text-sm font-medium">Question Date</CardTitle>
             <Calendar className="h-4 w-4 text-muted-foreground" />
           </CardHeader>
           <CardContent>
             <div className="text-lg font-bold">
-              {format(new Date(feedback.date), "MMM dd, yyyy")}
+              {format(new Date(question?.dateAsked || question?.created_at), "MMM dd, yyyy")}   
             </div>
           </CardContent>
         </Card>
-
-        <Card>
-          <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-            <CardTitle className="text-sm font-medium">Rating</CardTitle>
-            {feedback.rating === "like" ? (
-              <ThumbsUp className="h-4 w-4 text-green-600" />
-            ) : (
-              <ThumbsDown className="h-4 w-4 text-red-600" />
-            )}
-          </CardHeader>
-          <CardContent>
-            <div className="flex items-center gap-2">
-              {feedback.rating === "like" ? (
-                <>
-                  <ThumbsUp className="h-5 w-5 text-green-500" />
-                  <span className="text-lg font-bold text-green-600">Like</span>
-                </>
+        
+        {question?.reaction !== "neutral" && (
+          <Card>
+            <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
+              <CardTitle className="text-sm font-medium">Rating</CardTitle>
+              {question?.reaction === "like" ? (
+                <ThumbsUp className="h-4 w-4 text-green-600" />
               ) : (
-                <>
-                  <ThumbsDown className="h-5 w-5 text-red-500" />
-                  <span className="text-lg font-bold text-red-600">Dislike</span>
-                </>
+                <ThumbsDown className="h-4 w-4 text-red-600" />
               )}
-            </div>
-          </CardContent>
-        </Card>
+            </CardHeader>
+            <CardContent>
+              <div className="flex items-center gap-2">
+                {question?.reaction === "like" ? (
+                  <>
+                    <ThumbsUp className="h-5 w-5 text-green-500" />
+                    <span className="text-lg font-bold text-green-600">Like</span>
+                  </>
+                ) : (
+                  <>
+                    <ThumbsDown className="h-5 w-5 text-red-500" />
+                    <span className="text-lg font-bold text-red-600">Dislike</span>
+                  </>
+                )}
+              </div>
+            </CardContent>
+          </Card>
+        )}
 
         <Card>
           <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
@@ -305,18 +307,12 @@ const FeedbackDetails = () => {
           </CardHeader>
           <CardContent>
             <div className="text-sm">
-              {feedback.sessionId ? (
-                <button
-                  onClick={() => handleSessionClick(feedback.sessionId)}
-                  className="text-primary hover:underline"
-                >
-                  <code className="relative rounded bg-muted px-[0.3rem] py-[0.2rem] font-mono text-xs">
-                    {feedback.sessionId.substring(0, 8) + '...'}
-                  </code>
-                </button>
-              ) : (
-                <code className="relative rounded bg-muted px-[0.3rem] py-[0.2rem] font-mono text-xs">N/A</code>
-              )}
+              <button onClick={() => navigate(`/sessions/${question?.session_id}`)}>
+
+              <code className="truncate text-left text-primary hover:underline bg-transparent border-none p-0 m-0 w-full">
+                {question?.session_id ? question.session_id.substring(0, 8) + '...' : 'N/A'}
+              </code>
+              </button>
             </div>
           </CardContent>
         </Card>
@@ -324,15 +320,15 @@ const FeedbackDetails = () => {
 
       <Card>
         <CardHeader>
-          <CardTitle>Question & Feedback</CardTitle>
-          <CardDescription>Detailed feedback information</CardDescription>
+          <CardTitle>Question & Response</CardTitle>
+          <CardDescription>Detailed question and response information</CardDescription>
         </CardHeader>
         <CardContent className="space-y-6">
-          <div>
+          {/* <div>
             <h3 className="font-medium mb-2">User Feedback</h3>
             <div className="p-4 rounded-lg border border-border bg-card">
               <p className="text-foreground">
-                {feedback.feedback}
+                {question?.feedback || "No feedback provided"}
               </p>
               {translation?.feedbackMarathi && (
                 <div className="mt-4 pt-4 border-t border-border">
@@ -346,12 +342,12 @@ const FeedbackDetails = () => {
                 </div>
               )}
             </div>
-          </div>
+          </div> */}
           <div
             className={`p-4 rounded-lg border border-border bg-card ${
               session ? "cursor-pointer hover:bg-muted/50 transition-colors" : ""
             }`}
-            onClick={session ? () => handleSessionClick(session.sessionId) : undefined}
+            onClick={session ? handleSessionClick : undefined}
           >
             <div className="flex items-center gap-2 mb-2">
               <MessageCircle className="h-4 w-4" />
@@ -360,7 +356,7 @@ const FeedbackDetails = () => {
                 <span className="text-xs text-muted-foreground">(Click to view session)</span>
               )}
             </div>
-            <p className="text-foreground">{feedback.question}</p>
+            <p className="text-foreground">{question?.question}</p>
             {translation?.questionMarathi && (
               <div className="mt-4 pt-4 border-t border-border">
                 <div className="flex items-center gap-2 mb-2">
@@ -393,7 +389,7 @@ const FeedbackDetails = () => {
                         rehypePlugins={[rehypeRaw]}
                         components={markdownComponents}
                       >
-                        {feedback.answer}
+                        {question?.answer}
                       </ReactMarkdown>
                     </div>
                   </TabsContent>
@@ -407,7 +403,7 @@ const FeedbackDetails = () => {
                           fontFamily: 'monospace'
                         }}
                         className="text-foreground text-sm"
-                      >{feedback.answer}</pre>
+                      >{question?.answer}</pre>
                     </div>
                   </TabsContent>
                 </Tabs>
@@ -431,4 +427,4 @@ const FeedbackDetails = () => {
   );
 };
 
-export default FeedbackDetails;
+export default QuestionDetails;

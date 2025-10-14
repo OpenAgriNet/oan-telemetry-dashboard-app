@@ -1,7 +1,11 @@
 import React, { useState } from "react";
 import { Link, useLocation } from "react-router-dom";
 import { useTheme } from "@/contexts/ThemeContext";
+import { useDateFilter } from "@/contexts/DateFilterContext";
 import { Button } from "@/components/ui/button";
+import { useKeycloak } from "@react-keycloak/web";
+import DateRangePicker from "@/components/dashboard/DateRangePicker";
+import { isSuperAdmin } from "@/utils/roleUtils";
 import {
   BarChart3,
   Users,
@@ -14,6 +18,10 @@ import {
   UserRound,
   FileText,
   Activity,
+  CalendarIcon,
+  RotateCcw,
+  ClipboardCheck,
+  AlertTriangle,
 } from "lucide-react";
 import {
   DropdownMenu,
@@ -29,12 +37,17 @@ interface LayoutProps {
 
 const Layout: React.FC<LayoutProps> = ({ children }) => {
   const { theme, setTheme } = useTheme();
+  const { dateRange, setDateRange, resetDateRange } = useDateFilter();
   const location = useLocation();
   const [collapsed, setCollapsed] = useState(false);
+  const { keycloak } = useKeycloak();
 
   const handleLogout = () => {
-    console.log("Logout clicked");
+    keycloak.logout();
   };
+
+  // Check if current user is super admin
+  const isSuper = isSuperAdmin(keycloak);
 
   const navItems = [
     {
@@ -57,26 +70,48 @@ const Layout: React.FC<LayoutProps> = ({ children }) => {
       path: "/questions",
       icon: <MessageSquare size={20} />,
     },
-    {
-      name: "Content",
-      path: "/content",
-      icon: <FileText size={20} />,
-    },
-    {
-      name: "Analytics",
-      path: "/analytics",
-      icon: <BarChart3 size={20} />,
-    },
+    // {
+    //   name: "Content",
+    //   path: "/content",
+    //   icon: <FileText size={20} />,
+    // },
+    // {
+    //   name: "Analytics",
+    //   path: "/analytics",
+    //   icon: <BarChart3 size={20} />,
+    // },
     {
       name: "Feedback",
       path: "/feedback",
-      icon: <MessageSquare size={20} />,
+      icon: <ClipboardCheck size={20} />,
     },
-    {
-      name: "Service Status",
-      path: "/service-status",
-      icon: <Activity size={20} />,
-    },
+    // Conditionally add Errors menu item for super-admin users only
+    ...(isSuper
+      ? [
+          {
+            name: "Errors",
+            path: "/errors",
+            icon: <AlertTriangle size={20} />,
+          },
+          // {
+          //   name: "Health Monitor",
+          //   path: "/health-monitor",
+          //   icon: <Activity size={20} />,
+          // },
+          // {
+          //   name: "Service Status",
+          //   path: "/service-status",
+          //   icon: <Activity size={20} />,
+          // },
+        ]
+      : []),
+
+      {
+        name: "Service Status",
+        path: "/service-status",
+        icon: <Activity size={20} />,
+      },
+  
   ];
 
   return (
@@ -95,7 +130,7 @@ const Layout: React.FC<LayoutProps> = ({ children }) => {
             <Button
               variant="ghost"
               size="icon"
-              onClick={() => setCollapsed(!collapsed)}
+              onClick={() => setCollapsed(!collapsed)}  
               className="hover:bg-sidebar-accent"
             >
               {collapsed ? (
@@ -127,6 +162,7 @@ const Layout: React.FC<LayoutProps> = ({ children }) => {
           </nav>
 
           <div className="p-4 border-t border-sidebar-border">
+           
             <DropdownMenu>
               <DropdownMenuTrigger asChild>
                 <Button
@@ -155,11 +191,22 @@ const Layout: React.FC<LayoutProps> = ({ children }) => {
                   <Moon size={16} className="mr-2" />
                   Dark
                 </DropdownMenuItem>
-                <DropdownMenuItem onClick={() => setTheme("daylight")}>
-                  <Sun size={16} className="mr-2" />
-                  Daylight
-                </DropdownMenuItem>
               </DropdownMenuContent>
+            </DropdownMenu>
+            <DropdownMenu>
+              <DropdownMenuTrigger asChild>
+                <Button
+                  variant="ghost"
+                  size="sm"
+                  className={`w-full justify-${
+                    collapsed ? "center" : "start"
+                  } hover:bg-sidebar-accent`}
+                  onClick={handleLogout}
+                >
+                  <LogOut size={20} className="mr-2" />
+                  {!collapsed && <span>Logout</span>}
+                </Button>
+              </DropdownMenuTrigger>
             </DropdownMenu>
           </div>
         </div>
@@ -168,22 +215,31 @@ const Layout: React.FC<LayoutProps> = ({ children }) => {
       {/* Main content */}
       <main className="flex-1 overflow-x-hidden overflow-y-auto">
         <div className="container mx-auto">
-          {/* User Profile Section */}
-          <div className="flex justify-end items-center p-4 border-b">
+          {/* Header with Global Date Filter and User Profile */}
+          <div className="flex justify-between items-center p-6 border-b mb-2 mt-2">
+            <div className="flex items-center gap-4">
+              <div className="flex items-center gap-2">
+                <CalendarIcon className="h-4 w-4 text-muted-foreground" />
+                <span className="text-base font-medium">Filter:</span>
+              </div>
+              <div className="flex items-center gap-2">
+                <DateRangePicker dateRange={dateRange} setDateRange={setDateRange} />
+              </div>
+            </div>
+            
             <DropdownMenu>
-              <DropdownMenuTrigger asChild>
-                <Button variant="ghost" className="relative h-10 w-10 rounded-full">
+              {/* <DropdownMenuTrigger asChild> */}
+                {/* <Button variant="ghost" className="relative h-10 w-10 rounded-full">
                   <Avatar>
                     <AvatarFallback>
                       <UserRound className="h-6 w-6" />
                     </AvatarFallback>
                   </Avatar>
-                </Button>
-              </DropdownMenuTrigger>
-              <DropdownMenuContent className="w-56" align="end">
+                </Button> */}
+              {/* </DropdownMenuTrigger> */}
+              {/* <DropdownMenuContent className="w-56" align="end">
                 <DropdownMenuItem className="flex items-center">
                   <UserRound className="mr-2 h-4 w-4" />
-                  <span>John Doe</span>
                 </DropdownMenuItem>
                 <DropdownMenuItem
                   className="flex items-center text-red-600 focus:text-red-600"
@@ -192,7 +248,7 @@ const Layout: React.FC<LayoutProps> = ({ children }) => {
                   <LogOut className="mr-2 h-4 w-4" />
                   <span>Log out</span>
                 </DropdownMenuItem>
-              </DropdownMenuContent>
+              </DropdownMenuContent> */}
             </DropdownMenu>
           </div>
           
