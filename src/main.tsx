@@ -4,9 +4,9 @@ import { ReactKeycloakProvider } from '@react-keycloak/web'
 import App from './App.tsx'
 import './index.css'
 import keycloak from './lib/keycloak'
+import { setupAuthFetch } from './lib/setupAuthFetch'
 
-
-// Initialize Keycloak and render the app
+setupAuthFetch();
 createRoot(document.getElementById("root")!).render(
  
     <ReactKeycloakProvider 
