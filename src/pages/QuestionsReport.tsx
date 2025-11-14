@@ -1,4 +1,4 @@
-import React, { useState } from "react";
+import React, { useEffect, useState } from "react";
 import { useQuery } from "@tanstack/react-query";
 import {
   fetchQuestions,
@@ -7,7 +7,7 @@ import {
   type QuestionPaginationParams,
   type UserPaginationParams,
   type SessionPaginationParams,
-  type Question
+  type Question,
 } from "@/services/api";
 import TablePagination from "@/components/TablePagination";
 import {
@@ -27,34 +27,50 @@ import {
   TableHeader,
   TableRow,
 } from "@/components/ui/table";
-import { Mic, Search, ThumbsUp, ThumbsDown, RefreshCw, AlertCircle, Download } from "lucide-react";
+import {
+  Mic,
+  Search,
+  ThumbsUp,
+  ThumbsDown,
+  RefreshCw,
+  AlertCircle,
+  Download,
+} from "lucide-react";
 import { useDateFilter } from "@/contexts/DateFilterContext";
-import { exportToCSV, formatUtcDateWithPMCorrection, formatUTCToIST } from "@/lib/utils";
+import {
+  exportToCSV,
+  formatUtcDateWithPMCorrection,
+  formatUTCToIST,
+} from "@/lib/utils";
 import { useNavigate, useSearchParams } from "react-router-dom";
+import { set } from "date-fns";
 const QuestionsReport = () => {
   const { dateRange } = useDateFilter();
   const navigate = useNavigate();
   const [searchParams, setSearchParams] = useSearchParams();
-  
+
   // Get pagination state from URL params
-  const page = parseInt(searchParams.get('page') || '1', 10);
+  const page = parseInt(searchParams.get("page") || "1", 10);
   const pageSize = 10;
-  
+
   const [selectedUser, setSelectedUser] = useState<string>("all");
   const [selectedSession, setSelectedSession] = useState<string>("all");
   const [searchQuery, setSearchQuery] = useState<string>("");
-  const [sortConfig, setSortConfig] = useState({ key: 'dateAsked', direction: 'desc' });
+  const [sortConfig, setSortConfig] = useState({
+    key: "dateAsked",
+    direction: "desc",
+  });
 
   // Reset page when filters change
   const resetPage = () => {
     const newParams = new URLSearchParams(searchParams);
-    newParams.set('page', '1');
+    newParams.set("page", "1");
     setSearchParams(newParams);
   };
 
   const handlePageChange = (newPage: number) => {
     const newParams = new URLSearchParams(searchParams);
-    newParams.set('page', newPage.toString());
+    newParams.set("page", newPage.toString());
     setSearchParams(newParams);
   };
 
@@ -69,47 +85,57 @@ const QuestionsReport = () => {
     resetPage();
   };
 
+  const [pendingSearch, setPendingSearch] = useState<string>("");
   const handleSearchQueryChange = (query: string) => {
-    setSearchQuery(query);
+    // setSearchQuery(query);
+    setPendingSearch(query);
     resetPage();
   };
+
+  useEffect(() => {
+    const id = setTimeout(() => setSearchQuery(pendingSearch), 500);
+    return () => clearTimeout(id);
+  }, [pendingSearch]);
 
   const handleResetFilters = () => {
     setSelectedUser("all");
     setSelectedSession("all");
     setSearchQuery("");
     const newParams = new URLSearchParams();
-    newParams.set('page', '1');
+    newParams.set("page", "1");
     setSearchParams(newParams);
   };
   const handleSessionClick = (sessionId: string) => {
     navigate(`/sessions/${sessionId}`);
-
   };
   const handleQuestionClick = (id: string) => {
     navigate(`/questions/${id}`);
   };
 
   // Fetch users with search parameter if needed
-  const { data: usersResponse = { data: [] }, isLoading: isLoadingUsers } = useQuery({
-    queryKey: ["users-for-filter"],
-    queryFn: () => fetchUsers({ limit: 1000 } as UserPaginationParams),
-    staleTime: 5 * 60 * 1000, // Cache for 5 minutes
-  });
+  const { data: usersResponse = { data: [] }, isLoading: isLoadingUsers } =
+    useQuery({
+      queryKey: ["users-for-filter"],
+      queryFn: () => fetchUsers({ limit: 1000 } as UserPaginationParams),
+      staleTime: 5 * 60 * 1000, // Cache for 5 minutes
+    });
 
   // Fetch sessions with search parameter based on selected user
-  const { data: sessionsResponse = { data: [] }, isLoading: isLoadingSessions } = useQuery({
+  const {
+    data: sessionsResponse = { data: [] },
+    isLoading: isLoadingSessions,
+  } = useQuery({
     queryKey: ["sessions-for-filter", selectedUser],
     queryFn: () => {
-      const params: SessionPaginationParams = { 
+      const params: SessionPaginationParams = {
         limit: 1000,
       };
-      
+
       // Use search parameter to filter sessions by selected user
-      if (selectedUser !== 'all') {
+      if (selectedUser !== "all") {
         params.search = selectedUser;
       }
-      
+
       return fetchSessions(params);
     },
     staleTime: 5 * 60 * 1000, // Cache for 5 minutes
@@ -132,7 +158,7 @@ const QuestionsReport = () => {
       page,
       pageSize,
       sortConfig.key,
-      sortConfig.direction
+      sortConfig.direction,
     ],
     queryFn: async () => {
       const params: QuestionPaginationParams = {
@@ -142,14 +168,14 @@ const QuestionsReport = () => {
 
       // Build search terms array for proper search
       const searchTerms: string[] = [];
-      
+
       // Add user search if selected
-      if (selectedUser !== 'all') {
+      if (selectedUser !== "all") {
         searchTerms.push(selectedUser);
       }
 
-      // Add session search if selected  
-      if (selectedSession !== 'all') {
+      // Add session search if selected
+      if (selectedSession !== "all") {
         searchTerms.push(selectedSession);
       }
 
@@ -160,7 +186,7 @@ const QuestionsReport = () => {
 
       // Combine search terms - the backend will OR search across all fields
       if (searchTerms.length > 0) {
-        params.search = searchTerms.join(' ');
+        params.search = searchTerms.join(" ");
       }
 
       // Format dates for API (backend expects ISO strings or Unix timestamps)
@@ -181,21 +207,21 @@ const QuestionsReport = () => {
         params.endDate = toDate.toISOString();
       }
 
-      console.log('Fetching questions with params:', params);
-      
+      console.log("Fetching questions with params:", params);
+
       const response = await fetchQuestions(params);
-      console.log('Questions response:', response);
+      console.log("Questions response:", response);
 
       // Client-side sorting
       const sortedData = [...response.data].sort((a, b) => {
-        let aValue = a[sortConfig.key] ?? '';
-        let bValue = b[sortConfig.key] ?? '';
-        if (sortConfig.key === 'dateAsked' || sortConfig.key === 'created_at') {
+        let aValue = a[sortConfig.key] ?? "";
+        let bValue = b[sortConfig.key] ?? "";
+        if (sortConfig.key === "dateAsked" || sortConfig.key === "created_at") {
           aValue = new Date(String(aValue)).getTime();
           bValue = new Date(String(bValue)).getTime();
         }
-        if (aValue < bValue) return sortConfig.direction === 'asc' ? -1 : 1;
-        if (aValue > bValue) return sortConfig.direction === 'asc' ? 1 : -1;
+        if (aValue < bValue) return sortConfig.direction === "asc" ? -1 : 1;
+        if (aValue > bValue) return sortConfig.direction === "asc" ? 1 : -1;
         return 0;
       });
       return { ...response, data: sortedData };
@@ -225,10 +251,10 @@ const QuestionsReport = () => {
         limit,
       };
       const searchTerms: string[] = [];
-      if (selectedUser !== 'all') searchTerms.push(selectedUser);
-      if (selectedSession !== 'all') searchTerms.push(selectedSession);
+      if (selectedUser !== "all") searchTerms.push(selectedUser);
+      if (selectedSession !== "all") searchTerms.push(selectedSession);
       if (searchQuery.trim()) searchTerms.push(searchQuery.trim());
-      if (searchTerms.length > 0) params.search = searchTerms.join(' ');
+      if (searchTerms.length > 0) params.search = searchTerms.join(" ");
       if (dateRange.from) {
         const fromDate = new Date(dateRange.from);
         fromDate.setHours(0, 0, 0, 0);
@@ -259,45 +285,46 @@ const QuestionsReport = () => {
       }
       if (fetchPromises.length > 0) {
         const results = await Promise.all(fetchPromises);
-        results.forEach(r => {
+        results.forEach((r) => {
           allQuestions = allQuestions.concat(r.data);
         });
       }
 
       // Use the reusable exportToCSV utility
       exportToCSV<Question>(
-        allQuestions.map(q => ({
+        allQuestions.map((q) => ({
           ...q,
-          dateAsked: formatUTCToIST(q.dateAsked || q.created_at)
+          dateAsked: formatUTCToIST(q.dateAsked || q.created_at),
         })),
         [
-          { key: 'question', header: 'Question' },
-          { key: 'answer', header: 'Answer' },
-          { key: 'user_id', header: 'User ID' },
-          { key: 'session_id', header: 'Session ID' },
-          { key: 'dateAsked', header: 'Date Asked' },
-          { key: 'reaction', header: 'Reaction' },
-          { key: 'channel', header: 'Channel' },
+          { key: "question", header: "Question" },
+          { key: "answer", header: "Answer" },
+          { key: "user_id", header: "User ID" },
+          { key: "session_id", header: "Session ID" },
+          { key: "dateAsked", header: "Date Asked" },
+          { key: "reaction", header: "Reaction" },
+          { key: "channel", header: "Channel" },
         ],
-        'questions_report.csv'
+        "questions_report.csv"
       );
     } catch (err) {
-      alert('Failed to download CSV. Please try again.');
+      alert("Failed to download CSV. Please try again.");
     }
   };
 
   const handleSort = (key: string) => {
     setSortConfig((current) => ({
       key,
-      direction: current.key === key && current.direction === 'asc' ? 'desc' : 'asc'
+      direction:
+        current.key === key && current.direction === "asc" ? "desc" : "asc",
     }));
   };
 
   const SortIndicator = ({ columnKey }: { columnKey: string }) => {
     if (sortConfig.key === columnKey) {
-      return sortConfig.direction === 'asc' ? ' ↑' : ' ↓';
+      return sortConfig.direction === "asc" ? " ↑" : " ↓";
     }
-    return ' ↕';
+    return " ↕";
   };
 
   // Show error state
@@ -305,12 +332,16 @@ const QuestionsReport = () => {
     return (
       <div className="space-y-6">
         <div className="flex items-center justify-between">
-          <h1 className="text-2xl font-bold tracking-tight">Questions Report</h1>
+          <h1 className="text-2xl font-bold tracking-tight">
+            Questions Report
+          </h1>
         </div>
         <div className="flex justify-center items-center p-8 bg-destructive/10 border border-destructive/20 rounded-lg">
           <div className="text-center">
             <AlertCircle className="h-12 w-12 text-destructive mx-auto mb-4" />
-            <p className="text-destructive font-medium mb-2">Error loading questions data</p>
+            <p className="text-destructive font-medium mb-2">
+              Error loading questions data
+            </p>
             <p className="text-destructive/80 text-sm mb-4">{error.message}</p>
             <Button onClick={() => refetch()} variant="outline" size="sm">
               <RefreshCw className="h-4 w-4 mr-2" />
@@ -327,8 +358,14 @@ const QuestionsReport = () => {
       <div className="flex items-center justify-between">
         <h1 className="text-2xl font-bold tracking-tight">Questions Report</h1>
         <div className="flex gap-2">
-          <Button onClick={handleApplyFilters} disabled={isLoading} variant="outline">
-            <RefreshCw className={`h-4 w-4 mr-2 ${isLoading ? 'animate-spin' : ''}`} />
+          <Button
+            onClick={handleApplyFilters}
+            disabled={isLoading}
+            variant="outline"
+          >
+            <RefreshCw
+              className={`h-4 w-4 mr-2 ${isLoading ? "animate-spin" : ""}`}
+            />
             Refresh
           </Button>
         </div>
@@ -341,12 +378,16 @@ const QuestionsReport = () => {
             type="search"
             placeholder="Search questions..."
             className="pl-8"
-            value={searchQuery}
+            value={pendingSearch}
             onChange={(e) => handleSearchQueryChange(e.target.value)}
             maxLength={1000}
           />
         </div>
-        <Button onClick={downloadQuestionsCSV} disabled={isLoading} variant="outline">
+        <Button
+          onClick={downloadQuestionsCSV}
+          disabled={isLoading}
+          variant="outline"
+        >
           <Download className="h-4 w-4 mr-2" />
           Download as CSV
         </Button>
@@ -375,17 +416,33 @@ const QuestionsReport = () => {
           <Table>
             <TableHeader>
               <TableRow>
-                <TableHead className="w-[400px] cursor-pointer hover:bg-muted/50" onClick={() => handleSort('question')}>
-                  Question<SortIndicator columnKey="question" />
+                <TableHead
+                  className="w-[400px] cursor-pointer hover:bg-muted/50"
+                  onClick={() => handleSort("question")}
+                >
+                  Question
+                  <SortIndicator columnKey="question" />
                 </TableHead>
-                <TableHead className="cursor-pointer hover:bg-muted/50" onClick={() => handleSort('user_id')}>
-                  User<SortIndicator columnKey="user_id" />
+                <TableHead
+                  className="cursor-pointer hover:bg-muted/50"
+                  onClick={() => handleSort("user_id")}
+                >
+                  User
+                  <SortIndicator columnKey="user_id" />
                 </TableHead>
-                <TableHead className="cursor-pointer hover:bg-muted/50" onClick={() => handleSort('session_id')}>
-                  Session ID<SortIndicator columnKey="session_id" />
+                <TableHead
+                  className="cursor-pointer hover:bg-muted/50"
+                  onClick={() => handleSort("session_id")}
+                >
+                  Session ID
+                  <SortIndicator columnKey="session_id" />
                 </TableHead>
-                <TableHead className="cursor-pointer hover:bg-muted/50" onClick={() => handleSort('dateAsked')}>
-                  Date Asked<SortIndicator columnKey="dateAsked" />
+                <TableHead
+                  className="cursor-pointer hover:bg-muted/50"
+                  onClick={() => handleSort("dateAsked")}
+                >
+                  Date Asked
+                  <SortIndicator columnKey="dateAsked" />
                 </TableHead>
                 {/* <TableHead>Channel</TableHead> */}
                 {/* <TableHead>Reaction</TableHead> */}
@@ -397,15 +454,28 @@ const QuestionsReport = () => {
                   <TableCell colSpan={6} className="text-center py-12">
                     <div className="text-center">
                       <Search className="h-12 w-12 text-muted-foreground mx-auto mb-4" />
-                      <p className="text-muted-foreground font-medium mb-2">No questions found</p>
-                      <p className="text-sm text-muted-foreground/80 mb-4">
-                        {(searchQuery || selectedUser !== 'all' || selectedSession !== 'all' || dateRange.from || dateRange.to) 
-                          ? 'Try adjusting your filters to see more results.'
-                          : 'No questions are available in the database.'
-                        }
+                      <p className="text-muted-foreground font-medium mb-2">
+                        No questions found
                       </p>
-                      {(searchQuery || selectedUser !== 'all' || selectedSession !== 'all' || dateRange.from || dateRange.to) && (
-                        <Button variant="outline" onClick={handleResetFilters} size="sm">
+                      <p className="text-sm text-muted-foreground/80 mb-4">
+                        {searchQuery ||
+                        selectedUser !== "all" ||
+                        selectedSession !== "all" ||
+                        dateRange.from ||
+                        dateRange.to
+                          ? "Try adjusting your filters to see more results."
+                          : "No questions are available in the database."}
+                      </p>
+                      {(searchQuery ||
+                        selectedUser !== "all" ||
+                        selectedSession !== "all" ||
+                        dateRange.from ||
+                        dateRange.to) && (
+                        <Button
+                          variant="outline"
+                          onClick={handleResetFilters}
+                          size="sm"
+                        >
                           Clear all filters
                         </Button>
                       )}
@@ -414,7 +484,12 @@ const QuestionsReport = () => {
                 </TableRow>
               ) : (
                 questionsReport.data.map((question, index) => (
-                  <TableRow key={`${question.qid || question.id || 'question'}-${index}`} className="hover:bg-muted/30">
+                  <TableRow
+                    key={`${
+                      question.qid || question.id || "question"
+                    }-${index}`}
+                    className="hover:bg-muted/30"
+                  >
                     <TableCell className="font-medium">
                       <div className="max-w-md">
                         <button
@@ -426,7 +501,10 @@ const QuestionsReport = () => {
                           {question.question}
                         </button>
                         {question.answer && (
-                          <p className="text-sm text-muted-foreground truncate mt-1" title={question.answer}>
+                          <p
+                            className="text-sm text-muted-foreground truncate mt-1"
+                            title={question.answer}
+                          >
                             {question.answer}
                           </p>
                         )}
@@ -438,16 +516,20 @@ const QuestionsReport = () => {
                       </code>
                     </TableCell>
                     <TableCell>
-                    <button
-                          onClick={() => handleSessionClick(question.session_id)}
-                          className="text-primary hover:underline"
-                        >
-                          <code className="relative rounded bg-muted px-[0.3rem] py-[0.2rem] font-mono text-xs">
-                            {question.session_id.substring(0, 8)}...
-                          </code>
-                        </button>
+                      <button
+                        onClick={() => handleSessionClick(question.session_id)}
+                        className="text-primary hover:underline"
+                      >
+                        <code className="relative rounded bg-muted px-[0.3rem] py-[0.2rem] font-mono text-xs">
+                          {question.session_id.substring(0, 8)}...
+                        </code>
+                      </button>
                     </TableCell>
-                    <TableCell>{formatUTCToIST(question.dateAsked || question.created_at)}</TableCell>
+                    <TableCell>
+                      {formatUTCToIST(
+                        question.dateAsked || question.created_at
+                      )}
+                    </TableCell>
                     {/* <TableCell>
                       <span className="inline-flex items-center rounded-full bg-primary/10 px-2.5 py-0.5 text-xs font-medium text-primary">
                         {question.channel || 'N/A'}
@@ -480,13 +562,15 @@ const QuestionsReport = () => {
         )}
       </div>
 
-      {questionsReport && questionsReport.data.length > 0 && questionsReport.totalPages > 1 && (
-        <TablePagination
-          currentPage={page}
-          totalPages={questionsReport.totalPages}
-          onPageChange={handlePageChange}
-        />
-      )}
+      {questionsReport &&
+        questionsReport.data.length > 0 &&
+        questionsReport.totalPages > 1 && (
+          <TablePagination
+            currentPage={page}
+            totalPages={questionsReport.totalPages}
+            onPageChange={handlePageChange}
+          />
+        )}
     </div>
   );
 };
