@@ -73,7 +73,7 @@ const DateRangePicker: React.FC<DateRangePickerProps> = ({
   };
 
   const handleReset = () => {
-    // Reset to last 7 days instead of clearing
+    // Reset to last 7 days
     const today = new Date();
     today.setHours(23, 59, 59, 999);
     setDateRange({ from: subDays(today, 6), to: today });

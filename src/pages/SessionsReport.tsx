@@ -88,6 +88,7 @@ const SessionsReport = () => {
   // Fetch session statistics
   const { data: sessionStats = { totalSessions: 0, totalQuestions: 0, totalUsers: 0 }, isLoading: isLoadingStats } = useQuery({
     queryKey: ['session-stats', selectedUser, dateRange.from?.toISOString(), dateRange.to?.toISOString()],
+    enabled: dateRange.from !== undefined && dateRange.to !== undefined,
     queryFn: async () => {
       const statsParams: SessionPaginationParams = {
         page: 1,
@@ -149,6 +150,7 @@ const SessionsReport = () => {
       sortConfig.key,
       sortConfig.direction
     ],
+    enabled: dateRange.from !== undefined && dateRange.to !== undefined,
     queryFn: async () => {
       const params: SessionPaginationParams = {
         page,

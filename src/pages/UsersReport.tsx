@@ -128,6 +128,7 @@ const UsersReport = () => {
       isBackendSortable(sortConfig.key) ? sortConfig.key : 'client-sort',
       isBackendSortable(sortConfig.key) ? sortConfig.direction : 'client-direction'
     ],
+    enabled: dateRange.from !== undefined && dateRange.to !== undefined,
     queryFn: async () => {
       const params: UserPaginationParams = {
         page,
@@ -213,6 +214,7 @@ const UsersReport = () => {
       dateRange.from?.toISOString() || "all-time-start",
       dateRange.to?.toISOString() || "all-time-end",
     ],
+    enabled: dateRange.from !== undefined && dateRange.to !== undefined,
     queryFn: async () => {
       // Use unified date range utility with default start date for user stats
       const params = buildDateRangeParams(dateRange, {

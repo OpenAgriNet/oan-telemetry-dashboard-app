@@ -58,10 +58,10 @@ const Dashboard = () => {
     isLoading: isLoadingQuestionStats,
   } = useQuery({
     queryKey: ["question-stats", dateRange.from?.toISOString(), dateRange.to?.toISOString(), timeGranularity],
+    enabled: dateRange.from !== undefined && dateRange.to !== undefined,
     queryFn: () => {
       const params = buildDateRangeParams(dateRange, {
-        includeDefaultStart: true,
-        defaultStartDate: '2020-01-01',
+        includeDefaultStart: false,
         additionalParams: {
           granularity: timeGranularity
         },
@@ -77,10 +77,10 @@ const Dashboard = () => {
     isLoading: isLoadingQuestionsGraph,
   } = useQuery({
     queryKey: ["questions-graph", dateRange.from?.toISOString(), dateRange.to?.toISOString(), timeGranularity],
+    enabled: dateRange.from !== undefined && dateRange.to !== undefined,
     queryFn: () => {
       const params = buildDateRangeParams(dateRange, {
-        includeDefaultStart: true,
-        defaultStartDate: '2020-01-01',
+        includeDefaultStart: false,
         additionalParams: {
           granularity: timeGranularity
         },
@@ -96,10 +96,10 @@ const Dashboard = () => {
     isLoading: isLoadingSessionStats,
   } = useQuery({
     queryKey: ["session-stats", dateRange.from?.toISOString(), dateRange.to?.toISOString(), timeGranularity],
+    enabled: dateRange.from !== undefined && dateRange.to !== undefined,
     queryFn: () => {
       const params = buildDateRangeParams(dateRange, {
-        includeDefaultStart: true,
-        defaultStartDate: '2020-01-01',
+        includeDefaultStart: false,
         additionalParams: {
           granularity: timeGranularity
         },
@@ -115,10 +115,10 @@ const Dashboard = () => {
     isLoading: isLoadingSessionsGraph,
   } = useQuery({
     queryKey: ["sessions-graph", dateRange.from?.toISOString(), dateRange.to?.toISOString(), timeGranularity],
+    enabled: dateRange.from !== undefined && dateRange.to !== undefined,
     queryFn: () => {
       const params = buildDateRangeParams(dateRange, {
-        includeDefaultStart: true,
-        defaultStartDate: '2020-01-01',
+        includeDefaultStart: false,
         additionalParams: {
           granularity: timeGranularity
         },
@@ -134,10 +134,10 @@ const Dashboard = () => {
     isLoading: isLoadingUsersGraph,
   } = useQuery({
     queryKey: ["users-graph", dateRange.from?.toISOString(), dateRange.to?.toISOString(), timeGranularity],
+    enabled: dateRange.from !== undefined && dateRange.to !== undefined,
     queryFn: () => {
       const params = buildDateRangeParams(dateRange, {
-        includeDefaultStart: true,
-        defaultStartDate: '2020-01-01',
+        includeDefaultStart: false,
         additionalParams: {
           granularity: timeGranularity
         },
@@ -153,10 +153,10 @@ const Dashboard = () => {
     isLoading: isLoadingFeedbackStats,
   } = useQuery({
     queryKey: ["feedback-stats", dateRange.from?.toISOString(), dateRange.to?.toISOString(), timeGranularity],
+    enabled: dateRange.from !== undefined && dateRange.to !== undefined,
     queryFn: () => {
       const params = buildDateRangeParams(dateRange, {
-        includeDefaultStart: true,
-        defaultStartDate: '2020-01-01',
+        includeDefaultStart: false,
         additionalParams: {
           granularity: timeGranularity
         },
@@ -172,11 +172,10 @@ const Dashboard = () => {
     isLoading: isLoadingUserStats,
   } = useQuery({
     queryKey: ["users-stats", dateRange.from?.toISOString(), dateRange.to?.toISOString(), timeGranularity], 
+    enabled: dateRange.from !== undefined && dateRange.to !== undefined,
     queryFn: () => {
-      // Use unified date range utility with default start date for user stats consistency
       const params = buildDateRangeParams(dateRange, {
-        includeDefaultStart: true,
-        defaultStartDate: '2020-01-01',
+        includeDefaultStart: false,
         additionalParams: {
           granularity: timeGranularity
         }
@@ -191,10 +190,10 @@ const Dashboard = () => {
     isLoading: isLoadingFeedbackGraph,
   } = useQuery({
     queryKey: ["feedback-graph", dateRange.from?.toISOString(), dateRange.to?.toISOString(), timeGranularity],
+    enabled: dateRange.from !== undefined && dateRange.to !== undefined,
     queryFn: () => {
       const params = buildDateRangeParams(dateRange, {
-        includeDefaultStart: true,
-        defaultStartDate: '2020-01-01',
+        includeDefaultStart: false,
         additionalParams: {
           granularity: timeGranularity
         }
