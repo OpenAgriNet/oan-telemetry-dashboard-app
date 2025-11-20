@@ -1,6 +1,7 @@
 import React, { useState } from "react";
 import { useQuery } from "@tanstack/react-query";
 import {
+  fetchDashboardStats,
   fetchQuestionStats,
   fetchQuestionsGraph,
   fetchSessionStats,
@@ -52,24 +53,36 @@ const Dashboard = () => {
     return params;
   };
 
-  // Fetch question statistics (using consistent date logic)
+  // Fetch ALL dashboard statistics with a SINGLE API call - OPTIMIZED!
   const {
-    data: questionStats,
-    isLoading: isLoadingQuestionStats,
+    data: dashboardStats,
+    isLoading: isLoadingDashboardStats,
   } = useQuery({
-    queryKey: ["question-stats", dateRange.from?.toISOString(), dateRange.to?.toISOString(), timeGranularity],
+    queryKey: ["dashboard-stats", dateRange.from?.toISOString(), dateRange.to?.toISOString()],
     enabled: dateRange.from !== undefined && dateRange.to !== undefined,
     queryFn: () => {
       const params = buildDateRangeParams(dateRange, {
         includeDefaultStart: false,
-        additionalParams: {
-          granularity: timeGranularity
-        },
         alignToIST: false
       });
-      return fetchQuestionStats(params);
+      return fetchDashboardStats(params);
     },
   });
+
+  // Extract individual stats from unified response
+  const questionStats = dashboardStats ? { totalQuestions: dashboardStats.totalQuestions } : undefined;
+  const sessionStats = dashboardStats ? { totalSessions: dashboardStats.totalSessions } : undefined;
+  const feedbackStats = dashboardStats ? { 
+    totalFeedback: dashboardStats.totalFeedback,
+    totalLikes: dashboardStats.totalLikes,
+    totalDislikes: dashboardStats.totalDislikes 
+  } : undefined;
+  const userStats = dashboardStats ? { totalUsers: dashboardStats.totalUsers } : undefined;
+
+  const isLoadingQuestionStats = isLoadingDashboardStats;
+  const isLoadingSessionStats = isLoadingDashboardStats;
+  const isLoadingFeedbackStats = isLoadingDashboardStats;
+  const isLoadingUserStats = isLoadingDashboardStats;
 
   // Fetch questions graph data for time-series visualization
   const {
@@ -90,25 +103,6 @@ const Dashboard = () => {
     },
   });
 
-  // Fetch session statistics (using consistent date logic)
-  const {
-    data: sessionStats,
-    isLoading: isLoadingSessionStats,
-  } = useQuery({
-    queryKey: ["session-stats", dateRange.from?.toISOString(), dateRange.to?.toISOString(), timeGranularity],
-    enabled: dateRange.from !== undefined && dateRange.to !== undefined,
-    queryFn: () => {
-      const params = buildDateRangeParams(dateRange, {
-        includeDefaultStart: false,
-        additionalParams: {
-          granularity: timeGranularity
-        },
-        alignToIST: false
-      });
-      return fetchSessionStats(params);
-    },
-  });
-
   // Fetch sessions graph data for time-series visualization
   const {
     data: sessionsGraphData,
@@ -126,7 +120,7 @@ const Dashboard = () => {
       });
       return fetchSessionsGraph(params);
     },
-    });
+  });
 
   // Fetch users graph data for time-series visualization
   const {
@@ -144,43 +138,6 @@ const Dashboard = () => {
         alignToIST: false
       });
       return fetchUsersGraph(params);
-    },
-  });
-
-  // Fetch feedback statistics (using consistent date logic)
-  const {
-    data: feedbackStats,
-    isLoading: isLoadingFeedbackStats,
-  } = useQuery({
-    queryKey: ["feedback-stats", dateRange.from?.toISOString(), dateRange.to?.toISOString(), timeGranularity],
-    enabled: dateRange.from !== undefined && dateRange.to !== undefined,
-    queryFn: () => {
-      const params = buildDateRangeParams(dateRange, {
-        includeDefaultStart: false,
-        additionalParams: {
-          granularity: timeGranularity
-        },
-        alignToIST: false
-      });
-      return fetchFeedbackStats(params);
-    },
-  });
-
-  // Fetch users statistics
-  const {
-    data: userStats,
-    isLoading: isLoadingUserStats,
-  } = useQuery({
-    queryKey: ["users-stats", dateRange.from?.toISOString(), dateRange.to?.toISOString(), timeGranularity], 
-    enabled: dateRange.from !== undefined && dateRange.to !== undefined,
-    queryFn: () => {
-      const params = buildDateRangeParams(dateRange, {
-        includeDefaultStart: false,
-        additionalParams: {
-          granularity: timeGranularity
-        }
-      });
-      return fetchUserStats(params);
     },
   });
 
@@ -355,7 +312,7 @@ const Dashboard = () => {
               <TrendChart
                 title="Questions Asked Over Time"
                 description={`${timeGranularity === 'daily' ? 'Daily' : 'Hourly'} questions count (IST) - Powered by Questions Graph API`}
-                data={questionsGraphData?.data || questionStats?.dailyActivity || transformHourlyData(questionStats?.hourlyDistribution || [])}
+                data={questionsGraphData?.data || []}
                 dataKey="questionsCount"
                 type={chartType}
                 color="hsl(var(--primary))"
@@ -401,7 +358,7 @@ const Dashboard = () => {
               <TrendChart
                 title="Session Activity Over Time"
                 description={`${timeGranularity === 'daily' ? 'Daily' : 'Hourly'} sessions count (IST) - Powered by Sessions Graph API`}
-                data={sessionsGraphData?.data || sessionStats?.dailyActivity || transformHourlyData(sessionStats?.dailyActivity || [])}
+                data={sessionsGraphData?.data || []}
                 dataKey="sessionsCount"
                 type={chartType}
                 color="#10b981"
