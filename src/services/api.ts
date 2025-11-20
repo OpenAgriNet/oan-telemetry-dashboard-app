@@ -121,12 +121,6 @@ export interface UserStats {
   totalSessions: number;
   totalQuestions: number;
   totalFeedback: number;
-  dailyActivity: Array<{
-    date: string;
-    users: number;
-    sessions: number;
-    questions: number;
-  }>;
 }
 
 // Pagination types
@@ -369,15 +363,9 @@ export interface UserStatsResponse {
   totalFeedback: number;
   totalLikes: number;
   totalDislikes: number;
-  avgSessionDuration: number;
   newUsers: number;
   returningUsers: number;
   activeCumulative: number;
-  dailyActivity: Array<{
-    date: string;
-    activeUsers: number;
-    questionsCount: number;
-  }>;
 }
 
 // For users graph data (time series)
@@ -678,11 +666,9 @@ export const fetchUserStats = async (params: PaginationParams = {}): Promise<Use
       totalFeedback: 0,
       totalLikes: 0,
       totalDislikes: 0,
-      avgSessionDuration: 0,
       newUsers: 0,
       returningUsers: 0,
-      activeCumulative: 0,
-      dailyActivity: []
+      activeCumulative: 0
     };
   }
 };
