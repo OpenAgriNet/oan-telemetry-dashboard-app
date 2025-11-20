@@ -134,6 +134,7 @@ const QuestionsReport = () => {
       sortConfig.key,
       sortConfig.direction
     ],
+    enabled: dateRange.from !== undefined && dateRange.to !== undefined,
     queryFn: async () => {
       const params: QuestionPaginationParams = {
         page,
