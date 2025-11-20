@@ -1135,23 +1135,6 @@ export const fetchFeedbackStats = async (params: PaginationParams = {}): Promise
 // Get comprehensive session statistics
 export const fetchSessionStats = async (params: PaginationParams = {}): Promise<{
   totalSessions: number;
-  uniqueUsers: number;
-  totalQuestions: number;
-  avgQuestionsPerSession: number;
-  avgSessionDuration: number;
-  maxSessionDuration: number;
-  minSessionDuration: number;
-  dailyActivity: Array<{
-    date: string;
-    sessionsCount: number;
-    uniqueUsersCount: number;
-    questionsCount: number;
-  }>;
-  channelBreakdown: Array<{
-    channel: string;
-    sessionsCount: number;
-    questionsCount: number;
-  }>;
 }> => {
   try {
     const { startDate, endDate, granularity } = params;
@@ -1181,15 +1164,7 @@ export const fetchSessionStats = async (params: PaginationParams = {}): Promise<
   } catch (error) {
     console.error('Error fetching session stats:', error);
     return {
-      totalSessions: 0,
-      uniqueUsers: 0,
-      totalQuestions: 0,
-      avgQuestionsPerSession: 0,
-      avgSessionDuration: 0,
-      maxSessionDuration: 0,
-      minSessionDuration: 0,
-      dailyActivity: [],
-      channelBreakdown: []
+      totalSessions: 0
     };
   }
 };
@@ -1197,31 +1172,6 @@ export const fetchSessionStats = async (params: PaginationParams = {}): Promise<
 // Get comprehensive question statistics
 export const fetchQuestionStats = async (params: PaginationParams = {}): Promise<{
   totalQuestions: number;
-  uniqueUsers: number;
-  uniqueSessions: number;
-  uniqueChannels: number;
-  avgQuestionLength: number;
-  avgAnswerLength: number;
-  dailyActivity: Array<{
-    date: string;
-    questionsCount: number;
-    uniqueUsersCount: number;
-    uniqueSessionsCount: number;
-    avgQuestionLength: number;
-    avgAnswerLength: number;
-  }>;
-  channelBreakdown: Array<{
-    channel: string;
-    questionsCount: number;
-    uniqueUsers: number;
-    uniqueSessions: number;
-    avgQuestionLength: number;
-  }>;
-  hourlyDistribution: Array<{
-    hour: number;
-    uniqueUsersCount: number;
-    questionsCount: number;
-  }>;
 }> => {
   try {
     const { startDate, endDate, granularity } = params;
@@ -1251,15 +1201,7 @@ export const fetchQuestionStats = async (params: PaginationParams = {}): Promise
   } catch (error) {
     console.error('Error fetching question stats:', error);
     return {
-      totalQuestions: 0,
-      uniqueUsers: 0,
-      uniqueSessions: 0,
-      uniqueChannels: 0,
-      avgQuestionLength: 0,
-      avgAnswerLength: 0,
-      dailyActivity: [],
-      channelBreakdown: [],
-      hourlyDistribution: []
+      totalQuestions: 0
     };
   }
 };
@@ -1269,32 +1211,6 @@ export const fetchComprehensiveFeedbackStats = async (params: PaginationParams =
   totalFeedback: number;
   totalLikes: number;
   totalDislikes: number;
-  uniqueUsers: number;
-  uniqueSessions: number;
-  satisfactionRate: number;
-  avgFeedbackLength: number;
-  dailyActivity: Array<{
-    date: string;
-    feedbackCount: number;
-    likesCount: number;
-    dislikesCount: number;
-    uniqueUsersCount: number;
-    satisfactionRate: number;
-  }>;
-  channelBreakdown: Array<{
-    channel: string;
-    feedbackCount: number;
-    likesCount: number;
-    dislikesCount: number;
-    uniqueUsers: number;
-    satisfactionRate: number;
-  }>;
-  topFeedbackUsers: Array<{
-    userId: string;
-    feedbackCount: number;
-    likesCount: number;
-    dislikesCount: number;
-  }>;
 }> => {
   try {
     const { startDate, endDate, granularity } = params;
@@ -1326,19 +1242,12 @@ export const fetchComprehensiveFeedbackStats = async (params: PaginationParams =
     return {
       totalFeedback: 0,
       totalLikes: 0,
-      totalDislikes: 0,
-      uniqueUsers: 0,
-      uniqueSessions: 0,
-      satisfactionRate: 0,
-      avgFeedbackLength: 0,
-      dailyActivity: [],
-      channelBreakdown: [],
-      topFeedbackUsers: []
+      totalDislikes: 0
     };
   }
 };
 
-// Get comprehensive dashboard statistics
+// Get comprehensive dashboard statistics - OPTIMIZED
 export const fetchDashboardStats = async (params: PaginationParams = {}): Promise<{
   totalUsers: number;
   totalSessions: number;
@@ -1346,26 +1255,6 @@ export const fetchDashboardStats = async (params: PaginationParams = {}): Promis
   totalFeedback: number;
   totalLikes: number;
   totalDislikes: number;
-  satisfactionRate: number;
-  engagementRate: number;
-  avgQuestionsPerUser: number;
-  avgQuestionsPerSession: number;
-  avgSessionDuration: number;
-  avgQuestionLength: number;
-  avgAnswerLength: number;
-  uniqueChannels: number;
-  recentTrends: Array<{
-    date: string;
-    users: number;
-    sessions: number;
-    questions: number;
-  }>;
-  topChannels: Array<{
-    channel: string;
-    users: number;
-    sessions: number;
-    questions: number;
-  }>;
 }> => {
   try {
     const { startDate, endDate, granularity } = params;
@@ -1400,17 +1289,7 @@ export const fetchDashboardStats = async (params: PaginationParams = {}): Promis
       totalQuestions: 0,
       totalFeedback: 0,
       totalLikes: 0,
-      totalDislikes: 0,
-      satisfactionRate: 0,
-      engagementRate: 0,
-      avgQuestionsPerUser: 0,
-      avgQuestionsPerSession: 0,
-      avgSessionDuration: 0,
-      avgQuestionLength: 0,
-      avgAnswerLength: 0,
-      uniqueChannels: 0,
-      recentTrends: [],
-      topChannels: []
+      totalDislikes: 0
     };
   }
 };
