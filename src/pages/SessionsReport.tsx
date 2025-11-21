@@ -8,15 +8,11 @@ import {
   type UserPaginationParams,
   type PaginationParams,
 } from "@/services/api";
+import { useStats } from "@/contexts/StatsContext";
 import { useNavigate, useSearchParams } from "react-router-dom";
 import { useDateFilter } from "@/contexts/DateFilterContext";
-import {
-  Card,
-  CardContent,
-  CardDescription,
-  CardHeader,
-  CardTitle,
-} from "@/components/ui/card";
+import { buildDateRangeParams } from "@/lib/utils";
+import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 
 import {
   Select,
@@ -113,64 +109,11 @@ const SessionsReport = () => {
       staleTime: 5 * 60 * 1000, // Cache for 5 minutes
     });
 
-  // Fetch session statistics
-  const {
-    data: sessionStats = { totalSessions: 0, totalQuestions: 0, totalUsers: 0 },
-    isLoading: isLoadingStats,
-  } = useQuery({
-    queryKey: [
-      "session-stats",
-      selectedUser,
-      dateRange.from?.toISOString(),
-      dateRange.to?.toISOString(),
-    ],
-    queryFn: async () => {
-      const statsParams: SessionPaginationParams = {
-        page: 1,
-        limit: 10000, // Large limit to get comprehensive stats
-      };
-
-      // Add user filter for stats
-      if (selectedUser !== "all") {
-        statsParams.search = selectedUser; // Use search to filter by username
-      }
-
-      // Add date range filter for stats
-      if (dateRange.from) {
-        const fromDate = new Date(dateRange.from);
-        fromDate.setHours(0, 0, 0, 0);
-        statsParams.startDate = fromDate.toISOString();
-      }
-
-      if (dateRange.to) {
-        const toDate = new Date(dateRange.to);
-        toDate.setHours(23, 59, 59, 999);
-        statsParams.endDate = toDate.toISOString();
-      } else if (dateRange.from) {
-        const toDate = new Date(dateRange.from);
-        toDate.setHours(23, 59, 59, 999);
-        statsParams.endDate = toDate.toISOString();
-      }
-
-      const result = await fetchSessions(statsParams);
-
-      // Calculate statistics from the result
-      const totalQuestions = result.data.reduce(
-        (sum, session) => sum + session.questionCount,
-        0
-      );
-      const uniqueUsers = new Set(
-        result.data.map((session) => session.username)
-      ).size;
-
-      return {
-        totalSessions: result.total,
-        totalQuestions,
-        totalUsers: uniqueUsers,
-      };
-    },
-    staleTime: 2 * 60 * 1000, // Cache for 2 minutes
-  });
+  // Use centralized stats from StatsContext - no redundant API call!
+  const { stats, isLoading: isLoadingStats } = useStats();
+  const sessionStats = {
+    totalSessions: stats?.totalSessions ?? 0
+  };
 
   // Fetch sessions with server-side pagination and filtering
   const {
@@ -190,6 +133,7 @@ const SessionsReport = () => {
       sortConfig.key,
       sortConfig.direction,
     ],
+    enabled: dateRange.from !== undefined && dateRange.to !== undefined,
     queryFn: async () => {
       const params: SessionPaginationParams = {
         page,
@@ -458,17 +402,6 @@ const SessionsReport = () => {
                 <Download className="h-4 w-4 mr-2" />
                 Download as CSV
               </Button>
-            </div>
-
-            <div className="bg-muted/50 p-3 rounded-lg border">
-              <p className="text-sm font-medium">
-                Total Sessions: {sessionReport.total || 0}
-                {sessionReport.total > 0 && (
-                  <span className="text-muted-foreground ml-2">
-                    (Page {page} of {sessionReport.totalPages})
-                  </span>
-                )}
-              </p>
             </div>
 
             {isLoading ? (

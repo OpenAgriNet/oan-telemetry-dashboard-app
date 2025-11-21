@@ -9,7 +9,9 @@ import {
   type SessionPaginationParams,
   type Question,
 } from "@/services/api";
+import { useStats } from "@/contexts/StatsContext";
 import TablePagination from "@/components/TablePagination";
+import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import {
   Select,
   SelectContent,
@@ -27,21 +29,9 @@ import {
   TableHeader,
   TableRow,
 } from "@/components/ui/table";
-import {
-  Mic,
-  Search,
-  ThumbsUp,
-  ThumbsDown,
-  RefreshCw,
-  AlertCircle,
-  Download,
-} from "lucide-react";
+import { Mic, Search, ThumbsUp, ThumbsDown, RefreshCw, AlertCircle, Download, MessageSquare } from "lucide-react";
 import { useDateFilter } from "@/contexts/DateFilterContext";
-import {
-  exportToCSV,
-  formatUtcDateWithPMCorrection,
-  formatUTCToIST,
-} from "@/lib/utils";
+import { exportToCSV, formatUtcDateWithPMCorrection, formatUTCToIST, buildDateRangeParams } from "@/lib/utils";
 import { useNavigate, useSearchParams } from "react-router-dom";
 import { set } from "date-fns";
 const QuestionsReport = () => {
@@ -112,6 +102,12 @@ const QuestionsReport = () => {
     navigate(`/questions/${id}`);
   };
 
+  // Use centralized stats from StatsContext - no redundant API call!
+  const { stats, isLoading: isLoadingStats } = useStats();
+  const questionStats = {
+    totalQuestions: stats?.totalQuestions ?? 0
+  };
+
   // Fetch users with search parameter if needed
   const { data: usersResponse = { data: [] }, isLoading: isLoadingUsers } =
     useQuery({
@@ -160,6 +156,7 @@ const QuestionsReport = () => {
       sortConfig.key,
       sortConfig.direction,
     ],
+    enabled: dateRange.from !== undefined && dateRange.to !== undefined,
     queryFn: async () => {
       const params: QuestionPaginationParams = {
         page,
@@ -371,6 +368,28 @@ const QuestionsReport = () => {
         </div>
       </div>
 
+      {/* Question Stats Metric Card */}
+      <div className="grid gap-4 md:grid-cols-3">
+        <Card>
+          <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
+            <CardTitle className="text-sm font-medium">Total Questions</CardTitle>
+            <MessageSquare className="h-4 w-4 text-muted-foreground" />
+          </CardHeader>
+          <CardContent>
+            <div className="text-2xl font-bold">
+              {isLoadingStats ? (
+                <div className="h-8 w-16 bg-muted animate-pulse rounded" />
+              ) : (
+                questionStats.totalQuestions.toLocaleString()
+              )}
+            </div>
+            <p className="text-xs text-muted-foreground">
+              {dateRange.from || dateRange.to ? "Filtered period" : "All time"}
+            </p>
+          </CardContent>
+        </Card>
+      </div>
+
       <div className="flex gap-4 items-center justify-between">
         <div className="relative flex-1 max-w-md">
           <Search className="absolute left-2.5 top-2.5 h-4 w-4 text-muted-foreground" />
@@ -391,17 +410,6 @@ const QuestionsReport = () => {
           <Download className="h-4 w-4 mr-2" />
           Download as CSV
         </Button>
-      </div>
-
-      <div className="bg-muted/50 p-3 rounded-lg border">
-        <p className="text-sm font-medium">
-          Total Questions: {questionsReport.total || 0}
-          {questionsReport.total > 0 && (
-            <span className="text-muted-foreground ml-2">
-              (Page {page} of {questionsReport.totalPages})
-            </span>
-          )}
-        </p>
       </div>
 
       <div className="border rounded-lg">

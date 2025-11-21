@@ -43,7 +43,10 @@ const DateRangePicker: React.FC<DateRangePickerProps> = ({
 
   const formatDateRange = () => {
     if (!dateRange.from || !dateRange.to) return "Select date range";
-    return `${format(dateRange.from, "MMM dd")} - ${format(dateRange.to, "MMM dd, yyyy")}`;
+    return `${format(dateRange.from, "MMM dd")} - ${format(
+      dateRange.to,
+      "MMM dd, yyyy"
+    )}`;
   };
 
   const handleQuickSelect = (option: string) => {
@@ -63,7 +66,7 @@ const DateRangePicker: React.FC<DateRangePickerProps> = ({
         setDateRange({ from: subDays(today, 29), to: today });
         break;
       case "alltime":
-        setDateRange({ from: undefined, to: undefined });
+        setDateRange({ from: new Date("2025-05-01T00:00:00.000Z"), to: today });
         break;
       case "custom":
         setIsCalendarOpen(true);
@@ -73,7 +76,7 @@ const DateRangePicker: React.FC<DateRangePickerProps> = ({
   };
 
   const handleReset = () => {
-    // Reset to last 7 days instead of clearing
+    // Reset to last 7 days
     const today = new Date();
     today.setHours(23, 59, 59, 999);
     setDateRange({ from: subDays(today, 6), to: today });
@@ -115,7 +118,7 @@ const DateRangePicker: React.FC<DateRangePickerProps> = ({
                   from: range?.from,
                   to: range?.to,
                 });
-                
+
                 // Set to custom mode when starting a new selection
                 if (range?.from) {
                   setSelectedOption("custom");

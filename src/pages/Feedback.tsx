@@ -35,17 +35,17 @@ import {
   SelectValue,
 } from "@/components/ui/select";
 import { useDateFilter } from "@/contexts/DateFilterContext";
-import {
-  fetchFeedback,
-  fetchFeedbackStats,
-  fetchUsers,
-  type PaginationParams,
+import { useStats } from "@/contexts/StatsContext";
+import { 
+  fetchFeedback, 
+  fetchUsers, 
+  type PaginationParams, 
   type UserPaginationParams,
   fetchAllPages,
 } from "@/services/api";
 import { Download } from "lucide-react";
 import TablePagination from "@/components/TablePagination";
-import { exportToCSV } from "@/lib/utils";
+import { exportToCSV, buildDateRangeParams } from "@/lib/utils";
 
 const FeedbackPage = () => {
   const [searchParams, setSearchParams] = useSearchParams();
@@ -122,40 +122,13 @@ const FeedbackPage = () => {
       staleTime: 5 * 60 * 1000, // Cache for 5 minutes
     });
 
-  // Fetch feedback statistics
-  const {
-    data: feedbackStats = { totalFeedback: 0, totalLikes: 0, totalDislikes: 0 },
-    isLoading: isLoadingStats,
-  } = useQuery({
-    queryKey: [
-      "feedback-stats",
-      dateRange.from?.toISOString(),
-      dateRange.to?.toISOString(),
-    ],
-    queryFn: async () => {
-      const statsParams: PaginationParams = {};
-
-      // Add date range filter for stats
-      if (dateRange.from) {
-        const fromDate = new Date(dateRange.from);
-        fromDate.setHours(0, 0, 0, 0);
-        statsParams.startDate = fromDate.toISOString();
-      }
-
-      if (dateRange.to) {
-        const toDate = new Date(dateRange.to);
-        toDate.setHours(23, 59, 59, 999);
-        statsParams.endDate = toDate.toISOString();
-      } else if (dateRange.from) {
-        const toDate = new Date(dateRange.from);
-        toDate.setHours(23, 59, 59, 999);
-        statsParams.endDate = toDate.toISOString();
-      }
-
-      return fetchFeedbackStats(statsParams);
-    },
-    staleTime: 2 * 60 * 1000, // Cache for 2 minutes
-  });
+  // Use centralized stats from StatsContext - no redundant API call!
+  const { stats, isLoading: isLoadingStats } = useStats();
+  const feedbackStats = {
+    totalFeedback: stats?.totalFeedback ?? 0,
+    totalLikes: stats?.totalLikes ?? 0,
+    totalDislikes: stats?.totalDislikes ?? 0
+  };
 
   // Fetch feedback with server-side pagination and filtering
   const {
@@ -425,17 +398,6 @@ const FeedbackPage = () => {
                 <Download className="h-4 w-4 mr-2" />
                 Download as CSV
               </Button>
-            </div>
-
-            <div className="bg-muted/50 p-3 rounded-lg border">
-              <p className="text-sm font-medium">
-                Total Results: {feedbackResponse.total || 0}
-                {feedbackResponse.total > 0 && (
-                  <span className="text-muted-foreground ml-2">
-                    (Page {page} of {feedbackResponse.totalPages})
-                  </span>
-                )}
-              </p>
             </div>
 
             {isLoading ? (
