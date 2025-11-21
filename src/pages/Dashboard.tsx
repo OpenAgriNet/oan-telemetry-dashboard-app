@@ -31,6 +31,10 @@ import { formatUTCToIST, buildDateRangeParams } from "@/lib/utils";
 const Dashboard = () => {
   const { dateRange } = useDateFilter();
 
+  const [currentTab, setCurrentTab] = useState<
+    "users" | "questions" | "sessions" | "feedback"
+  >("users");
+
   // State to track chart type (line or bar)
   const [chartType, setChartType] = useState<"line" | "bar">("line");
 
@@ -54,58 +58,110 @@ const Dashboard = () => {
     return params;
   };
 
-  // Fetch question statistics (using consistent date logic)
-  const { data: questionStats, isLoading: isLoadingQuestionStats } = useQuery({
-    queryKey: [
-      "question-stats",
-      dateRange.from?.toISOString(),
-      dateRange.to?.toISOString(),
-      timeGranularity,
-    ],
-    enabled: dateRange.from !== undefined && dateRange.to !== undefined,
-    queryFn: () => {
-      const params = buildDateRangeParams(dateRange, {
-        includeDefaultStart: false,
-        additionalParams: {
-          granularity: timeGranularity,
-        },
-        alignToIST: false,
-      });
-      return fetchQuestionStats(params);
-    },
-  });
+  // Fetch ALL dashboard statistics with a SINGLE API call - OPTIMIZED!
+  const { data: dashboardStats, isLoading: isLoadingDashboardStats } = useQuery(
+    {
+      queryKey: [
+        "dashboard-stats",
+        dateRange.from?.toISOString(),
+        dateRange.to?.toISOString(),
+      ],
+      enabled: dateRange.from !== undefined && dateRange.to !== undefined,
+      queryFn: () => {
+        const params = buildDateRangeParams(dateRange, {
+          includeDefaultStart: false,
+          alignToIST: false,
+        });
+        return fetchDashboardStats(params);
+      },
+    }
+  );
+
+  // Extract individual stats from unified response
+  const questionStats = dashboardStats
+    ? { totalQuestions: dashboardStats.totalQuestions }
+    : undefined;
+  const sessionStats = dashboardStats
+    ? { totalSessions: dashboardStats.totalSessions }
+    : undefined;
+  const feedbackStats = dashboardStats
+    ? {
+        totalFeedback: dashboardStats.totalFeedback,
+        totalLikes: dashboardStats.totalLikes,
+        totalDislikes: dashboardStats.totalDislikes,
+      }
+    : undefined;
+  const userStats = dashboardStats
+    ? { totalUsers: dashboardStats.totalUsers }
+    : undefined;
+
+  const isLoadingQuestionStats = isLoadingDashboardStats;
+  const isLoadingSessionStats = isLoadingDashboardStats;
+  const isLoadingFeedbackStats = isLoadingDashboardStats;
+  const isLoadingUserStats = isLoadingDashboardStats;
 
   // Fetch questions graph data for time-series visualization
-  // const { data: questionsGraphData, isLoading: isLoadingQuestionsGraph } =
-  //   useQuery({
-  //     queryKey: [
-  //       "questions-graph",
-  //       dateRange.from?.toISOString(),
-  //       dateRange.to?.toISOString(),
-  //       timeGranularity,
-  //     ],
-  //     enabled: dateRange.from !== undefined && dateRange.to !== undefined,
-  //     queryFn: () => {
-  //       const params = buildDateRangeParams(dateRange, {
-  //         includeDefaultStart: false,
-  //         additionalParams: {
-  //           granularity: timeGranularity,
-  //         },
-  //         alignToIST: false,
-  //       });
-  //       return fetchQuestionsGraph(params);
-  //     },
-  //   });
+  const { data: questionsGraphData, isLoading: isLoadingQuestionsGraph } =
+    useQuery({
+      queryKey: [
+        "questions-graph",
+        dateRange.from?.toISOString(),
+        dateRange.to?.toISOString(),
+        timeGranularity,
+      ],
+      enabled:
+        dateRange.from !== undefined &&
+        dateRange.to !== undefined &&
+        currentTab === "questions",
+      queryFn: () => {
+        const params = buildDateRangeParams(dateRange, {
+          includeDefaultStart: false,
+          additionalParams: {
+            granularity: timeGranularity,
+          },
+          alignToIST: false,
+        });
+        return fetchQuestionsGraph(params);
+      },
+    });
 
-  // Fetch session statistics (using consistent date logic)
-  const { data: sessionStats, isLoading: isLoadingSessionStats } = useQuery({
+  // Fetch sessions graph data for time-series visualization
+  const { data: sessionsGraphData, isLoading: isLoadingSessionsGraph } =
+    useQuery({
+      queryKey: [
+        "sessions-graph",
+        dateRange.from?.toISOString(),
+        dateRange.to?.toISOString(),
+        timeGranularity,
+      ],
+      enabled:
+        dateRange.from !== undefined &&
+        dateRange.to !== undefined &&
+        currentTab === "sessions",
+      queryFn: () => {
+        const params = buildDateRangeParams(dateRange, {
+          includeDefaultStart: false,
+          additionalParams: {
+            granularity: timeGranularity,
+          },
+          alignToIST: false,
+        });
+        return fetchSessionsGraph(params);
+      },
+    });
+
+  // Fetch users graph data for time-series visualization
+  const { data: usersGraphData, isLoading: isLoadingUsersGraph } = useQuery({
     queryKey: [
-      "session-stats",
+      "users-graph",
       dateRange.from?.toISOString(),
       dateRange.to?.toISOString(),
       timeGranularity,
     ],
-    enabled: dateRange.from !== undefined && dateRange.to !== undefined,
+    enabled:
+      dateRange.from !== undefined &&
+      dateRange.to !== undefined &&
+      currentTab === "users",
     queryFn: () => {
       const params = buildDateRangeParams(dateRange, {
         includeDefaultStart: false,
@@ -114,81 +170,37 @@ const Dashboard = () => {
         },
         alignToIST: false,
       });
-      return fetchSessionStats(params);
+      return fetchUsersGraph(params);
     },
   });
 
-  // Fetch sessions graph data for time-series visualization
-  // const { data: sessionsGraphData, isLoading: isLoadingSessionsGraph } =
-  //   useQuery({
-  //     queryKey: [
-  //       "sessions-graph",
-  //       dateRange.from?.toISOString(),
-  //       dateRange.to?.toISOString(),
-  //       timeGranularity,
-  //     ],
-  //     enabled: dateRange.from !== undefined && dateRange.to !== undefined,
-  //     queryFn: () => {
-  //       const params = buildDateRangeParams(dateRange, {
-  //         includeDefaultStart: false,
-  //         additionalParams: {
-  //           granularity: timeGranularity,
-  //         },
-  //         alignToIST: false,
-  //       });
-  //       return fetchSessionsGraph(params);
-  //     },
-  //   });
-
-  // Fetch users graph data for time-series visualization
-  // const { data: usersGraphData, isLoading: isLoadingUsersGraph } = useQuery({
-  //   queryKey: [
-  //     "users-graph",
-  //     dateRange.from?.toISOString(),
-  //     dateRange.to?.toISOString(),
-  //     timeGranularity,
-  //   ],
-  //   enabled: dateRange.from !== undefined && dateRange.to !== undefined,
-  //   queryFn: () => {
-  //     const params = buildDateRangeParams(dateRange, {
-  //       includeDefaultStart: false,
-  //       additionalParams: {
-  //         granularity: timeGranularity,
-  //       },
-  //       alignToIST: false,
-  //     });
-  //     return fetchUsersGraph(params);
-  //   },
-  // });
-
   // Fetch feedback graph data for time-series visualization
-  // const { data: feedbackGraphData, isLoading: isLoadingFeedbackGraph } =
-  //   useQuery({
-  //     queryKey: [
-  //       "feedback-graph",
-  //       dateRange.from?.toISOString(),
-  //       dateRange.to?.toISOString(),
-  //       timeGranularity,
-  //     ],
-  //     enabled: dateRange.from !== undefined && dateRange.to !== undefined,
-  //     queryFn: () => {
-  //       const params = buildDateRangeParams(dateRange, {
-  //         includeDefaultStart: false,
-  //         additionalParams: {
-  //           granularity: timeGranularity,
-  //         },
-  //       });
-  //       return fetchFeedbackGraph(params);
-  //     },
-  //   });
+  const { data: feedbackGraphData, isLoading: isLoadingFeedbackGraph } =
+    useQuery({
+      queryKey: [
+        "feedback-graph",
+        dateRange.from?.toISOString(),
+        dateRange.to?.toISOString(),
+        timeGranularity,
+      ],
+      enabled:
+        dateRange.from !== undefined &&
+        dateRange.to !== undefined &&
+        currentTab === "feedback",
+      queryFn: () => {
+        const params = buildDateRangeParams(dateRange, {
+          includeDefaultStart: false,
+          additionalParams: {
+            granularity: timeGranularity,
+          },
+        });
+        return fetchFeedbackGraph(params);
+      },
+    });
 
   const isLoading =
     isLoadingQuestionStats ||
     isLoadingSessionStats ||
-    // isLoadingQuestionsGraph ||
-    // isLoadingSessionsGraph ||
-    // isLoadingFeedbackGraph ||
-    // isLoadingUsersGraph ||
     isLoadingUserStats ||
     isLoadingFeedbackStats;
 
@@ -237,6 +249,8 @@ const Dashboard = () => {
       totalUniqueUsers: (item.newUsers || 0) + (item.returningUsers || 0),
     }));
   };
+
+  console.log("users graph", usersGraphData);
 
   return (
     <div className="space-y-6">
@@ -292,7 +306,7 @@ const Dashboard = () => {
         )}
       </div>
 
-      {/* <Card className="card-gradient">
+      <Card className="card-gradient">
         <CardHeader className="flex flex-row items-center justify-between pb-2">
           <CardTitle>Chart Options</CardTitle>
           <div className="flex items-center gap-4">
@@ -306,7 +320,6 @@ const Dashboard = () => {
                 }
               >
                 <ToggleGroupItem value="daily">Daily</ToggleGroupItem>
-                <ToggleGroupItem value="hourly">Hourly</ToggleGroupItem>
               </ToggleGroup>
             </div>
             <div className="flex items-center gap-2">
@@ -328,22 +341,40 @@ const Dashboard = () => {
             </div>
           </div>
         </CardHeader>
-      </Card> */}
+      </Card>
 
-      {/* <div className="grid gap-4">
+      <div className="grid gap-4">
         <Tabs defaultValue="users">
-          {/* <TabsList>
-            <TabsTrigger value="users">Users</TabsTrigger>
-            <TabsTrigger value="questions">Questions</TabsTrigger>
-            <TabsTrigger value="sessions">Sessions</TabsTrigger>
-            <TabsTrigger value="feedback">Feedback</TabsTrigger>
-          </TabsList> */}
-          {/* <TabsContent value="users">
+          <TabsList>
+            <TabsTrigger onClick={() => setCurrentTab("users")} value="users">
+              Users
+            </TabsTrigger>
+            <TabsTrigger
+              onClick={() => setCurrentTab("questions")}
+              value="questions"
+            >
+              Questions
+            </TabsTrigger>
+            <TabsTrigger
+              onClick={() => setCurrentTab("sessions")}
+              value="sessions"
+            >
+              Sessions
+            </TabsTrigger>
+            <TabsTrigger
+              onClick={() => setCurrentTab("feedback")}
+              value="feedback"
+            >
+              Feedback
+            </TabsTrigger>
+          </TabsList>
+
+          <TabsContent value="users">
             <TrendChart
               title="User Activity"
               description={`${
                 timeGranularity === "daily" ? "Daily" : "Hourly"
-              } new vs returning vs total unique users (IST)`}
+              }  total users (IST)`}
               data={
                 timeGranularity === "daily"
                   ? transformUsersData(usersGraphData?.data || [])
@@ -353,21 +384,7 @@ const Dashboard = () => {
               }
               dataKey={[
                 {
-                  dataKey: "newUsers",
-                  color: "#3b82f6",
-                  name: "New Users",
-                  strokeDasharray: "5 5",
-                  fillOpacity: 0.3,
-                },
-                {
-                  dataKey: "returningUsers",
-                  color: "#10b981",
-                  name: "Returning Users",
-                  strokeDasharray: "5 5",
-                  fillOpacity: 0.3,
-                },
-                {
-                  dataKey: "totalUniqueUsers",
+                  dataKey: "uniqueUsersCount",
                   color: "hsl(var(--foreground))",
                   name: "Total Active Users",
                   fillOpacity: 1,
@@ -376,8 +393,8 @@ const Dashboard = () => {
               type={chartType}
               xAxisKey={getXAxisKey()}
             />
-          </TabsContent> */}
-          {/* <TabsContent value="questions">
+          </TabsContent>
+          <TabsContent value="questions">
             <div className="space-y-4">
               <TrendChart
                 title="Questions Asked Over Time"
@@ -390,79 +407,9 @@ const Dashboard = () => {
                 color="hsl(var(--primary))"
                 xAxisKey={getXAxisKey()}
               />
-
-              {questionsGraphData && (
-                <Card className="card-gradient">
-                  <CardHeader>
-                    <CardTitle>Questions Graph Statistics</CardTitle>
-                  </CardHeader>
-                  <CardContent>
-                    <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-4">
-                      <div className="space-y-1">
-                        <p className="text-sm text-muted-foreground">
-                          Total Data Points
-                        </p>
-                        <p className="text-2xl font-bold">
-                          {questionsGraphData.metadata.totalDataPoints}
-                        </p>
-                      </div>
-                      <div className="space-y-1">
-                        <p className="text-sm text-muted-foreground">
-                          Avg Questions/Period
-                        </p>
-                        <p className="text-2xl font-bold">
-                          {
-                            questionsGraphData.metadata.summary
-                              .avgQuestionsPerPeriod
-                          }
-                        </p>
-                      </div>
-                      <div className="space-y-1">
-                        <p className="text-sm text-muted-foreground">
-                          Peak Activity
-                        </p>
-                        <p className="text-lg font-bold">
-                          {
-                            questionsGraphData.metadata.summary.peakActivity
-                              .questionsCount
-                          }{" "}
-                          questions
-                        </p>
-                        <p className="text-xs text-muted-foreground">
-                          on{" "}
-                          {formatUTCToIST(
-                            questionsGraphData.metadata.summary.peakActivity
-                              .date,
-                            "MMM dd, yyyy"
-                          )}
-                        </p>
-                      </div>
-                      <div className="space-y-1">
-                        <p className="text-sm text-muted-foreground">
-                          Date Range (IST)
-                        </p>
-                        <p className="text-sm font-medium">
-                          {formatUTCToIST(
-                            questionsGraphData.metadata.dateRange.start,
-                            "MMM dd, yyyy"
-                          )}{" "}
-                          to{" "}
-                          {formatUTCToIST(
-                            questionsGraphData.metadata.dateRange.end,
-                            "MMM dd, yyyy"
-                          )}
-                        </p>
-                        <p className="text-xs text-muted-foreground">
-                          Granularity: {questionsGraphData.metadata.granularity}
-                        </p>
-                      </div>
-                    </div>
-                  </CardContent>
-                </Card>
-              )}
             </div>
-          </TabsContent> */}
-          {/* <TabsContent value="sessions">
+          </TabsContent>
+          <TabsContent value="sessions">
             <div className="space-y-4">
               <TrendChart
                 title="Session Activity Over Time"
@@ -475,79 +422,9 @@ const Dashboard = () => {
                 color="#10b981"
                 xAxisKey={getXAxisKey()}
               />
-
-              {sessionsGraphData && (
-                <Card className="card-gradient">
-                  <CardHeader>
-                    <CardTitle>Sessions Graph Statistics</CardTitle>
-                  </CardHeader>
-                  <CardContent>
-                    <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-4">
-                      <div className="space-y-1">
-                        <p className="text-sm text-muted-foreground">
-                          Total Data Points
-                        </p>
-                        <p className="text-2xl font-bold">
-                          {sessionsGraphData.metadata.totalDataPoints}
-                        </p>
-                      </div>
-                      <div className="space-y-1">
-                        <p className="text-sm text-muted-foreground">
-                          Avg Sessions/Period
-                        </p>
-                        <p className="text-2xl font-bold">
-                          {
-                            sessionsGraphData.metadata.summary
-                              .avgSessionsPerPeriod
-                          }
-                        </p>
-                      </div>
-                      <div className="space-y-1">
-                        <p className="text-sm text-muted-foreground">
-                          Peak Activity
-                        </p>
-                        <p className="text-lg font-bold">
-                          {
-                            sessionsGraphData.metadata.summary.peakActivity
-                              .sessionsCount
-                          }{" "}
-                          sessions
-                        </p>
-                        <p className="text-xs text-muted-foreground">
-                          on{" "}
-                          {formatUTCToIST(
-                            sessionsGraphData.metadata.summary.peakActivity
-                              .date,
-                            "MMM dd, yyyy"
-                          )}
-                        </p>
-                      </div>
-                      <div className="space-y-1">
-                        <p className="text-sm text-muted-foreground">
-                          Date Range (IST)
-                        </p>
-                        <p className="text-sm font-medium">
-                          {formatUTCToIST(
-                            sessionsGraphData.metadata.dateRange.start,
-                            "MMM dd, yyyy"
-                          )}{" "}
-                          to{" "}
-                          {formatUTCToIST(
-                            sessionsGraphData.metadata.dateRange.end,
-                            "MMM dd, yyyy"
-                          )}
-                        </p>
-                        <p className="text-xs text-muted-foreground">
-                          Granularity: {sessionsGraphData.metadata.granularity}
-                        </p>
-                      </div>
-                    </div>
-                  </CardContent>
-                </Card>
-              )}
             </div>
-          </TabsContent> */}
-          {/* <TabsContent value="feedback">
+          </TabsContent>
+          <TabsContent value="feedback">
             <div className="space-y-4">
               <TrendChart
                 title="Feedback Activity Over Time"
@@ -570,97 +447,10 @@ const Dashboard = () => {
                 type={chartType}
                 xAxisKey={getXAxisKey()}
               />
-
-              {feedbackGraphData && (
-                <Card className="card-gradient">
-                  <CardHeader>
-                    <CardTitle>Feedback Graph Statistics</CardTitle>
-                  </CardHeader>
-                  <CardContent>
-                    <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-4">
-                      <div className="space-y-1">
-                        <p className="text-sm text-muted-foreground">
-                          Total Data Points
-                        </p>
-                        <p className="text-2xl font-bold">
-                          {feedbackGraphData.metadata.totalDataPoints}
-                        </p>
-                      </div>
-                      <div className="space-y-1">
-                        <p className="text-sm text-muted-foreground">
-                          Avg Feedback/Period
-                        </p>
-                        <p className="text-2xl font-bold">
-                          {
-                            feedbackGraphData.metadata.summary
-                              .avgFeedbackPerPeriod
-                          }
-                        </p>
-                      </div>
-                      <div className="space-y-1">
-                        <p className="text-sm text-muted-foreground">
-                          Satisfaction Rate
-                        </p>
-                        <p className="text-lg font-bold">
-                          {
-                            feedbackGraphData.metadata.summary
-                              .overallSatisfactionRate
-                          }
-                          %
-                        </p>
-                        <p className="text-xs text-muted-foreground">
-                          {feedbackGraphData.metadata.summary.totalLikes} likes
-                          / {feedbackGraphData.metadata.summary.totalDislikes}{" "}
-                          dislikes
-                        </p>
-                      </div>
-                      <div className="space-y-1">
-                        <p className="text-sm text-muted-foreground">
-                          Peak Activity
-                        </p>
-                        <p className="text-lg font-bold">
-                          {
-                            feedbackGraphData.metadata.summary.peakActivity
-                              .feedbackCount
-                          }{" "}
-                          feedback
-                        </p>
-                        <p className="text-xs text-muted-foreground">
-                          on{" "}
-                          {formatUTCToIST(
-                            feedbackGraphData.metadata.summary.peakActivity
-                              .date,
-                            "MMM dd, yyyy"
-                          )}
-                        </p>
-                      </div>
-                      <div className="space-y-1">
-                        <p className="text-sm text-muted-foreground">
-                          Date Range (IST)
-                        </p>
-                        <p className="text-sm font-medium">
-                          {formatUTCToIST(
-                            feedbackGraphData.metadata.dateRange.start,
-                            "MMM dd, yyyy"
-                          )}{" "}
-                          to{" "}
-                          {formatUTCToIST(
-                            feedbackGraphData.metadata.dateRange.end,
-                            "MMM dd, yyyy"
-                          )}
-                        </p>
-                        <p className="text-xs text-muted-foreground">
-                          Granularity: {feedbackGraphData.metadata.granularity}
-                        </p>
-                      </div>
-                    </div>
-                  </CardContent>
-                </Card>
-              )}
             </div>
-          </TabsContent> */}
+          </TabsContent>
         </Tabs>
-      </div> */}
+      </div>
     </div>
   );
 };
