@@ -27,13 +27,11 @@ import {
   Users, 
   ThumbsUp,
   ThumbsDown,
-  Download,
   UserPlus,
   UserCheck
 } from "lucide-react";
 import TablePagination from "@/components/TablePagination";
-import { exportToCSV, formatUTCToIST, buildDateRangeParams } from "@/lib/utils";
-import { fetchAllPages } from "@/services/api";
+import { formatUTCToIST, buildDateRangeParams } from "@/lib/utils";
 // Add these types near the top of the file
 type SortDirection = 'asc' | 'desc' | null;
 type SortConfig = {
@@ -306,38 +304,6 @@ const UsersReport = () => {
                   maxLength={1000}
                 />
               </div>
-              <Button onClick={async () => {
-                // Build params for all filters using unified utility
-                const params: UserPaginationParams = {};
-                if (searchQuery.trim()) params.search = searchQuery.trim();
-                
-                // Add date range filter using unified utility
-                const dateParams = buildDateRangeParams(dateRange);
-                if (dateParams.startDate) params.startDate = dateParams.startDate;
-                if (dateParams.endDate) params.endDate = dateParams.endDate;
-                
-                const allUsers = await fetchAllPages(fetchUsers, params);
-                // Client-side user filter if needed
-                const filtered = (selectedUser !== "all"
-                  ? allUsers.filter(user => user.username === selectedUser || user.id === selectedUser)
-                  : allUsers
-                ).map(user => ({
-                  ...user,
-                  latestSession: formatUTCToIST(user.latestSession || user.lastActivity || "")
-                }));
-                exportToCSV(filtered, [
-                  { key: 'username', header: 'Username' },
-                  { key: 'sessions', header: 'Sessions' },
-                  { key: 'totalQuestions', header: 'Questions' },
-                  { key: 'feedbackCount', header: 'Feedback' },
-                  { key: 'likes', header: 'Likes' },
-                  { key: 'dislikes', header: 'Dislikes' },
-                  { key: 'latestSession', header: 'Latest Activity' },
-                ], 'users_report.csv');
-              }} disabled={isLoading} variant="outline">
-                <Download className="h-4 w-4 mr-2" />
-                Download as CSV
-              </Button>
             </div>
 
             {isLoading ? (
