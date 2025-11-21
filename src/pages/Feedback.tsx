@@ -23,7 +23,6 @@ import {
   Search,
   RefreshCw,
   AlertCircle,
-  Download,
 } from "lucide-react";
 import { format } from "date-fns";
 import { Input } from "@/components/ui/input";
@@ -42,10 +41,9 @@ import {
   fetchUsers, 
   type PaginationParams, 
   type UserPaginationParams,
-  fetchAllPages,
 } from "@/services/api";
 import TablePagination from "@/components/TablePagination";
-import { buildDateRangeParams, exportToCSV } from "@/lib/utils";
+import { buildDateRangeParams } from "@/lib/utils";
 
 const FeedbackPage = () => {
   const [searchParams, setSearchParams] = useSearchParams();
@@ -346,58 +344,6 @@ const FeedbackPage = () => {
                   maxLength={1000}
                 />
               </div>
-              <Button
-                onClick={async () => {
-                  // Build params for all filters
-                  const params: PaginationParams = {};
-                  if (searchTerm.trim()) params.search = searchTerm.trim();
-                  if (dateRange.from) {
-                    const fromDate = new Date(dateRange.from);
-                    fromDate.setHours(0, 0, 0, 0);
-                    params.startDate = fromDate.toISOString();
-                  }
-                  if (dateRange.to) {
-                    const toDate = new Date(dateRange.to);
-                    toDate.setHours(23, 59, 59, 999);
-                    params.endDate = toDate.toISOString();
-                  } else if (dateRange.from) {
-                    const toDate = new Date(dateRange.from);
-                    toDate.setHours(23, 59, 59, 999);
-                    params.endDate = toDate.toISOString();
-                  }
-                  const allFeedback = await fetchAllPages(
-                    fetchFeedback,
-                    params
-                  );
-                  // Client-side user filter if needed
-                  const filtered =
-                    selectedUser !== "all"
-                      ? allFeedback.filter(
-                          (fb) =>
-                            fb.userId === selectedUser ||
-                            fb.user === selectedUser
-                        )
-                      : allFeedback;
-                  exportToCSV(
-                    filtered,
-                    [
-                      { key: "date", header: "Date" },
-                      { key: "user", header: "User" },
-                      { key: "question", header: "Question" },
-                      { key: "answer", header: "Answer" },
-                      { key: "rating", header: "Rating" },
-                      { key: "feedback", header: "Feedback" },
-                      { key: "sessionId", header: "Session ID" },
-                    ],
-                    "feedback_report.csv"
-                  );
-                }}
-                disabled={isLoading}
-                variant="outline"
-              >
-                <Download className="h-4 w-4 mr-2" />
-                Download as CSV
-              </Button>
             </div>
 
             {isLoading ? (

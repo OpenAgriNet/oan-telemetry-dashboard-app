@@ -16,7 +16,7 @@ import {
   CardHeader,
   CardTitle,
 } from "@/components/ui/card";
-import { AlertTriangle, Search, RefreshCw, Download, Bug } from "lucide-react";
+import { AlertTriangle, Search, RefreshCw, Bug } from "lucide-react";
 import { format } from "date-fns";
 import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
@@ -29,10 +29,8 @@ import {
   fetchErrorStats,
   type ErrorPaginationParams,
   type PaginationParams,
-  fetchAllPages,
 } from "@/services/api";
 import TablePagination from "@/components/TablePagination";
-import { exportToCSV } from "@/lib/utils";
 
 const ErrorsPage = () => {
   const { keycloak } = useKeycloak();
@@ -199,63 +197,6 @@ const ErrorsPage = () => {
     refetch();
   };
 
-  const handleExportCSV = async () => {
-    try {
-      // Prepare params for export (no pagination)
-      const params: ErrorPaginationParams = {};
-
-      if (searchTerm.trim()) {
-        params.search = searchTerm.trim();
-      }
-
-      if (dateRange.from) {
-        const fromDate = new Date(dateRange.from);
-        fromDate.setHours(0, 0, 0, 0);
-        params.startDate = fromDate.toISOString();
-      }
-
-      if (dateRange.to) {
-        const toDate = new Date(dateRange.to);
-        toDate.setHours(23, 59, 59, 999);
-        params.endDate = toDate.toISOString();
-      } else if (dateRange.from) {
-        const toDate = new Date(dateRange.from);
-        toDate.setHours(23, 59, 59, 999);
-        params.endDate = toDate.toISOString();
-      }
-
-      const allErrors = await fetchAllPages(fetchErrors, params);
-
-      const csvData = allErrors.map((error) => ({
-        errorId: error.id,
-        errorMessage: error.errorMessage,
-        userId: error.userId || "N/A",
-        sessionId: error.sessionId || "N/A",
-        channel: error.channel || "N/A",
-        date: error.date,
-        time: error.time,
-      }));
-
-      const columns = [
-        { key: "errorId" as const, header: "Error ID" },
-        { key: "errorMessage" as const, header: "Error Message" },
-        { key: "userId" as const, header: "User ID" },
-        { key: "sessionId" as const, header: "Session ID" },
-        { key: "channel" as const, header: "Channel" },
-        { key: "date" as const, header: "Date" },
-        { key: "time" as const, header: "Time" },
-      ];
-
-      exportToCSV(
-        csvData,
-        columns,
-        `errors_${new Date().toISOString().split("T")[0]}.csv`
-      );
-    } catch (error) {
-      console.error("Error exporting CSV:", error);
-    }
-  };
-
   // Show error state
   if (error) {
     return (
@@ -286,17 +227,6 @@ const ErrorsPage = () => {
     <div className="space-y-6">
       <div className="flex items-center justify-between">
         <h1 className="text-2xl font-bold tracking-tight">Error Details</h1>
-        <div className="flex gap-2">
-          <Button
-            onClick={handleExportCSV}
-            variant="outline"
-            size="sm"
-            disabled={isLoading || errorsResponse.data.length === 0}
-          >
-            <Download className="h-4 w-4 mr-2" />
-            Export CSV
-          </Button>
-        </div>
       </div>
 
       {/* Statistics Card */}
