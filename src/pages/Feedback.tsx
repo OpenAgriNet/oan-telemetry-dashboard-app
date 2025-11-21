@@ -9,10 +9,9 @@ import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { useDateFilter } from "@/contexts/DateFilterContext";
+import { useStats } from "@/contexts/StatsContext";
 import { 
   fetchFeedback, 
-  fetchFeedbackStats, 
-  fetchComprehensiveFeedbackStats,
   fetchUsers, 
   type PaginationParams, 
   type UserPaginationParams,
@@ -86,20 +85,13 @@ const FeedbackPage = () => {
     staleTime: 5 * 60 * 1000, // Cache for 5 minutes
   });
 
-  // Fetch feedback statistics using dedicated stats endpoint
-  const { data: feedbackStats = { totalFeedback: 0, totalLikes: 0, totalDislikes: 0 }, isLoading: isLoadingStats } = useQuery({
-    queryKey: ['feedback-stats', dateRange.from?.toISOString(), dateRange.to?.toISOString()],
-    queryFn: async () => {
-      // Use unified date range utility - no default start date to match dashboard
-      const params = buildDateRangeParams(dateRange, {
-        includeDefaultStart: false,
-        alignToIST: false
-      });
-
-      return await fetchComprehensiveFeedbackStats(params);
-    },
-    staleTime: 2 * 60 * 1000, // Cache for 2 minutes
-  });
+  // Use centralized stats from StatsContext - no redundant API call!
+  const { stats, isLoading: isLoadingStats } = useStats();
+  const feedbackStats = {
+    totalFeedback: stats?.totalFeedback ?? 0,
+    totalLikes: stats?.totalLikes ?? 0,
+    totalDislikes: stats?.totalDislikes ?? 0
+  };
 
   // Fetch feedback with server-side pagination and filtering
   const { 
@@ -326,17 +318,6 @@ const FeedbackPage = () => {
                 <Download className="h-4 w-4 mr-2" />
                 Download as CSV
               </Button>
-            </div>
-
-            <div className="bg-muted/50 p-3 rounded-lg border">
-              <p className="text-sm font-medium">
-                Total Results: {feedbackResponse.total || 0}
-                {feedbackResponse.total > 0 && (
-                  <span className="text-muted-foreground ml-2">
-                    (Page {page} of {feedbackResponse.totalPages})
-                  </span>
-                )}
-              </p>
             </div>
 
             {isLoading ? (

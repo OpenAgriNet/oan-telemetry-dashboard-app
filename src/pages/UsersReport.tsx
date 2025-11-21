@@ -2,12 +2,12 @@ import React, { useState } from "react";
 import { useQuery } from "@tanstack/react-query";
 import { 
   fetchUsers, 
-  fetchUserStats,
   type UserPaginationParams,
   type UserStatsResponse
 } from "@/services/api";
 import { useNavigate, useSearchParams } from "react-router-dom";
 import { useDateFilter } from "@/contexts/DateFilterContext";
+import { useStats } from "@/contexts/StatsContext";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 // Removed unused Select components
 import { Input } from "@/components/ui/input";
@@ -190,37 +190,16 @@ const UsersReport = () => {
       retryDelay: (attemptIndex) => Math.min(1000 * 2 ** attemptIndex, 30000),
   });
 
-  // Fetch user stats with date filter applied
-  const {
-    data: userStats = {
-      totalUsers: 0,
-      totalSessions: 0,
-      totalQuestions: 0,
-      totalFeedback: 0,
-      totalLikes: 0,
-      totalDislikes: 0,
-      newUsers: 0,
-      returningUsers: 0,
-      activeCumulative: 0
-    } as UserStatsResponse,
-    isLoading: isStatsLoading,
-    error: statsError,
-  } = useQuery({
-    queryKey: [
-      "user-stats",
-      dateRange.from?.toISOString() || "all-time-start",
-      dateRange.to?.toISOString() || "all-time-end",
-    ],
-    queryFn: async () => {
-      // Use unified date range utility - no default start date to match dashboard
-      const params = buildDateRangeParams(dateRange, {
-        includeDefaultStart: false,
-        alignToIST: false
-      });
-
-      return await fetchUserStats(params);
-    },
-  });
+  // Use centralized stats from StatsContext - no redundant API call!
+  const { stats, isLoading: isStatsLoading, error: statsError } = useStats();
+  
+  // Extract stats with fallbacks
+  const totalUsers = stats?.totalUsers ?? 0;
+  const totalSessions = stats?.totalSessions ?? 0;
+  const totalQuestions = stats?.totalQuestions ?? 0;
+  const totalFeedback = stats?.totalFeedback ?? 0;
+  const totalLikes = stats?.totalLikes ?? 0;
+  const totalDislikes = stats?.totalDislikes ?? 0;
 
   // Removed unused all-users-for-filter query to prevent extra API call on init
   const paginatedUsers = usersResponse.data;
@@ -298,7 +277,7 @@ const UsersReport = () => {
               {isStatsLoading ? (
                 <div className="h-8 w-16 bg-muted animate-pulse rounded" />
               ) : (
-                userStats.totalUsers.toLocaleString()
+                totalUsers.toLocaleString()
               )}
             </div>
             <p className="text-xs text-muted-foreground">
@@ -359,17 +338,6 @@ const UsersReport = () => {
                 <Download className="h-4 w-4 mr-2" />
                 Download as CSV
               </Button>
-            </div>
-
-            <div className="bg-muted/50 p-3 rounded-lg border">
-              <p className="text-sm font-medium">
-                Total Users: {usersResponse.total || 0}
-                {usersResponse.total > 0 && (
-                  <span className="text-muted-foreground ml-2">
-                    (Page {page} of {usersResponse.totalPages})
-                  </span>
-                )}
-              </p>
             </div>
 
             {isLoading ? (

@@ -3,12 +3,12 @@ import { useQuery } from "@tanstack/react-query";
 import { 
   fetchSessions, 
   fetchBasicSessionStats,
-  fetchSessionStats,
   fetchUsers, 
   type SessionPaginationParams, 
   type UserPaginationParams,
   type PaginationParams
 } from "@/services/api";
+import { useStats } from "@/contexts/StatsContext";
 import { useNavigate, useSearchParams } from "react-router-dom";
 import { useDateFilter } from "@/contexts/DateFilterContext";
 import { buildDateRangeParams } from "@/lib/utils";
@@ -87,20 +87,11 @@ const SessionsReport = () => {
     staleTime: 5 * 60 * 1000, // Cache for 5 minutes
   });
 
-  // Fetch session statistics using dedicated stats endpoint
-  const { data: sessionStats = { totalSessions: 0 }, isLoading: isLoadingStats } = useQuery({
-    queryKey: ['session-stats', dateRange.from?.toISOString(), dateRange.to?.toISOString()],
-    queryFn: async () => {
-      // Use unified date range utility - no default start date to match dashboard
-      const params = buildDateRangeParams(dateRange, {
-        includeDefaultStart: false,
-        alignToIST: false
-      });
-
-      return await fetchSessionStats(params);
-    },
-    staleTime: 2 * 60 * 1000, // Cache for 2 minutes
-  });
+  // Use centralized stats from StatsContext - no redundant API call!
+  const { stats, isLoading: isLoadingStats } = useStats();
+  const sessionStats = {
+    totalSessions: stats?.totalSessions ?? 0
+  };
 
   // Fetch sessions with server-side pagination and filtering
   const {
@@ -363,17 +354,6 @@ const SessionsReport = () => {
                 <Download className="h-4 w-4 mr-2" />
                 Download as CSV
               </Button>
-            </div>
-
-            <div className="bg-muted/50 p-3 rounded-lg border">
-              <p className="text-sm font-medium">
-                Total Sessions: {sessionReport.total || 0}
-                {sessionReport.total > 0 && (
-                  <span className="text-muted-foreground ml-2">
-                    (Page {page} of {sessionReport.totalPages})
-                  </span>
-                )}
-              </p>
             </div>
 
             {isLoading ? (

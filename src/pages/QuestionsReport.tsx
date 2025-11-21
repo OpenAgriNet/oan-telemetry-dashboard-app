@@ -2,7 +2,6 @@ import React, { useState } from "react";
 import { useQuery } from "@tanstack/react-query";
 import {
   fetchQuestions,
-  fetchQuestionStats,
   fetchUsers,
   fetchSessions,
   type QuestionPaginationParams,
@@ -10,6 +9,7 @@ import {
   type SessionPaginationParams,
   type Question
 } from "@/services/api";
+import { useStats } from "@/contexts/StatsContext";
 import TablePagination from "@/components/TablePagination";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import {
@@ -92,20 +92,11 @@ const QuestionsReport = () => {
     navigate(`/questions/${id}`);
   };
 
-  // Fetch question statistics using dedicated stats endpoint
-  const { data: questionStats = { totalQuestions: 0 }, isLoading: isLoadingStats } = useQuery({
-    queryKey: ['question-stats', dateRange.from?.toISOString(), dateRange.to?.toISOString()],
-    queryFn: async () => {
-      // Use unified date range utility - no default start date to match dashboard
-      const params = buildDateRangeParams(dateRange, {
-        includeDefaultStart: false,
-        alignToIST: false
-      });
-
-      return await fetchQuestionStats(params);
-    },
-    staleTime: 2 * 60 * 1000, // Cache for 2 minutes
-  });
+  // Use centralized stats from StatsContext - no redundant API call!
+  const { stats, isLoading: isLoadingStats } = useStats();
+  const questionStats = {
+    totalQuestions: stats?.totalQuestions ?? 0
+  };
 
   // Fetch users with search parameter if needed
   const { data: usersResponse = { data: [] }, isLoading: isLoadingUsers } = useQuery({
@@ -390,17 +381,6 @@ const QuestionsReport = () => {
           <Download className="h-4 w-4 mr-2" />
           Download as CSV
         </Button>
-      </div>
-
-      <div className="bg-muted/50 p-3 rounded-lg border">
-        <p className="text-sm font-medium">
-          Total Questions: {questionsReport.total || 0}
-          {questionsReport.total > 0 && (
-            <span className="text-muted-foreground ml-2">
-              (Page {page} of {questionsReport.totalPages})
-            </span>
-          )}
-        </p>
       </div>
 
       <div className="border rounded-lg">

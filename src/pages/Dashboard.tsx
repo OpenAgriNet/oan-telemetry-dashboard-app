@@ -1,18 +1,14 @@
 import React, { useState } from "react";
 import { useQuery } from "@tanstack/react-query";
 import {
-  fetchDashboardStats,
-  fetchQuestionStats,
   fetchQuestionsGraph,
-  fetchSessionStats,
   fetchSessionsGraph,
-  fetchFeedbackStats,
   fetchFeedbackGraph,
-  fetchUserStats,
   fetchUsersGraph,
   type PaginationParams,
 } from "@/services/api";
 import { useDateFilter } from "@/contexts/DateFilterContext";
+import { useStats } from "@/contexts/StatsContext";
 import MetricCard from "@/components/dashboard/MetricCard";
 import LoadingMetricCard from "@/components/dashboard/LoadingMetricCard";
 import TrendChart from "@/components/dashboard/TrendChart";
@@ -54,24 +50,8 @@ const Dashboard = () => {
     return params;
   };
 
-  // Fetch ALL dashboard statistics with a SINGLE API call - OPTIMIZED!
-  const { data: dashboardStats, isLoading: isLoadingDashboardStats } = useQuery(
-    {
-      queryKey: [
-        "dashboard-stats",
-        dateRange.from?.toISOString(),
-        dateRange.to?.toISOString(),
-      ],
-      enabled: dateRange.from !== undefined && dateRange.to !== undefined,
-      queryFn: () => {
-        const params = buildDateRangeParams(dateRange, {
-          includeDefaultStart: false,
-          alignToIST: false,
-        });
-        return fetchDashboardStats(params);
-      },
-    }
-  );
+  // Use centralized stats from StatsContext - shared across all pages!
+  const { stats: dashboardStats, isLoading: isLoadingDashboardStats } = useStats();
 
   // Extract individual stats from unified response
   const questionStats = dashboardStats
