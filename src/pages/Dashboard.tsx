@@ -1,6 +1,7 @@
 import React, { useState } from "react";
 import { useQuery } from "@tanstack/react-query";
 import {
+  fetchDashboardStats,
   fetchQuestionStats,
   fetchQuestionsGraph,
   fetchSessionStats,
@@ -160,47 +161,6 @@ const Dashboard = () => {
   //   },
   // });
 
-  // Fetch feedback statistics (using consistent date logic)
-  const { data: feedbackStats, isLoading: isLoadingFeedbackStats } = useQuery({
-    queryKey: [
-      "feedback-stats",
-      dateRange.from?.toISOString(),
-      dateRange.to?.toISOString(),
-      timeGranularity,
-    ],
-    enabled: dateRange.from !== undefined && dateRange.to !== undefined,
-    queryFn: () => {
-      const params = buildDateRangeParams(dateRange, {
-        includeDefaultStart: false,
-        additionalParams: {
-          granularity: timeGranularity,
-        },
-        alignToIST: false,
-      });
-      return fetchFeedbackStats(params);
-    },
-  });
-
-  // Fetch users statistics
-  const { data: userStats, isLoading: isLoadingUserStats } = useQuery({
-    queryKey: [
-      "users-stats",
-      dateRange.from?.toISOString(),
-      dateRange.to?.toISOString(),
-      timeGranularity,
-    ],
-    enabled: dateRange.from !== undefined && dateRange.to !== undefined,
-    queryFn: () => {
-      const params = buildDateRangeParams(dateRange, {
-        includeDefaultStart: false,
-        additionalParams: {
-          granularity: timeGranularity,
-        },
-      });
-      return fetchUserStats(params);
-    },
-  });
-
   // Fetch feedback graph data for time-series visualization
   // const { data: feedbackGraphData, isLoading: isLoadingFeedbackGraph } =
   //   useQuery({
@@ -224,13 +184,13 @@ const Dashboard = () => {
 
   const isLoading =
     isLoadingQuestionStats ||
-    // isLoadingQuestionsGraph ||
     isLoadingSessionStats ||
+    // isLoadingQuestionsGraph ||
     // isLoadingSessionsGraph ||
-    isLoadingFeedbackStats ||
     // isLoadingFeedbackGraph ||
     // isLoadingUsersGraph ||
-    isLoadingUserStats;
+    isLoadingUserStats ||
+    isLoadingFeedbackStats;
 
   // Helper function to get the appropriate x-axis key based on granularity
   const getXAxisKey = () => {
@@ -338,14 +298,26 @@ const Dashboard = () => {
           <div className="flex items-center gap-4">
             <div className="flex items-center gap-2">
               <span className="text-sm text-muted-foreground">Data:</span>
-              <ToggleGroup type="single" value={timeGranularity} onValueChange={(value) => value && setTimeGranularity(value as "daily" | "hourly")}>
+              <ToggleGroup
+                type="single"
+                value={timeGranularity}
+                onValueChange={(value) =>
+                  value && setTimeGranularity(value as "daily" | "hourly")
+                }
+              >
                 <ToggleGroupItem value="daily">Daily</ToggleGroupItem>
                 <ToggleGroupItem value="hourly">Hourly</ToggleGroupItem>
               </ToggleGroup>
             </div>
             <div className="flex items-center gap-2">
               <span className="text-sm text-muted-foreground">Chart:</span>
-              <ToggleGroup type="single" value={chartType} onValueChange={(value) => value && setChartType(value as "line" | "bar")}>
+              <ToggleGroup
+                type="single"
+                value={chartType}
+                onValueChange={(value) =>
+                  value && setChartType(value as "line" | "bar")
+                }
+              >
                 <ToggleGroupItem value="line">
                   <LineChart size={16} className="mr-1" /> Line
                 </ToggleGroupItem>
@@ -360,13 +332,13 @@ const Dashboard = () => {
 
       {/* <div className="grid gap-4">
         <Tabs defaultValue="users">
-          <TabsList>
+          {/* <TabsList>
             <TabsTrigger value="users">Users</TabsTrigger>
             <TabsTrigger value="questions">Questions</TabsTrigger>
             <TabsTrigger value="sessions">Sessions</TabsTrigger>
             <TabsTrigger value="feedback">Feedback</TabsTrigger>
-          </TabsList>
-         <TabsContent value="users">
+          </TabsList> */}
+          {/* <TabsContent value="users">
             <TrendChart
               title="User Activity"
               description={`${
@@ -404,19 +376,15 @@ const Dashboard = () => {
               type={chartType}
               xAxisKey={getXAxisKey()}
             />
-          </TabsContent> 
-           <TabsContent value="questions">
+          </TabsContent> */}
+          {/* <TabsContent value="questions">
             <div className="space-y-4">
               <TrendChart
                 title="Questions Asked Over Time"
                 description={`${
                   timeGranularity === "daily" ? "Daily" : "Hourly"
                 } questions count (IST) - Powered by Questions Graph API`}
-                data={
-                  questionsGraphData?.data ||
-                  questionStats?.dailyActivity ||
-                  transformHourlyData(questionStats?.hourlyDistribution || [])
-                }
+                data={questionsGraphData?.data || []}
                 dataKey="questionsCount"
                 type={chartType}
                 color="hsl(var(--primary))"
@@ -493,19 +461,15 @@ const Dashboard = () => {
                 </Card>
               )}
             </div>
-          </TabsContent> 
-           <TabsContent value="sessions">
+          </TabsContent> */}
+          {/* <TabsContent value="sessions">
             <div className="space-y-4">
               <TrendChart
                 title="Session Activity Over Time"
                 description={`${
                   timeGranularity === "daily" ? "Daily" : "Hourly"
                 } sessions count (IST) - Powered by Sessions Graph API`}
-                data={
-                  sessionsGraphData?.data ||
-                  sessionStats?.dailyActivity ||
-                  transformHourlyData(sessionStats?.dailyActivity || [])
-                }
+                data={sessionsGraphData?.data || []}
                 dataKey="sessionsCount"
                 type={chartType}
                 color="#10b981"
@@ -582,8 +546,8 @@ const Dashboard = () => {
                 </Card>
               )}
             </div>
-          </TabsContent> 
-          <TabsContent value="feedback">
+          </TabsContent> */}
+          {/* <TabsContent value="feedback">
             <div className="space-y-4">
               <TrendChart
                 title="Feedback Activity Over Time"
@@ -694,7 +658,7 @@ const Dashboard = () => {
                 </Card>
               )}
             </div>
-          </TabsContent>
+          </TabsContent> */}
         </Tabs>
       </div> */}
     </div>

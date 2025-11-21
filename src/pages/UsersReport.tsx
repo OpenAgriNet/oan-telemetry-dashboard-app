@@ -128,7 +128,6 @@ const UsersReport = () => {
       isBackendSortable(sortConfig.key) ? sortConfig.key : 'client-sort',
       isBackendSortable(sortConfig.key) ? sortConfig.direction : 'client-direction'
     ],
-    enabled: dateRange.from !== undefined && dateRange.to !== undefined,
     queryFn: async () => {
       const params: UserPaginationParams = {
         page,
@@ -200,11 +199,9 @@ const UsersReport = () => {
       totalFeedback: 0,
       totalLikes: 0,
       totalDislikes: 0,
-      avgSessionDuration: 0,
       newUsers: 0,
       returningUsers: 0,
-      activeCumulative: 0,
-      dailyActivity: []
+      activeCumulative: 0
     } as UserStatsResponse,
     isLoading: isStatsLoading,
     error: statsError,
@@ -214,22 +211,15 @@ const UsersReport = () => {
       dateRange.from?.toISOString() || "all-time-start",
       dateRange.to?.toISOString() || "all-time-end",
     ],
-    enabled: dateRange.from !== undefined && dateRange.to !== undefined,
     queryFn: async () => {
-      // Use unified date range utility with default start date for user stats
+      // Use unified date range utility - no default start date to match dashboard
       const params = buildDateRangeParams(dateRange, {
-        includeDefaultStart: true,
-        defaultStartDate: '2020-01-01'
+        includeDefaultStart: false,
+        alignToIST: false
       });
 
       return await fetchUserStats(params);
     },
-    refetchOnWindowFocus: false,
-    staleTime: 30 * 1000,
-    gcTime: 5 * 60 * 1000,
-    refetchOnMount: false,
-    retry: 1,
-    retryDelay: (attemptIndex) => Math.min(1000 * 2 ** attemptIndex, 30000),
   });
 
   // Removed unused all-users-for-filter query to prevent extra API call on init
@@ -300,45 +290,7 @@ const UsersReport = () => {
       <div className="grid gap-4 md:grid-cols-3">
         <Card>
           <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-            <CardTitle className="text-sm font-medium">New Users</CardTitle>
-            <UserPlus className="h-4 w-4 text-muted-foreground" />
-          </CardHeader>
-          <CardContent>
-            <div className="text-2xl font-bold">
-              {isStatsLoading ? (
-                <div className="h-8 w-16 bg-muted animate-pulse rounded" />
-              ) : (
-                userStats.newUsers.toLocaleString()
-              )}
-            </div>
-            <p className="text-xs text-muted-foreground">
-            first-time active users
-            </p>
-          </CardContent>
-        </Card>
-
-        <Card>
-          <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-            <CardTitle className="text-sm font-medium">Returning Users</CardTitle>
-            <UserCheck className="h-4 w-4 text-muted-foreground" />
-          </CardHeader>
-          <CardContent>
-            <div className="text-2xl font-bold">
-              {isStatsLoading ? (
-                <div className="h-8 w-16 bg-muted animate-pulse rounded" />
-              ) : (
-                userStats.returningUsers.toLocaleString()
-              )}
-            </div>
-            <p className="text-xs text-muted-foreground">
-              active users with prior activity
-            </p>
-          </CardContent>
-        </Card>
-
-        <Card>
-          <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-            <CardTitle className="text-sm font-medium">Total Active</CardTitle>
+            <CardTitle className="text-sm font-medium">Total Unique Users</CardTitle>
             <Users className="h-4 w-4 text-muted-foreground" />
           </CardHeader>
           <CardContent>
@@ -346,11 +298,11 @@ const UsersReport = () => {
               {isStatsLoading ? (
                 <div className="h-8 w-16 bg-muted animate-pulse rounded" />
               ) : (
-                userStats.activeCumulative.toLocaleString()
+                userStats.totalUsers.toLocaleString()
               )}
             </div>
             <p className="text-xs text-muted-foreground">
-              unique active users (New + Returning)
+              unique active users in selected period
             </p>
           </CardContent>
         </Card>

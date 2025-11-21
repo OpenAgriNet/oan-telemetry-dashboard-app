@@ -2,6 +2,7 @@ import React, { useState } from "react";
 import { useQuery } from "@tanstack/react-query";
 import {
   fetchQuestions,
+  fetchQuestionStats,
   fetchUsers,
   fetchSessions,
   type QuestionPaginationParams,
@@ -10,6 +11,7 @@ import {
   type Question
 } from "@/services/api";
 import TablePagination from "@/components/TablePagination";
+import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import {
   Select,
   SelectContent,
@@ -27,9 +29,9 @@ import {
   TableHeader,
   TableRow,
 } from "@/components/ui/table";
-import { Mic, Search, ThumbsUp, ThumbsDown, RefreshCw, AlertCircle, Download } from "lucide-react";
+import { Mic, Search, ThumbsUp, ThumbsDown, RefreshCw, AlertCircle, Download, MessageSquare } from "lucide-react";
 import { useDateFilter } from "@/contexts/DateFilterContext";
-import { exportToCSV, formatUtcDateWithPMCorrection, formatUTCToIST } from "@/lib/utils";
+import { exportToCSV, formatUtcDateWithPMCorrection, formatUTCToIST, buildDateRangeParams } from "@/lib/utils";
 import { useNavigate, useSearchParams } from "react-router-dom";
 const QuestionsReport = () => {
   const { dateRange } = useDateFilter();
@@ -89,6 +91,21 @@ const QuestionsReport = () => {
   const handleQuestionClick = (id: string) => {
     navigate(`/questions/${id}`);
   };
+
+  // Fetch question statistics using dedicated stats endpoint
+  const { data: questionStats = { totalQuestions: 0 }, isLoading: isLoadingStats } = useQuery({
+    queryKey: ['question-stats', dateRange.from?.toISOString(), dateRange.to?.toISOString()],
+    queryFn: async () => {
+      // Use unified date range utility - no default start date to match dashboard
+      const params = buildDateRangeParams(dateRange, {
+        includeDefaultStart: false,
+        alignToIST: false
+      });
+
+      return await fetchQuestionStats(params);
+    },
+    staleTime: 2 * 60 * 1000, // Cache for 2 minutes
+  });
 
   // Fetch users with search parameter if needed
   const { data: usersResponse = { data: [] }, isLoading: isLoadingUsers } = useQuery({
@@ -333,6 +350,28 @@ const QuestionsReport = () => {
             Refresh
           </Button>
         </div>
+      </div>
+
+      {/* Question Stats Metric Card */}
+      <div className="grid gap-4 md:grid-cols-3">
+        <Card>
+          <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
+            <CardTitle className="text-sm font-medium">Total Questions</CardTitle>
+            <MessageSquare className="h-4 w-4 text-muted-foreground" />
+          </CardHeader>
+          <CardContent>
+            <div className="text-2xl font-bold">
+              {isLoadingStats ? (
+                <div className="h-8 w-16 bg-muted animate-pulse rounded" />
+              ) : (
+                questionStats.totalQuestions.toLocaleString()
+              )}
+            </div>
+            <p className="text-xs text-muted-foreground">
+              {dateRange.from || dateRange.to ? "Filtered period" : "All time"}
+            </p>
+          </CardContent>
+        </Card>
       </div>
 
       <div className="flex gap-4 items-center justify-between">

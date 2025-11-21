@@ -3,6 +3,7 @@ import { useQuery } from "@tanstack/react-query";
 import { 
   fetchSessions, 
   fetchBasicSessionStats,
+  fetchSessionStats,
   fetchUsers, 
   type SessionPaginationParams, 
   type UserPaginationParams,
@@ -10,6 +11,7 @@ import {
 } from "@/services/api";
 import { useNavigate, useSearchParams } from "react-router-dom";
 import { useDateFilter } from "@/contexts/DateFilterContext";
+import { buildDateRangeParams } from "@/lib/utils";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 
 import {
@@ -85,49 +87,17 @@ const SessionsReport = () => {
     staleTime: 5 * 60 * 1000, // Cache for 5 minutes
   });
 
-  // Fetch session statistics
-  const { data: sessionStats = { totalSessions: 0, totalQuestions: 0, totalUsers: 0 }, isLoading: isLoadingStats } = useQuery({
-    queryKey: ['session-stats', selectedUser, dateRange.from?.toISOString(), dateRange.to?.toISOString()],
-    enabled: dateRange.from !== undefined && dateRange.to !== undefined,
+  // Fetch session statistics using dedicated stats endpoint
+  const { data: sessionStats = { totalSessions: 0 }, isLoading: isLoadingStats } = useQuery({
+    queryKey: ['session-stats', dateRange.from?.toISOString(), dateRange.to?.toISOString()],
     queryFn: async () => {
-      const statsParams: SessionPaginationParams = {
-        page: 1,
-        limit: 10000, // Large limit to get comprehensive stats
-      };
+      // Use unified date range utility - no default start date to match dashboard
+      const params = buildDateRangeParams(dateRange, {
+        includeDefaultStart: false,
+        alignToIST: false
+      });
 
-      // Add user filter for stats
-      if (selectedUser !== 'all') {
-        statsParams.search = selectedUser; // Use search to filter by username
-      }
-
-      // Add date range filter for stats
-      if (dateRange.from) {
-        const fromDate = new Date(dateRange.from);
-        fromDate.setHours(0, 0, 0, 0);
-        statsParams.startDate = fromDate.toISOString();
-      }
-
-      if (dateRange.to) {
-        const toDate = new Date(dateRange.to);
-        toDate.setHours(23, 59, 59, 999);
-        statsParams.endDate = toDate.toISOString();
-      } else if (dateRange.from) {
-        const toDate = new Date(dateRange.from);
-        toDate.setHours(23, 59, 59, 999);
-        statsParams.endDate = toDate.toISOString();
-      }
-
-      const result = await fetchSessions(statsParams);
-      
-      // Calculate statistics from the result
-      const totalQuestions = result.data.reduce((sum, session) => sum + session.questionCount, 0);
-      const uniqueUsers = new Set(result.data.map(session => session.username)).size;
-
-      return {
-        totalSessions: result.total,
-        totalQuestions,
-        totalUsers: uniqueUsers
-      };
+      return await fetchSessionStats(params);
     },
     staleTime: 2 * 60 * 1000, // Cache for 2 minutes
   });

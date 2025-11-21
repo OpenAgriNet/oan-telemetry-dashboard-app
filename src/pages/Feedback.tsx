@@ -12,6 +12,7 @@ import { useDateFilter } from "@/contexts/DateFilterContext";
 import { 
   fetchFeedback, 
   fetchFeedbackStats, 
+  fetchComprehensiveFeedbackStats,
   fetchUsers, 
   type PaginationParams, 
   type UserPaginationParams,
@@ -19,7 +20,7 @@ import {
 } from "@/services/api";
 import { Download } from "lucide-react";
 import TablePagination from "@/components/TablePagination";
-import { exportToCSV } from "@/lib/utils";
+import { exportToCSV, buildDateRangeParams } from "@/lib/utils";
 
 const FeedbackPage = () => {
   const [searchParams, setSearchParams] = useSearchParams();
@@ -85,30 +86,17 @@ const FeedbackPage = () => {
     staleTime: 5 * 60 * 1000, // Cache for 5 minutes
   });
 
-  // Fetch feedback statistics
+  // Fetch feedback statistics using dedicated stats endpoint
   const { data: feedbackStats = { totalFeedback: 0, totalLikes: 0, totalDislikes: 0 }, isLoading: isLoadingStats } = useQuery({
     queryKey: ['feedback-stats', dateRange.from?.toISOString(), dateRange.to?.toISOString()],
     queryFn: async () => {
-      const statsParams: PaginationParams = {};
+      // Use unified date range utility - no default start date to match dashboard
+      const params = buildDateRangeParams(dateRange, {
+        includeDefaultStart: false,
+        alignToIST: false
+      });
 
-      // Add date range filter for stats
-      if (dateRange.from) {
-        const fromDate = new Date(dateRange.from);
-        fromDate.setHours(0, 0, 0, 0);
-        statsParams.startDate = fromDate.toISOString();
-      }
-
-      if (dateRange.to) {
-        const toDate = new Date(dateRange.to);
-        toDate.setHours(23, 59, 59, 999);
-        statsParams.endDate = toDate.toISOString();
-      } else if (dateRange.from) {
-        const toDate = new Date(dateRange.from);
-        toDate.setHours(23, 59, 59, 999);
-        statsParams.endDate = toDate.toISOString();
-      }
-
-      return fetchFeedbackStats(statsParams);
+      return await fetchComprehensiveFeedbackStats(params);
     },
     staleTime: 2 * 60 * 1000, // Cache for 2 minutes
   });
