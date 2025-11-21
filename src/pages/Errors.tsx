@@ -1,8 +1,21 @@
-import React, { useState } from "react";
+import React, { useEffect, useState } from "react";
 import { Link } from "react-router-dom";
 import { useQuery } from "@tanstack/react-query";
-import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
-import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
+import {
+  Table,
+  TableBody,
+  TableCell,
+  TableHead,
+  TableHeader,
+  TableRow,
+} from "@/components/ui/table";
+import {
+  Card,
+  CardContent,
+  CardDescription,
+  CardHeader,
+  CardTitle,
+} from "@/components/ui/card";
 import { AlertTriangle, Search, RefreshCw, Download, Bug } from "lucide-react";
 import { format } from "date-fns";
 import { Input } from "@/components/ui/input";
@@ -11,12 +24,12 @@ import { Badge } from "@/components/ui/badge";
 import { useDateFilter } from "@/contexts/DateFilterContext";
 import { useKeycloak } from "@react-keycloak/web";
 import { isSuperAdmin } from "@/utils/roleUtils";
-import { 
-  fetchErrors, 
-  fetchErrorStats, 
-  type ErrorPaginationParams, 
+import {
+  fetchErrors,
+  fetchErrorStats,
+  type ErrorPaginationParams,
   type PaginationParams,
-  fetchAllPages
+  fetchAllPages,
 } from "@/services/api";
 import TablePagination from "@/components/TablePagination";
 import { exportToCSV } from "@/lib/utils";
@@ -27,15 +40,24 @@ const ErrorsPage = () => {
   const { dateRange } = useDateFilter();
   const [page, setPage] = useState(1);
   const pageSize = 10;
-  const [sortConfig, setSortConfig] = useState({ key: 'date', direction: 'desc' });
+  const [sortConfig, setSortConfig] = useState({
+    key: "date",
+    direction: "desc",
+  });
 
   // Reset page when filters change
   const resetPage = () => setPage(1);
 
+  const [pendingSearch, setPendingSearch] = useState("");
   const handleSearchChange = (value: string) => {
-    setSearchTerm(value);
+    setPendingSearch(value);
     resetPage();
   };
+
+  useEffect(() => {
+    const id = setTimeout(() => setSearchTerm(pendingSearch), 500);
+    return () => clearTimeout(id);
+  }, [pendingSearch]);
 
   const handleResetFilters = () => {
     setSearchTerm("");
@@ -45,61 +67,67 @@ const ErrorsPage = () => {
   const handleSort = (key: string) => {
     setSortConfig((current) => ({
       key,
-      direction: current.key === key && current.direction === 'asc' ? 'desc' : 'asc'
+      direction:
+        current.key === key && current.direction === "asc" ? "desc" : "asc",
     }));
   };
 
   const SortIndicator = ({ columnKey }: { columnKey: string }) => {
     if (sortConfig.key === columnKey) {
-      return sortConfig.direction === 'asc' ? ' ↑' : ' ↓';
+      return sortConfig.direction === "asc" ? " ↑" : " ↓";
     }
-    return ' ↕';
+    return " ↕";
   };
 
   // Fetch error statistics
-  const { data: errorStats = { totalErrors: 0 }, isLoading: isLoadingStats } = useQuery({
-    queryKey: ['error-stats', dateRange.from?.toISOString(), dateRange.to?.toISOString()],
-    queryFn: async () => {
-      const statsParams: PaginationParams = {};
+  const { data: errorStats = { totalErrors: 0 }, isLoading: isLoadingStats } =
+    useQuery({
+      queryKey: [
+        "error-stats",
+        dateRange.from?.toISOString(),
+        dateRange.to?.toISOString(),
+      ],
+      queryFn: async () => {
+        const statsParams: PaginationParams = {};
 
-      // Add date range filter for stats
-      if (dateRange.from) {
-        const fromDate = new Date(dateRange.from);
-        fromDate.setHours(0, 0, 0, 0);
-        statsParams.startDate = fromDate.toISOString();
-      }
+        // Add date range filter for stats
+        if (dateRange.from) {
+          const fromDate = new Date(dateRange.from);
+          fromDate.setHours(0, 0, 0, 0);
+          statsParams.startDate = fromDate.toISOString();
+        }
 
-      if (dateRange.to) {
-        const toDate = new Date(dateRange.to);
-        toDate.setHours(23, 59, 59, 999);
-        statsParams.endDate = toDate.toISOString();
-      } else if (dateRange.from) {
-        const toDate = new Date(dateRange.from);
-        toDate.setHours(23, 59, 59, 999);
-        statsParams.endDate = toDate.toISOString();
-      }
+        if (dateRange.to) {
+          const toDate = new Date(dateRange.to);
+          toDate.setHours(23, 59, 59, 999);
+          statsParams.endDate = toDate.toISOString();
+        } else if (dateRange.from) {
+          const toDate = new Date(dateRange.from);
+          toDate.setHours(23, 59, 59, 999);
+          statsParams.endDate = toDate.toISOString();
+        }
 
-      return fetchErrorStats(statsParams);
-    },
-    staleTime: 2 * 60 * 1000, // Cache for 2 minutes
-  });
+        return fetchErrorStats(statsParams);
+      },
+      staleTime: 2 * 60 * 1000, // Cache for 2 minutes
+    });
 
   // Fetch errors with server-side pagination and filtering
-  const { 
-    data: errorsResponse = { data: [], total: 0, totalPages: 0 }, 
+  const {
+    data: errorsResponse = { data: [], total: 0, totalPages: 0 },
     isLoading,
     error,
-    refetch 
+    refetch,
   } = useQuery({
     queryKey: [
-      'errors', 
-      page, 
-      pageSize, 
-      searchTerm, 
-      dateRange.from?.toISOString(), 
+      "errors",
+      page,
+      pageSize,
+      searchTerm,
+      dateRange.from?.toISOString(),
       dateRange.to?.toISOString(),
       sortConfig.key,
-      sortConfig.direction
+      sortConfig.direction,
     ],
     queryFn: async () => {
       const params: ErrorPaginationParams = {
@@ -129,19 +157,19 @@ const ErrorsPage = () => {
         params.endDate = toDate.toISOString();
       }
 
-      console.log('Fetching errors with params:', params);
+      console.log("Fetching errors with params:", params);
       const result = await fetchErrors(params);
-      
+
       // Client-side sorting
       const sortedData = [...result.data].sort((a, b) => {
-        let aValue = a[sortConfig.key as keyof typeof a] ?? '';
-        let bValue = b[sortConfig.key as keyof typeof b] ?? '';
-        if (sortConfig.key === 'date') {
+        let aValue = a[sortConfig.key as keyof typeof a] ?? "";
+        let bValue = b[sortConfig.key as keyof typeof b] ?? "";
+        if (sortConfig.key === "date") {
           aValue = new Date(String(aValue)).getTime();
           bValue = new Date(String(bValue)).getTime();
         }
-        if (aValue < bValue) return sortConfig.direction === 'asc' ? -1 : 1;
-        if (aValue > bValue) return sortConfig.direction === 'asc' ? 1 : -1;
+        if (aValue < bValue) return sortConfig.direction === "asc" ? -1 : 1;
+        if (aValue > bValue) return sortConfig.direction === "asc" ? 1 : -1;
         return 0;
       });
       return { ...result, data: sortedData };
@@ -158,7 +186,10 @@ const ErrorsPage = () => {
         <div className="text-center">
           <AlertTriangle className="h-12 w-12 text-destructive mx-auto mb-4" />
           <p className="text-destructive font-medium mb-2">Access Denied</p>
-          <p className="text-destructive/80 text-sm">You don't have permission to access this page. Only super-admin users can view errors.</p>
+          <p className="text-destructive/80 text-sm">
+            You don't have permission to access this page. Only super-admin
+            users can view errors.
+          </p>
         </div>
       </div>
     );
@@ -194,30 +225,34 @@ const ErrorsPage = () => {
       }
 
       const allErrors = await fetchAllPages(fetchErrors, params);
-      
-      const csvData = allErrors.map(error => ({
+
+      const csvData = allErrors.map((error) => ({
         errorId: error.id,
         errorMessage: error.errorMessage,
-        userId: error.userId || 'N/A',
-        sessionId: error.sessionId || 'N/A',
-        channel: error.channel || 'N/A',
+        userId: error.userId || "N/A",
+        sessionId: error.sessionId || "N/A",
+        channel: error.channel || "N/A",
         date: error.date,
-        time: error.time
+        time: error.time,
       }));
 
       const columns = [
-        { key: 'errorId' as const, header: 'Error ID' },
-        { key: 'errorMessage' as const, header: 'Error Message' },
-        { key: 'userId' as const, header: 'User ID' },
-        { key: 'sessionId' as const, header: 'Session ID' },
-        { key: 'channel' as const, header: 'Channel' },
-        { key: 'date' as const, header: 'Date' },
-        { key: 'time' as const, header: 'Time' }
+        { key: "errorId" as const, header: "Error ID" },
+        { key: "errorMessage" as const, header: "Error Message" },
+        { key: "userId" as const, header: "User ID" },
+        { key: "sessionId" as const, header: "Session ID" },
+        { key: "channel" as const, header: "Channel" },
+        { key: "date" as const, header: "Date" },
+        { key: "time" as const, header: "Time" },
       ];
 
-      exportToCSV(csvData, columns, `errors_${new Date().toISOString().split('T')[0]}.csv`);
+      exportToCSV(
+        csvData,
+        columns,
+        `errors_${new Date().toISOString().split("T")[0]}.csv`
+      );
     } catch (error) {
-      console.error('Error exporting CSV:', error);
+      console.error("Error exporting CSV:", error);
     }
   };
 
@@ -231,8 +266,12 @@ const ErrorsPage = () => {
         <div className="flex justify-center items-center p-8 bg-destructive/10 border border-destructive/20 rounded-lg">
           <div className="text-center">
             <AlertTriangle className="h-12 w-12 text-destructive mx-auto mb-4" />
-            <p className="text-destructive font-medium mb-2">Error loading error data</p>
-            <p className="text-destructive/80 text-sm mb-4">{(error as Error).message}</p>
+            <p className="text-destructive font-medium mb-2">
+              Error loading error data
+            </p>
+            <p className="text-destructive/80 text-sm mb-4">
+              {(error as Error).message}
+            </p>
             <Button onClick={() => refetch()} variant="outline" size="sm">
               <RefreshCw className="h-4 w-4 mr-2" />
               Retry
@@ -248,9 +287,9 @@ const ErrorsPage = () => {
       <div className="flex items-center justify-between">
         <h1 className="text-2xl font-bold tracking-tight">Error Details</h1>
         <div className="flex gap-2">
-          <Button 
-            onClick={handleExportCSV} 
-            variant="outline" 
+          <Button
+            onClick={handleExportCSV}
+            variant="outline"
             size="sm"
             disabled={isLoading || errorsResponse.data.length === 0}
           >
@@ -293,7 +332,7 @@ const ErrorsPage = () => {
                 <Search className="absolute left-2 top-2.5 h-4 w-4 text-muted-foreground" />
                 <Input
                   placeholder="Search errors, users, sessions..."
-                  value={searchTerm}
+                  value={pendingSearch}
                   onChange={(e) => handleSearchChange(e.target.value)}
                   className="pl-8"
                 />
@@ -325,11 +364,11 @@ const ErrorsPage = () => {
                 <Table>
                   <TableHeader>
                     <TableRow>
-                      <TableHead 
+                      <TableHead
                         className="cursor-pointer hover:bg-muted/50"
-                        onClick={() => handleSort('date')}
+                        onClick={() => handleSort("date")}
                       >
-                        Date{SortIndicator({ columnKey: 'date' })}
+                        Date{SortIndicator({ columnKey: "date" })}
                       </TableHead>
                       <TableHead>Error Message</TableHead>
                       <TableHead>User</TableHead>
@@ -341,7 +380,10 @@ const ErrorsPage = () => {
                   <TableBody>
                     {errorsResponse.data.length === 0 ? (
                       <TableRow>
-                        <TableCell colSpan={6} className="text-center py-8 text-muted-foreground">
+                        <TableCell
+                          colSpan={6}
+                          className="text-center py-8 text-muted-foreground"
+                        >
                           No errors found matching your criteria.
                         </TableCell>
                       </TableRow>
@@ -350,37 +392,47 @@ const ErrorsPage = () => {
                         <TableRow key={errorItem.id}>
                           <TableCell>
                             <div className="space-y-1">
-                              <div className="font-medium">{errorItem.date}</div>
-                              <div className="text-sm text-muted-foreground">{errorItem.time}</div>
+                              <div className="font-medium">
+                                {errorItem.date}
+                              </div>
+                              <div className="text-sm text-muted-foreground">
+                                {errorItem.time}
+                              </div>
                             </div>
                           </TableCell>
                           <TableCell>
                             <div className="max-w-md">
-                              <p className="truncate font-medium">{errorItem.errorMessage}</p>
+                              <p className="truncate font-medium">
+                                {errorItem.errorMessage}
+                              </p>
                             </div>
                           </TableCell>
                           <TableCell>
                             {errorItem.userId ? (
-                              <Link 
+                              <Link
                                 to={`/users?search=${errorItem.userId}`}
                                 className="text-primary hover:underline text-sm"
                               >
                                 {errorItem.userId}
                               </Link>
                             ) : (
-                              <span className="text-muted-foreground text-sm">N/A</span>
+                              <span className="text-muted-foreground text-sm">
+                                N/A
+                              </span>
                             )}
                           </TableCell>
                           <TableCell>
                             {errorItem.sessionId ? (
-                              <Link 
+                              <Link
                                 to={`/sessions/${errorItem.sessionId}`}
                                 className="text-primary hover:underline text-sm"
                               >
                                 {errorItem.sessionId.slice(0, 8)}...
                               </Link>
                             ) : (
-                              <span className="text-muted-foreground text-sm">N/A</span>
+                              <span className="text-muted-foreground text-sm">
+                                N/A
+                              </span>
                             )}
                           </TableCell>
                           <TableCell>
@@ -389,11 +441,13 @@ const ErrorsPage = () => {
                                 {errorItem.channel}
                               </Badge>
                             ) : (
-                              <span className="text-muted-foreground text-sm">N/A</span>
+                              <span className="text-muted-foreground text-sm">
+                                N/A
+                              </span>
                             )}
                           </TableCell>
                           <TableCell>
-                            <Link 
+                            <Link
                               to={`/errors/${errorItem.id}`}
                               className="inline-flex items-center justify-center rounded-md text-sm font-medium ring-offset-background transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 disabled:pointer-events-none disabled:opacity-50 border border-input bg-background hover:bg-accent hover:text-accent-foreground h-8 px-3"
                             >
@@ -423,4 +477,4 @@ const ErrorsPage = () => {
   );
 };
 
-export default ErrorsPage; 
+export default ErrorsPage;
