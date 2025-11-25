@@ -1,4 +1,4 @@
-import React, { useEffect, useState } from "react";
+import React, { useState } from "react";
 import { useQuery } from "@tanstack/react-query";
 import {
   fetchQuestions,
@@ -36,7 +36,7 @@ import {
   ThumbsDown,
   RefreshCw,
   AlertCircle,
-  MessageSquare,
+  MessageSquare, RotateCcw,
 } from "lucide-react";
 import { useDateFilter } from "@/contexts/DateFilterContext";
 import {
@@ -89,20 +89,19 @@ const QuestionsReport = () => {
 
   const [pendingSearch, setPendingSearch] = useState<string>("");
   const handleSearchQueryChange = (query: string) => {
-    // setSearchQuery(query);
     setPendingSearch(query);
-    resetPage();
   };
 
-  useEffect(() => {
-    const id = setTimeout(() => setSearchQuery(pendingSearch), 500);
-    return () => clearTimeout(id);
-  }, [pendingSearch]);
+  const handleSearch = () => {
+    setSearchQuery(pendingSearch);
+    resetPage();
+  };
 
   const handleResetFilters = () => {
     setSelectedUser("all");
     setSelectedSession("all");
     setSearchQuery("");
+    setPendingSearch("");
     const newParams = new URLSearchParams();
     newParams.set("page", "1");
     setSearchParams(newParams);
@@ -335,18 +334,29 @@ const QuestionsReport = () => {
         </Card>
       </div>
 
-      <div className="flex gap-4 items-center justify-between">
-        <div className="relative flex-1 max-w-md">
-          <Search className="absolute left-2.5 top-2.5 h-4 w-4 text-muted-foreground" />
+      <div className="flex flex-col md:flex-row gap-4">
+        <div className="relative flex-1">
+          <Search className="absolute left-2 top-2.5 h-4 w-4 text-muted-foreground" />
           <Input
             type="search"
             placeholder="Search questions..."
             className="pl-8"
             value={pendingSearch}
             onChange={(e) => handleSearchQueryChange(e.target.value)}
+            onKeyDown={(e) => {
+              if (e.key === 'Enter') {
+                handleSearch();
+              }
+            }}
             maxLength={1000}
           />
         </div>
+        <Button onClick={handleSearch} disabled={isLoading} variant="outline" size="icon" title="Search">
+          <Search className="h-4 w-4" />
+        </Button>
+        <Button onClick={handleResetFilters} variant="outline" size="icon" title="Reset Search">
+          <RotateCcw className="h-4 w-4" />
+        </Button>
       </div>
 
       <div className="border rounded-lg">

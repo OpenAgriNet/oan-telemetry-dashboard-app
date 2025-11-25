@@ -35,6 +35,7 @@ import {
   ThumbsDown,
   UserPlus,
   UserCheck,
+  RotateCcw,
 } from "lucide-react";
 import TablePagination from "@/components/TablePagination";
 import { formatUTCToIST, buildDateRangeParams } from "@/lib/utils";
@@ -75,16 +76,20 @@ const UsersReport = () => {
     resetPage();
   };
 
-  // Debounce search to reduce API calls
   const [pendingSearch, setPendingSearch] = useState<string>("");
   const handleSearchChange = (query: string) => {
     setPendingSearch(query);
+  };
+
+  const handleSearch = () => {
+    setSearchQuery(pendingSearch);
     resetPage();
   };
 
   const handleResetFilters = () => {
     setSelectedUser("all");
     setSearchQuery("");
+    setPendingSearch("");
     const newParams = new URLSearchParams();
     newParams.set("page", "1");
     setSearchParams(newParams);
@@ -218,14 +223,6 @@ const UsersReport = () => {
   // Removed unused all-users-for-filter query to prevent extra API call on init
   const paginatedUsers = usersResponse.data;
 
-  // Apply debouncing effect for search input
-  React.useEffect(() => {
-    const id = setTimeout(() => setSearchQuery(pendingSearch), 350);
-    return () => clearTimeout(id);
-  }, [pendingSearch]);
-
-  // No-op
-
   const handleApplyFilters = () => {
     refetch();
   };
@@ -320,18 +317,29 @@ const UsersReport = () => {
         </CardHeader>
         <CardContent>
           <div className="space-y-4">
-            <div className="flex gap-4 items-center justify-between">
-              <div className="relative flex-1 max-w-md">
-                <Search className="absolute left-2.5 top-2.5 h-4 w-4 text-muted-foreground" />
+            <div className="flex flex-col md:flex-row gap-4">
+              <div className="relative flex-1">
+                <Search className="absolute left-2 top-2.5 h-4 w-4 text-muted-foreground" />
                 <Input
                   type="search"
                   placeholder="Search by username..."
                   className="pl-8"
                   value={pendingSearch}
                   onChange={(e) => handleSearchChange(e.target.value)}
+                  onKeyDown={(e) => {
+                    if (e.key === 'Enter') {
+                      handleSearch();
+                    }
+                  }}
                   maxLength={1000}
                 />
               </div>
+              <Button onClick={handleSearch} disabled={isLoading} variant="outline" size="icon" title="Search">
+                <Search className="h-4 w-4" />
+              </Button>
+              <Button onClick={handleResetFilters} variant="outline" size="icon" title="Reset Search">
+                <RotateCcw className="h-4 w-4" />
+              </Button>
             </div>
 
             {isLoading ? (
