@@ -1,4 +1,4 @@
-import React, { useEffect, useState } from "react";
+import React, { useState } from "react";
 import { Link, useSearchParams } from "react-router-dom";
 import { useQuery } from "@tanstack/react-query";
 import {
@@ -23,6 +23,7 @@ import {
   Search,
   RefreshCw,
   AlertCircle,
+  RotateCcw,
 } from "lucide-react";
 import { format } from "date-fns";
 import { Input } from "@/components/ui/input";
@@ -76,13 +77,12 @@ const FeedbackPage = () => {
   const [pendingSearch, setPendingSearch] = useState("");
   const handleSearchChange = (value: string) => {
     setPendingSearch(value);
-    resetPage();
   };
 
-  useEffect(() => {
-    const id = setTimeout(() => setSearchTerm(pendingSearch), 500);
-    return () => clearTimeout(id);
-  }, [pendingSearch]);
+  const handleSearch = () => {
+    setSearchTerm(pendingSearch);
+    resetPage();
+  };
 
   const handleUserChange = (value: string) => {
     setSelectedUser(value);
@@ -91,6 +91,7 @@ const FeedbackPage = () => {
 
   const handleResetFilters = () => {
     setSearchTerm("");
+    setPendingSearch("");
     setSelectedUser("all");
     const newParams = new URLSearchParams();
     newParams.set("page", "1");
@@ -339,17 +340,28 @@ const FeedbackPage = () => {
         </CardHeader>
         <CardContent>
           <div className="space-y-4">
-            <div className="flex gap-4 items-center justify-between">
-              <div className="relative flex-1 max-w-md">
-                <Search className="h-4 w-4 absolute left-2.5 top-2.5 text-muted-foreground" />
+            <div className="flex flex-col md:flex-row gap-4">
+              <div className="relative flex-1">
+                <Search className="h-4 w-4 absolute left-2 top-2.5 text-muted-foreground" />
                 <Input
                   placeholder="Search questions, feedback or users..."
                   value={pendingSearch}
                   onChange={(e) => handleSearchChange(e.target.value)}
+                  onKeyDown={(e) => {
+                    if (e.key === 'Enter') {
+                      handleSearch();
+                    }
+                  }}
                   className="pl-8"
                   maxLength={1000}
                 />
               </div>
+              <Button onClick={handleSearch} disabled={isLoading} variant="outline" size="icon" title="Search">
+                <Search className="h-4 w-4" />
+              </Button>
+              <Button onClick={handleResetFilters} variant="outline" size="icon" title="Reset Search">
+                <RotateCcw className="h-4 w-4" />
+              </Button>
             </div>
 
             {isLoading ? (

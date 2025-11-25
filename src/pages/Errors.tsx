@@ -1,4 +1,4 @@
-import React, { useEffect, useState } from "react";
+import React, { useState } from "react";
 import { Link } from "react-router-dom";
 import { useQuery } from "@tanstack/react-query";
 import {
@@ -16,7 +16,7 @@ import {
   CardHeader,
   CardTitle,
 } from "@/components/ui/card";
-import { AlertTriangle, Search, RefreshCw, Bug } from "lucide-react";
+import { AlertTriangle, Search, RefreshCw, Bug, RotateCcw } from "lucide-react";
 import { format } from "date-fns";
 import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
@@ -49,16 +49,16 @@ const ErrorsPage = () => {
   const [pendingSearch, setPendingSearch] = useState("");
   const handleSearchChange = (value: string) => {
     setPendingSearch(value);
+  };
+
+  const handleSearch = () => {
+    setSearchTerm(pendingSearch);
     resetPage();
   };
 
-  useEffect(() => {
-    const id = setTimeout(() => setSearchTerm(pendingSearch), 500);
-    return () => clearTimeout(id);
-  }, [pendingSearch]);
-
   const handleResetFilters = () => {
     setSearchTerm("");
+    setPendingSearch("");
     setPage(1);
   };
 
@@ -276,12 +276,20 @@ const ErrorsPage = () => {
                   placeholder="Search errors, users, sessions..."
                   value={pendingSearch}
                   onChange={(e) => handleSearchChange(e.target.value)}
+                  onKeyDown={(e) => {
+                    if (e.key === 'Enter') {
+                      handleSearch();
+                    }
+                  }}
                   className="pl-8"
                 />
               </div>
             </div>
-            <Button onClick={handleResetFilters} variant="outline" size="sm">
-              Reset Search
+            <Button onClick={handleSearch} disabled={isLoading} variant="outline" size="icon" title="Search">
+              <Search className="h-4 w-4" />
+            </Button>
+            <Button onClick={handleResetFilters} variant="outline" size="icon" title="Reset Search">
+              <RotateCcw className="h-4 w-4" />
             </Button>
           </div>
         </CardContent>
