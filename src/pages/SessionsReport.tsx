@@ -12,7 +12,13 @@ import { useStats } from "@/contexts/StatsContext";
 import { useNavigate, useSearchParams } from "react-router-dom";
 import { useDateFilter } from "@/contexts/DateFilterContext";
 import { buildDateRangeParams } from "@/lib/utils";
-import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
+import {
+  Card,
+  CardContent,
+  CardDescription,
+  CardHeader,
+  CardTitle,
+} from "@/components/ui/card";
 
 import {
   Select,
@@ -40,10 +46,7 @@ import {
   Activity,
 } from "lucide-react";
 import TablePagination from "@/components/TablePagination";
-import {
-  formatUtcDateWithPMCorrection,
-  formatUTCToIST,
-} from "@/lib/utils";
+import { formatUtcDateWithPMCorrection, formatUTCToIST } from "@/lib/utils";
 
 const SessionsReport = () => {
   const navigate = useNavigate();
@@ -99,17 +102,17 @@ const SessionsReport = () => {
   };
 
   // Fetch users for the filter dropdown
-  const { data: usersResponse = { data: [] }, isLoading: isLoadingUsers } =
-    useQuery({
-      queryKey: ["users-for-sessions-filter"],
-      queryFn: () => fetchUsers({ limit: 1000 } as UserPaginationParams),
-      staleTime: 5 * 60 * 1000, // Cache for 5 minutes
-    });
+  // const { data: usersResponse = { data: [] }, isLoading: isLoadingUsers } =
+  //   useQuery({
+  //     queryKey: ["users-for-sessions-filter"],
+  //     queryFn: () => fetchUsers({ limit: 1000 } as UserPaginationParams),
+  //     staleTime: 5 * 60 * 1000, // Cache for 5 minutes
+  //   });
 
   // Use centralized stats from StatsContext - no redundant API call!
   const { stats, isLoading: isLoadingStats } = useStats();
   const sessionStats = {
-    totalSessions: stats?.totalSessions ?? 0
+    totalSessions: stats?.totalSessions ?? 0,
   };
 
   // Fetch sessions with server-side pagination and filtering
@@ -189,11 +192,16 @@ const SessionsReport = () => {
       return { ...result, data: sortedData };
     },
     refetchOnWindowFocus: false,
-    retry: 3,
+    retry: 2,
     retryDelay: (attemptIndex) => Math.min(1000 * 2 ** attemptIndex, 30000),
+    // Keep old page data while fetching the next
+    placeholderData: (prev) => prev,
+    staleTime: 30 * 1000,
+    gcTime: 5 * 60 * 1000,
+    refetchOnMount: false,
   });
 
-  const users = usersResponse.data;
+  // const users = usersResponse.data;
 
   const handleSessionClick = (sessionId: string) => {
     navigate(`/sessions/${sessionId}`);

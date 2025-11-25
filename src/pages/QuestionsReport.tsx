@@ -29,9 +29,21 @@ import {
   TableHeader,
   TableRow,
 } from "@/components/ui/table";
-import { Mic, Search, ThumbsUp, ThumbsDown, RefreshCw, AlertCircle, MessageSquare } from "lucide-react";
+import {
+  Mic,
+  Search,
+  ThumbsUp,
+  ThumbsDown,
+  RefreshCw,
+  AlertCircle,
+  MessageSquare,
+} from "lucide-react";
 import { useDateFilter } from "@/contexts/DateFilterContext";
-import { formatUtcDateWithPMCorrection, formatUTCToIST, buildDateRangeParams } from "@/lib/utils";
+import {
+  formatUtcDateWithPMCorrection,
+  formatUTCToIST,
+  buildDateRangeParams,
+} from "@/lib/utils";
 import { useNavigate, useSearchParams } from "react-router-dom";
 import { set } from "date-fns";
 const QuestionsReport = () => {
@@ -105,37 +117,37 @@ const QuestionsReport = () => {
   // Use centralized stats from StatsContext - no redundant API call!
   const { stats, isLoading: isLoadingStats } = useStats();
   const questionStats = {
-    totalQuestions: stats?.totalQuestions ?? 0
+    totalQuestions: stats?.totalQuestions ?? 0,
   };
 
   // Fetch users with search parameter if needed
-  const { data: usersResponse = { data: [] }, isLoading: isLoadingUsers } =
-    useQuery({
-      queryKey: ["users-for-filter"],
-      queryFn: () => fetchUsers({ limit: 1000 } as UserPaginationParams),
-      staleTime: 5 * 60 * 1000, // Cache for 5 minutes
-    });
+  // const { data: usersResponse = { data: [] }, isLoading: isLoadingUsers } =
+  //   useQuery({
+  //     queryKey: ["users-for-filter"],
+  //     queryFn: () => fetchUsers({ limit: 1000 } as UserPaginationParams),
+  //     staleTime: 5 * 60 * 1000, // Cache for 5 minutes
+  //   });
 
   // Fetch sessions with search parameter based on selected user
-  const {
-    data: sessionsResponse = { data: [] },
-    isLoading: isLoadingSessions,
-  } = useQuery({
-    queryKey: ["sessions-for-filter", selectedUser],
-    queryFn: () => {
-      const params: SessionPaginationParams = {
-        limit: 1000,
-      };
+  // const {
+  //   data: sessionsResponse = { data: [] },
+  //   isLoading: isLoadingSessions,
+  // } = useQuery({
+  //   queryKey: ["sessions-for-filter", selectedUser],
+  //   queryFn: () => {
+  //     const params: SessionPaginationParams = {
+  //       limit: 1000,
+  //     };
 
-      // Use search parameter to filter sessions by selected user
-      if (selectedUser !== "all") {
-        params.search = selectedUser;
-      }
+  //     // Use search parameter to filter sessions by selected user
+  //     if (selectedUser !== "all") {
+  //       params.search = selectedUser;
+  //     }
 
-      return fetchSessions(params);
-    },
-    staleTime: 5 * 60 * 1000, // Cache for 5 minutes
-  });
+  //     return fetchSessions(params);
+  //   },
+  //   staleTime: 5 * 60 * 1000, // Cache for 5 minutes
+  // });
 
   // Main questions query with all filters
   const {
@@ -224,12 +236,17 @@ const QuestionsReport = () => {
       return { ...response, data: sortedData };
     },
     refetchOnWindowFocus: false,
-    retry: 3,
+    retry: 2,
     retryDelay: (attemptIndex) => Math.min(1000 * 2 ** attemptIndex, 30000),
+    // Keep old page data while fetching the next
+    placeholderData: (prev) => prev,
+    staleTime: 30 * 1000,
+    gcTime: 5 * 60 * 1000,
+    refetchOnMount: false,
   });
 
-  const users = usersResponse.data;
-  const sessions = sessionsResponse.data;
+  // const users = usersResponse.data;
+  // const sessions = sessionsResponse.data;
 
   const handleApplyFilters = () => {
     refetch();
@@ -298,7 +315,9 @@ const QuestionsReport = () => {
       <div className="grid gap-4 md:grid-cols-3">
         <Card>
           <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-            <CardTitle className="text-sm font-medium">Total Questions</CardTitle>
+            <CardTitle className="text-sm font-medium">
+              Total Questions
+            </CardTitle>
             <MessageSquare className="h-4 w-4 text-muted-foreground" />
           </CardHeader>
           <CardContent>

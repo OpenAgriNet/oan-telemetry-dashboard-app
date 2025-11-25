@@ -108,6 +108,13 @@ const ErrorsPage = () => {
         return fetchErrorStats(statsParams);
       },
       staleTime: 2 * 60 * 1000, // Cache for 2 minutes
+      refetchOnWindowFocus: false,
+      retry: 2,
+      retryDelay: (attemptIndex) => Math.min(1000 * 2 ** attemptIndex, 30000),
+      // Keep old page data while fetching the next
+      placeholderData: (prev) => prev,
+      gcTime: 5 * 60 * 1000,
+      refetchOnMount: false,
     });
 
   // Fetch errors with server-side pagination and filtering
@@ -173,8 +180,13 @@ const ErrorsPage = () => {
       return { ...result, data: sortedData };
     },
     refetchOnWindowFocus: false,
-    retry: 3,
+    retry: 2,
     retryDelay: (attemptIndex) => Math.min(1000 * 2 ** attemptIndex, 30000),
+    // Keep old page data while fetching the next
+    placeholderData: (prev) => prev,
+    staleTime: 30 * 1000,
+    gcTime: 5 * 60 * 1000,
+    refetchOnMount: false,
   });
 
   // Check if user has super-admin role (after all hooks)
