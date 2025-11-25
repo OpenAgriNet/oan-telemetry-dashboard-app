@@ -36,7 +36,6 @@ import {
   SelectValue,
 } from "@/components/ui/select";
 import { useDateFilter } from "@/contexts/DateFilterContext";
-import { useStats } from "@/contexts/StatsContext";
 import {
   fetchFeedback,
   fetchUsers,
@@ -121,17 +120,9 @@ const FeedbackPage = () => {
   //     staleTime: 5 * 60 * 1000, // Cache for 5 minutes
   //   });
 
-  // Use centralized stats from StatsContext - no redundant API call!
-  const { stats, isLoading: isLoadingStats } = useStats();
-  const feedbackStats = {
-    totalFeedback: stats?.totalFeedback ?? 0,
-    totalLikes: stats?.totalLikes ?? 0,
-    totalDislikes: stats?.totalDislikes ?? 0,
-  };
-
   // Fetch feedback with server-side pagination and filtering
   const {
-    data: feedbackResponse = { data: [], total: 0, totalPages: 0 },
+    data: feedbackResponse = { data: [], total: 0, totalPages: 0, totalLikes: 0, totalDislikes: 0 },
     isLoading,
     error,
     refetch,
@@ -202,6 +193,13 @@ const FeedbackPage = () => {
     gcTime: 5 * 60 * 1000,
     refetchOnMount: false,
   });
+
+  const feedbackStats = {
+    totalFeedback: feedbackResponse.total,
+    totalLikes: feedbackResponse.totalLikes ?? 0,
+    totalDislikes: feedbackResponse.totalDislikes ?? 0,
+  };
+  const isLoadingStats = isLoading;
 
   // const users = usersResponse.data;
 

@@ -89,10 +89,7 @@ const Dashboard = () => {
         dateRange.to?.toISOString(),
         timeGranularity,
       ],
-      enabled:
-        dateRange.from !== undefined &&
-        dateRange.to !== undefined &&
-        currentTab === "questions",
+      enabled: dateRange.from !== undefined && dateRange.to !== undefined,
       queryFn: () => {
         const params = buildDateRangeParams(dateRange, {
           includeDefaultStart: false,
@@ -103,6 +100,8 @@ const Dashboard = () => {
         });
         return fetchQuestionsGraph(params);
       },
+      staleTime: 2 * 60 * 1000,
+      gcTime: 5 * 60 * 1000,
     });
 
   // Fetch sessions graph data for time-series visualization
@@ -114,10 +113,7 @@ const Dashboard = () => {
         dateRange.to?.toISOString(),
         timeGranularity,
       ],
-      enabled:
-        dateRange.from !== undefined &&
-        dateRange.to !== undefined &&
-        currentTab === "sessions",
+      enabled: dateRange.from !== undefined && dateRange.to !== undefined,
       queryFn: () => {
         const params = buildDateRangeParams(dateRange, {
           includeDefaultStart: false,
@@ -128,6 +124,8 @@ const Dashboard = () => {
         });
         return fetchSessionsGraph(params);
       },
+      staleTime: 2 * 60 * 1000,
+      gcTime: 5 * 60 * 1000,
     });
 
   // Fetch users graph data for time-series visualization
@@ -138,10 +136,7 @@ const Dashboard = () => {
       dateRange.to?.toISOString(),
       timeGranularity,
     ],
-    enabled:
-      dateRange.from !== undefined &&
-      dateRange.to !== undefined &&
-      currentTab === "users",
+    enabled: dateRange.from !== undefined && dateRange.to !== undefined,
     queryFn: () => {
       const params = buildDateRangeParams(dateRange, {
         includeDefaultStart: false,
@@ -152,6 +147,8 @@ const Dashboard = () => {
       });
       return fetchUsersGraph(params);
     },
+    staleTime: 2 * 60 * 1000,
+    gcTime: 5 * 60 * 1000,
   });
 
   // Fetch feedback graph data for time-series visualization
@@ -163,10 +160,7 @@ const Dashboard = () => {
         dateRange.to?.toISOString(),
         timeGranularity,
       ],
-      enabled:
-        dateRange.from !== undefined &&
-        dateRange.to !== undefined &&
-        currentTab === "feedback",
+      enabled: dateRange.from !== undefined && dateRange.to !== undefined,
       queryFn: () => {
         const params = buildDateRangeParams(dateRange, {
           includeDefaultStart: false,
@@ -176,6 +170,8 @@ const Dashboard = () => {
         });
         return fetchFeedbackGraph(params);
       },
+      staleTime: 2 * 60 * 1000,
+      gcTime: 5 * 60 * 1000,
     });
 
   const isLoading =
@@ -324,27 +320,18 @@ const Dashboard = () => {
       </Card>
 
       <div className="grid gap-4">
-        <Tabs defaultValue="users">
+        <Tabs value={currentTab} onValueChange={(value) => setCurrentTab(value as typeof currentTab)}>
           <TabsList>
-            <TabsTrigger onClick={() => setCurrentTab("users")} value="users">
+            <TabsTrigger value="users">
               Users
             </TabsTrigger>
-            <TabsTrigger
-              onClick={() => setCurrentTab("questions")}
-              value="questions"
-            >
+            <TabsTrigger value="questions">
               Questions
             </TabsTrigger>
-            <TabsTrigger
-              onClick={() => setCurrentTab("sessions")}
-              value="sessions"
-            >
+            <TabsTrigger value="sessions">
               Sessions
             </TabsTrigger>
-            <TabsTrigger
-              onClick={() => setCurrentTab("feedback")}
-              value="feedback"
-            >
+            <TabsTrigger value="feedback">
               Feedback
             </TabsTrigger>
           </TabsList>

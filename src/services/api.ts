@@ -155,6 +155,8 @@ export interface PaginatedResponse<T> {
   page: number;
   pageSize: number;
   totalPages: number;
+  totalLikes?: number;
+  totalDislikes?: number;
 }
 
 // API Response interface for Questions API (matches actual backend response)
@@ -1025,7 +1027,9 @@ export const fetchFeedback = async (params: PaginationParams = {}): Promise<Pagi
       total: result.pagination.totalItems,
       page: result.pagination.currentPage,
       pageSize: result.pagination.itemsPerPage,
-      totalPages: result.pagination.totalPages
+      totalPages: result.pagination.totalPages,
+      totalLikes: result.pagination.totalLikes,
+      totalDislikes: result.pagination.totalDislikes
     };
   } catch (error) {
     console.error('Error fetching feedback:', error);

@@ -8,7 +8,6 @@ import {
   type UserPaginationParams,
   type PaginationParams,
 } from "@/services/api";
-import { useStats } from "@/contexts/StatsContext";
 import { useNavigate, useSearchParams } from "react-router-dom";
 import { useDateFilter } from "@/contexts/DateFilterContext";
 import { buildDateRangeParams } from "@/lib/utils";
@@ -110,12 +109,6 @@ const SessionsReport = () => {
   //     staleTime: 5 * 60 * 1000, // Cache for 5 minutes
   //   });
 
-  // Use centralized stats from StatsContext - no redundant API call!
-  const { stats, isLoading: isLoadingStats } = useStats();
-  const sessionStats = {
-    totalSessions: stats?.totalSessions ?? 0,
-  };
-
   // Fetch sessions with server-side pagination and filtering
   const {
     data: sessionReport = { data: [], total: 0, totalPages: 0 },
@@ -202,6 +195,8 @@ const SessionsReport = () => {
     refetchOnMount: false,
   });
 
+  const totalSessions = sessionReport.total;
+
   // const users = usersResponse.data;
 
   const handleSessionClick = (sessionId: string) => {
@@ -278,11 +273,11 @@ const SessionsReport = () => {
             <Activity className="h-4 w-4 text-muted-foreground" />
           </CardHeader>
           <CardContent>
-            {isLoadingStats ? (
+            {isLoading ? (
               <div className="h-8 w-24 bg-muted animate-pulse rounded mb-2" />
             ) : (
               <div className="text-2xl font-bold">
-                {sessionStats.totalSessions}
+                {totalSessions}
               </div>
             )}
             <p className="text-xs text-muted-foreground">
