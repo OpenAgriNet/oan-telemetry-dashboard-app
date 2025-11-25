@@ -9,7 +9,6 @@ import {
   type SessionPaginationParams,
   type Question,
 } from "@/services/api";
-import { useStats } from "@/contexts/StatsContext";
 import TablePagination from "@/components/TablePagination";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import {
@@ -111,12 +110,6 @@ const QuestionsReport = () => {
   };
   const handleQuestionClick = (id: string) => {
     navigate(`/questions/${id}`);
-  };
-
-  // Use centralized stats from StatsContext - no redundant API call!
-  const { stats, isLoading: isLoadingStats } = useStats();
-  const questionStats = {
-    totalQuestions: stats?.totalQuestions ?? 0,
   };
 
   // Fetch users with search parameter if needed
@@ -244,6 +237,8 @@ const QuestionsReport = () => {
     refetchOnMount: false,
   });
 
+  const totalQuestions = questionsReport.total;
+
   // const users = usersResponse.data;
   // const sessions = sessionsResponse.data;
 
@@ -321,10 +316,10 @@ const QuestionsReport = () => {
           </CardHeader>
           <CardContent>
             <div className="text-2xl font-bold">
-              {isLoadingStats ? (
+              {isLoading ? (
                 <div className="h-8 w-16 bg-muted animate-pulse rounded" />
               ) : (
-                questionStats.totalQuestions.toLocaleString()
+                totalQuestions.toLocaleString()
               )}
             </div>
             <p className="text-xs text-muted-foreground">
