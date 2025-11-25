@@ -334,7 +334,7 @@ const QuestionsReport = () => {
           <Search className="absolute left-2 top-2.5 h-4 w-4 text-muted-foreground" />
           <Input
             type="search"
-            placeholder="Search questions..."
+            placeholder="Search based on question & username..."
             className="pl-8"
             value={pendingSearch}
             onChange={(e) => handleSearchQueryChange(e.target.value)}

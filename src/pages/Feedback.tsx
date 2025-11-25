@@ -342,7 +342,8 @@ const FeedbackPage = () => {
               <div className="relative flex-1">
                 <Search className="h-4 w-4 absolute left-2 top-2.5 text-muted-foreground" />
                 <Input
-                  placeholder="Search questions, feedback or users..."
+                  type="search"
+                  placeholder="Search based on question, answer or users..."
                   value={pendingSearch}
                   onChange={(e) => handleSearchChange(e.target.value)}
                   onKeyDown={(e) => {

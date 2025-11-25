@@ -89,7 +89,7 @@ const Dashboard = () => {
         dateRange.to?.toISOString(),
         timeGranularity,
       ],
-      enabled: dateRange.from !== undefined && dateRange.to !== undefined,
+      enabled: dateRange.from !== undefined && dateRange.to !== undefined && currentTab === "questions",
       queryFn: () => {
         const params = buildDateRangeParams(dateRange, {
           includeDefaultStart: false,
@@ -113,7 +113,7 @@ const Dashboard = () => {
         dateRange.to?.toISOString(),
         timeGranularity,
       ],
-      enabled: dateRange.from !== undefined && dateRange.to !== undefined,
+      enabled: dateRange.from !== undefined && dateRange.to !== undefined && currentTab === "sessions",
       queryFn: () => {
         const params = buildDateRangeParams(dateRange, {
           includeDefaultStart: false,
@@ -160,7 +160,7 @@ const Dashboard = () => {
         dateRange.to?.toISOString(),
         timeGranularity,
       ],
-      enabled: dateRange.from !== undefined && dateRange.to !== undefined,
+      enabled: dateRange.from !== undefined && dateRange.to !== undefined && currentTab === "feedback",
       queryFn: () => {
         const params = buildDateRangeParams(dateRange, {
           includeDefaultStart: false,

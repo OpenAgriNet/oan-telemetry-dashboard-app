@@ -273,7 +273,8 @@ const ErrorsPage = () => {
               <div className="relative">
                 <Search className="absolute left-2 top-2.5 h-4 w-4 text-muted-foreground" />
                 <Input
-                  placeholder="Search errors, users, sessions..."
+                  type="search"
+                  placeholder="Search based on error message or username..."
                   value={pendingSearch}
                   onChange={(e) => handleSearchChange(e.target.value)}
                   onKeyDown={(e) => {
