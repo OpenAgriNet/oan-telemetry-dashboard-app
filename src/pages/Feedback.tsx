@@ -36,10 +36,10 @@ import {
 } from "@/components/ui/select";
 import { useDateFilter } from "@/contexts/DateFilterContext";
 import { useStats } from "@/contexts/StatsContext";
-import { 
-  fetchFeedback, 
-  fetchUsers, 
-  type PaginationParams, 
+import {
+  fetchFeedback,
+  fetchUsers,
+  type PaginationParams,
   type UserPaginationParams,
 } from "@/services/api";
 import TablePagination from "@/components/TablePagination";
@@ -113,19 +113,19 @@ const FeedbackPage = () => {
   };
 
   // Fetch users for the filter dropdown
-  const { data: usersResponse = { data: [] }, isLoading: isLoadingUsers } =
-    useQuery({
-      queryKey: ["users-for-feedback-filter"],
-      queryFn: () => fetchUsers({ limit: 1000 } as UserPaginationParams),
-      staleTime: 5 * 60 * 1000, // Cache for 5 minutes
-    });
+  // const { data: usersResponse = { data: [] }, isLoading: isLoadingUsers } =
+  //   useQuery({
+  //     queryKey: ["users-for-feedback-filter"],
+  //     queryFn: () => fetchUsers({ limit: 1000 } as UserPaginationParams),
+  //     staleTime: 5 * 60 * 1000, // Cache for 5 minutes
+  //   });
 
   // Use centralized stats from StatsContext - no redundant API call!
   const { stats, isLoading: isLoadingStats } = useStats();
   const feedbackStats = {
     totalFeedback: stats?.totalFeedback ?? 0,
     totalLikes: stats?.totalLikes ?? 0,
-    totalDislikes: stats?.totalDislikes ?? 0
+    totalDislikes: stats?.totalDislikes ?? 0,
   };
 
   // Fetch feedback with server-side pagination and filtering
@@ -146,6 +146,7 @@ const FeedbackPage = () => {
       sortConfig.key,
       sortConfig.direction,
     ],
+    enabled: dateRange.from !== undefined && dateRange.to !== undefined,
     queryFn: async () => {
       const params: PaginationParams = {
         page,
@@ -192,11 +193,16 @@ const FeedbackPage = () => {
       return { ...result, data: sortedData };
     },
     refetchOnWindowFocus: false,
-    retry: 3,
+    retry: 2,
     retryDelay: (attemptIndex) => Math.min(1000 * 2 ** attemptIndex, 30000),
+    // Keep old page data while fetching the next
+    placeholderData: (prev) => prev,
+    staleTime: 30 * 1000,
+    gcTime: 5 * 60 * 1000,
+    refetchOnMount: false,
   });
 
-  const users = usersResponse.data;
+  // const users = usersResponse.data;
 
   const handleApplyFilters = () => {
     refetch();

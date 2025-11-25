@@ -1,14 +1,20 @@
 import React, { useState } from "react";
 import { useQuery } from "@tanstack/react-query";
-import { 
-  fetchUsers, 
+import {
+  fetchUsers,
   type UserPaginationParams,
-  type UserStatsResponse
+  type UserStatsResponse,
 } from "@/services/api";
 import { useNavigate, useSearchParams } from "react-router-dom";
 import { useDateFilter } from "@/contexts/DateFilterContext";
 import { useStats } from "@/contexts/StatsContext";
-import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
+import {
+  Card,
+  CardContent,
+  CardDescription,
+  CardHeader,
+  CardTitle,
+} from "@/components/ui/card";
 // Removed unused Select components
 import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
@@ -20,20 +26,20 @@ import {
   TableHeader,
   TableRow,
 } from "@/components/ui/table";
-import { 
-  Search, 
-  RefreshCw, 
-  AlertCircle, 
-  Users, 
+import {
+  Search,
+  RefreshCw,
+  AlertCircle,
+  Users,
   ThumbsUp,
   ThumbsDown,
   UserPlus,
-  UserCheck
+  UserCheck,
 } from "lucide-react";
 import TablePagination from "@/components/TablePagination";
 import { formatUTCToIST, buildDateRangeParams } from "@/lib/utils";
 // Add these types near the top of the file
-type SortDirection = 'asc' | 'desc' | null;
+type SortDirection = "asc" | "desc" | null;
 type SortConfig = {
   key: string;
   direction: SortDirection;
@@ -43,24 +49,24 @@ const UsersReport = () => {
   const { dateRange } = useDateFilter();
   const navigate = useNavigate();
   const [searchParams, setSearchParams] = useSearchParams();
-  
+
   // Get pagination state from URL params
-  const page = parseInt(searchParams.get('page') || '1', 10);
+  const page = parseInt(searchParams.get("page") || "1", 10);
   const pageSize = 10;
-  
+
   const [selectedUser, setSelectedUser] = useState<string>("all");
   const [searchQuery, setSearchQuery] = useState<string>("");
 
   // Reset page when filters change
   const resetPage = () => {
     const newParams = new URLSearchParams(searchParams);
-    newParams.set('page', '1');
+    newParams.set("page", "1");
     setSearchParams(newParams);
   };
 
   const handlePageChange = (newPage: number) => {
     const newParams = new URLSearchParams(searchParams);
-    newParams.set('page', newPage.toString());
+    newParams.set("page", newPage.toString());
     setSearchParams(newParams);
   };
 
@@ -80,28 +86,29 @@ const UsersReport = () => {
     setSelectedUser("all");
     setSearchQuery("");
     const newParams = new URLSearchParams();
-    newParams.set('page', '1');
+    newParams.set("page", "1");
     setSearchParams(newParams);
   };
 
   // Add new state for sorting
   const [sortConfig, setSortConfig] = useState<SortConfig>({
-    key: 'username',
-    direction: 'asc'
+    key: "username",
+    direction: "asc",
   });
 
   // Add sorting function
   const handleSort = (key: string) => {
-    setSortConfig(current => ({
+    setSortConfig((current) => ({
       key,
-      direction: current.key === key && current.direction === 'asc' ? 'desc' : 'asc'
+      direction:
+        current.key === key && current.direction === "asc" ? "desc" : "asc",
     }));
   };
 
   // Helper to check if a column is backend-sortable
   const isBackendSortable = (key: string) => {
     // Only username is backend-sortable in current API
-    return key === 'username';
+    return key === "username";
   };
 
   // Removed stats query and summary cards
@@ -123,9 +130,12 @@ const UsersReport = () => {
       page,
       pageSize,
       // Only include backend-sortable sort in key to avoid refetches on client-only sorts
-      isBackendSortable(sortConfig.key) ? sortConfig.key : 'client-sort',
-      isBackendSortable(sortConfig.key) ? sortConfig.direction : 'client-direction'
+      isBackendSortable(sortConfig.key) ? sortConfig.key : "client-sort",
+      isBackendSortable(sortConfig.key)
+        ? sortConfig.direction
+        : "client-direction",
     ],
+    enabled: dateRange.from !== undefined && dateRange.to !== undefined,
     queryFn: async () => {
       const params: UserPaginationParams = {
         page,
@@ -148,9 +158,9 @@ const UsersReport = () => {
 
       const result = await fetchUsers(params);
       let filteredData = result.data;
-      if (selectedUser !== 'all') {
-        filteredData = result.data.filter(user => 
-          user.username === selectedUser || user.id === selectedUser
+      if (selectedUser !== "all") {
+        filteredData = result.data.filter(
+          (user) => user.username === selectedUser || user.id === selectedUser
         );
       }
 
@@ -160,12 +170,15 @@ const UsersReport = () => {
           let aValue = a[sortConfig.key] ?? 0;
           let bValue = b[sortConfig.key] ?? 0;
           // For latestSession, parse as date
-          if (sortConfig.key === 'latestSession' || sortConfig.key === 'lastActivity') {
+          if (
+            sortConfig.key === "latestSession" ||
+            sortConfig.key === "lastActivity"
+          ) {
             aValue = new Date(String(aValue)).getTime();
             bValue = new Date(String(bValue)).getTime();
           }
-          if (aValue < bValue) return sortConfig.direction === 'asc' ? -1 : 1;
-          if (aValue > bValue) return sortConfig.direction === 'asc' ? 1 : -1;
+          if (aValue < bValue) return sortConfig.direction === "asc" ? -1 : 1;
+          if (aValue > bValue) return sortConfig.direction === "asc" ? 1 : -1;
           return 0;
         });
       }
@@ -173,8 +186,11 @@ const UsersReport = () => {
       return {
         ...result,
         data: filteredData,
-        total: selectedUser !== 'all' ? filteredData.length : result.total,
-        totalPages: selectedUser !== 'all' ? Math.ceil(filteredData.length / pageSize) : result.totalPages
+        total: selectedUser !== "all" ? filteredData.length : result.total,
+        totalPages:
+          selectedUser !== "all"
+            ? Math.ceil(filteredData.length / pageSize)
+            : result.totalPages,
       };
     },
     refetchOnWindowFocus: false,
@@ -184,13 +200,13 @@ const UsersReport = () => {
     gcTime: 5 * 60 * 1000,
     // Don't refetch immediately on mount if we already have data
     refetchOnMount: false,
-      retry: 1,
-      retryDelay: (attemptIndex) => Math.min(1000 * 2 ** attemptIndex, 30000),
+    retry: 2,
+    retryDelay: (attemptIndex) => Math.min(1000 * 2 ** attemptIndex, 30000),
   });
 
   // Use centralized stats from StatsContext - no redundant API call!
   const { stats, isLoading: isStatsLoading, error: statsError } = useStats();
-  
+
   // Extract stats with fallbacks
   const totalUsers = stats?.totalUsers ?? 0;
   const totalSessions = stats?.totalSessions ?? 0;
@@ -217,13 +233,13 @@ const UsersReport = () => {
   // Update sort indicator component
   const SortIndicator = ({ columnKey }: { columnKey: string }) => {
     if (sortConfig.key === columnKey) {
-      return sortConfig.direction === 'asc' ? ' ↑' : ' ↓';
+      return sortConfig.direction === "asc" ? " ↑" : " ↓";
     }
-    return ' ↕';
+    return " ↕";
   };
 
   const handleSessionClick = (sessionId: string) => {
-    console.log('Session ID:', sessionId);
+    console.log("Session ID:", sessionId);
     const SessionId = sessionId;
     // Add your logic here to handlne the session click
     navigate(`/sessions/${SessionId}`);
@@ -239,8 +255,12 @@ const UsersReport = () => {
         <div className="flex justify-center items-center p-8 bg-destructive/10 border border-destructive/20 rounded-lg">
           <div className="text-center">
             <AlertCircle className="h-12 w-12 text-destructive mx-auto mb-4" />
-            <p className="text-destructive font-medium mb-2">Error loading users data</p>
-            <p className="text-destructive/80 text-sm mb-4">{(error || statsError)?.message}</p>
+            <p className="text-destructive font-medium mb-2">
+              Error loading users data
+            </p>
+            <p className="text-destructive/80 text-sm mb-4">
+              {(error || statsError)?.message}
+            </p>
             <Button onClick={() => refetch()} variant="outline" size="sm">
               <RefreshCw className="h-4 w-4 mr-2" />
               Retry
@@ -256,8 +276,14 @@ const UsersReport = () => {
       <div className="flex items-center justify-between">
         <h1 className="text-2xl font-bold tracking-tight">Users Report</h1>
         <div className="flex gap-2">
-          <Button onClick={handleApplyFilters} disabled={isLoading} variant="outline">
-            <RefreshCw className={`h-4 w-4 mr-2 ${isLoading ? 'animate-spin' : ''}`} />
+          <Button
+            onClick={handleApplyFilters}
+            disabled={isLoading}
+            variant="outline"
+          >
+            <RefreshCw
+              className={`h-4 w-4 mr-2 ${isLoading ? "animate-spin" : ""}`}
+            />
             Refresh
           </Button>
         </div>
@@ -267,7 +293,9 @@ const UsersReport = () => {
       <div className="grid gap-4 md:grid-cols-3">
         <Card>
           <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-            <CardTitle className="text-sm font-medium">Total Unique Users</CardTitle>
+            <CardTitle className="text-sm font-medium">
+              Total Unique Users
+            </CardTitle>
             <Users className="h-4 w-4 text-muted-foreground" />
           </CardHeader>
           <CardContent>
@@ -316,23 +344,41 @@ const UsersReport = () => {
             ) : usersResponse.total === 0 ? (
               <div className="text-center py-12">
                 <Users className="h-12 w-12 text-muted-foreground mx-auto mb-4" />
-                <p className="text-muted-foreground font-medium mb-2">No users found</p>
-                <p className="text-sm text-muted-foreground/80 mb-4">
-                  {(searchQuery || selectedUser !== 'all' || dateRange.from || dateRange.to) 
-                    ? 'Try adjusting your filters to see more results.'
-                    : 'No users are available in the database.'
-                  }
+                <p className="text-muted-foreground font-medium mb-2">
+                  No users found
                 </p>
-                {(searchQuery || selectedUser !== 'all' || dateRange.from || dateRange.to) && (
-                  <Button variant="outline" onClick={handleResetFilters} size="sm">
+                <p className="text-sm text-muted-foreground/80 mb-4">
+                  {searchQuery ||
+                  selectedUser !== "all" ||
+                  dateRange.from ||
+                  dateRange.to
+                    ? "Try adjusting your filters to see more results."
+                    : "No users are available in the database."}
+                </p>
+                {(searchQuery ||
+                  selectedUser !== "all" ||
+                  dateRange.from ||
+                  dateRange.to) && (
+                  <Button
+                    variant="outline"
+                    onClick={handleResetFilters}
+                    size="sm"
+                  >
                     Clear all filters
                   </Button>
                 )}
               </div>
             ) : paginatedUsers.length === 0 ? (
               <div className="text-center py-8">
-                <p className="text-muted-foreground">No users match your current filters</p>
-                <Button variant="outline" onClick={handleResetFilters} size="sm" className="mt-2">
+                <p className="text-muted-foreground">
+                  No users match your current filters
+                </p>
+                <Button
+                  variant="outline"
+                  onClick={handleResetFilters}
+                  size="sm"
+                  className="mt-2"
+                >
                   Clear filters
                 </Button>
               </div>
@@ -340,47 +386,52 @@ const UsersReport = () => {
               <Table>
                 <TableHeader>
                   <TableRow>
-                    <TableHead 
+                    <TableHead
                       className="cursor-pointer hover:bg-muted/50"
-                      onClick={() => handleSort('username')}
+                      onClick={() => handleSort("username")}
                     >
                       Username{<SortIndicator columnKey="username" />}
                     </TableHead>
-                    <TableHead 
+                    <TableHead
                       className="text-right cursor-pointer hover:bg-muted/50"
-                      onClick={() => handleSort('sessions')}
+                      onClick={() => handleSort("sessions")}
                     >
                       Sessions{<SortIndicator columnKey="sessions" />}
                     </TableHead>
-                    <TableHead 
+                    <TableHead
                       className="text-right cursor-pointer hover:bg-muted/50"
-                      onClick={() => handleSort('totalQuestions')}
+                      onClick={() => handleSort("totalQuestions")}
                     >
                       Questions{<SortIndicator columnKey="totalQuestions" />}
                     </TableHead>
-                    <TableHead 
+                    <TableHead
                       className="text-right cursor-pointer hover:bg-muted/50"
-                      onClick={() => handleSort('feedbackCount')}
+                      onClick={() => handleSort("feedbackCount")}
                     >
                       Feedback{<SortIndicator columnKey="feedbackCount" />}
                     </TableHead>
-                    <TableHead 
+                    <TableHead
                       className="cursor-pointer hover:bg-muted/50"
-                      onClick={() => handleSort('latestSession')}
+                      onClick={() => handleSort("latestSession")}
                     >
-                      Latest Activity{<SortIndicator columnKey="latestSession" />}
+                      Latest Activity
+                      {<SortIndicator columnKey="latestSession" />}
                     </TableHead>
-                    <TableHead 
+                    <TableHead
                       className="cursor-pointer hover:bg-muted/50"
-                      onClick={() => handleSort('latestSession')}
+                      onClick={() => handleSort("latestSession")}
                     >
-                      Latest Session{<SortIndicator columnKey="latestSession" />}
+                      Latest Session
+                      {<SortIndicator columnKey="latestSession" />}
                     </TableHead>
                   </TableRow>
                 </TableHeader>
                 <TableBody>
                   {paginatedUsers.map((user, idx) => (
-                    <TableRow key={user.id || idx} className="hover:bg-muted/30">
+                    <TableRow
+                      key={user.id || idx}
+                      className="hover:bg-muted/30"
+                    >
                       <TableCell className="font-medium">
                         <code className="relative rounded bg-muted px-[0.3rem] py-[0.2rem] font-mono text-sm">
                           {user.username}
@@ -402,21 +453,31 @@ const UsersReport = () => {
                             <>
                               <div className="flex items-center gap-1">
                                 <ThumbsUp className="h-3 w-3 text-green-500" />
-                                <span className="text-xs">{user.likes || 0}</span>
+                                <span className="text-xs">
+                                  {user.likes || 0}
+                                </span>
                               </div>
                               <div className="flex items-center gap-1">
                                 <ThumbsDown className="h-3 w-3 text-red-500" />
-                                <span className="text-xs">{user.dislikes || 0}</span>
+                                <span className="text-xs">
+                                  {user.dislikes || 0}
+                                </span>
                               </div>
                             </>
                           ) : (
-                            <span className="text-xs text-muted-foreground">No feedback</span>
+                            <span className="text-xs text-muted-foreground">
+                              No feedback
+                            </span>
                           )}
                         </div>
                       </TableCell>
-                      <TableCell>{formatUTCToIST(user.latestSession || user.lastActivity || "")}</TableCell>
                       <TableCell>
-                      <button
+                        {formatUTCToIST(
+                          user.latestSession || user.lastActivity || ""
+                        )}
+                      </TableCell>
+                      <TableCell>
+                        <button
                           onClick={() => handleSessionClick(user.sessionId)}
                           className="text-primary hover:underline"
                         >
@@ -430,9 +491,9 @@ const UsersReport = () => {
                 </TableBody>
               </Table>
             )}
-            
+
             {paginatedUsers.length > 0 && usersResponse.totalPages > 1 && (
-              <TablePagination 
+              <TablePagination
                 currentPage={page}
                 totalPages={usersResponse.totalPages}
                 onPageChange={handlePageChange}
