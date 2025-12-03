@@ -226,7 +226,7 @@ const Dashboard = () => {
     }));
   };
 
-  console.log("users graph", usersGraphData);
+  
 
   return (
     <div className="space-y-6">
@@ -349,6 +349,7 @@ const Dashboard = () => {
                       transformHourlyData(usersGraphData?.data || [])
                     )
               }
+              isLoading={isLoadingUsersGraph}
               dataKey={[
                 {
                   dataKey: "uniqueUsersCount",
@@ -369,6 +370,7 @@ const Dashboard = () => {
                   timeGranularity === "daily" ? "Daily" : "Hourly"
                 } questions count (IST) - Powered by Questions Graph API`}
                 data={questionsGraphData?.data || []}
+                isLoading={isLoadingQuestionsGraph}
                 dataKey="questionsCount"
                 type={chartType}
                 color="hsl(var(--primary))"
@@ -384,6 +386,7 @@ const Dashboard = () => {
                   timeGranularity === "daily" ? "Daily" : "Hourly"
                 } sessions count (IST) - Powered by Sessions Graph API`}
                 data={sessionsGraphData?.data || []}
+                isLoading={isLoadingSessionsGraph}
                 dataKey="sessionsCount"
                 type={chartType}
                 color="#10b981"
@@ -399,6 +402,7 @@ const Dashboard = () => {
                   timeGranularity === "daily" ? "Daily" : "Hourly"
                 } likes and dislikes (IST) - Powered by Feedback Graph API`}
                 data={feedbackGraphData?.data || []}
+                isLoading={isLoadingFeedbackGraph}
                 dataKey={[
                   {
                     dataKey: "likesCount",
