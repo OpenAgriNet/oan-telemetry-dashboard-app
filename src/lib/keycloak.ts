@@ -2,8 +2,8 @@
 import Keycloak from 'keycloak-js';
 
 const keycloak = new Keycloak({
-  url:  'https://prodauthvistaar.mahapocra.gov.in/auth',
-  realm: 'Vistaar',
+  url:  'https://auth-vistaar-dev.mahapocra.gov.in/',
+  realm: 'Vistaar-dashboard',
   clientId: 'vistaar-ui',
 });
 
