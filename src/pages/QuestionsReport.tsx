@@ -140,7 +140,9 @@ const QuestionsReport = () => {
   //   },
   //   staleTime: 5 * 60 * 1000, // Cache for 5 minutes
   // });
-
+console.log("Questions",dateRange)
+console.log("Questions from",dateRange.from)
+console.log("Questions from ISO",dateRange.from?.toISOString())
   // Main questions query with all filters
   const {
     data: questionsReport = { data: [], total: 0, totalPages: 0 },
@@ -191,22 +193,25 @@ const QuestionsReport = () => {
       }
 
       // Format dates for API (backend expects ISO strings or Unix timestamps)
-      if (dateRange.from) {
-        const fromDate = new Date(dateRange.from);
-        fromDate.setHours(0, 0, 0, 0);
-        params.startDate = fromDate.toISOString();
-      }
+      // if (dateRange.from) {
+      //   const fromDate = new Date(dateRange.from);
+      //   fromDate.setHours(0, 0, 0, 0);
+      //   params.startDate = fromDate.toISOString();
+      // }
 
-      if (dateRange.to) {
-        const toDate = new Date(dateRange.to);
-        toDate.setHours(23, 59, 59, 999);
-        params.endDate = toDate.toISOString();
-      } else if (dateRange.from) {
-        // If only from date is provided, use same day end as to date
-        const toDate = new Date(dateRange.from);
-        toDate.setHours(23, 59, 59, 999);
-        params.endDate = toDate.toISOString();
-      }
+      // if (dateRange.to) {
+      //   const toDate = new Date(dateRange.to);
+      //   toDate.setHours(23, 59, 59, 999);
+      //   params.endDate = toDate.toISOString();
+      // } else if (dateRange.from) {
+      //   // If only from date is provided, use same day end as to date
+      //   const toDate = new Date(dateRange.from);
+      //   toDate.setHours(23, 59, 59, 999);
+      //   params.endDate = toDate.toISOString();
+      // }
+       const dateParams = buildDateRangeParams(dateRange);
+            if (dateParams.startDate) params.startDate = dateParams.startDate;
+            if (dateParams.endDate) params.endDate = dateParams.endDate;
 
       console.log("Fetching questions with params:", params);
 
