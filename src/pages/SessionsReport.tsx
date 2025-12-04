@@ -152,21 +152,9 @@ const SessionsReport = () => {
       }
 
       // Add date range filter
-      if (dateRange.from) {
-        const fromDate = new Date(dateRange.from);
-        fromDate.setHours(0, 0, 0, 0);
-        params.startDate = fromDate.toISOString();
-      }
-
-      if (dateRange.to) {
-        const toDate = new Date(dateRange.to);
-        toDate.setHours(23, 59, 59, 999);
-        params.endDate = toDate.toISOString();
-      } else if (dateRange.from) {
-        const toDate = new Date(dateRange.from);
-        toDate.setHours(23, 59, 59, 999);
-        params.endDate = toDate.toISOString();
-      }
+       const dateParams = buildDateRangeParams(dateRange);
+            if (dateParams.startDate) params.startDate = dateParams.startDate;
+            if (dateParams.endDate) params.endDate = dateParams.endDate;
 
       console.log("Fetching sessions with params:", params);
       const result = await fetchSessions(params);
