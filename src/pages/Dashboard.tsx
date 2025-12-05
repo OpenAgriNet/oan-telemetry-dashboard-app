@@ -341,7 +341,7 @@ const Dashboard = () => {
               title="User Activity"
               description={`${
                 timeGranularity === "daily" ? "Daily" : "Hourly"
-              }  total users (IST)`}
+              } new vs reutning vs total users (IST)`}
               data={
                 timeGranularity === "daily"
                   ? transformUsersData(usersGraphData?.data || [])
@@ -351,6 +351,20 @@ const Dashboard = () => {
               }
               isLoading={isLoadingUsersGraph}
               dataKey={[
+                 {
+                  dataKey: "newUsersCount",
+                  color: "#3b82f6",
+                  name: "New Users",
+                  strokeDasharray: "5 5",
+                  fillOpacity: 0.3,
+                },
+                {
+                  dataKey: "returningUsersCount",
+                  color: "#10b981",
+                  name: "Returning Users",
+                  strokeDasharray: "5 5",
+                  fillOpacity: 0.3,
+                },
                 {
                   dataKey: "uniqueUsersCount",
                   color: "hsl(var(--foreground))",

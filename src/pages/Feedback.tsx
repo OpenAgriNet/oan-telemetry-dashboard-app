@@ -412,42 +412,42 @@ const FeedbackPage = () => {
                       onClick={() => handleSort("date")}
                     >
                       Date
-                      <SortIndicator columnKey="date" />
+                      {/* <SortIndicator columnKey="date" /> */}
                     </TableHead>
                     <TableHead
                       className="cursor-pointer hover:bg-muted/50"
                       onClick={() => handleSort("user")}
                     >
                       User
-                      <SortIndicator columnKey="user" />
+                      {/* <SortIndicator columnKey="user" /> */}
                     </TableHead>
                     <TableHead
                       className="cursor-pointer hover:bg-muted/50"
                       onClick={() => handleSort("question")}
                     >
                       Question
-                      <SortIndicator columnKey="question" />
+                      {/* <SortIndicator columnKey="question" /> */}
                     </TableHead>
                     <TableHead
                       className="cursor-pointer hover:bg-muted/50"
                       onClick={() => handleSort("answer")}
                     >
                       Answer
-                      <SortIndicator columnKey="answer" />
+                      {/* <SortIndicator columnKey="answer" /> */}
                     </TableHead>
                     <TableHead
                       className="cursor-pointer hover:bg-muted/50"
                       onClick={() => handleSort("rating")}
                     >
                       Rating
-                      <SortIndicator columnKey="rating" />
+                      {/* <SortIndicator columnKey="rating" /> */}
                     </TableHead>
                     <TableHead
                       className="cursor-pointer hover:bg-muted/50"
                       onClick={() => handleSort("feedback")}
                     >
                       Feedback
-                      <SortIndicator columnKey="feedback" />
+                      {/* <SortIndicator columnKey="feedback" /> */}
                     </TableHead>
                     <TableHead>Details</TableHead>
                   </TableRow>
