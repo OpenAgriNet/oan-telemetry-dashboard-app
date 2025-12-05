@@ -19,6 +19,7 @@ XAxis,
 YAxis,
 } from "recharts";
 import { formatChartXAxisToIST, formatChartTooltipToIST } from "@/lib/utils";
+import { RefreshCcw } from "lucide-react";
 
 interface DataSeriesConfig {
   dataKey: string;
@@ -36,6 +37,7 @@ dataKey: string | DataSeriesConfig[]; // Support both single and multiple series
 type?: "line" | "bar" | "area";
 color?: string;
 xAxisKey?: string;
+isLoading?: boolean;
 }
 
 const TrendChart: React.FC<TrendChartProps> = ({
@@ -43,6 +45,7 @@ title,
 description,
 data,
 dataKey,
+isLoading, 
 type = "line",
 color = "var(--primary)",
 xAxisKey = "date",
@@ -101,11 +104,21 @@ const CustomTooltip = ({ active, payload, label }: {
   const hasData = data && data.length > 0;
   
 const renderChart = () => {
-    if (!hasData) {
+    if (!hasData && !isLoading) { 
       return (
         <div className="flex items-center justify-center h-60 text-muted-foreground">
           No data available for selected time period
         </div>
+      );
+    }
+    if(isLoading){ 
+        return (
+          <div className="flex justify-center items-center p-12 bg-muted/30 rounded-lg">
+                <div className="text-center">
+                  <RefreshCcw className="h-8 w-8 animate-spin mx-auto mb-3 text-muted-foreground" />
+                  <p className="text-muted-foreground">Loading users data...</p>
+                </div>
+              </div>
       );
     }
     

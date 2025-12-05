@@ -109,10 +109,16 @@ const UsersReport = () => {
         current.key === key && current.direction === "asc" ? "desc" : "asc",
     }));
   };
+  console.log("Sort Config:", sortConfig);
 
   // Helper to check if a column is backend-sortable
   const isBackendSortable = (key: string) => {
     // Only username is backend-sortable in current API
+    // const backendSortableKeys = ["username", "sessions", "totalQuestions", "feedbackCount"];
+    // if(backendSortableKeys.includes(key)){
+    //   return key;
+    // }
+    // return null;
     return key === "username";
   };
 
@@ -398,39 +404,43 @@ const UsersReport = () => {
                       className="cursor-pointer hover:bg-muted/50"
                       onClick={() => handleSort("username")}
                     >
-                      Username{<SortIndicator columnKey="username" />}
+                      Username
+                      {/* {<SortIndicator columnKey="username" />} */}
                     </TableHead>
                     <TableHead
                       className="text-right cursor-pointer hover:bg-muted/50"
                       onClick={() => handleSort("sessions")}
                     >
-                      Sessions{<SortIndicator columnKey="sessions" />}
+                      Sessions
+                      {/* {<SortIndicator columnKey="sessions" />} */}
                     </TableHead>
                     <TableHead
                       className="text-right cursor-pointer hover:bg-muted/50"
                       onClick={() => handleSort("totalQuestions")}
                     >
-                      Questions{<SortIndicator columnKey="totalQuestions" />}
+                      Questions
+                      {/* {<SortIndicator columnKey="totalQuestions" />} */}
                     </TableHead>
                     <TableHead
                       className="text-right cursor-pointer hover:bg-muted/50"
                       onClick={() => handleSort("feedbackCount")}
                     >
-                      Feedback{<SortIndicator columnKey="feedbackCount" />}
+                      Feedback
+                      {/* {<SortIndicator columnKey="feedbackCount" />} */}
                     </TableHead>
                     <TableHead
                       className="cursor-pointer hover:bg-muted/50"
-                      onClick={() => handleSort("latestSession")}
+                      onClick={() => handleSort("latestActivity")}
                     >
                       Latest Activity
-                      {<SortIndicator columnKey="latestSession" />}
+                      {/* {<SortIndicator columnKey="latestActivity" />} */}
                     </TableHead>
                     <TableHead
                       className="cursor-pointer hover:bg-muted/50"
                       onClick={() => handleSort("latestSession")}
                     >
                       Latest Session
-                      {<SortIndicator columnKey="latestSession" />}
+                      {/* {<SortIndicator columnKey="latestSession" />} */}
                     </TableHead>
                   </TableRow>
                 </TableHeader>
