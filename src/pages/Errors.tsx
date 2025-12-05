@@ -319,7 +319,8 @@ const ErrorsPage = () => {
                         className="cursor-pointer hover:bg-muted/50"
                         onClick={() => handleSort("date")}
                       >
-                        Date{SortIndicator({ columnKey: "date" })}
+                        Date
+                        {/* {SortIndicator({ columnKey: "date" })} */}
                       </TableHead>
                       <TableHead>Error Message</TableHead>
                       <TableHead>User</TableHead>

@@ -412,28 +412,28 @@ const SessionsReport = () => {
                       onClick={() => handleSort("sessionId")}
                     >
                       Session ID
-                      <SortIndicator columnKey="sessionId" />
+                      {/* <SortIndicator columnKey="sessionId" /> */}
                     </TableHead>
                     <TableHead
                       className="cursor-pointer hover:bg-muted/50"
                       onClick={() => handleSort("username")}
                     >
                       User
-                      <SortIndicator columnKey="username" />
+                      {/* <SortIndicator columnKey="username" /> */}
                     </TableHead>
                     <TableHead
                       className="text-right cursor-pointer hover:bg-muted/50"
                       onClick={() => handleSort("questionCount")}
                     >
                       Questions
-                      <SortIndicator columnKey="questionCount" />
+                      {/* <SortIndicator columnKey="questionCount" /> */}
                     </TableHead>
                     <TableHead
                       className="cursor-pointer hover:bg-muted/50"
                       onClick={() => handleSort("sessionTime")}
                     >
                       Session Time
-                      <SortIndicator columnKey="sessionTime" />
+                      {/* <SortIndicator columnKey="sessionTime" /> */}
                     </TableHead>
                   </TableRow>
                 </TableHeader>
