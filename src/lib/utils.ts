@@ -321,3 +321,8 @@ export function formatChartTooltipToIST(
   
   return { formattedLabel, timestampInfo };
 }
+
+
+export function formatLocal(dateString: string, outputFormat = "MMM dd, yyyy hh:mm a") {
+  return formatDateFnsInternal(new Date(dateString), outputFormat);
+}

@@ -38,7 +38,7 @@ import {
   RotateCcw,
 } from "lucide-react";
 import TablePagination from "@/components/TablePagination";
-import { formatUTCToIST, buildDateRangeParams } from "@/lib/utils";
+import { formatUTCToIST, buildDateRangeParams, formatLocal } from "@/lib/utils";
 // Add these types near the top of the file
 type SortDirection = "asc" | "desc" | null;
 type SortConfig = {
@@ -490,8 +490,8 @@ const UsersReport = () => {
                         </div>
                       </TableCell>
                       <TableCell>
-                        {formatUTCToIST(
-                          user.latestSession || user.lastActivity || ""
+                        {formatLocal(
+                          user.latestSession || ""
                         )}
                       </TableCell>
                       <TableCell>
