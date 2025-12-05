@@ -482,7 +482,7 @@ console.log("Questions from ISO",dateRange.from?.toISOString())
                     </TableCell>
                     <TableCell>
                       {formatUTCToIST(
-                        question.dateAsked || question.created_at
+                        question.created_at || ""
                       )}
                     </TableCell>
                     {/* <TableCell>

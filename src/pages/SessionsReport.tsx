@@ -10,7 +10,7 @@ import {
 } from "@/services/api";
 import { useNavigate, useSearchParams } from "react-router-dom";
 import { useDateFilter } from "@/contexts/DateFilterContext";
-import { buildDateRangeParams } from "@/lib/utils";
+import { buildDateRangeParams, formatLocal } from "@/lib/utils";
 import {
   Card,
   CardContent,
@@ -468,7 +468,7 @@ const SessionsReport = () => {
                           </span>
                         </TableCell>
                         <TableCell>
-                          {formatUTCToIST(session.sessionTime)}
+                          {formatLocal(session.sessionTime || "")}
                         </TableCell>
                       </TableRow>
                     ))}
