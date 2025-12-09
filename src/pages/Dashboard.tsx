@@ -72,7 +72,7 @@ const Dashboard = () => {
       }
     : undefined;
   const userStats = dashboardStats
-    ? { totalUsers: dashboardStats.totalUsers }
+    ? { totalUsers: dashboardStats.totalUsers, }
     : undefined;
 
   const isLoadingQuestionStats = isLoadingDashboardStats;
