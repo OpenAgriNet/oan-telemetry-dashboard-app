@@ -217,15 +217,12 @@ const UsersReport = () => {
 
   // Use centralized stats from StatsContext - no redundant API call!
   const { stats, isLoading: isStatsLoading, error: statsError } = useStats();
+  console.log(stats)
 
   // Extract stats with fallbacks
   const totalUsers = stats?.totalUsers ?? 0;
-  const totalSessions = stats?.totalSessions ?? 0;
-  const totalQuestions = stats?.totalQuestions ?? 0;
-  const totalFeedback = stats?.totalFeedback ?? 0;
-  const totalLikes = stats?.totalLikes ?? 0;
-  const totalDislikes = stats?.totalDislikes ?? 0;
-
+  const totalNewUsers = stats?.totalNewUsers ?? 0;
+  
   // Removed unused all-users-for-filter query to prevent extra API call on init
   const paginatedUsers = usersResponse.data;
 
@@ -311,6 +308,44 @@ const UsersReport = () => {
             </div>
             <p className="text-xs text-muted-foreground">
               unique active users in selected period
+            </p>
+          </CardContent>
+        </Card>
+
+           <Card>
+          <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
+            <CardTitle className="text-sm font-medium">New Users</CardTitle>
+            <UserPlus className="h-4 w-4 text-muted-foreground" />
+          </CardHeader>
+          <CardContent>
+            <div className="text-2xl font-bold">
+              {isStatsLoading ? (
+                <div className="h-8 w-16 bg-muted animate-pulse rounded" />
+              ) : (
+                totalNewUsers.toLocaleString() || 0
+              )}
+            </div>
+            <p className="text-xs text-muted-foreground">
+            first-time active users
+            </p>
+          </CardContent>
+        </Card>
+
+          <Card>
+          <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
+            <CardTitle className="text-sm font-medium">Returning Users</CardTitle>
+            <UserCheck className="h-4 w-4 text-muted-foreground" />
+          </CardHeader>
+          <CardContent>
+            <div className="text-2xl font-bold">
+              {isStatsLoading ? (
+                <div className="h-8 w-16 bg-muted animate-pulse rounded" />
+              ) : (
+                (totalUsers-totalNewUsers).toLocaleString() || 0
+              )}
+            </div>
+            <p className="text-xs text-muted-foreground">
+              active users with prior activity
             </p>
           </CardContent>
         </Card>

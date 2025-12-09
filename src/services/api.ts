@@ -1240,6 +1240,7 @@ export const fetchComprehensiveFeedbackStats = async (params: PaginationParams =
 // Get comprehensive dashboard statistics - OPTIMIZED
 export const fetchDashboardStats = async (params: PaginationParams = {}): Promise<{
   totalUsers: number;
+  totalNewUsers: number;
   totalSessions: number;
   totalQuestions: number;
   totalFeedback: number;
@@ -1275,6 +1276,7 @@ export const fetchDashboardStats = async (params: PaginationParams = {}): Promis
     console.error('Error fetching dashboard stats:', error);
     return {
       totalUsers: 0,
+      totalNewUsers: 0,
       totalSessions: 0,
       totalQuestions: 0,
       totalFeedback: 0,
