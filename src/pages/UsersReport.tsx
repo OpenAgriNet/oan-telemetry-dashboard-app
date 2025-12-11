@@ -525,9 +525,7 @@ const UsersReport = () => {
                         </div>
                       </TableCell>
                       <TableCell>
-                        {formatLocal(
-                          user.latestSession || ""
-                        )}
+                        {user.latestSession || "N/A"}
                       </TableCell>
                       <TableCell>
                         <button
