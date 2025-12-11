@@ -1,0 +1,16 @@
+/**
+ * Environment configuration for the application
+ */
+
+// API Configuration
+export const API_CONFIG = {
+  SERVER_URL: "YOUR_SERVER_URL",
+};
+
+// Watchtower Status API Configuration
+export const WATCHTOWER_CONFIG = {
+  BASE_URL:
+    import.meta.env.VITE_WATCHTOWER_BASE_URL || "YOUR_WATCHTOWER_URL",
+  JWT_TOKEN:
+    import.meta.env.VITE_WATCHTOWER_JWT || "YOUR_JWT_TOKEN",
+};
