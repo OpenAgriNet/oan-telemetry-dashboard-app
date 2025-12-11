@@ -38,8 +38,14 @@ import { formatUTCToIST } from "@/lib/utils";
 import { useKeycloak } from "@react-keycloak/web";
 import { isSuperAdmin } from "@/utils/roleUtils";
 
-// Helper function to get a safe ISO string from question data
+// Helper function to get a safe timestamp string from question data
+// Now handles IST-formatted dates from backend directly
 function getQuestionTimestampISO(question: Question): string {
+  // If dateAsked contains "IST", it's already formatted by the backend - use as-is
+  if (question.dateAsked && typeof question.dateAsked === 'string' && question.dateAsked.includes('IST')) {
+    return question.dateAsked; // Return IST formatted string directly
+  }
+  
   // 1. question.ets (often epoch milliseconds)
   if (question.ets) {
     const etsValue = question.ets;
@@ -311,6 +317,12 @@ const SessionDetails = () => {
 
   const formatTimestamp = (timestamp: string) => {
     try {
+      // If timestamp already contains IST, it's already formatted by the backend
+      if (timestamp.includes('IST')) {
+        // Extract just the time portion (HH:mm:ss) from "YYYY-MM-DD HH:mm:ss IST"
+        const timePart = timestamp.split(' ')[1];
+        return timePart ? `${timePart} IST` : timestamp;
+      }
       // Use the utility function to format UTC timestamp to IST
       return formatUTCToIST(timestamp, "HH:mm:ss zzz");
     } catch (error) {

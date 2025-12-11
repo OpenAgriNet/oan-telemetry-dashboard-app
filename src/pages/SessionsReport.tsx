@@ -180,7 +180,7 @@ const SessionsReport = () => {
     placeholderData: (prev) => prev,
     staleTime: 30 * 1000,
     gcTime: 5 * 60 * 1000,
-    refetchOnMount: false,
+    refetchOnMount: true,
   });
 
   const totalSessions = sessionReport.total;
@@ -468,7 +468,7 @@ const SessionsReport = () => {
                           </span>
                         </TableCell>
                         <TableCell>
-                          {formatLocal(session.sessionTime || "")}
+                          {session.sessionTime || "N/A"}
                         </TableCell>
                       </TableRow>
                     ))}
