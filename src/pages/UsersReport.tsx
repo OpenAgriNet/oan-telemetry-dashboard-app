@@ -97,7 +97,7 @@ const UsersReport = () => {
 
   // Add new state for sorting
   const [sortConfig, setSortConfig] = useState<SortConfig>({
-    key: "username",
+    key: "",
     direction: "asc",
   });
 
@@ -166,7 +166,7 @@ const UsersReport = () => {
       const dateParams = buildDateRangeParams(dateRange);
       if (dateParams.startDate) params.startDate = dateParams.startDate;
       if (dateParams.endDate) params.endDate = dateParams.endDate;
-
+    console.log(params)
       const result = await fetchUsers(params);
       let filteredData = result.data;
       if (selectedUser !== "all") {
