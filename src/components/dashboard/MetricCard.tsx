@@ -40,7 +40,7 @@ const MetricCard: React.FC<MetricCardProps> = ({
   return (
     <Card className="card-gradient overflow-hidden">
       <CardHeader className="flex flex-row items-center justify-between pb-2 space-y-0">
-        <div className="h-10 w-10 rounded-md bg-primary/10 flex items-center justify-center text-primary">
+        <div className="h-10 w-10 rounded-md bg-primary/10 flex items-center justify-center">
           {icon}
         </div>
       </CardHeader>

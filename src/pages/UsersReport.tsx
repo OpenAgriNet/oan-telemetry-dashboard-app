@@ -491,7 +491,7 @@ const UsersReport = () => {
                         </code>
                       </TableCell>
                       <TableCell className="text-right">
-                        <span className="inline-flex items-center rounded-full bg-primary/10 px-2.5 py-0.5 text-xs font-medium text-primary">
+                        <span className="inline-flex items-center rounded-full bg-primary/10 px-2.5 py-0.5 text-xs font-medium">
                           {user.sessions || user.totalSessions || 0}
                         </span>
                       </TableCell>
@@ -530,7 +530,7 @@ const UsersReport = () => {
                       <TableCell>
                         <button
                           onClick={() => handleSessionClick(user.sessionId)}
-                          className="text-primary hover:underline"
+                          className="hover:underline"
                         >
                           <code className="relative rounded bg-muted px-[0.3rem] py-[0.2rem] font-mono text-xs">
                             {user.sessionId?.substring(0, 8)}...

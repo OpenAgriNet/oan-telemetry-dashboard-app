@@ -448,7 +448,7 @@ console.log("Questions from ISO",dateRange.from?.toISOString())
                     <TableCell className="font-medium">
                       <div className="max-w-md">
                         <button
-                          className="truncate text-left text-primary hover:underline bg-transparent border-none p-0 m-0 w-full"
+                          className="truncate text-left hover:underline bg-transparent border-none p-0 m-0 w-full"
                           title={question.question}
                           onClick={() => handleQuestionClick(question.id)}
                           type="button"
@@ -473,7 +473,7 @@ console.log("Questions from ISO",dateRange.from?.toISOString())
                     <TableCell>
                       <button
                         onClick={() => handleSessionClick(question.session_id)}
-                        className="text-primary hover:underline"
+                        className="hover:underline"
                       >
                         <code className="relative rounded bg-muted px-[0.3rem] py-[0.2rem] font-mono text-xs">
                           {question.session_id.substring(0, 8)}...
