@@ -11,6 +11,7 @@ Area,
 AreaChart,
 Bar,
 BarChart,
+Legend,
 Line,
 LineChart,
 ResponsiveContainer,
@@ -116,7 +117,7 @@ const renderChart = () => {
           <div className="flex justify-center items-center p-12 bg-muted/30 rounded-lg">
                 <div className="text-center">
                   <RefreshCcw className="h-8 w-8 animate-spin mx-auto mb-3 text-muted-foreground" />
-                  <p className="text-muted-foreground">Loading users data...</p>
+                  <p className="text-muted-foreground">Loading Chart data...</p>
                 </div>
               </div>
       );
@@ -154,6 +155,7 @@ radius={[4, 4, 0, 0]}
 name={series.name || series.dataKey}
 />
 ))}
+{ title === "User Activity" &&  <Legend/>}
 </BarChart>
 </ResponsiveContainer>
 );
@@ -190,6 +192,7 @@ fillOpacity={series.fillOpacity !== undefined ? series.fillOpacity : 0.2}
 name={series.name || series.dataKey}
 />
 ))}
+{ title === "User Activity" &&  <Legend/>}
 </AreaChart>
 </ResponsiveContainer>
 );
@@ -228,6 +231,7 @@ activeDot={{ r: 6 }}
 name={series.name || series.dataKey}
 />
 ))}
+{ title === "User Activity" &&  <Legend/>}
 </LineChart>
 </ResponsiveContainer>
 );

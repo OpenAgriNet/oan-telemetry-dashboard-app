@@ -265,7 +265,7 @@ const SessionsReport = () => {
               <div className="h-8 w-24 bg-muted animate-pulse rounded mb-2" />
             ) : (
               <div className="text-2xl font-bold">
-                {totalSessions}
+                {totalSessions.toLocaleString()}
               </div>
             )}
             <p className="text-xs text-muted-foreground">
@@ -450,7 +450,7 @@ const SessionsReport = () => {
                             onClick={() =>
                               handleSessionClick(session.sessionId)
                             }
-                            className="text-primary hover:underline"
+                            className="hover:underline"
                           >
                             <code className="relative rounded bg-muted px-[0.3rem] py-[0.2rem] font-mono text-xs">
                               {session.sessionId.substring(0, 8)}...
@@ -463,7 +463,7 @@ const SessionsReport = () => {
                           </code>
                         </TableCell>
                         <TableCell className="text-right">
-                          <span className="inline-flex items-center rounded-full bg-primary/10 px-2.5 py-0.5 text-xs font-medium text-primary">
+                          <span className="inline-flex items-center rounded-full bg-primary/10 px-2.5 py-0.5 text-xs font-medium">
                             {session.questionCount}
                           </span>
                         </TableCell>

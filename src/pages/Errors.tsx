@@ -363,7 +363,7 @@ const ErrorsPage = () => {
                             {errorItem.userId ? (
                               <Link
                                 to={`/users?search=${errorItem.userId}`}
-                                className="text-primary hover:underline text-sm"
+                                className="hover:underline text-sm"
                               >
                                 {errorItem.userId}
                               </Link>
@@ -377,7 +377,7 @@ const ErrorsPage = () => {
                             {errorItem.sessionId ? (
                               <Link
                                 to={`/sessions/${errorItem.sessionId}`}
-                                className="text-primary hover:underline text-sm"
+                                className="hover:underline text-sm"
                               >
                                 {errorItem.sessionId.slice(0, 8)}...
                               </Link>
