@@ -17,6 +17,7 @@ import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import {
   User,
   MessageSquare,
+  Activity,
   ThumbsUp,
   BarChart,
   LineChart,
@@ -248,25 +249,25 @@ const Dashboard = () => {
         ) : (
           <>
             <MetricCard
-              title="Unique Users"
+              title="Users"
               value={userStats?.totalUsers || 0}
               icon={<User size={16} />}
-              description="Total unique users"
+              description="Count of unique users"
             />
             <MetricCard
-              title="Total Sessions"
+              title="Sessions"
               value={sessionStats?.totalSessions || 0}
-              icon={<MessageSquare size={16} />}
-              description="Total user sessions"
+              icon={<Activity size={16} />}
+              description="Total session activity"
             />
             <MetricCard
-              title="Questions Asked"
+              title="Questions"
               value={questionStats?.totalQuestions || 0}
               icon={<MessageSquare size={16} />}
-              description="Total questions"
+              description="Total questions submitted"
             />
             <MetricCard
-              title="Feedback Collected"
+              title="Feedback"
               value={feedbackStats?.totalFeedback || 0}
               icon={<ThumbsUp size={16} />}
               description={`${
@@ -276,7 +277,7 @@ const Dashboard = () => {
                       100
                     ).toFixed(1)
                   : 0
-              }% positive feedback`}
+              }% Positive feedback rate`}
             />
           </>
         )}
@@ -286,7 +287,7 @@ const Dashboard = () => {
         <CardHeader className="flex flex-row items-center justify-between pb-2">
           <CardTitle>Chart Options</CardTitle>
           <div className="flex items-center gap-4">
-            <div className="flex items-center gap-2">
+            {/* <div className="flex items-center gap-2">
               <span className="text-sm text-muted-foreground">Data:</span>
               <ToggleGroup
                 type="single"
@@ -297,7 +298,7 @@ const Dashboard = () => {
               >
                 <ToggleGroupItem value="daily">Daily</ToggleGroupItem>
               </ToggleGroup>
-            </div>
+            </div> */}
             <div className="flex items-center gap-2">
               <span className="text-sm text-muted-foreground">Chart:</span>
               <ToggleGroup
@@ -341,7 +342,7 @@ const Dashboard = () => {
               title="User Activity"
               description={`${
                 timeGranularity === "daily" ? "Daily" : "Hourly"
-              } new vs reutning vs total users (IST)`}
+              } new vs returning vs total users`}
               data={
                 timeGranularity === "daily"
                   ? transformUsersData(usersGraphData?.data || [])
@@ -382,7 +383,7 @@ const Dashboard = () => {
                 title="Questions Asked Over Time"
                 description={`${
                   timeGranularity === "daily" ? "Daily" : "Hourly"
-                } questions count (IST) - Powered by Questions Graph API`}
+                } questions count`}
                 data={questionsGraphData?.data || []}
                 isLoading={isLoadingQuestionsGraph}
                 dataKey="questionsCount"
@@ -398,7 +399,7 @@ const Dashboard = () => {
                 title="Session Activity Over Time"
                 description={`${
                   timeGranularity === "daily" ? "Daily" : "Hourly"
-                } sessions count (IST) - Powered by Sessions Graph API`}
+                } sessions count`}
                 data={sessionsGraphData?.data || []}
                 isLoading={isLoadingSessionsGraph}
                 dataKey="sessionsCount"
@@ -414,7 +415,7 @@ const Dashboard = () => {
                 title="Feedback Activity Over Time"
                 description={`${
                   timeGranularity === "daily" ? "Daily" : "Hourly"
-                } likes and dislikes (IST) - Powered by Feedback Graph API`}
+                } likes and dislikes`}
                 data={feedbackGraphData?.data || []}
                 isLoading={isLoadingFeedbackGraph}
                 dataKey={[

@@ -252,7 +252,7 @@ const FeedbackPage = () => {
               <div className="h-8 w-24 bg-muted animate-pulse rounded mb-2" />
             ) : (
               <div className="text-2xl font-bold">
-                {feedbackStats.totalFeedback}
+                {feedbackStats.totalFeedback.toLocaleString()}
               </div>
             )}
             <p className="text-xs text-muted-foreground">
@@ -271,7 +271,7 @@ const FeedbackPage = () => {
               <div className="h-8 w-24 bg-muted animate-pulse rounded mb-2" />
             ) : (
               <div className="text-2xl font-bold text-green-600">
-                {feedbackStats.totalLikes}
+                {feedbackStats.totalLikes.toLocaleString()}
               </div>
             )}
             <p className="text-xs text-muted-foreground">
@@ -300,7 +300,7 @@ const FeedbackPage = () => {
               <div className="h-8 w-24 bg-muted animate-pulse rounded mb-2" />
             ) : (
               <div className="text-2xl font-bold text-red-600">
-                {feedbackStats.totalDislikes}
+                {feedbackStats.totalDislikes.toLocaleString()}
               </div>
             )}
             <p className="text-xs text-muted-foreground">
@@ -459,7 +459,8 @@ const FeedbackPage = () => {
                       className="hover:bg-muted/30"
                     >
                       <TableCell>
-                        {format(new Date(feedback.date), "MMM dd, yyyy")}
+                        {feedback.date}
+                        {/* {format(new Date(feedback.date), "MMM dd, yyyy")} */}
                       </TableCell>
                       <TableCell>
                         <code className="relative rounded bg-muted px-[0.3rem] py-[0.2rem] font-mono text-sm">
@@ -503,7 +504,7 @@ const FeedbackPage = () => {
                       <TableCell>
                         <Link
                           to={`/feedback/${feedback.id}`}
-                          className="text-primary hover:underline"
+                          className="hover:underline"
                         >
                           View Details
                         </Link>
