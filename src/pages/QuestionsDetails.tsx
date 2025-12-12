@@ -267,7 +267,7 @@ const QuestionDetails = () => {
           </CardHeader>
           <CardContent>
             <div className="text-lg font-bold">
-              {format(new Date(question?.dateAsked || question?.created_at), "MMM dd, yyyy")}   
+              {question?.dateAsked || question?.created_at || "N/A"}   
             </div>
           </CardContent>
         </Card>

@@ -10,7 +10,7 @@ import {
 } from "@/services/api";
 import { useNavigate, useSearchParams } from "react-router-dom";
 import { useDateFilter } from "@/contexts/DateFilterContext";
-import { buildDateRangeParams } from "@/lib/utils";
+import { buildDateRangeParams, formatLocal } from "@/lib/utils";
 import {
   Card,
   CardContent,
@@ -152,21 +152,9 @@ const SessionsReport = () => {
       }
 
       // Add date range filter
-      if (dateRange.from) {
-        const fromDate = new Date(dateRange.from);
-        fromDate.setHours(0, 0, 0, 0);
-        params.startDate = fromDate.toISOString();
-      }
-
-      if (dateRange.to) {
-        const toDate = new Date(dateRange.to);
-        toDate.setHours(23, 59, 59, 999);
-        params.endDate = toDate.toISOString();
-      } else if (dateRange.from) {
-        const toDate = new Date(dateRange.from);
-        toDate.setHours(23, 59, 59, 999);
-        params.endDate = toDate.toISOString();
-      }
+       const dateParams = buildDateRangeParams(dateRange);
+            if (dateParams.startDate) params.startDate = dateParams.startDate;
+            if (dateParams.endDate) params.endDate = dateParams.endDate;
 
       console.log("Fetching sessions with params:", params);
       const result = await fetchSessions(params);
@@ -192,7 +180,7 @@ const SessionsReport = () => {
     placeholderData: (prev) => prev,
     staleTime: 30 * 1000,
     gcTime: 5 * 60 * 1000,
-    refetchOnMount: false,
+    refetchOnMount: true,
   });
 
   const totalSessions = sessionReport.total;
@@ -424,28 +412,28 @@ const SessionsReport = () => {
                       onClick={() => handleSort("sessionId")}
                     >
                       Session ID
-                      <SortIndicator columnKey="sessionId" />
+                      {/* <SortIndicator columnKey="sessionId" /> */}
                     </TableHead>
                     <TableHead
                       className="cursor-pointer hover:bg-muted/50"
                       onClick={() => handleSort("username")}
                     >
                       User
-                      <SortIndicator columnKey="username" />
+                      {/* <SortIndicator columnKey="username" /> */}
                     </TableHead>
                     <TableHead
                       className="text-right cursor-pointer hover:bg-muted/50"
                       onClick={() => handleSort("questionCount")}
                     >
                       Questions
-                      <SortIndicator columnKey="questionCount" />
+                      {/* <SortIndicator columnKey="questionCount" /> */}
                     </TableHead>
                     <TableHead
                       className="cursor-pointer hover:bg-muted/50"
                       onClick={() => handleSort("sessionTime")}
                     >
                       Session Time
-                      <SortIndicator columnKey="sessionTime" />
+                      {/* <SortIndicator columnKey="sessionTime" /> */}
                     </TableHead>
                   </TableRow>
                 </TableHeader>
@@ -480,7 +468,7 @@ const SessionsReport = () => {
                           </span>
                         </TableCell>
                         <TableCell>
-                          {formatUTCToIST(session.sessionTime)}
+                          {session.sessionTime || "N/A"}
                         </TableCell>
                       </TableRow>
                     ))}

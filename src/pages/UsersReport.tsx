@@ -38,7 +38,7 @@ import {
   RotateCcw,
 } from "lucide-react";
 import TablePagination from "@/components/TablePagination";
-import { formatUTCToIST, buildDateRangeParams } from "@/lib/utils";
+import { formatUTCToIST, buildDateRangeParams, formatLocal } from "@/lib/utils";
 // Add these types near the top of the file
 type SortDirection = "asc" | "desc" | null;
 type SortConfig = {
@@ -109,10 +109,16 @@ const UsersReport = () => {
         current.key === key && current.direction === "asc" ? "desc" : "asc",
     }));
   };
+  console.log("Sort Config:", sortConfig);
 
   // Helper to check if a column is backend-sortable
   const isBackendSortable = (key: string) => {
     // Only username is backend-sortable in current API
+    // const backendSortableKeys = ["username", "sessions", "totalQuestions", "feedbackCount"];
+    // if(backendSortableKeys.includes(key)){
+    //   return key;
+    // }
+    // return null;
     return key === "username";
   };
 
@@ -211,15 +217,12 @@ const UsersReport = () => {
 
   // Use centralized stats from StatsContext - no redundant API call!
   const { stats, isLoading: isStatsLoading, error: statsError } = useStats();
+  console.log(stats)
 
   // Extract stats with fallbacks
   const totalUsers = stats?.totalUsers ?? 0;
-  const totalSessions = stats?.totalSessions ?? 0;
-  const totalQuestions = stats?.totalQuestions ?? 0;
-  const totalFeedback = stats?.totalFeedback ?? 0;
-  const totalLikes = stats?.totalLikes ?? 0;
-  const totalDislikes = stats?.totalDislikes ?? 0;
-
+  const totalNewUsers = stats?.totalNewUsers ?? 0;
+  
   // Removed unused all-users-for-filter query to prevent extra API call on init
   const paginatedUsers = usersResponse.data;
 
@@ -305,6 +308,44 @@ const UsersReport = () => {
             </div>
             <p className="text-xs text-muted-foreground">
               unique active users in selected period
+            </p>
+          </CardContent>
+        </Card>
+
+           <Card>
+          <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
+            <CardTitle className="text-sm font-medium">New Users</CardTitle>
+            <UserPlus className="h-4 w-4 text-muted-foreground" />
+          </CardHeader>
+          <CardContent>
+            <div className="text-2xl font-bold">
+              {isStatsLoading ? (
+                <div className="h-8 w-16 bg-muted animate-pulse rounded" />
+              ) : (
+                totalNewUsers.toLocaleString() || 0
+              )}
+            </div>
+            <p className="text-xs text-muted-foreground">
+            first-time active users
+            </p>
+          </CardContent>
+        </Card>
+
+          <Card>
+          <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
+            <CardTitle className="text-sm font-medium">Returning Users</CardTitle>
+            <UserCheck className="h-4 w-4 text-muted-foreground" />
+          </CardHeader>
+          <CardContent>
+            <div className="text-2xl font-bold">
+              {isStatsLoading ? (
+                <div className="h-8 w-16 bg-muted animate-pulse rounded" />
+              ) : (
+                (totalUsers-totalNewUsers).toLocaleString() || 0
+              )}
+            </div>
+            <p className="text-xs text-muted-foreground">
+              active users with prior activity
             </p>
           </CardContent>
         </Card>
@@ -398,39 +439,43 @@ const UsersReport = () => {
                       className="cursor-pointer hover:bg-muted/50"
                       onClick={() => handleSort("username")}
                     >
-                      Username{<SortIndicator columnKey="username" />}
+                      Username
+                      {/* {<SortIndicator columnKey="username" />} */}
                     </TableHead>
                     <TableHead
                       className="text-right cursor-pointer hover:bg-muted/50"
                       onClick={() => handleSort("sessions")}
                     >
-                      Sessions{<SortIndicator columnKey="sessions" />}
+                      Sessions
+                      {/* {<SortIndicator columnKey="sessions" />} */}
                     </TableHead>
                     <TableHead
                       className="text-right cursor-pointer hover:bg-muted/50"
                       onClick={() => handleSort("totalQuestions")}
                     >
-                      Questions{<SortIndicator columnKey="totalQuestions" />}
+                      Questions
+                      {/* {<SortIndicator columnKey="totalQuestions" />} */}
                     </TableHead>
                     <TableHead
                       className="text-right cursor-pointer hover:bg-muted/50"
                       onClick={() => handleSort("feedbackCount")}
                     >
-                      Feedback{<SortIndicator columnKey="feedbackCount" />}
+                      Feedback
+                      {/* {<SortIndicator columnKey="feedbackCount" />} */}
                     </TableHead>
                     <TableHead
                       className="cursor-pointer hover:bg-muted/50"
-                      onClick={() => handleSort("latestSession")}
+                      onClick={() => handleSort("latestActivity")}
                     >
                       Latest Activity
-                      {<SortIndicator columnKey="latestSession" />}
+                      {/* {<SortIndicator columnKey="latestActivity" />} */}
                     </TableHead>
                     <TableHead
                       className="cursor-pointer hover:bg-muted/50"
                       onClick={() => handleSort("latestSession")}
                     >
                       Latest Session
-                      {<SortIndicator columnKey="latestSession" />}
+                      {/* {<SortIndicator columnKey="latestSession" />} */}
                     </TableHead>
                   </TableRow>
                 </TableHeader>
@@ -480,9 +525,7 @@ const UsersReport = () => {
                         </div>
                       </TableCell>
                       <TableCell>
-                        {formatUTCToIST(
-                          user.latestSession || user.lastActivity || ""
-                        )}
+                        {user.latestSession || "N/A"}
                       </TableCell>
                       <TableCell>
                         <button
