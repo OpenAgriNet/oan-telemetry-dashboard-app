@@ -180,7 +180,7 @@ const SessionsReport = () => {
     placeholderData: (prev) => prev,
     staleTime: 30 * 1000,
     gcTime: 5 * 60 * 1000,
-    refetchOnMount: true,
+    refetchOnMount: false,
   });
 
   const totalSessions = sessionReport.total;
