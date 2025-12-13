@@ -50,7 +50,6 @@ const Dashboard = () => {
       additionalParams: {
         granularity: timeGranularity,
       },
-      alignToIST: false,
     });
     return params;
   };
@@ -97,7 +96,6 @@ const Dashboard = () => {
           additionalParams: {
             granularity: timeGranularity,
           },
-          alignToIST: false,
         });
         return fetchQuestionsGraph(params);
       },
@@ -121,9 +119,8 @@ const Dashboard = () => {
           additionalParams: {
             granularity: timeGranularity,
           },
-          alignToIST: false,
         });
-        return fetchSessionsGraph(params);
+        return fetchUsersGraph(params);
       },
       staleTime: 2 * 60 * 1000,
       gcTime: 5 * 60 * 1000,
@@ -144,7 +141,6 @@ const Dashboard = () => {
         additionalParams: {
           granularity: timeGranularity,
         },
-        alignToIST: false,
       });
       return fetchUsersGraph(params);
     },

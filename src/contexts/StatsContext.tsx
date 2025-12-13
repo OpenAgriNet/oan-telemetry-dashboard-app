@@ -54,7 +54,6 @@ export const StatsProvider: React.FC<StatsProviderProps> = ({ children }) => {
     queryFn: () => {
       const params = buildDateRangeParams(dateRange, {
         includeDefaultStart: false,
-        alignToIST: false,
       });
       console.log('StatsContext: Fetching centralized stats with params:', params);
       return fetchDashboardStats(params);

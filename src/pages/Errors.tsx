@@ -24,6 +24,7 @@ import { Badge } from "@/components/ui/badge";
 import { useDateFilter } from "@/contexts/DateFilterContext";
 import { useKeycloak } from "@react-keycloak/web";
 import { isSuperAdmin } from "@/utils/roleUtils";
+import { buildDateRangeParams } from "@/lib/utils";
 import {
   fetchErrors,
   fetchErrorStats,
@@ -88,22 +89,10 @@ const ErrorsPage = () => {
       queryFn: async () => {
         const statsParams: PaginationParams = {};
 
-        // Add date range filter for stats
-        if (dateRange.from) {
-          const fromDate = new Date(dateRange.from);
-          fromDate.setHours(0, 0, 0, 0);
-          statsParams.startDate = fromDate.toISOString();
-        }
-
-        if (dateRange.to) {
-          const toDate = new Date(dateRange.to);
-          toDate.setHours(23, 59, 59, 999);
-          statsParams.endDate = toDate.toISOString();
-        } else if (dateRange.from) {
-          const toDate = new Date(dateRange.from);
-          toDate.setHours(23, 59, 59, 999);
-          statsParams.endDate = toDate.toISOString();
-        }
+        // Add date range filter using unified utility
+        const dateParams = buildDateRangeParams(dateRange);
+        if (dateParams.startDate) statsParams.startDate = dateParams.startDate;
+        if (dateParams.endDate) statsParams.endDate = dateParams.endDate;
 
         return fetchErrorStats(statsParams);
       },
@@ -145,22 +134,10 @@ const ErrorsPage = () => {
         params.search = searchTerm.trim();
       }
 
-      // Add date range filter
-      if (dateRange.from) {
-        const fromDate = new Date(dateRange.from);
-        fromDate.setHours(0, 0, 0, 0);
-        params.startDate = fromDate.toISOString();
-      }
-
-      if (dateRange.to) {
-        const toDate = new Date(dateRange.to);
-        toDate.setHours(23, 59, 59, 999);
-        params.endDate = toDate.toISOString();
-      } else if (dateRange.from) {
-        const toDate = new Date(dateRange.from);
-        toDate.setHours(23, 59, 59, 999);
-        params.endDate = toDate.toISOString();
-      }
+      // Add date range filter using unified utility
+      const dateParams = buildDateRangeParams(dateRange);
+      if (dateParams.startDate) params.startDate = dateParams.startDate;
+      if (dateParams.endDate) params.endDate = dateParams.endDate;
 
       console.log("Fetching errors with params:", params);
       const result = await fetchErrors(params);
