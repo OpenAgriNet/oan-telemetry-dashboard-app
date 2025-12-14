@@ -50,7 +50,6 @@ const Dashboard = () => {
       additionalParams: {
         granularity: timeGranularity,
       },
-      alignToIST: false,
     });
     return params;
   };
@@ -97,7 +96,6 @@ const Dashboard = () => {
           additionalParams: {
             granularity: timeGranularity,
           },
-          alignToIST: false,
         });
         return fetchQuestionsGraph(params);
       },
@@ -121,9 +119,8 @@ const Dashboard = () => {
           additionalParams: {
             granularity: timeGranularity,
           },
-          alignToIST: false,
         });
-        return fetchSessionsGraph(params);
+        return fetchUsersGraph(params);
       },
       staleTime: 2 * 60 * 1000,
       gcTime: 5 * 60 * 1000,
@@ -144,7 +141,6 @@ const Dashboard = () => {
         additionalParams: {
           granularity: timeGranularity,
         },
-        alignToIST: false,
       });
       return fetchUsersGraph(params);
     },
@@ -352,20 +348,20 @@ const Dashboard = () => {
               }
               isLoading={isLoadingUsersGraph}
               dataKey={[
-                 {
-                  dataKey: "newUsersCount",
-                  color: "#3b82f6",
-                  name: "New Users",
-                  strokeDasharray: "5 5",
-                  fillOpacity: 0.3,
-                },
-                {
-                  dataKey: "returningUsersCount",
-                  color: "#10b981",
-                  name: "Returning Users",
-                  strokeDasharray: "5 5",
-                  fillOpacity: 0.3,
-                },
+                //  {
+                //   dataKey: "newUsersCount",
+                //   color: "#3b82f6",
+                //   name: "New Users",
+                //   strokeDasharray: "5 5",
+                //   fillOpacity: 0.3,
+                // },
+                // {
+                //   dataKey: "returningUsersCount",
+                //   color: "#10b981",
+                //   name: "Returning Users",
+                //   strokeDasharray: "5 5",
+                //   fillOpacity: 0.3,
+                // },
                 {
                   dataKey: "uniqueUsersCount",
                   color: "hsl(var(--foreground))",
