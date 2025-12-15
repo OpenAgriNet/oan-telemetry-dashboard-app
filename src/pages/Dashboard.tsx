@@ -120,7 +120,7 @@ const Dashboard = () => {
             granularity: timeGranularity,
           },
         });
-        return fetchUsersGraph(params);
+        return fetchSessionsGraph(params);
       },
       staleTime: 2 * 60 * 1000,
       gcTime: 5 * 60 * 1000,
@@ -331,7 +331,7 @@ const Dashboard = () => {
             <TabsTrigger value="feedback">
               Feedback
             </TabsTrigger>
-          </TabsList>
+          </TabsList> 
 
           <TabsContent value="users">
             <TrendChart
