@@ -206,7 +206,7 @@ const UsersReport = () => {
     },
     refetchOnWindowFocus: false,
     // Keep old page data while fetching the next
-    placeholderData: (prev) => prev,
+    // placeholderData: (prev) => prev,
     staleTime: 30 * 1000,
     gcTime: 5 * 60 * 1000,
     // Don't refetch immediately on mount if we already have data
