@@ -40,7 +40,7 @@ const ErrorsPage = () => {
   const [page, setPage] = useState(1);
   const pageSize = 10;
   const [sortConfig, setSortConfig] = useState({
-    key: "date",
+    key: "created_at",
     direction: "desc",
   });
 
@@ -138,6 +138,11 @@ const ErrorsPage = () => {
       const dateParams = buildDateRangeParams(dateRange);
       if (dateParams.startDate) params.startDate = dateParams.startDate;
       if (dateParams.endDate) params.endDate = dateParams.endDate;
+
+       if (sortConfig.key  ) {
+          params.sortBy = sortConfig.key;
+          params.sortOrder = sortConfig.direction as "asc" | "desc";
+        }
 
       console.log("Fetching errors with params:", params);
       const result = await fetchErrors(params);
@@ -294,14 +299,31 @@ const ErrorsPage = () => {
                     <TableRow>
                       <TableHead
                         className="cursor-pointer hover:bg-muted/50"
-                        onClick={() => handleSort("date")}
+                        onClick={() => handleSort("created_at")}
                       >
                         Date
-                        {/* {SortIndicator({ columnKey: "date" })} */}
+                        {SortIndicator({ columnKey: "created_at" })}
                       </TableHead>
-                      <TableHead>Error Message</TableHead>
-                      <TableHead>User</TableHead>
-                      <TableHead>Session</TableHead>
+                      <TableHead
+                        className="cursor-pointer hover:bg-muted/50"
+                        onClick={() => handleSort("error_message")}
+                      >
+                        Error Message
+                        {SortIndicator({ columnKey: "error_message" })}
+                        </TableHead>
+                      <TableHead
+                        className="cursor-pointer hover:bg-muted/50"
+                        onClick={() => handleSort("user_id")}
+                      >User
+                        {SortIndicator({ columnKey: "user_id" })}
+                      </TableHead>
+                      <TableHead
+                        className="cursor-pointer hover:bg-muted/50"
+                        onClick={() => handleSort("session_id")}
+                        >
+                          Session
+                        {SortIndicator({ columnKey: "session_id" })}
+                      </TableHead>
                       <TableHead>Channel</TableHead>
                       <TableHead>Actions</TableHead>
                     </TableRow>
