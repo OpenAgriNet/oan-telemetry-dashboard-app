@@ -208,19 +208,49 @@ const Dashboard = () => {
   };
 
   // Helper function to add total unique users to the data
-  const transformUsersData = (
-    data: Array<{
-      newUsers?: number;
-      returningUsers?: number;
-      [key: string]: unknown;
-    }>
-  ) => {
+  const transformUsersData = <T extends {
+    newUsers?: number;
+    returningUsers?: number;
+    date?: string;
+    hour?: number;
+    [key: string]: unknown;
+  }>(
+    data: T[]
+  ): (T & { totalUniqueUsers: number })[] => {
     if (!data || !Array.isArray(data)) return [];
 
     return data.map((item) => ({
       ...item,
       totalUniqueUsers: (item.newUsers || 0) + (item.returningUsers || 0),
     }));
+  };
+
+  // Helper function to filter graph data by the selected date range
+  // This ensures only data within the selected dates is shown even if backend returns extra data
+  const filterDataByDateRange = <T extends { date?: string; hour?: number }>(
+    data: T[]
+  ): T[] => {
+    if (!data || !Array.isArray(data)) return [];
+    if (!dateRange.from || !dateRange.to) return data;
+
+    // Normalize dates to start of day for comparison
+    const fromDate = new Date(dateRange.from);
+    fromDate.setHours(0, 0, 0, 0);
+    
+    const toDate = new Date(dateRange.to);
+    toDate.setHours(23, 59, 59, 999);
+
+    return data.filter((item) => {
+      if (!item.date) return false;
+
+      // Parse the date from the data point
+      // Handle formats like "YYYY-MM-DD" or "YYYY-MM-DD HH:mm:ss"
+      const dateStr = item.date.split(' ')[0]; // Get just the date part
+      const itemDate = new Date(dateStr + 'T00:00:00');
+
+      // Check if the item date is within the selected range
+      return itemDate >= fromDate && itemDate <= toDate;
+    });
   };
 
   
@@ -340,11 +370,13 @@ const Dashboard = () => {
                 timeGranularity === "daily" ? "Daily" : "Hourly"
               } new vs returning vs total users`}
               data={
-                timeGranularity === "daily"
-                  ? transformUsersData(usersGraphData?.data || [])
-                  : transformUsersData(
-                      transformHourlyData(usersGraphData?.data || [])
-                    )
+                filterDataByDateRange(
+                  timeGranularity === "daily"
+                    ? transformUsersData(usersGraphData?.data || [])
+                    : transformUsersData(
+                        transformHourlyData(usersGraphData?.data || [])
+                      )
+                )
               }
               isLoading={isLoadingUsersGraph}
               dataKey={[
@@ -380,7 +412,7 @@ const Dashboard = () => {
                 description={`${
                   timeGranularity === "daily" ? "Daily" : "Hourly"
                 } questions count`}
-                data={questionsGraphData?.data || []}
+                data={filterDataByDateRange(questionsGraphData?.data || [])}
                 isLoading={isLoadingQuestionsGraph}
                 dataKey="questionsCount"
                 type={chartType}
@@ -396,7 +428,7 @@ const Dashboard = () => {
                 description={`${
                   timeGranularity === "daily" ? "Daily" : "Hourly"
                 } sessions count`}
-                data={sessionsGraphData?.data || []}
+                data={filterDataByDateRange(sessionsGraphData?.data || [])}
                 isLoading={isLoadingSessionsGraph}
                 dataKey="sessionsCount"
                 type={chartType}
@@ -412,7 +444,7 @@ const Dashboard = () => {
                 description={`${
                   timeGranularity === "daily" ? "Daily" : "Hourly"
                 } likes and dislikes`}
-                data={feedbackGraphData?.data || []}
+                data={filterDataByDateRange(feedbackGraphData?.data || [])}
                 isLoading={isLoadingFeedbackGraph}
                 dataKey={[
                   {
