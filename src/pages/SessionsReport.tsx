@@ -415,10 +415,10 @@ const SessionsReport = () => {
                   <TableRow>
                     <TableHead
                       className="cursor-pointer hover:bg-muted/50"
-                      onClick={() => handleSort("session_id")}
+                      // onClick={() => handleSort("session_id")}
                     >
                       Session ID
-                      <SortIndicator columnKey="session_id" /> 
+                      {/* <SortIndicator columnKey="session_id" />  */}
                     </TableHead>
                     <TableHead
                       className="cursor-pointer hover:bg-muted/50"
@@ -429,10 +429,10 @@ const SessionsReport = () => {
                     </TableHead>
                     <TableHead
                       className="text-right cursor-pointer hover:bg-muted/50"
-                      onClick={() => handleSort("question_count")}
+                      // onClick={() => handleSort("question_count")}
                     >
                       Questions
-                      <SortIndicator columnKey="question_count" />
+                      {/* <SortIndicator columnKey="question_count" /> */}
                     </TableHead>
                     <TableHead
                       className="cursor-pointer hover:bg-muted/50"
@@ -445,7 +445,7 @@ const SessionsReport = () => {
                 </TableHeader>
                 <TableBody>
                   {sessionReport.data
-                    .filter((session) => session.questionCount > 0)
+                    // .filter((session) => session.questionCount > 0)
                     .map((session, idx) => (
                       <TableRow
                         key={session.sessionId || idx}

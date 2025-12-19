@@ -451,17 +451,17 @@ const UsersReport = () => {
                     </TableHead>
                     <TableHead
                       className="text-right cursor-pointer hover:bg-muted/50"
-                      onClick={() => handleSort("session_count")}
+                      // onClick={() => handleSort("session_count")}
                     >
                       Sessions
-                      {<SortIndicator columnKey="session_count" />}
+                      {/* {<SortIndicator columnKey="session_count" />} */}
                     </TableHead>
                     <TableHead
                       className="text-right cursor-pointer hover:bg-muted/50"
-                      onClick={() => handleSort("total_questions")}
+                      // onClick={() => handleSort("total_questions")}
                     >
                       Questions
-                      {<SortIndicator columnKey="total_questions" />}
+                      {/* {<SortIndicator columnKey="total_questions" />} */}
                     </TableHead>
                     <TableHead
                       className="text-right cursor-pointer hover:bg-muted/50"
@@ -479,10 +479,10 @@ const UsersReport = () => {
                     </TableHead>
                     <TableHead
                       className="cursor-pointer hover:bg-muted/50"
-                      onClick={() => handleSort("latest_session")}
+                      // onClick={() => handleSort("latest_session")}
                     >
                       Latest Session
-                      {<SortIndicator columnKey="latest_session" />}
+                      {/* {<SortIndicator columnKey="latest_session" />} */}
                     </TableHead>
                   </TableRow>
                 </TableHeader>
