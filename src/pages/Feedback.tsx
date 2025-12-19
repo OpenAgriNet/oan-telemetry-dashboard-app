@@ -441,10 +441,10 @@ const FeedbackPage = () => {
                     </TableHead>
                     <TableHead
                       className="cursor-pointer hover:bg-muted/50"
-                      onClick={() => handleSort("feedbacktype")}
+                      // onClick={() => handleSort("feedbacktype")}
                     >
                       Rating
-                      <SortIndicator columnKey="feedbacktype" />
+                      {/* <SortIndicator columnKey="feedbacktype" /> */}
                     </TableHead>
                     <TableHead
                       className="cursor-pointer hover:bg-muted/50"

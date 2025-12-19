@@ -378,10 +378,10 @@ console.log("Questions from ISO",dateRange.from?.toISOString())
               <TableRow>
                 <TableHead
                   className="w-[400px] cursor-pointer hover:bg-muted/50"
-                  onClick={() => handleSort("question")}
+                  // onClick={() => handleSort("question")}
                 >
                   Question
-                  <SortIndicator columnKey="question" />
+                  {/* <SortIndicator columnKey="question" /> */}
                 </TableHead>
                 <TableHead
                   className="cursor-pointer hover:bg-muted/50"
@@ -392,10 +392,10 @@ console.log("Questions from ISO",dateRange.from?.toISOString())
                 </TableHead>
                 <TableHead
                   className="cursor-pointer hover:bg-muted/50"
-                  onClick={() => handleSort("session_id")}
+                  // onClick={() => handleSort("session_id")}
                 >
                   Session ID
-                  <SortIndicator columnKey="session_id" />
+                  {/* <SortIndicator columnKey="session_id" /> */}
                 </TableHead>
                 <TableHead
                   className="cursor-pointer hover:bg-muted/50"
