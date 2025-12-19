@@ -137,8 +137,6 @@ export interface PaginationParams {
 
 export interface UserPaginationParams extends PaginationParams {
   username?: string;
-  sortKey?: string;
-  sortDirection?: 'asc' | 'desc';
 }
 
 export interface SessionPaginationParams extends PaginationParams {
@@ -509,8 +507,8 @@ export const fetchUsers = async (params: UserPaginationParams = {}): Promise<Pag
       search,
   startDate,
   endDate,
-  sortKey,
-  sortDirection
+  sortBy,
+  sortOrder
     } = params;
 
     const queryParams = buildQueryParams({
@@ -520,8 +518,8 @@ export const fetchUsers = async (params: UserPaginationParams = {}): Promise<Pag
       startDate: startDate || '',
   endDate: endDate || '',
   // Map client sortKey to server sortBy param name
-  sortBy: sortKey || '',
-  sortDirection: sortDirection || ''
+  sortBy: sortBy || '',
+  sortOrder: sortOrder || ''
     });
 
   console.log('Fetching users with URL:', `${SERVER_URL}/users?${queryParams}`);
