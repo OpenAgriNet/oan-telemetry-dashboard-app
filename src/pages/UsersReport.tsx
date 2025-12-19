@@ -97,8 +97,8 @@ const UsersReport = () => {
 
   // Add new state for sorting
   const [sortConfig, setSortConfig] = useState<SortConfig>({
-    key: "",
-    direction: "asc",
+    key: "last_activity",
+    direction: "desc",
   });
 
   // Add sorting function
@@ -140,6 +140,8 @@ const UsersReport = () => {
       selectedUser,
       page,
       pageSize,
+      sortConfig.key,
+      sortConfig.direction,
       // Only include backend-sortable sort in key to avoid refetches on client-only sorts
       isBackendSortable(sortConfig.key) ? sortConfig.key : "client-sort",
       isBackendSortable(sortConfig.key)
@@ -152,10 +154,15 @@ const UsersReport = () => {
         page,
         limit: pageSize,
       };
-      if (isBackendSortable(sortConfig.key)) {
-        params.sortKey = sortConfig.key;
-        params.sortDirection = sortConfig.direction;
-      }
+      // if (isBackendSortable(sortConfig.key)) {
+      //   params.sortKey = sortConfig.key;
+      //   params.sortDirection = sortConfig.direction;
+      // }
+
+       if (sortConfig.key) {
+        params.sortBy = sortConfig.key;
+        params.sortOrder = sortConfig.direction as "asc" | "desc";
+      }   
 
       // Add search filter
       if (searchQuery.trim()) {
@@ -437,45 +444,45 @@ const UsersReport = () => {
                   <TableRow>
                     <TableHead
                       className="cursor-pointer hover:bg-muted/50"
-                      onClick={() => handleSort("username")}
+                      onClick={() => handleSort("user_id")}
                     >
                       Username
-                      {/* {<SortIndicator columnKey="username" />} */}
+                      {<SortIndicator columnKey="user_id" />}
                     </TableHead>
                     <TableHead
                       className="text-right cursor-pointer hover:bg-muted/50"
-                      onClick={() => handleSort("sessions")}
+                      onClick={() => handleSort("session_count")}
                     >
                       Sessions
-                      {/* {<SortIndicator columnKey="sessions" />} */}
+                      {<SortIndicator columnKey="session_count" />}
                     </TableHead>
                     <TableHead
                       className="text-right cursor-pointer hover:bg-muted/50"
-                      onClick={() => handleSort("totalQuestions")}
+                      onClick={() => handleSort("total_questions")}
                     >
                       Questions
-                      {/* {<SortIndicator columnKey="totalQuestions" />} */}
+                      {<SortIndicator columnKey="total_questions" />}
                     </TableHead>
                     <TableHead
                       className="text-right cursor-pointer hover:bg-muted/50"
-                      onClick={() => handleSort("feedbackCount")}
+                      onClick={() => handleSort("feedback_count")}
                     >
                       Feedback
-                      {/* {<SortIndicator columnKey="feedbackCount" />} */}
+                      {<SortIndicator columnKey="feedback_count" />}
                     </TableHead>
                     <TableHead
                       className="cursor-pointer hover:bg-muted/50"
-                      onClick={() => handleSort("latestActivity")}
+                      onClick={() => handleSort("last_activity")}
                     >
                       Latest Activity
-                      {/* {<SortIndicator columnKey="latestActivity" />} */}
+                      {<SortIndicator columnKey="last_activity" />}
                     </TableHead>
                     <TableHead
                       className="cursor-pointer hover:bg-muted/50"
-                      onClick={() => handleSort("latestSession")}
+                      onClick={() => handleSort("latest_session")}
                     >
                       Latest Session
-                      {/* {<SortIndicator columnKey="latestSession" />} */}
+                      {<SortIndicator columnKey="latest_session" />}
                     </TableHead>
                   </TableRow>
                 </TableHeader>

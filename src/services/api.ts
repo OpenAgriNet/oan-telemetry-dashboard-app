@@ -131,12 +131,12 @@ export interface PaginationParams {
   startDate?: string;
   endDate?: string;
   granularity?: string;
+  sortBy?: string;
+  sortOrder?: 'asc' | 'desc';
 }
 
 export interface UserPaginationParams extends PaginationParams {
   username?: string;
-  sortKey?: string;
-  sortDirection?: 'asc' | 'desc';
 }
 
 export interface SessionPaginationParams extends PaginationParams {
@@ -507,8 +507,8 @@ export const fetchUsers = async (params: UserPaginationParams = {}): Promise<Pag
       search,
   startDate,
   endDate,
-  sortKey,
-  sortDirection
+  sortBy,
+  sortOrder
     } = params;
 
     const queryParams = buildQueryParams({
@@ -518,8 +518,8 @@ export const fetchUsers = async (params: UserPaginationParams = {}): Promise<Pag
       startDate: startDate || '',
   endDate: endDate || '',
   // Map client sortKey to server sortBy param name
-  sortBy: sortKey || '',
-  sortDirection: sortDirection || ''
+  sortBy: sortBy || '',
+  sortOrder: sortOrder || ''
     });
 
   console.log('Fetching users with URL:', `${SERVER_URL}/users?${queryParams}`);
@@ -683,7 +683,9 @@ export const fetchSessions = async (params: SessionPaginationParams = {}): Promi
       limit = DEFAULT_LIMIT,
       search,
       startDate,
-      endDate
+      endDate,
+      sortBy,
+      sortOrder
     } = params;
 
     const queryParams = buildQueryParams({
@@ -691,7 +693,9 @@ export const fetchSessions = async (params: SessionPaginationParams = {}): Promi
       limit,
       search: search || '',
       startDate: startDate || '',
-      endDate: endDate || ''
+      endDate: endDate || '',
+      sortBy: sortBy || '',
+      sortOrder: sortOrder || ''
     });
 
     console.log('Fetching sessions with URL:', `${SERVER_URL}/sessions?${queryParams}`);
@@ -878,7 +882,9 @@ export const fetchQuestions = async (params: QuestionPaginationParams = {}): Pro
       startDate,
       endDate,
       userId,
-      sessionId
+      sessionId,
+      sortBy,
+      sortOrder
     } = params;
 
     const queryParams = buildQueryParams({
@@ -888,7 +894,9 @@ export const fetchQuestions = async (params: QuestionPaginationParams = {}): Pro
       startDate: startDate || '',
       endDate: endDate || '',
       userId: userId || '',
-      sessionId: sessionId || ''
+      sessionId: sessionId || '',
+      sortBy: sortBy || '',
+      sortOrder: sortOrder || ''
     });
 
     console.log('Fetching questions with URL:', `${SERVER_URL}/questions?${queryParams}`);
@@ -986,7 +994,9 @@ export const fetchFeedback = async (params: PaginationParams = {}): Promise<Pagi
       limit = DEFAULT_LIMIT,
       search,
       startDate,
-      endDate
+      endDate,
+      sortBy,
+      sortOrder
     } = params;
 
     const queryParams = buildQueryParams({
@@ -994,7 +1004,9 @@ export const fetchFeedback = async (params: PaginationParams = {}): Promise<Pagi
       limit,
       search: search || '',
       startDate: startDate || '',
-      endDate: endDate || ''
+      endDate: endDate || '',
+      sortBy: sortBy || '',
+      sortOrder: sortOrder || ''
     });
 
     console.log('Fetching feedback with URL:', `${SERVER_URL}/feedback?${queryParams}`);
@@ -1903,7 +1915,7 @@ export interface ErrorGraphResponse {
 // Get all errors with pagination
 export const fetchErrors = async (params: ErrorPaginationParams = {}): Promise<PaginatedResponse<ErrorDetail>> => {
   try {
-    const { page = 1, limit = 10, search = '', startDate, endDate, errorType = '' } = params;
+    const { page = 1, limit = 10, search = '', startDate, endDate, errorType = '', sortBy, sortOrder } = params;
     
     const queryParams = buildQueryParams({
       page: page.toString(),
@@ -1911,7 +1923,9 @@ export const fetchErrors = async (params: ErrorPaginationParams = {}): Promise<P
       search: search || '',
       startDate: startDate || '',
       endDate: endDate || '',
-      errorType: errorType || ''
+      errorType: errorType || '',
+      sortBy: sortBy || '',
+      sortOrder: sortOrder || ''
     });
 
     const url = `${SERVER_URL}/errors${queryParams ? `?${queryParams}` : ''}`;
