@@ -60,7 +60,7 @@ const SessionsReport = () => {
   const [selectedUser, setSelectedUser] = useState<string>("all");
   const [searchQuery, setSearchQuery] = useState<string>("");
   const [sortConfig, setSortConfig] = useState({
-    key: "sessionTime",
+    key: "session_time",
     direction: "desc",
   });
 
@@ -155,6 +155,12 @@ const SessionsReport = () => {
        const dateParams = buildDateRangeParams(dateRange);
             if (dateParams.startDate) params.startDate = dateParams.startDate;
             if (dateParams.endDate) params.endDate = dateParams.endDate;
+
+      if (sortConfig.key) {
+        params.sortBy = sortConfig.key;
+        params.sortOrder = sortConfig.direction as "asc" | "desc";
+      }    
+
 
       console.log("Fetching sessions with params:", params);
       const result = await fetchSessions(params);
@@ -409,31 +415,31 @@ const SessionsReport = () => {
                   <TableRow>
                     <TableHead
                       className="cursor-pointer hover:bg-muted/50"
-                      onClick={() => handleSort("sessionId")}
+                      onClick={() => handleSort("session_id")}
                     >
                       Session ID
-                      {/* <SortIndicator columnKey="sessionId" /> */}
+                      <SortIndicator columnKey="session_id" /> 
                     </TableHead>
                     <TableHead
                       className="cursor-pointer hover:bg-muted/50"
                       onClick={() => handleSort("username")}
                     >
                       User
-                      {/* <SortIndicator columnKey="username" /> */}
+                      <SortIndicator columnKey="username" />
                     </TableHead>
                     <TableHead
                       className="text-right cursor-pointer hover:bg-muted/50"
-                      onClick={() => handleSort("questionCount")}
+                      onClick={() => handleSort("question_count")}
                     >
                       Questions
-                      {/* <SortIndicator columnKey="questionCount" /> */}
+                      <SortIndicator columnKey="question_count" />
                     </TableHead>
                     <TableHead
                       className="cursor-pointer hover:bg-muted/50"
-                      onClick={() => handleSort("sessionTime")}
+                      onClick={() => handleSort("session_time")}
                     >
                       Session Time
-                      {/* <SortIndicator columnKey="sessionTime" /> */}
+                      <SortIndicator columnKey="session_time" />
                     </TableHead>
                   </TableRow>
                 </TableHeader>

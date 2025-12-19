@@ -192,6 +192,11 @@ console.log("Questions from ISO",dateRange.from?.toISOString())
         params.search = searchTerms.join(" ");
       }
 
+      if(sortConfig.key){
+        params.sortBy = sortConfig.key;
+        params.sortOrder = sortConfig.direction as 'asc' | 'desc';
+      }
+
       // Format dates for API (backend expects ISO strings or Unix timestamps)
       // if (dateRange.from) {
       //   const fromDate = new Date(dateRange.from);
@@ -376,28 +381,28 @@ console.log("Questions from ISO",dateRange.from?.toISOString())
                   onClick={() => handleSort("question")}
                 >
                   Question
-                  {/* <SortIndicator columnKey="question" /> */}
+                  <SortIndicator columnKey="question" />
                 </TableHead>
                 <TableHead
                   className="cursor-pointer hover:bg-muted/50"
                   onClick={() => handleSort("user_id")}
                 >
                   User
-                  {/* <SortIndicator columnKey="user_id" /> */}
+                  <SortIndicator columnKey="user_id" />
                 </TableHead>
                 <TableHead
                   className="cursor-pointer hover:bg-muted/50"
                   onClick={() => handleSort("session_id")}
                 >
                   Session ID
-                  {/* <SortIndicator columnKey="session_id" /> */}
+                  <SortIndicator columnKey="session_id" />
                 </TableHead>
                 <TableHead
                   className="cursor-pointer hover:bg-muted/50"
                   onClick={() => handleSort("dateAsked")}
                 >
                   Date Asked
-                  {/* <SortIndicator columnKey="dateAsked" /> */}
+                  <SortIndicator columnKey="dateAsked" />
                 </TableHead>
                 {/* <TableHead>Channel</TableHead> */}
                 {/* <TableHead>Reaction</TableHead> */}
