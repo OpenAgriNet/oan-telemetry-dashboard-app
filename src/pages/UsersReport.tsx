@@ -319,7 +319,7 @@ const UsersReport = () => {
           </CardContent>
         </Card>
 
-           {/* <Card>
+           <Card>
           <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
             <CardTitle className="text-sm font-medium">New Users</CardTitle>
             <UserPlus className="h-4 w-4 text-muted-foreground" />
@@ -336,9 +336,9 @@ const UsersReport = () => {
             first-time active users
             </p>
           </CardContent>
-        </Card> */}
+        </Card>
 
-          {/* <Card>
+          <Card>
           <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
             <CardTitle className="text-sm font-medium">Returning Users</CardTitle>
             <UserCheck className="h-4 w-4 text-muted-foreground" />
@@ -355,7 +355,7 @@ const UsersReport = () => {
               active users with prior activity
             </p>
           </CardContent>
-        </Card> */}
+        </Card>
       </div>
 
       <Card>

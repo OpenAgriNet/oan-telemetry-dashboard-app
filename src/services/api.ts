@@ -374,9 +374,10 @@ export interface UserStatsResponse {
 export interface UsersGraphDataPoint {
   date: string;
   hour?: number;
-  newUsers?: number;
-  returningUsers?: number;
+  newUsersCount?: number;
+  returningUsersCount?: number;
   uniqueUsersCount?: number;
+  timestamp?: number;
   [key: string]: string | number | undefined;
 }
 

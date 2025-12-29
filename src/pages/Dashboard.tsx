@@ -187,7 +187,7 @@ const Dashboard = () => {
     data: Array<{
       hour?: number;
       date?: string;
-      timestamp?: string;
+      timestamp?: number;
       [key: string]: unknown;
     }>
   ) => {
@@ -209,8 +209,8 @@ const Dashboard = () => {
 
   // Helper function to add total unique users to the data
   const transformUsersData = <T extends {
-    newUsers?: number;
-    returningUsers?: number;
+    newUsersCount?: number;
+    returningUsersCount?: number;
     date?: string;
     hour?: number;
     [key: string]: unknown;
@@ -221,7 +221,7 @@ const Dashboard = () => {
 
     return data.map((item) => ({
       ...item,
-      totalUniqueUsers: (item.newUsers || 0) + (item.returningUsers || 0),
+      totalUniqueUsers: (item.newUsersCount || 0) + (item.returningUsersCount || 0),
     }));
   };
 
@@ -380,20 +380,20 @@ const Dashboard = () => {
               }
               isLoading={isLoadingUsersGraph}
               dataKey={[
-                //  {
-                //   dataKey: "newUsersCount",
-                //   color: "#3b82f6",
-                //   name: "New Users",
-                //   strokeDasharray: "5 5",
-                //   fillOpacity: 0.3,
-                // },
-                // {
-                //   dataKey: "returningUsersCount",
-                //   color: "#10b981",
-                //   name: "Returning Users",
-                //   strokeDasharray: "5 5",
-                //   fillOpacity: 0.3,
-                // },
+                {
+                  dataKey: "newUsersCount",
+                  color: "#3b82f6",
+                  name: "New Users",
+                  strokeDasharray: "5 5",
+                  fillOpacity: 0.3,
+                },
+                {
+                  dataKey: "returningUsersCount",
+                  color: "#10b981",
+                  name: "Returning Users",
+                  strokeDasharray: "5 5",
+                  fillOpacity: 0.3,
+                },
                 {
                   dataKey: "uniqueUsersCount",
                   color: "hsl(var(--foreground))",
