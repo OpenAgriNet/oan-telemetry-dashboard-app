@@ -1,0 +1,255 @@
+{
+  "info": {
+    "name": "Analytics Dashboard API",
+    "description": "API collection for Analytics Dashboard application",
+    "schema": "https://schema.getpostman.com/json/collection/v2.1.0/collection.json"
+  },
+  "item": [
+    {
+      "name": "Users",
+      "item": [
+        {
+          "name": "Get All Users",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{baseUrl}}/api/users?page={{page}}&pageSize={{pageSize}}",
+              "host": ["{{baseUrl}}"],
+              "path": ["api", "users"],
+              "query": [
+                {
+                  "key": "page",
+                  "value": "{{page}}",
+                  "description": "Page number"
+                },
+                {
+                  "key": "pageSize",
+                  "value": "{{pageSize}}",
+                  "description": "Items per page"
+                }
+              ]
+            },
+            "description": "Retrieve all users with pagination"
+          }
+        }
+      ]
+    },
+    {
+      "name": "Sessions",
+      "item": [
+        {
+          "name": "Get All Sessions",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{baseUrl}}/api/sessions",
+              "host": ["{{baseUrl}}"],
+              "path": ["api", "sessions"]
+            }
+          }
+        },
+        {
+          "name": "Generate Session Report",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{baseUrl}}/api/sessions/report?userId={{userId}}&startDate={{startDate}}&endDate={{endDate}}",
+              "host": ["{{baseUrl}}"],
+              "path": ["api", "sessions", "report"],
+              "query": [
+                {
+                  "key": "userId",
+                  "value": "{{userId}}",
+                  "description": "Optional user ID filter"
+                },
+                {
+                  "key": "startDate",
+                  "value": "{{startDate}}",
+                  "description": "Optional start date filter (ISO format)"
+                },
+                {
+                  "key": "endDate",
+                  "value": "{{endDate}}",
+                  "description": "Optional end date filter (ISO format)"
+                }
+              ]
+            }
+          }
+        },
+        {
+          "name": "Get Session Events",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{baseUrl}}/api/sessions/{{sessionId}}/events",
+              "host": ["{{baseUrl}}"],
+              "path": ["api", "sessions", "{{sessionId}}", "events"],
+              "variable": [
+                {
+                  "key": "sessionId",
+                  "value": "",
+                  "description": "Session ID to fetch events for"
+                }
+              ]
+            },
+            "description": "Retrieve all events for a specific session"
+          }
+        }
+      ]
+    },
+    {
+      "name": "Questions",
+      "item": [
+        {
+          "name": "Get All Questions",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{baseUrl}}/api/questions",
+              "host": ["{{baseUrl}}"],
+              "path": ["api", "questions"]
+            }
+          }
+        },
+        {
+          "name": "Generate Questions Report",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{baseUrl}}/api/questions/report?userId={{userId}}&sessionId={{sessionId}}&startDate={{startDate}}&endDate={{endDate}}&searchText={{searchText}}",
+              "host": ["{{baseUrl}}"],
+              "path": ["api", "questions", "report"],
+              "query": [
+                {
+                  "key": "userId",
+                  "value": "{{userId}}",
+                  "description": "Optional user ID filter"
+                },
+                {
+                  "key": "sessionId",
+                  "value": "{{sessionId}}",
+                  "description": "Optional session ID filter"
+                },
+                {
+                  "key": "startDate",
+                  "value": "{{startDate}}",
+                  "description": "Optional start date filter (ISO format)"
+                },
+                {
+                  "key": "endDate",
+                  "value": "{{endDate}}",
+                  "description": "Optional end date filter (ISO format)"
+                },
+                {
+                  "key": "searchText",
+                  "value": "{{searchText}}",
+                  "description": "Optional text search filter"
+                }
+              ]
+            }
+          }
+        }
+      ]
+    },
+    {
+      "name": "Metrics",
+      "item": [
+        {
+          "name": "Get Daily Metrics",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{baseUrl}}/api/metrics/daily",
+              "host": ["{{baseUrl}}"],
+              "path": ["api", "metrics", "daily"]
+            }
+          }
+        }
+      ]
+    },
+    {
+      "name": "Feedback",
+      "item": [
+        {
+          "name": "Get All Feedback",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{baseUrl}}/api/feedback",
+              "host": ["{{baseUrl}}"],
+              "path": ["api", "feedback"]
+            }
+          }
+        },
+        {
+          "name": "Get Feedback by ID",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{baseUrl}}/api/feedback/{{feedbackId}}",
+              "host": ["{{baseUrl}}"],
+              "path": ["api", "feedback", "{{feedbackId}}"],
+              "variable": [
+                {
+                  "key": "feedbackId",
+                  "value": "",
+                  "description": "Feedback ID"
+                }
+              ]
+            }
+          }
+        }
+      ]
+    },
+    {
+      "name": "Translations",
+      "item": [
+        {
+          "name": "Get Translation by Feedback ID",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{baseUrl}}/api/translations/{{feedbackId}}",
+              "host": ["{{baseUrl}}"],
+              "path": ["api", "translations", "{{feedbackId}}"],
+              "variable": [
+                {
+                  "key": "feedbackId",
+                  "value": "",
+                  "description": "Feedback ID for translation"
+                }
+              ]
+            }
+          }
+        }
+      ]
+    }
+  ],
+  "variable": [
+    {
+      "key": "baseUrl",
+      "value": "http://localhost:5173",
+      "type": "string"
+    },
+    {
+      "key": "page",
+      "value": "1",
+      "type": "string"
+    },
+    {
+      "key": "pageSize",
+      "value": "10",
+      "type": "string"
+    }
+  ]
+}
