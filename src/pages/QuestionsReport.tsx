@@ -192,6 +192,11 @@ console.log("Questions from ISO",dateRange.from?.toISOString())
         params.search = searchTerms.join(" ");
       }
 
+      if(sortConfig.key){
+        params.sortBy = sortConfig.key;
+        params.sortOrder = sortConfig.direction as 'asc' | 'desc';
+      }
+
       // Format dates for API (backend expects ISO strings or Unix timestamps)
       // if (dateRange.from) {
       //   const fromDate = new Date(dateRange.from);
@@ -236,7 +241,7 @@ console.log("Questions from ISO",dateRange.from?.toISOString())
     retry: 2,
     retryDelay: (attemptIndex) => Math.min(1000 * 2 ** attemptIndex, 30000),
     // Keep old page data while fetching the next
-    placeholderData: (prev) => prev,
+    // placeholderData: (prev) => prev,
     staleTime: 30 * 1000,
     gcTime: 5 * 60 * 1000,
     refetchOnMount: false,
@@ -373,7 +378,7 @@ console.log("Questions from ISO",dateRange.from?.toISOString())
               <TableRow>
                 <TableHead
                   className="w-[400px] cursor-pointer hover:bg-muted/50"
-                  onClick={() => handleSort("question")}
+                  // onClick={() => handleSort("question")}
                 >
                   Question
                   {/* <SortIndicator columnKey="question" /> */}
@@ -383,11 +388,11 @@ console.log("Questions from ISO",dateRange.from?.toISOString())
                   onClick={() => handleSort("user_id")}
                 >
                   User
-                  {/* <SortIndicator columnKey="user_id" /> */}
+                  <SortIndicator columnKey="user_id" />
                 </TableHead>
                 <TableHead
                   className="cursor-pointer hover:bg-muted/50"
-                  onClick={() => handleSort("session_id")}
+                  // onClick={() => handleSort("session_id")}
                 >
                   Session ID
                   {/* <SortIndicator columnKey="session_id" /> */}
@@ -397,7 +402,7 @@ console.log("Questions from ISO",dateRange.from?.toISOString())
                   onClick={() => handleSort("dateAsked")}
                 >
                   Date Asked
-                  {/* <SortIndicator columnKey="dateAsked" /> */}
+                  <SortIndicator columnKey="dateAsked" />
                 </TableHead>
                 {/* <TableHead>Channel</TableHead> */}
                 {/* <TableHead>Reaction</TableHead> */}
@@ -448,7 +453,7 @@ console.log("Questions from ISO",dateRange.from?.toISOString())
                     <TableCell className="font-medium">
                       <div className="max-w-md">
                         <button
-                          className="truncate text-left text-primary hover:underline bg-transparent border-none p-0 m-0 w-full"
+                          className="truncate text-left hover:underline bg-transparent border-none p-0 m-0 w-full"
                           title={question.question}
                           onClick={() => handleQuestionClick(question.id)}
                           type="button"
@@ -473,7 +478,7 @@ console.log("Questions from ISO",dateRange.from?.toISOString())
                     <TableCell>
                       <button
                         onClick={() => handleSessionClick(question.session_id)}
-                        className="text-primary hover:underline"
+                        className="hover:underline"
                       >
                         <code className="relative rounded bg-muted px-[0.3rem] py-[0.2rem] font-mono text-xs">
                           {question.session_id.substring(0, 8)}...

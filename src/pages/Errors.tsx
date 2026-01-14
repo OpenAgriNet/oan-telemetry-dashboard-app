@@ -24,6 +24,7 @@ import { Badge } from "@/components/ui/badge";
 import { useDateFilter } from "@/contexts/DateFilterContext";
 import { useKeycloak } from "@react-keycloak/web";
 import { isSuperAdmin } from "@/utils/roleUtils";
+import { buildDateRangeParams } from "@/lib/utils";
 import {
   fetchErrors,
   fetchErrorStats,
@@ -39,7 +40,7 @@ const ErrorsPage = () => {
   const [page, setPage] = useState(1);
   const pageSize = 10;
   const [sortConfig, setSortConfig] = useState({
-    key: "date",
+    key: "created_at",
     direction: "desc",
   });
 
@@ -88,22 +89,10 @@ const ErrorsPage = () => {
       queryFn: async () => {
         const statsParams: PaginationParams = {};
 
-        // Add date range filter for stats
-        if (dateRange.from) {
-          const fromDate = new Date(dateRange.from);
-          fromDate.setHours(0, 0, 0, 0);
-          statsParams.startDate = fromDate.toISOString();
-        }
-
-        if (dateRange.to) {
-          const toDate = new Date(dateRange.to);
-          toDate.setHours(23, 59, 59, 999);
-          statsParams.endDate = toDate.toISOString();
-        } else if (dateRange.from) {
-          const toDate = new Date(dateRange.from);
-          toDate.setHours(23, 59, 59, 999);
-          statsParams.endDate = toDate.toISOString();
-        }
+        // Add date range filter using unified utility
+        const dateParams = buildDateRangeParams(dateRange);
+        if (dateParams.startDate) statsParams.startDate = dateParams.startDate;
+        if (dateParams.endDate) statsParams.endDate = dateParams.endDate;
 
         return fetchErrorStats(statsParams);
       },
@@ -145,22 +134,15 @@ const ErrorsPage = () => {
         params.search = searchTerm.trim();
       }
 
-      // Add date range filter
-      if (dateRange.from) {
-        const fromDate = new Date(dateRange.from);
-        fromDate.setHours(0, 0, 0, 0);
-        params.startDate = fromDate.toISOString();
-      }
+      // Add date range filter using unified utility
+      const dateParams = buildDateRangeParams(dateRange);
+      if (dateParams.startDate) params.startDate = dateParams.startDate;
+      if (dateParams.endDate) params.endDate = dateParams.endDate;
 
-      if (dateRange.to) {
-        const toDate = new Date(dateRange.to);
-        toDate.setHours(23, 59, 59, 999);
-        params.endDate = toDate.toISOString();
-      } else if (dateRange.from) {
-        const toDate = new Date(dateRange.from);
-        toDate.setHours(23, 59, 59, 999);
-        params.endDate = toDate.toISOString();
-      }
+       if (sortConfig.key  ) {
+          params.sortBy = sortConfig.key;
+          params.sortOrder = sortConfig.direction as "asc" | "desc";
+        }
 
       console.log("Fetching errors with params:", params);
       const result = await fetchErrors(params);
@@ -183,7 +165,7 @@ const ErrorsPage = () => {
     retry: 2,
     retryDelay: (attemptIndex) => Math.min(1000 * 2 ** attemptIndex, 30000),
     // Keep old page data while fetching the next
-    placeholderData: (prev) => prev,
+    // placeholderData: (prev) => prev,
     staleTime: 30 * 1000,
     gcTime: 5 * 60 * 1000,
     refetchOnMount: false,
@@ -317,14 +299,31 @@ const ErrorsPage = () => {
                     <TableRow>
                       <TableHead
                         className="cursor-pointer hover:bg-muted/50"
-                        onClick={() => handleSort("date")}
+                        onClick={() => handleSort("created_at")}
                       >
                         Date
-                        {/* {SortIndicator({ columnKey: "date" })} */}
+                        {SortIndicator({ columnKey: "created_at" })}
                       </TableHead>
-                      <TableHead>Error Message</TableHead>
-                      <TableHead>User</TableHead>
-                      <TableHead>Session</TableHead>
+                      <TableHead
+                        className="cursor-pointer hover:bg-muted/50"
+                        onClick={() => handleSort("error_message")}
+                      >
+                        Error Message
+                        {SortIndicator({ columnKey: "error_message" })}
+                        </TableHead>
+                      <TableHead
+                        className="cursor-pointer hover:bg-muted/50"
+                        onClick={() => handleSort("user_id")}
+                      >User
+                        {SortIndicator({ columnKey: "user_id" })}
+                      </TableHead>
+                      <TableHead
+                        className="cursor-pointer hover:bg-muted/50"
+                        onClick={() => handleSort("session_id")}
+                        >
+                          Session
+                        {SortIndicator({ columnKey: "session_id" })}
+                      </TableHead>
                       <TableHead>Channel</TableHead>
                       <TableHead>Actions</TableHead>
                     </TableRow>
@@ -363,7 +362,7 @@ const ErrorsPage = () => {
                             {errorItem.userId ? (
                               <Link
                                 to={`/users?search=${errorItem.userId}`}
-                                className="text-primary hover:underline text-sm"
+                                className="hover:underline text-sm"
                               >
                                 {errorItem.userId}
                               </Link>
@@ -377,7 +376,7 @@ const ErrorsPage = () => {
                             {errorItem.sessionId ? (
                               <Link
                                 to={`/sessions/${errorItem.sessionId}`}
-                                className="text-primary hover:underline text-sm"
+                                className="hover:underline text-sm"
                               >
                                 {errorItem.sessionId.slice(0, 8)}...
                               </Link>

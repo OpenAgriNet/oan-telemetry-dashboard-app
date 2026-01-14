@@ -60,7 +60,7 @@ const SessionsReport = () => {
   const [selectedUser, setSelectedUser] = useState<string>("all");
   const [searchQuery, setSearchQuery] = useState<string>("");
   const [sortConfig, setSortConfig] = useState({
-    key: "sessionTime",
+    key: "session_time",
     direction: "desc",
   });
 
@@ -156,6 +156,12 @@ const SessionsReport = () => {
             if (dateParams.startDate) params.startDate = dateParams.startDate;
             if (dateParams.endDate) params.endDate = dateParams.endDate;
 
+      if (sortConfig.key) {
+        params.sortBy = sortConfig.key;
+        params.sortOrder = sortConfig.direction as "asc" | "desc";
+      }    
+
+
       console.log("Fetching sessions with params:", params);
       const result = await fetchSessions(params);
 
@@ -177,10 +183,10 @@ const SessionsReport = () => {
     retry: 2,
     retryDelay: (attemptIndex) => Math.min(1000 * 2 ** attemptIndex, 30000),
     // Keep old page data while fetching the next
-    placeholderData: (prev) => prev,
+    // placeholderData: (prev) => prev,
     staleTime: 30 * 1000,
     gcTime: 5 * 60 * 1000,
-    refetchOnMount: true,
+    refetchOnMount: false,
   });
 
   const totalSessions = sessionReport.total;
@@ -265,7 +271,7 @@ const SessionsReport = () => {
               <div className="h-8 w-24 bg-muted animate-pulse rounded mb-2" />
             ) : (
               <div className="text-2xl font-bold">
-                {totalSessions}
+                {totalSessions.toLocaleString()}
               </div>
             )}
             <p className="text-xs text-muted-foreground">
@@ -409,37 +415,37 @@ const SessionsReport = () => {
                   <TableRow>
                     <TableHead
                       className="cursor-pointer hover:bg-muted/50"
-                      onClick={() => handleSort("sessionId")}
+                      // onClick={() => handleSort("session_id")}
                     >
                       Session ID
-                      {/* <SortIndicator columnKey="sessionId" /> */}
+                      {/* <SortIndicator columnKey="session_id" />  */}
                     </TableHead>
                     <TableHead
                       className="cursor-pointer hover:bg-muted/50"
                       onClick={() => handleSort("username")}
                     >
                       User
-                      {/* <SortIndicator columnKey="username" /> */}
+                      <SortIndicator columnKey="username" />
                     </TableHead>
                     <TableHead
                       className="text-right cursor-pointer hover:bg-muted/50"
-                      onClick={() => handleSort("questionCount")}
+                      // onClick={() => handleSort("question_count")}
                     >
                       Questions
-                      {/* <SortIndicator columnKey="questionCount" /> */}
+                      {/* <SortIndicator columnKey="question_count" /> */}
                     </TableHead>
                     <TableHead
                       className="cursor-pointer hover:bg-muted/50"
-                      onClick={() => handleSort("sessionTime")}
+                      onClick={() => handleSort("session_time")}
                     >
                       Session Time
-                      {/* <SortIndicator columnKey="sessionTime" /> */}
+                      <SortIndicator columnKey="session_time" />
                     </TableHead>
                   </TableRow>
                 </TableHeader>
                 <TableBody>
                   {sessionReport.data
-                    .filter((session) => session.questionCount > 0)
+                    // .filter((session) => session.questionCount > 0)
                     .map((session, idx) => (
                       <TableRow
                         key={session.sessionId || idx}
@@ -450,7 +456,7 @@ const SessionsReport = () => {
                             onClick={() =>
                               handleSessionClick(session.sessionId)
                             }
-                            className="text-primary hover:underline"
+                            className="hover:underline"
                           >
                             <code className="relative rounded bg-muted px-[0.3rem] py-[0.2rem] font-mono text-xs">
                               {session.sessionId.substring(0, 8)}...
@@ -463,7 +469,7 @@ const SessionsReport = () => {
                           </code>
                         </TableCell>
                         <TableCell className="text-right">
-                          <span className="inline-flex items-center rounded-full bg-primary/10 px-2.5 py-0.5 text-xs font-medium text-primary">
+                          <span className="inline-flex items-center rounded-full bg-primary/10 px-2.5 py-0.5 text-xs font-medium">
                             {session.questionCount}
                           </span>
                         </TableCell>

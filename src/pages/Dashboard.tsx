@@ -17,6 +17,7 @@ import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import {
   User,
   MessageSquare,
+  Activity,
   ThumbsUp,
   BarChart,
   LineChart,
@@ -49,7 +50,6 @@ const Dashboard = () => {
       additionalParams: {
         granularity: timeGranularity,
       },
-      alignToIST: false,
     });
     return params;
   };
@@ -96,7 +96,6 @@ const Dashboard = () => {
           additionalParams: {
             granularity: timeGranularity,
           },
-          alignToIST: false,
         });
         return fetchQuestionsGraph(params);
       },
@@ -120,7 +119,6 @@ const Dashboard = () => {
           additionalParams: {
             granularity: timeGranularity,
           },
-          alignToIST: false,
         });
         return fetchSessionsGraph(params);
       },
@@ -143,7 +141,6 @@ const Dashboard = () => {
         additionalParams: {
           granularity: timeGranularity,
         },
-        alignToIST: false,
       });
       return fetchUsersGraph(params);
     },
@@ -190,7 +187,7 @@ const Dashboard = () => {
     data: Array<{
       hour?: number;
       date?: string;
-      timestamp?: string;
+      timestamp?: number;
       [key: string]: unknown;
     }>
   ) => {
@@ -211,19 +208,49 @@ const Dashboard = () => {
   };
 
   // Helper function to add total unique users to the data
-  const transformUsersData = (
-    data: Array<{
-      newUsers?: number;
-      returningUsers?: number;
-      [key: string]: unknown;
-    }>
-  ) => {
+  const transformUsersData = <T extends {
+    newUsersCount?: number;
+    returningUsersCount?: number;
+    date?: string;
+    hour?: number;
+    [key: string]: unknown;
+  }>(
+    data: T[]
+  ): (T & { totalUniqueUsers: number })[] => {
     if (!data || !Array.isArray(data)) return [];
 
     return data.map((item) => ({
       ...item,
-      totalUniqueUsers: (item.newUsers || 0) + (item.returningUsers || 0),
+      totalUniqueUsers: (item.newUsersCount || 0) + (item.returningUsersCount || 0),
     }));
+  };
+
+  // Helper function to filter graph data by the selected date range
+  // This ensures only data within the selected dates is shown even if backend returns extra data
+  const filterDataByDateRange = <T extends { date?: string; hour?: number }>(
+    data: T[]
+  ): T[] => {
+    if (!data || !Array.isArray(data)) return [];
+    if (!dateRange.from || !dateRange.to) return data;
+
+    // Normalize dates to start of day for comparison
+    const fromDate = new Date(dateRange.from);
+    fromDate.setHours(0, 0, 0, 0);
+    
+    const toDate = new Date(dateRange.to);
+    toDate.setHours(23, 59, 59, 999);
+
+    return data.filter((item) => {
+      if (!item.date) return false;
+
+      // Parse the date from the data point
+      // Handle formats like "YYYY-MM-DD" or "YYYY-MM-DD HH:mm:ss"
+      const dateStr = item.date.split(' ')[0]; // Get just the date part
+      const itemDate = new Date(dateStr + 'T00:00:00');
+
+      // Check if the item date is within the selected range
+      return itemDate >= fromDate && itemDate <= toDate;
+    });
   };
 
   
@@ -248,25 +275,25 @@ const Dashboard = () => {
         ) : (
           <>
             <MetricCard
-              title="Unique Users"
+              title="Users"
               value={userStats?.totalUsers || 0}
               icon={<User size={16} />}
-              description="Total unique users"
+              description="Count of unique users"
             />
             <MetricCard
-              title="Total Sessions"
+              title="Sessions"
               value={sessionStats?.totalSessions || 0}
-              icon={<MessageSquare size={16} />}
-              description="Total user sessions"
+              icon={<Activity size={16} />}
+              description="Total session activity"
             />
             <MetricCard
-              title="Questions Asked"
+              title="Questions"
               value={questionStats?.totalQuestions || 0}
               icon={<MessageSquare size={16} />}
-              description="Total questions"
+              description="Total questions submitted"
             />
             <MetricCard
-              title="Feedback Collected"
+              title="Feedback"
               value={feedbackStats?.totalFeedback || 0}
               icon={<ThumbsUp size={16} />}
               description={`${
@@ -276,7 +303,7 @@ const Dashboard = () => {
                       100
                     ).toFixed(1)
                   : 0
-              }% positive feedback`}
+              }% Positive feedback rate`}
             />
           </>
         )}
@@ -286,7 +313,7 @@ const Dashboard = () => {
         <CardHeader className="flex flex-row items-center justify-between pb-2">
           <CardTitle>Chart Options</CardTitle>
           <div className="flex items-center gap-4">
-            <div className="flex items-center gap-2">
+            {/* <div className="flex items-center gap-2">
               <span className="text-sm text-muted-foreground">Data:</span>
               <ToggleGroup
                 type="single"
@@ -297,7 +324,7 @@ const Dashboard = () => {
               >
                 <ToggleGroupItem value="daily">Daily</ToggleGroupItem>
               </ToggleGroup>
-            </div>
+            </div> */}
             <div className="flex items-center gap-2">
               <span className="text-sm text-muted-foreground">Chart:</span>
               <ToggleGroup
@@ -334,24 +361,26 @@ const Dashboard = () => {
             <TabsTrigger value="feedback">
               Feedback
             </TabsTrigger>
-          </TabsList>
+          </TabsList> 
 
           <TabsContent value="users">
             <TrendChart
               title="User Activity"
               description={`${
                 timeGranularity === "daily" ? "Daily" : "Hourly"
-              } new vs reutning vs total users (IST)`}
+              } new vs returning vs total users`}
               data={
-                timeGranularity === "daily"
-                  ? transformUsersData(usersGraphData?.data || [])
-                  : transformUsersData(
-                      transformHourlyData(usersGraphData?.data || [])
-                    )
+                filterDataByDateRange(
+                  timeGranularity === "daily"
+                    ? transformUsersData(usersGraphData?.data || [])
+                    : transformUsersData(
+                        transformHourlyData(usersGraphData?.data || [])
+                      )
+                )
               }
               isLoading={isLoadingUsersGraph}
               dataKey={[
-                 {
+                {
                   dataKey: "newUsersCount",
                   color: "#3b82f6",
                   name: "New Users",
@@ -382,8 +411,8 @@ const Dashboard = () => {
                 title="Questions Asked Over Time"
                 description={`${
                   timeGranularity === "daily" ? "Daily" : "Hourly"
-                } questions count (IST) - Powered by Questions Graph API`}
-                data={questionsGraphData?.data || []}
+                } questions count`}
+                data={filterDataByDateRange(questionsGraphData?.data || [])}
                 isLoading={isLoadingQuestionsGraph}
                 dataKey="questionsCount"
                 type={chartType}
@@ -398,8 +427,8 @@ const Dashboard = () => {
                 title="Session Activity Over Time"
                 description={`${
                   timeGranularity === "daily" ? "Daily" : "Hourly"
-                } sessions count (IST) - Powered by Sessions Graph API`}
-                data={sessionsGraphData?.data || []}
+                } sessions count`}
+                data={filterDataByDateRange(sessionsGraphData?.data || [])}
                 isLoading={isLoadingSessionsGraph}
                 dataKey="sessionsCount"
                 type={chartType}
@@ -414,8 +443,8 @@ const Dashboard = () => {
                 title="Feedback Activity Over Time"
                 description={`${
                   timeGranularity === "daily" ? "Daily" : "Hourly"
-                } likes and dislikes (IST) - Powered by Feedback Graph API`}
-                data={feedbackGraphData?.data || []}
+                } likes and dislikes`}
+                data={filterDataByDateRange(feedbackGraphData?.data || [])}
                 isLoading={isLoadingFeedbackGraph}
                 dataKey={[
                   {

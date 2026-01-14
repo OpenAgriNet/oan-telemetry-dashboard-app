@@ -56,7 +56,7 @@ const FeedbackPage = () => {
   const [searchTerm, setSearchTerm] = useState("");
   const [selectedUser, setSelectedUser] = useState("all");
   const [sortConfig, setSortConfig] = useState({
-    key: "date",
+    key: "created_at",
     direction: "desc",
   });
 
@@ -156,6 +156,10 @@ const FeedbackPage = () => {
             if (dateParams.startDate) params.startDate = dateParams.startDate;
             if (dateParams.endDate) params.endDate = dateParams.endDate;
       
+      if(sortConfig.key){
+        params.sortBy = sortConfig.key;
+        params.sortOrder = sortConfig.direction as 'asc' | 'desc';
+      }      
 
       console.log("Fetching feedback with params:", params);
       const result = await fetchFeedback(params);
@@ -178,7 +182,7 @@ const FeedbackPage = () => {
     retry: 2,
     retryDelay: (attemptIndex) => Math.min(1000 * 2 ** attemptIndex, 30000),
     // Keep old page data while fetching the next
-    placeholderData: (prev) => prev,
+    // placeholderData: (prev) => prev,
     staleTime: 30 * 1000,
     gcTime: 5 * 60 * 1000,
     refetchOnMount: false,
@@ -252,7 +256,7 @@ const FeedbackPage = () => {
               <div className="h-8 w-24 bg-muted animate-pulse rounded mb-2" />
             ) : (
               <div className="text-2xl font-bold">
-                {feedbackStats.totalFeedback}
+                {feedbackStats.totalFeedback.toLocaleString()}
               </div>
             )}
             <p className="text-xs text-muted-foreground">
@@ -271,7 +275,7 @@ const FeedbackPage = () => {
               <div className="h-8 w-24 bg-muted animate-pulse rounded mb-2" />
             ) : (
               <div className="text-2xl font-bold text-green-600">
-                {feedbackStats.totalLikes}
+                {feedbackStats.totalLikes.toLocaleString()}
               </div>
             )}
             <p className="text-xs text-muted-foreground">
@@ -300,7 +304,7 @@ const FeedbackPage = () => {
               <div className="h-8 w-24 bg-muted animate-pulse rounded mb-2" />
             ) : (
               <div className="text-2xl font-bold text-red-600">
-                {feedbackStats.totalDislikes}
+                {feedbackStats.totalDislikes.toLocaleString()}
               </div>
             )}
             <p className="text-xs text-muted-foreground">
@@ -409,45 +413,45 @@ const FeedbackPage = () => {
                   <TableRow>
                     <TableHead
                       className="cursor-pointer hover:bg-muted/50"
-                      onClick={() => handleSort("date")}
+                      onClick={() => handleSort("created_at")}
                     >
                       Date
-                      {/* <SortIndicator columnKey="date" /> */}
+                      <SortIndicator columnKey="created_at" />
                     </TableHead>
                     <TableHead
                       className="cursor-pointer hover:bg-muted/50"
-                      onClick={() => handleSort("user")}
+                      onClick={() => handleSort("user_id")}
                     >
                       User
-                      {/* <SortIndicator columnKey="user" /> */}
+                      <SortIndicator columnKey="user_id" />
                     </TableHead>
                     <TableHead
-                      className="cursor-pointer hover:bg-muted/50"
-                      onClick={() => handleSort("question")}
+                      // className="cursor-pointer hover:bg-muted/50"
+                      // onClick={() => handleSort("question")}
                     >
                       Question
                       {/* <SortIndicator columnKey="question" /> */}
                     </TableHead>
                     <TableHead
-                      className="cursor-pointer hover:bg-muted/50"
-                      onClick={() => handleSort("answer")}
+                      // className="cursor-pointer hover:bg-muted/50"
+                      // onClick={() => handleSort("answer")}
                     >
                       Answer
                       {/* <SortIndicator columnKey="answer" /> */}
                     </TableHead>
                     <TableHead
                       className="cursor-pointer hover:bg-muted/50"
-                      onClick={() => handleSort("rating")}
+                      // onClick={() => handleSort("feedbacktype")}
                     >
                       Rating
-                      {/* <SortIndicator columnKey="rating" /> */}
+                      {/* <SortIndicator columnKey="feedbacktype" /> */}
                     </TableHead>
                     <TableHead
                       className="cursor-pointer hover:bg-muted/50"
-                      onClick={() => handleSort("feedback")}
+                      onClick={() => handleSort("feedbacktext")}
                     >
                       Feedback
-                      {/* <SortIndicator columnKey="feedback" /> */}
+                      <SortIndicator columnKey="feedbacktext" />
                     </TableHead>
                     <TableHead>Details</TableHead>
                   </TableRow>
@@ -459,7 +463,8 @@ const FeedbackPage = () => {
                       className="hover:bg-muted/30"
                     >
                       <TableCell>
-                        {format(new Date(feedback.date), "MMM dd, yyyy")}
+                        {feedback.date}
+                        {/* {format(new Date(feedback.date), "MMM dd, yyyy")} */}
                       </TableCell>
                       <TableCell>
                         <code className="relative rounded bg-muted px-[0.3rem] py-[0.2rem] font-mono text-sm">
@@ -503,7 +508,7 @@ const FeedbackPage = () => {
                       <TableCell>
                         <Link
                           to={`/feedback/${feedback.id}`}
-                          className="text-primary hover:underline"
+                          className="hover:underline"
                         >
                           View Details
                         </Link>
