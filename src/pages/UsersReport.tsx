@@ -178,7 +178,7 @@ const UsersReport = () => {
       let filteredData = result.data;
       if (selectedUser !== "all") {
         filteredData = result.data.filter(
-          (user) => user.username === selectedUser || user.id === selectedUser
+          (user) => user.username === selectedUser || user.id === selectedUser,
         );
       }
 
@@ -301,7 +301,7 @@ const UsersReport = () => {
         <Card>
           <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
             <CardTitle className="text-sm font-medium">
-              Total Unique Users
+              Total Unique Devices
             </CardTitle>
             <Users className="h-4 w-4 text-muted-foreground" />
           </CardHeader>
@@ -314,7 +314,7 @@ const UsersReport = () => {
               )}
             </div>
             <p className="text-xs text-muted-foreground">
-              unique active users in selected period
+              unique devices in selected period
             </p>
           </CardContent>
         </Card>
@@ -375,17 +375,28 @@ const UsersReport = () => {
                   value={pendingSearch}
                   onChange={(e) => handleSearchChange(e.target.value)}
                   onKeyDown={(e) => {
-                    if (e.key === 'Enter') {
+                    if (e.key === "Enter") {
                       handleSearch();
                     }
                   }}
                   maxLength={1000}
                 />
               </div>
-              <Button onClick={handleSearch} disabled={isLoading} variant="outline" size="icon" title="Search">
+              <Button
+                onClick={handleSearch}
+                disabled={isLoading}
+                variant="outline"
+                size="icon"
+                title="Search"
+              >
                 <Search className="h-4 w-4" />
               </Button>
-              <Button onClick={handleResetFilters} variant="outline" size="icon" title="Reset Search">
+              <Button
+                onClick={handleResetFilters}
+                variant="outline"
+                size="icon"
+                title="Reset Search"
+              >
                 <RotateCcw className="h-4 w-4" />
               </Button>
             </div>
@@ -532,7 +543,9 @@ const UsersReport = () => {
                         </div>
                       </TableCell>
                       <TableCell>
-                        {user.latestSession || "N/A"}
+                        {formatUTCToIST(
+                          user.latestSession || user.lastActivity || "",
+                        )}
                       </TableCell>
                       <TableCell>
                         <button

@@ -37,7 +37,7 @@ const Dashboard = () => {
 
   // State to track time granularity (daily or hourly)
   const [timeGranularity, setTimeGranularity] = useState<"daily" | "hourly">(
-    "daily"
+    "daily",
   );
 
   // Helper function to build API params using unified date range utility
@@ -55,7 +55,8 @@ const Dashboard = () => {
   };
 
   // Use centralized stats from StatsContext - shared across all pages!
-  const { stats: dashboardStats, isLoading: isLoadingDashboardStats } = useStats();
+  const { stats: dashboardStats, isLoading: isLoadingDashboardStats } =
+    useStats();
 
   // Extract individual stats from unified response
   const questionStats = dashboardStats
@@ -89,7 +90,10 @@ const Dashboard = () => {
         dateRange.to?.toISOString(),
         timeGranularity,
       ],
-      enabled: dateRange.from !== undefined && dateRange.to !== undefined && currentTab === "questions",
+      enabled:
+        dateRange.from !== undefined &&
+        dateRange.to !== undefined &&
+        currentTab === "questions",
       queryFn: () => {
         const params = buildDateRangeParams(dateRange, {
           includeDefaultStart: false,
@@ -112,7 +116,10 @@ const Dashboard = () => {
         dateRange.to?.toISOString(),
         timeGranularity,
       ],
-      enabled: dateRange.from !== undefined && dateRange.to !== undefined && currentTab === "sessions",
+      enabled:
+        dateRange.from !== undefined &&
+        dateRange.to !== undefined &&
+        currentTab === "sessions",
       queryFn: () => {
         const params = buildDateRangeParams(dateRange, {
           includeDefaultStart: false,
@@ -157,7 +164,10 @@ const Dashboard = () => {
         dateRange.to?.toISOString(),
         timeGranularity,
       ],
-      enabled: dateRange.from !== undefined && dateRange.to !== undefined && currentTab === "feedback",
+      enabled:
+        dateRange.from !== undefined &&
+        dateRange.to !== undefined &&
+        currentTab === "feedback",
       queryFn: () => {
         const params = buildDateRangeParams(dateRange, {
           includeDefaultStart: false,
@@ -189,7 +199,7 @@ const Dashboard = () => {
       date?: string;
       timestamp?: number;
       [key: string]: unknown;
-    }>
+    }>,
   ) => {
     if (!data || !Array.isArray(data)) return [];
 
@@ -200,23 +210,21 @@ const Dashboard = () => {
         item.hour !== undefined
           ? item.hour
           : typeof item.date === "string" && item.date.includes(" ")
-          ? parseInt(item.date.split(" ")[1]?.split(":")[0] || "0")
-          : 0,
+            ? parseInt(item.date.split(" ")[1]?.split(":")[0] || "0")
+            : 0,
       // Keep date as is for x-axis labeling
       date: item.date || `Hour ${item.hour || 0}`,
     }));
   };
 
   // Helper function to add total unique users to the data
-  const transformUsersData = <T extends {
-    newUsersCount?: number;
-    returningUsersCount?: number;
-    date?: string;
-    hour?: number;
-    [key: string]: unknown;
-  }>(
-    data: T[]
-  ): (T & { totalUniqueUsers: number })[] => {
+  const transformUsersData = (
+    data: Array<{
+      newUsers?: number;
+      returningUsers?: number;
+      [key: string]: unknown;
+    }>,
+  ) => {
     if (!data || !Array.isArray(data)) return [];
 
     return data.map((item) => ({
@@ -225,35 +233,11 @@ const Dashboard = () => {
     }));
   };
 
-  // Helper function to filter graph data by the selected date range
-  // This ensures only data within the selected dates is shown even if backend returns extra data
-  const filterDataByDateRange = <T extends { date?: string; hour?: number }>(
-    data: T[]
-  ): T[] => {
-    if (!data || !Array.isArray(data)) return [];
-    if (!dateRange.from || !dateRange.to) return data;
-
-    // Normalize dates to start of day for comparison
-    const fromDate = new Date(dateRange.from);
-    fromDate.setHours(0, 0, 0, 0);
-    
-    const toDate = new Date(dateRange.to);
-    toDate.setHours(23, 59, 59, 999);
-
-    return data.filter((item) => {
-      if (!item.date) return false;
-
-      // Parse the date from the data point
-      // Handle formats like "YYYY-MM-DD" or "YYYY-MM-DD HH:mm:ss"
-      const dateStr = item.date.split(' ')[0]; // Get just the date part
-      const itemDate = new Date(dateStr + 'T00:00:00');
-
-      // Check if the item date is within the selected range
-      return itemDate >= fromDate && itemDate <= toDate;
-    });
-  };
-
-  
+  console.log("questions graph", questionsGraphData);
+  console.log("sessions graph", sessionsGraphData);
+  console.log("feedback graph", feedbackGraphData);
+  console.log("users graph", usersGraphData);
+  console.log("dashboard stats", dashboardStats);
 
   return (
     <div className="space-y-6">
@@ -275,15 +259,15 @@ const Dashboard = () => {
         ) : (
           <>
             <MetricCard
-              title="Users"
+              title="Devices"
               value={userStats?.totalUsers || 0}
               icon={<User size={16} />}
-              description="Count of unique users"
+              description="Count of unique devices"
             />
             <MetricCard
               title="Sessions"
               value={sessionStats?.totalSessions || 0}
-              icon={<Activity size={16} />}
+              icon={<MessageSquare size={16} />}
               description="Total session activity"
             />
             <MetricCard
@@ -347,57 +331,50 @@ const Dashboard = () => {
       </Card>
 
       <div className="grid gap-4">
-        <Tabs value={currentTab} onValueChange={(value) => setCurrentTab(value as typeof currentTab)}>
+        <Tabs
+          value={currentTab}
+          onValueChange={(value) => setCurrentTab(value as typeof currentTab)}
+        >
           <TabsList>
-            <TabsTrigger value="users">
-              Users
-            </TabsTrigger>
-            <TabsTrigger value="questions">
-              Questions
-            </TabsTrigger>
-            <TabsTrigger value="sessions">
-              Sessions
-            </TabsTrigger>
-            <TabsTrigger value="feedback">
-              Feedback
-            </TabsTrigger>
-          </TabsList> 
+            <TabsTrigger value="users">Devices</TabsTrigger>
+            <TabsTrigger value="questions">Questions</TabsTrigger>
+            <TabsTrigger value="sessions">Sessions</TabsTrigger>
+            <TabsTrigger value="feedback">Feedback</TabsTrigger>
+          </TabsList>
 
           <TabsContent value="users">
             <TrendChart
-              title="User Activity"
+              title="Device Activity"
               description={`${
                 timeGranularity === "daily" ? "Daily" : "Hourly"
-              } new vs returning vs total users`}
+              } new vs returning vs total devices`}
               data={
-                filterDataByDateRange(
-                  timeGranularity === "daily"
-                    ? transformUsersData(usersGraphData?.data || [])
-                    : transformUsersData(
-                        transformHourlyData(usersGraphData?.data || [])
-                      )
-                )
+                timeGranularity === "daily"
+                  ? transformUsersData(usersGraphData?.data || [])
+                  : transformUsersData(
+                      transformHourlyData(usersGraphData?.data || []),
+                    )
               }
               isLoading={isLoadingUsersGraph}
               dataKey={[
                 {
                   dataKey: "newUsersCount",
                   color: "#3b82f6",
-                  name: "New Users",
+                  name: "New Devices",
                   strokeDasharray: "5 5",
                   fillOpacity: 0.3,
                 },
                 {
                   dataKey: "returningUsersCount",
                   color: "#10b981",
-                  name: "Returning Users",
+                  name: "Returning Devices",
                   strokeDasharray: "5 5",
                   fillOpacity: 0.3,
                 },
                 {
                   dataKey: "uniqueUsersCount",
                   color: "hsl(var(--foreground))",
-                  name: "Total Active Users",
+                  name: "Total Active Devices",
                   fillOpacity: 1,
                 },
               ]}
@@ -412,9 +389,9 @@ const Dashboard = () => {
                 description={`${
                   timeGranularity === "daily" ? "Daily" : "Hourly"
                 } questions count`}
-                data={filterDataByDateRange(questionsGraphData?.data || [])}
-                isLoading={isLoadingQuestionsGraph}
+                data={questionsGraphData?.data || []}
                 dataKey="questionsCount"
+                isLoading={isLoadingQuestionsGraph}
                 type={chartType}
                 color="hsl(var(--primary))"
                 xAxisKey={getXAxisKey()}
@@ -428,11 +405,11 @@ const Dashboard = () => {
                 description={`${
                   timeGranularity === "daily" ? "Daily" : "Hourly"
                 } sessions count`}
-                data={filterDataByDateRange(sessionsGraphData?.data || [])}
-                isLoading={isLoadingSessionsGraph}
+                data={sessionsGraphData?.data || []}
                 dataKey="sessionsCount"
                 type={chartType}
                 color="#10b981"
+                isLoading={isLoadingSessionsGraph}
                 xAxisKey={getXAxisKey()}
               />
             </div>
@@ -444,8 +421,7 @@ const Dashboard = () => {
                 description={`${
                   timeGranularity === "daily" ? "Daily" : "Hourly"
                 } likes and dislikes`}
-                data={filterDataByDateRange(feedbackGraphData?.data || [])}
-                isLoading={isLoadingFeedbackGraph}
+                data={feedbackGraphData?.data || []}
                 dataKey={[
                   {
                     dataKey: "likesCount",
@@ -459,6 +435,7 @@ const Dashboard = () => {
                   },
                 ]}
                 type={chartType}
+                isLoading={isLoadingFeedbackGraph}
                 xAxisKey={getXAxisKey()}
               />
             </div>

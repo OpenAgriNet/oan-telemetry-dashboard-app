@@ -56,20 +56,20 @@ const Layout: React.FC<LayoutProps> = ({ children }) => {
       icon: <LayoutDashboard size={20} />,
     },
     {
-      name: "Users",
-      path: "/users",
+      name: "Devices",
+      path: "/devices",
       icon: <Users size={20} />,
     },
-    {
-      name: "Sessions",
-      path: "/sessions",
-      icon: <Calendar size={20} />,
-    },
-    {
-      name: "Questions",
-      path: "/questions",
-      icon: <MessageSquare size={20} />,
-    },
+    // {
+    //   name: "Sessions",
+    //   path: "/sessions",
+    //   icon: <Calendar size={20} />,
+    // },
+    // {
+    //   name: "Questions",
+    //   path: "/questions",
+    //   icon: <MessageSquare size={20} />,
+    // },
     // {
     //   name: "Content",
     //   path: "/content",
@@ -80,19 +80,19 @@ const Layout: React.FC<LayoutProps> = ({ children }) => {
     //   path: "/analytics",
     //   icon: <BarChart3 size={20} />,
     // },
-    {
-      name: "Feedback",
-      path: "/feedback",
-      icon: <ClipboardCheck size={20} />,
-    },
+    // {
+    //   name: "Feedback",
+    //   path: "/feedback",
+    //   icon: <ClipboardCheck size={20} />,
+    // },
     // Conditionally add Errors menu item for super-admin users only
     ...(isSuper
       ? [
-          {
-            name: "Errors",
-            path: "/errors",
-            icon: <AlertTriangle size={20} />,
-          },
+          // {
+          //   name: "Errors",
+          //   path: "/errors",
+          //   icon: <AlertTriangle size={20} />,
+          // },
           // {
           //   name: "Health Monitor",
           //   path: "/health-monitor",
@@ -106,12 +106,11 @@ const Layout: React.FC<LayoutProps> = ({ children }) => {
         ]
       : []),
 
-      {
-        name: "Service Status",
-        path: "/service-status",
-        icon: <Activity size={20} />,
-      },
-  
+    // {
+    //   name: "Service Status",
+    //   path: "/service-status",
+    //   icon: <Activity size={20} />,
+    // },
   ];
 
   return (
@@ -125,19 +124,15 @@ const Layout: React.FC<LayoutProps> = ({ children }) => {
         <div className="flex flex-col h-full">
           <div className="p-4 border-b border-sidebar-border flex justify-between items-center">
             {!collapsed && (
-              <h2 className="text-lg font-semibold">MAHA Vistaar Insights</h2>
+              <h2 className="text-lg font-semibold">Bharat Vistaar Insights</h2>
             )}
             <Button
               variant="ghost"
               size="icon"
-              onClick={() => setCollapsed(!collapsed)}  
+              onClick={() => setCollapsed(!collapsed)}
               className="hover:bg-sidebar-accent"
             >
-              {collapsed ? (
-                <BarChart3 size={20} />
-              ) : (
-                <BarChart3 size={20} />
-              )}
+              {collapsed ? <BarChart3 size={20} /> : <BarChart3 size={20} />}
             </Button>
           </div>
 
@@ -162,7 +157,6 @@ const Layout: React.FC<LayoutProps> = ({ children }) => {
           </nav>
 
           <div className="p-4 border-t border-sidebar-border">
-           
             <DropdownMenu>
               <DropdownMenuTrigger asChild>
                 <Button
@@ -223,13 +217,16 @@ const Layout: React.FC<LayoutProps> = ({ children }) => {
                 <span className="text-base font-medium">Filter:</span>
               </div>
               <div className="flex items-center gap-2">
-                <DateRangePicker dateRange={dateRange} setDateRange={setDateRange} />
+                <DateRangePicker
+                  dateRange={dateRange}
+                  setDateRange={setDateRange}
+                />
               </div>
             </div>
-            
+
             <DropdownMenu>
               {/* <DropdownMenuTrigger asChild> */}
-                {/* <Button variant="ghost" className="relative h-10 w-10 rounded-full">
+              {/* <Button variant="ghost" className="relative h-10 w-10 rounded-full">
                   <Avatar>
                     <AvatarFallback>
                       <UserRound className="h-6 w-6" />
@@ -251,10 +248,8 @@ const Layout: React.FC<LayoutProps> = ({ children }) => {
               </DropdownMenuContent> */}
             </DropdownMenu>
           </div>
-          
-          <div className="p-6">
-            {children}
-          </div>
+
+          <div className="p-6">{children}</div>
         </div>
       </main>
     </div>

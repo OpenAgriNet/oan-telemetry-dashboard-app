@@ -35,7 +35,8 @@ import {
   ThumbsDown,
   RefreshCw,
   AlertCircle,
-  MessageSquare, RotateCcw,
+  MessageSquare,
+  RotateCcw,
 } from "lucide-react";
 import { useDateFilter } from "@/contexts/DateFilterContext";
 import {
@@ -349,17 +350,28 @@ console.log("Questions from ISO",dateRange.from?.toISOString())
             value={pendingSearch}
             onChange={(e) => handleSearchQueryChange(e.target.value)}
             onKeyDown={(e) => {
-              if (e.key === 'Enter') {
+              if (e.key === "Enter") {
                 handleSearch();
               }
             }}
             maxLength={1000}
           />
         </div>
-        <Button onClick={handleSearch} disabled={isLoading} variant="outline" size="icon" title="Search">
+        <Button
+          onClick={handleSearch}
+          disabled={isLoading}
+          variant="outline"
+          size="icon"
+          title="Search"
+        >
           <Search className="h-4 w-4" />
         </Button>
-        <Button onClick={handleResetFilters} variant="outline" size="icon" title="Reset Search">
+        <Button
+          onClick={handleResetFilters}
+          variant="outline"
+          size="icon"
+          title="Reset Search"
+        >
           <RotateCcw className="h-4 w-4" />
         </Button>
       </div>
@@ -486,7 +498,9 @@ console.log("Questions from ISO",dateRange.from?.toISOString())
                       </button>
                     </TableCell>
                     <TableCell>
-                      {question.dateAsked || question.created_at || "N/A"}
+                      {formatUTCToIST(
+                        question.dateAsked || question.created_at,
+                      )}
                     </TableCell>
                     {/* <TableCell>
                       <span className="inline-flex items-center rounded-full bg-primary/10 px-2.5 py-0.5 text-xs font-medium text-primary">
