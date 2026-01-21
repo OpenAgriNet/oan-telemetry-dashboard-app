@@ -36,7 +36,7 @@ const Dashboard = () => {
 
   // State to track time granularity (daily or hourly)
   const [timeGranularity, setTimeGranularity] = useState<"daily" | "hourly">(
-    "daily"
+    "daily",
   );
 
   // Helper function to build API params using unified date range utility
@@ -55,7 +55,8 @@ const Dashboard = () => {
   };
 
   // Use centralized stats from StatsContext - shared across all pages!
-  const { stats: dashboardStats, isLoading: isLoadingDashboardStats } = useStats();
+  const { stats: dashboardStats, isLoading: isLoadingDashboardStats } =
+    useStats();
 
   // Extract individual stats from unified response
   const questionStats = dashboardStats
@@ -89,7 +90,10 @@ const Dashboard = () => {
         dateRange.to?.toISOString(),
         timeGranularity,
       ],
-      enabled: dateRange.from !== undefined && dateRange.to !== undefined && currentTab === "questions",
+      enabled:
+        dateRange.from !== undefined &&
+        dateRange.to !== undefined &&
+        currentTab === "questions",
       queryFn: () => {
         const params = buildDateRangeParams(dateRange, {
           includeDefaultStart: false,
@@ -113,7 +117,10 @@ const Dashboard = () => {
         dateRange.to?.toISOString(),
         timeGranularity,
       ],
-      enabled: dateRange.from !== undefined && dateRange.to !== undefined && currentTab === "sessions",
+      enabled:
+        dateRange.from !== undefined &&
+        dateRange.to !== undefined &&
+        currentTab === "sessions",
       queryFn: () => {
         const params = buildDateRangeParams(dateRange, {
           includeDefaultStart: false,
@@ -160,7 +167,10 @@ const Dashboard = () => {
         dateRange.to?.toISOString(),
         timeGranularity,
       ],
-      enabled: dateRange.from !== undefined && dateRange.to !== undefined && currentTab === "feedback",
+      enabled:
+        dateRange.from !== undefined &&
+        dateRange.to !== undefined &&
+        currentTab === "feedback",
       queryFn: () => {
         const params = buildDateRangeParams(dateRange, {
           includeDefaultStart: false,
@@ -192,7 +202,7 @@ const Dashboard = () => {
       date?: string;
       timestamp?: string;
       [key: string]: unknown;
-    }>
+    }>,
   ) => {
     if (!data || !Array.isArray(data)) return [];
 
@@ -203,8 +213,8 @@ const Dashboard = () => {
         item.hour !== undefined
           ? item.hour
           : typeof item.date === "string" && item.date.includes(" ")
-          ? parseInt(item.date.split(" ")[1]?.split(":")[0] || "0")
-          : 0,
+            ? parseInt(item.date.split(" ")[1]?.split(":")[0] || "0")
+            : 0,
       // Keep date as is for x-axis labeling
       date: item.date || `Hour ${item.hour || 0}`,
     }));
@@ -216,7 +226,7 @@ const Dashboard = () => {
       newUsers?: number;
       returningUsers?: number;
       [key: string]: unknown;
-    }>
+    }>,
   ) => {
     if (!data || !Array.isArray(data)) return [];
 
@@ -226,7 +236,11 @@ const Dashboard = () => {
     }));
   };
 
+  console.log("questions graph", questionsGraphData);
+  console.log("sessions graph", sessionsGraphData);
+  console.log("feedback graph", feedbackGraphData);
   console.log("users graph", usersGraphData);
+  console.log("dashboard stats", dashboardStats);
 
   return (
     <div className="space-y-6">
@@ -248,22 +262,22 @@ const Dashboard = () => {
         ) : (
           <>
             <MetricCard
-              title="Unique Users"
+              title="Devices"
               value={userStats?.totalUsers || 0}
               icon={<User size={16} />}
-              description="Total unique users"
+              description="Count of unique devices"
             />
             <MetricCard
-              title="Total Sessions"
+              title="Sessions"
               value={sessionStats?.totalSessions || 0}
               icon={<MessageSquare size={16} />}
-              description="Total user sessions"
+              description="Total session activity"
             />
             <MetricCard
-              title="Questions Asked"
+              title="Questions"
               value={questionStats?.totalQuestions || 0}
               icon={<MessageSquare size={16} />}
-              description="Total questions"
+              description="Total questions submitted"
             />
             <MetricCard
               title="Feedback Collected"
@@ -320,40 +334,50 @@ const Dashboard = () => {
       </Card>
 
       <div className="grid gap-4">
-        <Tabs value={currentTab} onValueChange={(value) => setCurrentTab(value as typeof currentTab)}>
+        <Tabs
+          value={currentTab}
+          onValueChange={(value) => setCurrentTab(value as typeof currentTab)}
+        >
           <TabsList>
-            <TabsTrigger value="users">
-              Users
-            </TabsTrigger>
-            <TabsTrigger value="questions">
-              Questions
-            </TabsTrigger>
-            <TabsTrigger value="sessions">
-              Sessions
-            </TabsTrigger>
-            <TabsTrigger value="feedback">
-              Feedback
-            </TabsTrigger>
+            <TabsTrigger value="users">Devices</TabsTrigger>
+            <TabsTrigger value="questions">Questions</TabsTrigger>
+            <TabsTrigger value="sessions">Sessions</TabsTrigger>
+            <TabsTrigger value="feedback">Feedback</TabsTrigger>
           </TabsList>
 
           <TabsContent value="users">
             <TrendChart
-              title="User Activity"
+              title="Device Activity"
               description={`${
                 timeGranularity === "daily" ? "Daily" : "Hourly"
-              }  total users (IST)`}
+              } new vs returning vs total devices`}
               data={
                 timeGranularity === "daily"
                   ? transformUsersData(usersGraphData?.data || [])
                   : transformUsersData(
-                      transformHourlyData(usersGraphData?.data || [])
+                      transformHourlyData(usersGraphData?.data || []),
                     )
               }
+              isLoading={isLoadingUsersGraph}
               dataKey={[
+                {
+                  dataKey: "newUsersCount",
+                  color: "#3b82f6",
+                  name: "New Devices",
+                  strokeDasharray: "5 5",
+                  fillOpacity: 0.3,
+                },
+                {
+                  dataKey: "returningUsersCount",
+                  color: "#10b981",
+                  name: "Returning Devices",
+                  strokeDasharray: "5 5",
+                  fillOpacity: 0.3,
+                },
                 {
                   dataKey: "uniqueUsersCount",
                   color: "hsl(var(--foreground))",
-                  name: "Total Active Users",
+                  name: "Total Active Devices",
                   fillOpacity: 1,
                 },
               ]}
@@ -367,9 +391,10 @@ const Dashboard = () => {
                 title="Questions Asked Over Time"
                 description={`${
                   timeGranularity === "daily" ? "Daily" : "Hourly"
-                } questions count (IST) - Powered by Questions Graph API`}
+                } questions count`}
                 data={questionsGraphData?.data || []}
                 dataKey="questionsCount"
+                isLoading={isLoadingQuestionsGraph}
                 type={chartType}
                 color="hsl(var(--primary))"
                 xAxisKey={getXAxisKey()}
@@ -382,11 +407,12 @@ const Dashboard = () => {
                 title="Session Activity Over Time"
                 description={`${
                   timeGranularity === "daily" ? "Daily" : "Hourly"
-                } sessions count (IST) - Powered by Sessions Graph API`}
+                } sessions count`}
                 data={sessionsGraphData?.data || []}
                 dataKey="sessionsCount"
                 type={chartType}
                 color="#10b981"
+                isLoading={isLoadingSessionsGraph}
                 xAxisKey={getXAxisKey()}
               />
             </div>
@@ -397,7 +423,7 @@ const Dashboard = () => {
                 title="Feedback Activity Over Time"
                 description={`${
                   timeGranularity === "daily" ? "Daily" : "Hourly"
-                } likes and dislikes (IST) - Powered by Feedback Graph API`}
+                } likes and dislikes`}
                 data={feedbackGraphData?.data || []}
                 dataKey={[
                   {
@@ -412,6 +438,7 @@ const Dashboard = () => {
                   },
                 ]}
                 type={chartType}
+                isLoading={isLoadingFeedbackGraph}
                 xAxisKey={getXAxisKey()}
               />
             </div>

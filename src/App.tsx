@@ -24,6 +24,7 @@ import HealthMonitor from "./pages/HealthMonitor";
 import { useKeycloak } from "@react-keycloak/web";
 import QuestionsDetails from "./pages/QuestionsDetails";
 import { isSuperAdmin } from "@/utils/roleUtils";
+import DeviceReport from "./pages/DeviceReport";
 
 const queryClient = new QueryClient({
   defaultOptions: {
@@ -36,12 +37,16 @@ const queryClient = new QueryClient({
 
 const App = () => {
   const { keycloak, initialized } = useKeycloak();
-  
+
   // Show loading state while Keycloak is initializing
   if (!initialized) {
-    return <div className=" bg-foreground/80 flex justify-center items-center h-screen text-background">Loading...</div>;
+    return (
+      <div className=" bg-foreground/80 flex justify-center items-center h-screen text-background">
+        Loading...
+      </div>
+    );
   }
-  
+
   // If not authenticated, don't render the app
   if (!keycloak.authenticated) {
     return null;
@@ -51,105 +56,146 @@ const App = () => {
   const isSuper = isSuperAdmin(keycloak);
 
   return (
-  <QueryClientProvider client={queryClient}>
-    <ThemeProvider>
-      <DateFilterProvider>
-        <StatsProvider>
-          <TooltipProvider>
-          <Toaster />
-          <Sonner />
-          <BrowserRouter>
-            <Routes>
-              <Route path="/" element={
-                <Layout>
-                  <Dashboard />
-                </Layout>
-              } />
-              <Route path="/" element={
-                <Layout>
-                  <UsersReport />
-                </Layout>
-              } />
-              <Route path="/users" element={
-                <Layout>
-                  <UsersReport />
-                </Layout>
-              } />
-              <Route path="/sessions" element={
-                <Layout>
-                  <SessionsReport />
-                </Layout>
-              } />
-              <Route path="/questions" element={
-                <Layout>
-                  <QuestionsReport />
-                </Layout>
-              } />
-              <Route path="/questions/:id" element={
-                <Layout>
-                  <QuestionsDetails />
-                </Layout>
-              } />
-              <Route path="/analytics" element={
-                <Layout>
-                  <Analytics />
-                </Layout>
-              } />
-              <Route path="/sessions/:sessionId" element={
-                <Layout>
-                  <SessionDetails />
-                </Layout>
-              } />
-              <Route path="/feedback" element={
-                <Layout>
-                  <Feedback />
-                </Layout>
-              } />
-              <Route path="/feedback/:feedbackId" element={
-                <Layout>
-                  <FeedbackDetails />
-                </Layout>
-              } />
-              <Route path="/content" element={
-                <Layout>
-                  <Content />
-                </Layout>
-              } />
-              <Route path="/service-status" element={
-                <Layout>
-                  <ServiceStatus />
-                </Layout>
-              } />
-              {/* <Route path="/health-monitor" element={
+    <QueryClientProvider client={queryClient}>
+      <ThemeProvider>
+        <DateFilterProvider>
+          <StatsProvider>
+            <TooltipProvider>
+              <Toaster />
+              <Sonner />
+              <BrowserRouter>
+                <Routes>
+                  <Route
+                    path="/"
+                    element={
+                      <Layout>
+                        <Dashboard />
+                      </Layout>
+                    }
+                  />
+                  <Route
+                    path="/"
+                    element={
+                      <Layout>
+                        <DeviceReport />
+                      </Layout>
+                    }
+                  />
+                  <Route
+                    path="/devices"
+                    element={
+                      <Layout>
+                        <DeviceReport />
+                      </Layout>
+                    }
+                  />
+                  <Route
+                    path="/sessions"
+                    element={
+                      <Layout>
+                        <SessionsReport />
+                      </Layout>
+                    }
+                  />
+                  <Route
+                    path="/questions"
+                    element={
+                      <Layout>
+                        <QuestionsReport />
+                      </Layout>
+                    }
+                  />
+                  <Route
+                    path="/questions/:id"
+                    element={
+                      <Layout>
+                        <QuestionsDetails />
+                      </Layout>
+                    }
+                  />
+                  <Route
+                    path="/analytics"
+                    element={
+                      <Layout>
+                        <Analytics />
+                      </Layout>
+                    }
+                  />
+                  <Route
+                    path="/sessions/:sessionId"
+                    element={
+                      <Layout>
+                        <SessionDetails />
+                      </Layout>
+                    }
+                  />
+                  <Route
+                    path="/feedback"
+                    element={
+                      <Layout>
+                        <Feedback />
+                      </Layout>
+                    }
+                  />
+                  <Route
+                    path="/feedback/:feedbackId"
+                    element={
+                      <Layout>
+                        <FeedbackDetails />
+                      </Layout>
+                    }
+                  />
+                  <Route
+                    path="/content"
+                    element={
+                      <Layout>
+                        <Content />
+                      </Layout>
+                    }
+                  />
+                  <Route
+                    path="/service-status"
+                    element={
+                      <Layout>
+                        <ServiceStatus />
+                      </Layout>
+                    }
+                  />
+                  {/* <Route path="/health-monitor" element={
                 <Layout>
                   <HealthMonitor />
                 </Layout>
               } /> */}
-              {/* Conditionally render error routes for super-admin users only */}
-              {isSuper && (
-                <>
-                  <Route path="/errors" element={
-                    <Layout>
-                      <Errors />
-                    </Layout>
-                  } />
-                  <Route path="/errors/:errorId" element={
-                    <Layout>
-                      <ErrorDetails />
-                    </Layout>
-                  } />
-                </>
-              )}
-              <Route path="*" element={<NotFound />} />
-            </Routes>
-          </BrowserRouter>
-          </TooltipProvider>
-        </StatsProvider>
-      </DateFilterProvider>
-    </ThemeProvider>
-  </QueryClientProvider>
-);
+                  {/* Conditionally render error routes for super-admin users only */}
+                  {isSuper && (
+                    <>
+                      <Route
+                        path="/errors"
+                        element={
+                          <Layout>
+                            <Errors />
+                          </Layout>
+                        }
+                      />
+                      <Route
+                        path="/errors/:errorId"
+                        element={
+                          <Layout>
+                            <ErrorDetails />
+                          </Layout>
+                        }
+                      />
+                    </>
+                  )}
+                  <Route path="*" element={<NotFound />} />
+                </Routes>
+              </BrowserRouter>
+            </TooltipProvider>
+          </StatsProvider>
+        </DateFilterProvider>
+      </ThemeProvider>
+    </QueryClientProvider>
+  );
 };
-
 
 export default App;
