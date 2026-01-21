@@ -2,6 +2,7 @@ import { clsx, type ClassValue } from "clsx"
 import { twMerge } from "tailwind-merge"
 import { addMinutes, format as formatDateFnsInternal, addHours } from "date-fns"
 import { formatInTimeZone } from "date-fns-tz"
+import { getStartOfDay, getEndOfDay } from "../utils/dateUtils"
 
 export function cn(...inputs: ClassValue[]) {
   return twMerge(clsx(inputs))
@@ -23,54 +24,39 @@ export interface DateRangeOptions {
 }
 
 /**
- * Build date range params. Previous implementation tried to normalise to IST which
- * resulted in startDate appearing as previous day (e.g. Aug 27 -> Aug 26 18:30:00Z).
- * For API expectations that treat the incoming ISO strictly by its UTC calendar day,
- * we now default to sending the exact selected calendar day boundaries in UTC
- * (00:00:00.000Z to 23:59:59.999Z) so the network tab shows the same dates picked.
- *
- * If you still need IST aligned windows you can pass alignToIST: true.
+ * Build date range params for API calls.
+ * 
+ * IMPORTANT: The backend interprets ALL date strings as IST (Indian Standard Time),
+ * regardless of the 'Z' suffix. This means:
+ * - "2025-12-13T00:00:00.000Z" is treated as midnight IST on Dec 13, not UTC
+ * - Users selecting Dec 13 will get data for Dec 13 IST (as expected)
+ * 
+ * This function uses the calendar date components to build ISO strings that
+ * the backend will correctly interpret as IST times.
  */
 export function buildDateRangeParams(
   dateRange: { from?: Date; to?: Date },
-  options: DateRangeOptions & { alignToIST?: boolean } = {}
+  options: DateRangeOptions = {}
 ): DateRangeParams & Record<string, string | undefined> {
   const params: DateRangeParams & Record<string, string | undefined> = {};
 
   const {
     includeDefaultStart = false,
     defaultStartDate = '2020-01-01',
-    additionalParams = {},
-    alignToIST = false
+    additionalParams = {}
   } = options;
 
-  const buildBoundary = (
-    base: Date,
-    end: boolean
-  ) => {
-    const year = base.getFullYear();
-    const month = base.getMonth();
-    const day = base.getDate();
-    if (alignToIST) {
-      // Recreate old behaviour (IST window converted to UTC)
-      const istString = `${year}-${String(month + 1).padStart(2, '0')}-${String(day).padStart(2, '0')}T${end ? '23:59:59.999' : '00:00:00.000'}+05:30`;
-      return new Date(istString).toISOString();
-    }
-    // Pure UTC boundaries
-    const utcDate = new Date(Date.UTC(year, month, day, end ? 23 : 0, end ? 59 : 0, end ? 59 : 0, end ? 999 : 0));
-    return utcDate.toISOString();
-  };
-
   if (dateRange.from) {
-    params.startDate = buildBoundary(new Date(dateRange.from), false);
+    params.startDate = getStartOfDay(dateRange.from);
   } else if (includeDefaultStart) {
-    params.startDate = buildBoundary(new Date(defaultStartDate), false);
+    params.startDate = getStartOfDay(defaultStartDate);
   }
 
   if (dateRange.to) {
-    params.endDate = buildBoundary(new Date(dateRange.to), true);
+    params.endDate = getEndOfDay(dateRange.to);
   } else if (dateRange.from) {
-    params.endDate = buildBoundary(new Date(dateRange.from), true);
+    // If only 'from' is provided, use same day as end
+    params.endDate = getEndOfDay(dateRange.from);
   }
 
   return { ...params, ...additionalParams };
@@ -320,4 +306,9 @@ export function formatChartTooltipToIST(
   }
   
   return { formattedLabel, timestampInfo };
+}
+
+
+export function formatLocal(dateString: string, outputFormat = "MMM dd, yyyy hh:mm a") {
+  return formatDateFnsInternal(new Date(dateString), outputFormat);
 }

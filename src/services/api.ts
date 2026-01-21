@@ -187,6 +187,8 @@ export interface PaginationParams {
   startDate?: string;
   endDate?: string;
   granularity?: string;
+  sortBy?: string;
+  sortOrder?: 'asc' | 'desc';
 }
 
 export interface UserPaginationParams extends PaginationParams {
@@ -432,9 +434,10 @@ export interface UserStatsResponse {
 export interface UsersGraphDataPoint {
   date: string;
   hour?: number;
-  newUsers?: number;
-  returningUsers?: number;
+  newUsersCount?: number;
+  returningUsersCount?: number;
   uniqueUsersCount?: number;
+  timestamp?: number;
   [key: string]: string | number | undefined;
 }
 
@@ -1387,6 +1390,7 @@ export const fetchDashboardStats = async (
   params: PaginationParams = {},
 ): Promise<{
   totalUsers: number;
+  totalNewUsers: number;
   totalSessions: number;
   totalQuestions: number;
   totalFeedback: number;
@@ -1422,6 +1426,7 @@ export const fetchDashboardStats = async (
     console.error("Error fetching dashboard stats:", error);
     return {
       totalUsers: 0,
+      totalNewUsers: 0,
       totalSessions: 0,
       totalQuestions: 0,
       totalFeedback: 0,

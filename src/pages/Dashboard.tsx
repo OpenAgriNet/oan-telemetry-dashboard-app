@@ -17,6 +17,7 @@ import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import {
   User,
   MessageSquare,
+  Activity,
   ThumbsUp,
   BarChart,
   LineChart,
@@ -49,7 +50,6 @@ const Dashboard = () => {
       additionalParams: {
         granularity: timeGranularity,
       },
-      alignToIST: false,
     });
     return params;
   };
@@ -73,7 +73,7 @@ const Dashboard = () => {
       }
     : undefined;
   const userStats = dashboardStats
-    ? { totalUsers: dashboardStats.totalUsers }
+    ? { totalUsers: dashboardStats.totalUsers, }
     : undefined;
 
   const isLoadingQuestionStats = isLoadingDashboardStats;
@@ -100,7 +100,6 @@ const Dashboard = () => {
           additionalParams: {
             granularity: timeGranularity,
           },
-          alignToIST: false,
         });
         return fetchQuestionsGraph(params);
       },
@@ -127,7 +126,6 @@ const Dashboard = () => {
           additionalParams: {
             granularity: timeGranularity,
           },
-          alignToIST: false,
         });
         return fetchSessionsGraph(params);
       },
@@ -150,7 +148,6 @@ const Dashboard = () => {
         additionalParams: {
           granularity: timeGranularity,
         },
-        alignToIST: false,
       });
       return fetchUsersGraph(params);
     },
@@ -200,7 +197,7 @@ const Dashboard = () => {
     data: Array<{
       hour?: number;
       date?: string;
-      timestamp?: string;
+      timestamp?: number;
       [key: string]: unknown;
     }>,
   ) => {
@@ -232,7 +229,7 @@ const Dashboard = () => {
 
     return data.map((item) => ({
       ...item,
-      totalUniqueUsers: (item.newUsers || 0) + (item.returningUsers || 0),
+      totalUniqueUsers: (item.newUsersCount || 0) + (item.returningUsersCount || 0),
     }));
   };
 
@@ -280,7 +277,7 @@ const Dashboard = () => {
               description="Total questions submitted"
             />
             <MetricCard
-              title="Feedback Collected"
+              title="Feedback"
               value={feedbackStats?.totalFeedback || 0}
               icon={<ThumbsUp size={16} />}
               description={`${
@@ -290,7 +287,7 @@ const Dashboard = () => {
                       100
                     ).toFixed(1)
                   : 0
-              }% positive feedback`}
+              }% Positive feedback rate`}
             />
           </>
         )}
@@ -300,7 +297,7 @@ const Dashboard = () => {
         <CardHeader className="flex flex-row items-center justify-between pb-2">
           <CardTitle>Chart Options</CardTitle>
           <div className="flex items-center gap-4">
-            <div className="flex items-center gap-2">
+            {/* <div className="flex items-center gap-2">
               <span className="text-sm text-muted-foreground">Data:</span>
               <ToggleGroup
                 type="single"
@@ -311,7 +308,7 @@ const Dashboard = () => {
               >
                 <ToggleGroupItem value="daily">Daily</ToggleGroupItem>
               </ToggleGroup>
-            </div>
+            </div> */}
             <div className="flex items-center gap-2">
               <span className="text-sm text-muted-foreground">Chart:</span>
               <ToggleGroup

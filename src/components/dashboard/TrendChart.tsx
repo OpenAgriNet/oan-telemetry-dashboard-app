@@ -19,6 +19,7 @@ import {
   YAxis,
 } from "recharts";
 import { formatChartXAxisToIST, formatChartTooltipToIST } from "@/lib/utils";
+import { RefreshCcw } from "lucide-react";
 
 interface DataSeriesConfig {
   dataKey: string;

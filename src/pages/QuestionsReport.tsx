@@ -141,7 +141,9 @@ const QuestionsReport = () => {
   //   },
   //   staleTime: 5 * 60 * 1000, // Cache for 5 minutes
   // });
-
+console.log("Questions",dateRange)
+console.log("Questions from",dateRange.from)
+console.log("Questions from ISO",dateRange.from?.toISOString())
   // Main questions query with all filters
   const {
     data: questionsReport = { data: [], total: 0, totalPages: 0 },
@@ -191,23 +193,31 @@ const QuestionsReport = () => {
         params.search = searchTerms.join(" ");
       }
 
-      // Format dates for API (backend expects ISO strings or Unix timestamps)
-      if (dateRange.from) {
-        const fromDate = new Date(dateRange.from);
-        fromDate.setHours(0, 0, 0, 0);
-        params.startDate = fromDate.toISOString();
+      if(sortConfig.key){
+        params.sortBy = sortConfig.key;
+        params.sortOrder = sortConfig.direction as 'asc' | 'desc';
       }
 
-      if (dateRange.to) {
-        const toDate = new Date(dateRange.to);
-        toDate.setHours(23, 59, 59, 999);
-        params.endDate = toDate.toISOString();
-      } else if (dateRange.from) {
-        // If only from date is provided, use same day end as to date
-        const toDate = new Date(dateRange.from);
-        toDate.setHours(23, 59, 59, 999);
-        params.endDate = toDate.toISOString();
-      }
+      // Format dates for API (backend expects ISO strings or Unix timestamps)
+      // if (dateRange.from) {
+      //   const fromDate = new Date(dateRange.from);
+      //   fromDate.setHours(0, 0, 0, 0);
+      //   params.startDate = fromDate.toISOString();
+      // }
+
+      // if (dateRange.to) {
+      //   const toDate = new Date(dateRange.to);
+      //   toDate.setHours(23, 59, 59, 999);
+      //   params.endDate = toDate.toISOString();
+      // } else if (dateRange.from) {
+      //   // If only from date is provided, use same day end as to date
+      //   const toDate = new Date(dateRange.from);
+      //   toDate.setHours(23, 59, 59, 999);
+      //   params.endDate = toDate.toISOString();
+      // }
+       const dateParams = buildDateRangeParams(dateRange);
+            if (dateParams.startDate) params.startDate = dateParams.startDate;
+            if (dateParams.endDate) params.endDate = dateParams.endDate;
 
       console.log("Fetching questions with params:", params);
 
@@ -232,7 +242,7 @@ const QuestionsReport = () => {
     retry: 2,
     retryDelay: (attemptIndex) => Math.min(1000 * 2 ** attemptIndex, 30000),
     // Keep old page data while fetching the next
-    placeholderData: (prev) => prev,
+    // placeholderData: (prev) => prev,
     staleTime: 30 * 1000,
     gcTime: 5 * 60 * 1000,
     refetchOnMount: false,
@@ -380,10 +390,10 @@ const QuestionsReport = () => {
               <TableRow>
                 <TableHead
                   className="w-[400px] cursor-pointer hover:bg-muted/50"
-                  onClick={() => handleSort("question")}
+                  // onClick={() => handleSort("question")}
                 >
                   Question
-                  <SortIndicator columnKey="question" />
+                  {/* <SortIndicator columnKey="question" /> */}
                 </TableHead>
                 <TableHead
                   className="cursor-pointer hover:bg-muted/50"
@@ -394,10 +404,10 @@ const QuestionsReport = () => {
                 </TableHead>
                 <TableHead
                   className="cursor-pointer hover:bg-muted/50"
-                  onClick={() => handleSort("session_id")}
+                  // onClick={() => handleSort("session_id")}
                 >
                   Session ID
-                  <SortIndicator columnKey="session_id" />
+                  {/* <SortIndicator columnKey="session_id" /> */}
                 </TableHead>
                 <TableHead
                   className="cursor-pointer hover:bg-muted/50"
@@ -455,7 +465,7 @@ const QuestionsReport = () => {
                     <TableCell className="font-medium">
                       <div className="max-w-md">
                         <button
-                          className="truncate text-left text-primary hover:underline bg-transparent border-none p-0 m-0 w-full"
+                          className="truncate text-left hover:underline bg-transparent border-none p-0 m-0 w-full"
                           title={question.question}
                           onClick={() => handleQuestionClick(question.id)}
                           type="button"
@@ -480,7 +490,7 @@ const QuestionsReport = () => {
                     <TableCell>
                       <button
                         onClick={() => handleSessionClick(question.session_id)}
-                        className="text-primary hover:underline"
+                        className="hover:underline"
                       >
                         <code className="relative rounded bg-muted px-[0.3rem] py-[0.2rem] font-mono text-xs">
                           {question.session_id.substring(0, 8)}...

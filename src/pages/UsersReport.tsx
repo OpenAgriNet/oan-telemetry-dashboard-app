@@ -38,7 +38,7 @@ import {
   RotateCcw,
 } from "lucide-react";
 import TablePagination from "@/components/TablePagination";
-import { formatUTCToIST, buildDateRangeParams } from "@/lib/utils";
+import { formatUTCToIST, buildDateRangeParams, formatLocal } from "@/lib/utils";
 // Add these types near the top of the file
 type SortDirection = "asc" | "desc" | null;
 type SortConfig = {
@@ -97,8 +97,8 @@ const UsersReport = () => {
 
   // Add new state for sorting
   const [sortConfig, setSortConfig] = useState<SortConfig>({
-    key: "username",
-    direction: "asc",
+    key: "last_activity",
+    direction: "desc",
   });
 
   // Add sorting function
@@ -109,10 +109,16 @@ const UsersReport = () => {
         current.key === key && current.direction === "asc" ? "desc" : "asc",
     }));
   };
+  console.log("Sort Config:", sortConfig);
 
   // Helper to check if a column is backend-sortable
   const isBackendSortable = (key: string) => {
     // Only username is backend-sortable in current API
+    // const backendSortableKeys = ["username", "sessions", "totalQuestions", "feedbackCount"];
+    // if(backendSortableKeys.includes(key)){
+    //   return key;
+    // }
+    // return null;
     return key === "username";
   };
 
@@ -134,6 +140,8 @@ const UsersReport = () => {
       selectedUser,
       page,
       pageSize,
+      sortConfig.key,
+      sortConfig.direction,
       // Only include backend-sortable sort in key to avoid refetches on client-only sorts
       isBackendSortable(sortConfig.key) ? sortConfig.key : "client-sort",
       isBackendSortable(sortConfig.key)
@@ -146,10 +154,15 @@ const UsersReport = () => {
         page,
         limit: pageSize,
       };
-      if (isBackendSortable(sortConfig.key)) {
-        params.sortKey = sortConfig.key;
-        params.sortDirection = sortConfig.direction;
-      }
+      // if (isBackendSortable(sortConfig.key)) {
+      //   params.sortKey = sortConfig.key;
+      //   params.sortDirection = sortConfig.direction;
+      // }
+
+       if (sortConfig.key) {
+        params.sortBy = sortConfig.key;
+        params.sortOrder = sortConfig.direction as "asc" | "desc";
+      }   
 
       // Add search filter
       if (searchQuery.trim()) {
@@ -160,7 +173,7 @@ const UsersReport = () => {
       const dateParams = buildDateRangeParams(dateRange);
       if (dateParams.startDate) params.startDate = dateParams.startDate;
       if (dateParams.endDate) params.endDate = dateParams.endDate;
-
+    console.log(params)
       const result = await fetchUsers(params);
       let filteredData = result.data;
       if (selectedUser !== "all") {
@@ -200,7 +213,7 @@ const UsersReport = () => {
     },
     refetchOnWindowFocus: false,
     // Keep old page data while fetching the next
-    placeholderData: (prev) => prev,
+    // placeholderData: (prev) => prev,
     staleTime: 30 * 1000,
     gcTime: 5 * 60 * 1000,
     // Don't refetch immediately on mount if we already have data
@@ -211,15 +224,12 @@ const UsersReport = () => {
 
   // Use centralized stats from StatsContext - no redundant API call!
   const { stats, isLoading: isStatsLoading, error: statsError } = useStats();
+  console.log(stats)
 
   // Extract stats with fallbacks
   const totalUsers = stats?.totalUsers ?? 0;
-  const totalSessions = stats?.totalSessions ?? 0;
-  const totalQuestions = stats?.totalQuestions ?? 0;
-  const totalFeedback = stats?.totalFeedback ?? 0;
-  const totalLikes = stats?.totalLikes ?? 0;
-  const totalDislikes = stats?.totalDislikes ?? 0;
-
+  const totalNewUsers = stats?.totalNewUsers ?? 0;
+  
   // Removed unused all-users-for-filter query to prevent extra API call on init
   const paginatedUsers = usersResponse.data;
 
@@ -305,6 +315,44 @@ const UsersReport = () => {
             </div>
             <p className="text-xs text-muted-foreground">
               unique devices in selected period
+            </p>
+          </CardContent>
+        </Card>
+
+           <Card>
+          <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
+            <CardTitle className="text-sm font-medium">New Users</CardTitle>
+            <UserPlus className="h-4 w-4 text-muted-foreground" />
+          </CardHeader>
+          <CardContent>
+            <div className="text-2xl font-bold">
+              {isStatsLoading ? (
+                <div className="h-8 w-16 bg-muted animate-pulse rounded" />
+              ) : (
+                totalNewUsers.toLocaleString() || 0
+              )}
+            </div>
+            <p className="text-xs text-muted-foreground">
+            first-time active users
+            </p>
+          </CardContent>
+        </Card>
+
+          <Card>
+          <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
+            <CardTitle className="text-sm font-medium">Returning Users</CardTitle>
+            <UserCheck className="h-4 w-4 text-muted-foreground" />
+          </CardHeader>
+          <CardContent>
+            <div className="text-2xl font-bold">
+              {isStatsLoading ? (
+                <div className="h-8 w-16 bg-muted animate-pulse rounded" />
+              ) : (
+                (totalUsers-totalNewUsers).toLocaleString() || 0
+              )}
+            </div>
+            <p className="text-xs text-muted-foreground">
+              active users with prior activity
             </p>
           </CardContent>
         </Card>
@@ -407,41 +455,45 @@ const UsersReport = () => {
                   <TableRow>
                     <TableHead
                       className="cursor-pointer hover:bg-muted/50"
-                      onClick={() => handleSort("username")}
+                      onClick={() => handleSort("user_id")}
                     >
-                      Username{<SortIndicator columnKey="username" />}
+                      Username
+                      {<SortIndicator columnKey="user_id" />}
                     </TableHead>
                     <TableHead
                       className="text-right cursor-pointer hover:bg-muted/50"
-                      onClick={() => handleSort("sessions")}
+                      // onClick={() => handleSort("session_count")}
                     >
-                      Sessions{<SortIndicator columnKey="sessions" />}
+                      Sessions
+                      {/* {<SortIndicator columnKey="session_count" />} */}
                     </TableHead>
                     <TableHead
                       className="text-right cursor-pointer hover:bg-muted/50"
-                      onClick={() => handleSort("totalQuestions")}
+                      // onClick={() => handleSort("total_questions")}
                     >
-                      Questions{<SortIndicator columnKey="totalQuestions" />}
+                      Questions
+                      {/* {<SortIndicator columnKey="total_questions" />} */}
                     </TableHead>
                     <TableHead
                       className="text-right cursor-pointer hover:bg-muted/50"
-                      onClick={() => handleSort("feedbackCount")}
+                      onClick={() => handleSort("feedback_count")}
                     >
-                      Feedback{<SortIndicator columnKey="feedbackCount" />}
+                      Feedback
+                      {<SortIndicator columnKey="feedback_count" />}
                     </TableHead>
                     <TableHead
                       className="cursor-pointer hover:bg-muted/50"
-                      onClick={() => handleSort("latestSession")}
+                      onClick={() => handleSort("last_activity")}
                     >
                       Latest Activity
-                      {<SortIndicator columnKey="latestSession" />}
+                      {<SortIndicator columnKey="last_activity" />}
                     </TableHead>
                     <TableHead
                       className="cursor-pointer hover:bg-muted/50"
-                      onClick={() => handleSort("latestSession")}
+                      // onClick={() => handleSort("latest_session")}
                     >
                       Latest Session
-                      {<SortIndicator columnKey="latestSession" />}
+                      {/* {<SortIndicator columnKey="latest_session" />} */}
                     </TableHead>
                   </TableRow>
                 </TableHeader>
@@ -457,7 +509,7 @@ const UsersReport = () => {
                         </code>
                       </TableCell>
                       <TableCell className="text-right">
-                        <span className="inline-flex items-center rounded-full bg-primary/10 px-2.5 py-0.5 text-xs font-medium text-primary">
+                        <span className="inline-flex items-center rounded-full bg-primary/10 px-2.5 py-0.5 text-xs font-medium">
                           {user.sessions || user.totalSessions || 0}
                         </span>
                       </TableCell>
@@ -498,7 +550,7 @@ const UsersReport = () => {
                       <TableCell>
                         <button
                           onClick={() => handleSessionClick(user.sessionId)}
-                          className="text-primary hover:underline"
+                          className="hover:underline"
                         >
                           <code className="relative rounded bg-muted px-[0.3rem] py-[0.2rem] font-mono text-xs">
                             {user.sessionId?.substring(0, 8)}...
