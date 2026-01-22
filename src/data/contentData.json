@@ -1,0 +1,189 @@
+{
+  "metrics": {
+    "totalContentsIngested": 16,
+    "totalQuestionsAnswered": 246,
+    "totalContentsUsed": 14,
+    "unusedContents": 2,
+    "averageQuestionsPerContent": 15.4,
+    "byPeriod": [
+      { "date": "2025-04-25", "contentsIngested": 1, "questionsAnswered": 21 },
+      { "date": "2025-04-26", "contentsIngested": 2, "questionsAnswered": 28 },
+      { "date": "2025-04-27", "contentsIngested": 0, "questionsAnswered": 32 },
+      { "date": "2025-04-28", "contentsIngested": 3, "questionsAnswered": 41 },
+      { "date": "2025-04-29", "contentsIngested": 1, "questionsAnswered": 35 },
+      { "date": "2025-04-30", "contentsIngested": 2, "questionsAnswered": 29 },
+      { "date": "2025-05-01", "contentsIngested": 4, "questionsAnswered": 34 },
+      { "date": "2025-05-02", "contentsIngested": 3, "questionsAnswered": 26 }
+    ]
+  },
+  "topUsedContents": [
+    {
+      "id": "content001",
+      "name": "MPKV Krishi Darshani",
+      "source": "Maharashtra Agricultural University",
+      "questionsReferred": 42,
+      "uploadedDate": "2025-04-06T09:30:00Z",
+      "language": "English",
+      "format": "PDF"
+    },
+    {
+      "id": "content002",
+      "name": "Krushi VNMAU",
+      "source": "VNMU",
+      "questionsReferred": 38,
+      "uploadedDate": "2025-04-06T14:45:00Z",
+      "language": "English",
+      "format": "PDF"
+    },
+    {
+      "id": "content003",
+      "name": "Dr. Panjabrao Deshmukh Krishi Vidyapeeth",
+      "source": "Dr. Panjabrao Deshmukh Krishi Vidyapeeth, Akola",
+      "questionsReferred": 31,
+      "uploadedDate": "2025-04-06T11:15:00Z",
+      "language": "English",
+      "format": "PDF"
+    },
+    {
+      "id": "content004",
+      "name": "MPKV Research Recommendation 2022 Rahuri",
+      "source": "MPKV",
+      "questionsReferred": 27,
+      "uploadedDate": "2025-04-17T10:00:00Z",
+      "language": "English",
+      "format": "PDF"
+    },
+    {
+      "id": "content005",
+      "name": "MPKV Research Recommendation 2023 Rahuri",
+      "source": "MPKV",
+      "questionsReferred": 25,
+      "uploadedDate": "2025-04-17T13:20:00Z",
+      "language": "English",
+      "format": "PDF"
+    },
+    {
+      "id": "content006",
+      "name": "MPKV Research Recommendation 2024 Rahuri",
+      "source": "MPKV",
+      "questionsReferred": 22,
+      "uploadedDate": "2025-04-17T16:05:00Z",
+      "language": "English",
+      "format": "PDF"
+    },
+    {
+      "id": "content007",
+      "name": "Chickpea MPKV Rahuri",
+      "source": "MPKV",
+      "questionsReferred": 18,
+      "uploadedDate": "2025-04-21T08:45:00Z",
+      "language": "English",
+      "format": "PDF"
+    },
+    {
+      "id": "content008",
+      "name": "Cotton MPKV Rahuri",
+      "source": "MPKV",
+      "questionsReferred": 16,
+      "uploadedDate": "2025-04-21T15:30:00Z",
+      "language": "English",
+      "format": "PDF"
+    },
+    {
+      "id": "content009",
+      "name": "Fruit crops MPKV Rahuri",
+      "source": "MPKV",
+      "questionsReferred": 14,
+      "uploadedDate": "2025-04-21T12:10:00Z",
+      "language": "English",
+      "format": "PDF"
+    },
+    {
+      "id": "content010",
+      "name": "Maize MPKV Rahuri",
+      "source": "MPKV",
+      "questionsReferred": 12,
+      "uploadedDate": "2025-04-22T09:25:00Z",
+      "language": "English",
+      "format": "PDF"
+    }
+  ],
+  "leastUsedContents": [
+    {
+      "id": "content011",
+      "name": "Pearlmillet MPKV Rahuri",
+      "source": "MPKV",
+      "questionsReferred": 0,
+      "uploadedDate": "2025-04-22T11:20:00Z",
+      "language": "English",
+      "format": "PDF"
+    },
+    {
+      "id": "content012",
+      "name": "Rice MPKV Rahuri",
+      "source": "MPKV",
+      "questionsReferred": 0,
+      "uploadedDate": "2025-04-22T14:45:00Z",
+      "language": "English",
+      "format": "PDF"
+    },
+    {
+      "id": "content013",
+      "name": "Sorghum MPKV Rahuri",
+      "source": "MPKV",
+      "questionsReferred": 1,
+      "uploadedDate": "2025-04-23T10:30:00Z",
+      "language": "English",
+      "format": "PDF"
+    },
+    {
+      "id": "content014",
+      "name": "Sugarcane MPKV Rahuri",
+      "source": "MPKV",
+      "questionsReferred": 1,
+      "uploadedDate": "2025-04-23T16:15:00Z",
+      "language": "English",
+      "format": "PDF"
+    },
+    {
+      "id": "content015",
+      "name": "Vegetable MPKV Rahuri",
+      "source": "MPKV",
+      "questionsReferred": 2,
+      "uploadedDate": "2025-04-23T15:30:00Z",
+      "language": "English",
+      "format": "PDF"
+    },
+    {
+      "id": "content016",
+      "name": "Wheat MPKV Rahuri",
+      "source": "MPKV",
+      "questionsReferred": 2,
+      "uploadedDate": "2025-04-23T10:20:00Z",
+      "language": "English",
+      "format": "PDF"
+    }
+  ],
+  "sourceUtilization": [
+    {
+      "source": "Maharashtra Agricultural University",
+      "documentsCount": 1,
+      "questionsReferred": 42
+    },
+    {
+      "source": "VNMU",
+      "documentsCount": 1,
+      "questionsReferred": 38
+    },
+    {
+      "source": "Dr. Panjabrao Deshmukh Krishi Vidyapeeth, Akola",
+      "documentsCount": 1,
+      "questionsReferred": 31
+    },
+    {
+      "source": "MPKV",
+      "documentsCount": 13,
+      "questionsReferred": 135
+    }
+  ]
+}

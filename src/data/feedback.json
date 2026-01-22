@@ -1,0 +1,42 @@
+[
+  {
+    "id": "fb1",
+    "sessionId": "ses001",
+    "userId": "user1",
+    "questionText": "How do I improve soil fertility for better crop yield?",
+    "feedback": "Very helpful response. The AI provided clear, actionable steps that I could immediately implement.",
+    "aiResponse": "Here are some steps you can take: 1) Use organic compost 2) Rotate crops 3) Test soil regularly.",
+    "rating": 5,
+    "timestamp": "2025-04-28T09:01:45Z"
+  },
+  {
+    "id": "fb2",
+    "sessionId": "ses002",
+    "userId": "user2",
+    "questionText": "What are the best irrigation techniques for rice farming?",
+    "feedback": "Clear and practical advice. Helped me choose the right irrigation method.",
+    "aiResponse": "Drip irrigation and flood irrigation are effective for rice farming. Ensure proper water management.",
+    "rating": 4,
+    "timestamp": "2025-04-28T10:15:30Z"
+  },
+  {
+    "id": "fb3",
+    "sessionId": "ses003",
+    "userId": "user3",
+    "questionText": "How can I prevent pest infestations in my crops?",
+    "feedback": "The response was detailed and easy to follow.",
+    "aiResponse": "Use natural pest repellents, practice crop rotation, and monitor crops regularly for early detection.",
+    "rating": 5,
+    "timestamp": "2025-04-28T11:20:00Z"
+  },
+  {
+    "id": "fb4",
+    "sessionId": "ses004",
+    "userId": "user4",
+    "questionText": "What are the benefits of using organic fertilizers?",
+    "feedback": "Informative and concise. Helped me understand the advantages of organic farming.",
+    "aiResponse": "Organic fertilizers improve soil health, increase microbial activity, and are environmentally friendly.",
+    "rating": 5,
+    "timestamp": "2025-04-28T12:30:00Z"
+  }
+]
