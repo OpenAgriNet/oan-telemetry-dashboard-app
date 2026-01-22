@@ -1,0 +1,10 @@
+
+[
+  {"date": "2025-04-22", "uniqueLogins": 23, "questionsAsked": 78, "reactionsCollected": 65, "voiceInputs": 8, "mobileUsers": 14, "desktopUsers": 9},
+  {"date": "2025-04-23", "uniqueLogins": 25, "questionsAsked": 92, "reactionsCollected": 73, "voiceInputs": 12, "mobileUsers": 15, "desktopUsers": 10},
+  {"date": "2025-04-24", "uniqueLogins": 19, "questionsAsked": 67, "reactionsCollected": 55, "voiceInputs": 7, "mobileUsers": 11, "desktopUsers": 8},
+  {"date": "2025-04-25", "uniqueLogins": 27, "questionsAsked": 102, "reactionsCollected": 85, "voiceInputs": 15, "mobileUsers": 16, "desktopUsers": 11},
+  {"date": "2025-04-26", "uniqueLogins": 31, "questionsAsked": 118, "reactionsCollected": 96, "voiceInputs": 18, "mobileUsers": 19, "desktopUsers": 12},
+  {"date": "2025-04-27", "uniqueLogins": 22, "questionsAsked": 84, "reactionsCollected": 70, "voiceInputs": 9, "mobileUsers": 13, "desktopUsers": 9},
+  {"date": "2025-04-28", "uniqueLogins": 29, "questionsAsked": 108, "reactionsCollected": 90, "voiceInputs": 16, "mobileUsers": 18, "desktopUsers": 11}
+]
