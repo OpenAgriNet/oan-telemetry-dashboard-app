@@ -471,12 +471,12 @@ const FeedbackPage = () => {
                           {feedback.user || feedback.userId || "Unknown"}
                         </code>
                       </TableCell>
-                      <TableCell className="max-w-[200px]">
+                      <TableCell className="max-w-[100px]">
                         <div className="truncate" title={feedback.question}>
                           {feedback.question}
                         </div>
                       </TableCell>
-                      <TableCell className="max-w-[200px]">
+                      <TableCell className="max-w-[100px]">
                         <div className="truncate" title={feedback.answer}>
                           {feedback.answer}
                         </div>

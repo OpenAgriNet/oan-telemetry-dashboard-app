@@ -6,6 +6,7 @@ import { useNavigate, useSearchParams } from "react-router-dom";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
+import { buildDateRangeParams } from "@/lib/utils";
 import {
   Table,
   TableBody,
@@ -78,8 +79,13 @@ const DeviceReport = () => {
         limit: pageSize,
       };
       if (searchQuery.trim()) params.search = searchQuery.trim();
-      if (dateRange.from) params.startDate = dateRange.from.toISOString();
-      if (dateRange.to) params.endDate = dateRange.to.toISOString();
+      // if (dateRange.from) params.startDate = dateRange.from.toISOString();
+      // if (dateRange.to) params.endDate = dateRange.to.toISOString();
+      const dateParams = buildDateRangeParams(dateRange);
+
+      if (dateParams.startDate) params.startDate = dateParams.startDate;
+      if (dateParams.endDate) params.endDate = dateParams.endDate;
+      
       return await fetchDevices(params);
     },
     refetchOnWindowFocus: false,

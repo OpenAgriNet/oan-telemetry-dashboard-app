@@ -6,6 +6,7 @@ import {
   fetchFeedbackGraph,
   fetchUsersGraph,
   type PaginationParams,
+  fetchDevicesGraph,
 } from "@/services/api";
 import { useDateFilter } from "@/contexts/DateFilterContext";
 import { useStats } from "@/contexts/StatsContext";
@@ -149,7 +150,7 @@ const Dashboard = () => {
           granularity: timeGranularity,
         },
       });
-      return fetchUsersGraph(params);
+      return fetchDevicesGraph(params);
     },
     staleTime: 2 * 60 * 1000,
     gcTime: 5 * 60 * 1000,
@@ -229,7 +230,7 @@ const Dashboard = () => {
 
     return data.map((item) => ({
       ...item,
-      totalUniqueUsers: (item.newUsersCount || 0) + (item.returningUsersCount || 0),
+      // totalUniqueUsers: (item.newUsersCount || 0) + (item.returningUsersCount || 0),
     }));
   };
 

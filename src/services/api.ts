@@ -773,6 +773,8 @@ export const fetchSessions = async (
       search,
       startDate,
       endDate,
+      sortBy,
+      sortOrder,
     } = params;
 
     const queryParams = buildQueryParams({
@@ -781,6 +783,8 @@ export const fetchSessions = async (
       search: search || "",
       startDate: startDate || "",
       endDate: endDate || "",
+      sortBy: sortBy || "",
+      sortOrder: sortOrder || "",
     });
 
     console.log(
@@ -993,6 +997,8 @@ export const fetchQuestions = async (
       endDate,
       userId,
       sessionId,
+      sortBy,
+      sortOrder,
     } = params;
 
     const queryParams = buildQueryParams({
@@ -1003,6 +1009,8 @@ export const fetchQuestions = async (
       endDate: endDate || "",
       userId: userId || "",
       sessionId: sessionId || "",
+      sortBy: sortBy || "",
+      sortOrder: sortOrder || "",
     });
 
     console.log(
@@ -1113,6 +1121,8 @@ export const fetchFeedback = async (
       search,
       startDate,
       endDate,
+      sortBy,
+      sortOrder,
     } = params;
 
     const queryParams = buildQueryParams({
@@ -1121,6 +1131,8 @@ export const fetchFeedback = async (
       search: search || "",
       startDate: startDate || "",
       endDate: endDate || "",
+      sortBy: sortBy || "",
+      sortOrder: sortOrder || "",
     });
 
     console.log(
@@ -2104,6 +2116,8 @@ export const fetchErrors = async (
       startDate,
       endDate,
       errorType = "",
+      sortBy,
+      sortOrder,
     } = params;
 
     const queryParams = buildQueryParams({
@@ -2113,6 +2127,8 @@ export const fetchErrors = async (
       startDate: startDate || "",
       endDate: endDate || "",
       errorType: errorType || "",
+      sortBy: sortBy || "",
+      sortOrder: sortOrder || "",
     });
 
     const url = `${SERVER_URL}/errors${queryParams ? `?${queryParams}` : ""}`;
@@ -2261,6 +2277,66 @@ export const fetchUsersGraph = async (
 
     const url = `${SERVER_URL}/userss/graph-user${queryParams ? `?${queryParams}` : ""}`;
     console.log("Fetching users graph data with URL:", url);
+
+    const response = await fetch(url);
+
+    if (!response.ok) {
+      throw new Error(`HTTP error! status: ${response.status}`);
+    }
+
+    const result = await response.json();
+
+    if (!result.success) {
+      throw new Error("Failed to fetch users graph data");
+    }
+
+    return result;
+  } catch (error) {
+    console.error("Error fetching users graph data:", error);
+    return {
+      data: [],
+      metadata: {
+        granularity: "daily",
+        totalDataPoints: 0,
+        dateRange: {
+          start: null,
+          end: null,
+        },
+        summary: {
+          totalUniqueUsers: 0,
+          peakActivity: {
+            date: null,
+            uniqueUsersCount: 0,
+          },
+        },
+      },
+      filters: {
+        search: "",
+        startDate: null,
+        endDate: null,
+        granularity: "daily",
+        appliedStartTimestamp: null,
+        appliedEndTimestamp: null,
+      },
+    };
+  }
+};
+
+export const fetchDevicesGraph = async (
+  params: PaginationParams = {},
+): Promise<UsersGraphResponse> => {
+  try {
+    const { startDate, endDate, granularity, search } = params;
+
+    const queryParams = buildQueryParams({
+      startDate: startDate || "",
+      endDate: endDate || "",
+      granularity: granularity || "daily",
+      search: search || "",
+    });
+
+    const url = `${SERVER_URL}/devices/graph${queryParams ? `?${queryParams}` : ""}`;
+    console.log("Fetching devices graph data with URL:", url);
 
     const response = await fetch(url);
 
