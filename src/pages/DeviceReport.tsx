@@ -15,8 +15,9 @@ import {
   TableHeader,
   TableRow,
 } from "@/components/ui/table";
-import { Search, RefreshCw, RotateCcw, MonitorSmartphone } from "lucide-react";
+import { Search, RefreshCw, RotateCcw, MonitorSmartphone, Users, UserPlus, UserCheck } from "lucide-react";
 import TablePagination from "@/components/TablePagination";
+import { useStats } from "@/contexts/StatsContext";
 
 // DeviceReport page for /devices endpoint
 const DeviceReport = () => {
@@ -96,6 +97,12 @@ const DeviceReport = () => {
     retryDelay: (attemptIndex) => Math.min(1000 * 2 ** attemptIndex, 30000),
   });
 
+  const { stats, isLoading: isStatsLoading, error: statsError } = useStats();
+
+  // Extract stats with fallbacks
+  const totalUsers = stats?.totalUsers ?? 0;
+  const totalNewUsers = stats?.totalNewUsers ?? 0;
+
   const paginatedDevices = devicesResponse.data;
 
   return (
@@ -114,6 +121,67 @@ const DeviceReport = () => {
             Refresh
           </Button>
         </div>
+      </div>
+           {/* User Stats Metric Cards */}
+      <div className="grid gap-4 md:grid-cols-3">
+        <Card>
+          <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
+            <CardTitle className="text-sm font-medium">
+              Total Unique Devices
+            </CardTitle>
+            <Users className="h-4 w-4 text-muted-foreground" />
+          </CardHeader>
+          <CardContent>
+            <div className="text-2xl font-bold">
+              {isStatsLoading ? (
+                <div className="h-8 w-16 bg-muted animate-pulse rounded" />
+              ) : (
+                totalUsers.toLocaleString() || 0
+              )}
+            </div>
+            <p className="text-xs text-muted-foreground">
+              unique active devices in selected period
+            </p>
+          </CardContent>
+        </Card>
+
+           <Card>
+          <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
+            <CardTitle className="text-sm font-medium">New Devices</CardTitle>
+            <UserPlus className="h-4 w-4 text-muted-foreground" />
+          </CardHeader>
+          <CardContent>
+            <div className="text-2xl font-bold">
+              {isStatsLoading ? (
+                <div className="h-8 w-16 bg-muted animate-pulse rounded" />
+              ) : (
+                totalNewUsers.toLocaleString() || 0
+              )}
+            </div>
+            <p className="text-xs text-muted-foreground">
+              first-time active devices
+            </p>
+          </CardContent>
+        </Card>
+
+          <Card>
+          <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
+            <CardTitle className="text-sm font-medium">Returning Devices</CardTitle>
+            <UserCheck className="h-4 w-4 text-muted-foreground" />
+          </CardHeader>
+          <CardContent>
+            <div className="text-2xl font-bold">
+              {isStatsLoading ? (
+                <div className="h-8 w-16 bg-muted animate-pulse rounded" />
+              ) : (
+                (totalUsers-totalNewUsers).toLocaleString() || 0
+              )}
+            </div>
+            <p className="text-xs text-muted-foreground">
+              active devices with prior activity
+            </p>
+          </CardContent>
+        </Card>
       </div>
       <Card>
         <CardHeader>
