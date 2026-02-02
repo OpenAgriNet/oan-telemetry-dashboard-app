@@ -1,4 +1,3 @@
-// src/lib/keycloak.ts.example
 import Keycloak from 'keycloak-js';
 import { KEYCLOAK_CONFIG } from '../config/environment';
 

@@ -26,7 +26,3 @@ dist-ssr
 package-*.json
 pnpm-lock.yaml
 package-lock.json
-
-# Environment and authentication config
-src/lib/keycloak.ts
-src/config/environment.ts

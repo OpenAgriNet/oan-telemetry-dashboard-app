@@ -1,6 +1,14 @@
 /**
- * Environment configuration for the application
+ * Environment configuration example
+ * Copy this file to environment.ts and configure your values
  */
+
+// Keycloak Configuration
+export const KEYCLOAK_CONFIG = {
+  url: "YOUR_KEYCLOAK_URL",
+  realm: "YOUR_REALM",
+  clientId: "YOUR_CLIENT_ID",
+};
 
 // API Configuration
 export const API_CONFIG = {
@@ -9,8 +17,6 @@ export const API_CONFIG = {
 
 // Watchtower Status API Configuration
 export const WATCHTOWER_CONFIG = {
-  BASE_URL:
-    import.meta.env.VITE_WATCHTOWER_BASE_URL || "YOUR_WATCHTOWER_URL",
-  JWT_TOKEN:
-    import.meta.env.VITE_WATCHTOWER_JWT || "YOUR_JWT_TOKEN",
+  BASE_URL: "YOUR_WATCHTOWER_URL",
+  JWT_TOKEN: "YOUR_JWT_TOKEN",
 };
