@@ -60,16 +60,16 @@ const Layout: React.FC<LayoutProps> = ({ children }) => {
       path: "/devices",
       icon: <Users size={20} />,
     },
-    // {
-    //   name: "Sessions",
-    //   path: "/sessions",
-    //   icon: <Calendar size={20} />,
-    // },
-    // {
-    //   name: "Questions",
-    //   path: "/questions",
-    //   icon: <MessageSquare size={20} />,
-    // },
+    {
+      name: "Sessions",
+      path: "/sessions",
+      icon: <Calendar size={20} />,
+    },
+    {
+      name: "Questions",
+      path: "/questions",
+      icon: <MessageSquare size={20} />,
+    },
     // {
     //   name: "Content",
     //   path: "/content",
@@ -80,11 +80,11 @@ const Layout: React.FC<LayoutProps> = ({ children }) => {
     //   path: "/analytics",
     //   icon: <BarChart3 size={20} />,
     // },
-    // {
-    //   name: "Feedback",
-    //   path: "/feedback",
-    //   icon: <ClipboardCheck size={20} />,
-    // },
+    {
+      name: "Feedback",
+      path: "/feedback",
+      icon: <ClipboardCheck size={20} />,
+    },
     // Conditionally add Errors menu item for super-admin users only
     ...(isSuper
       ? [

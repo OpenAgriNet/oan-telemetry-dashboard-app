@@ -11,6 +11,7 @@ import {
   AreaChart,
   Bar,
   BarChart,
+  Legend,
   Line,
   LineChart,
   ResponsiveContainer,
@@ -154,6 +155,7 @@ const TrendChart: React.FC<TrendChartProps> = ({
                   name={series.name || series.dataKey}
                 />
               ))}
+              {title === "Device Activity" && <Legend />}
             </BarChart>
           </ResponsiveContainer>
         );
@@ -192,6 +194,7 @@ const TrendChart: React.FC<TrendChartProps> = ({
                   name={series.name || series.dataKey}
                 />
               ))}
+              {title === "Device Activity" && <Legend />}
             </AreaChart>
           </ResponsiveContainer>
         );
@@ -230,6 +233,7 @@ const TrendChart: React.FC<TrendChartProps> = ({
                   name={series.name || series.dataKey}
                 />
               ))}
+              {title === "Device Activity" && <Legend />}
             </LineChart>
           </ResponsiveContainer>
         );

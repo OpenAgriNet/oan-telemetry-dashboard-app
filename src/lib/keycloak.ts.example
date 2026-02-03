@@ -1,11 +1,10 @@
-// src/lib/keycloak.ts.example
+// src/lib/keycloak.ts
 import Keycloak from 'keycloak-js';
-import { KEYCLOAK_CONFIG } from '../config/environment';
 
 const keycloak = new Keycloak({
-  url: KEYCLOAK_CONFIG.url,
-  realm: KEYCLOAK_CONFIG.realm,
-  clientId: KEYCLOAK_CONFIG.clientId,
+  url: "YOUR_KEYCLOAK_URL",
+  realm: 'YOUR_REALM',
+  clientId: 'YOUR_CLIENT_ID',
 });
 
 export default keycloak;
