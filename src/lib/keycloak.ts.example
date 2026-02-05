@@ -1,10 +1,18 @@
-// src/lib/keycloak.ts
+// src/lib/keycloak.ts - Keycloak is configured via environment variables.
+// Copy these to your .env or .env.production (they are baked in at build time):
+//
+//   VITE_KEYCLOAK_URL=https://auth.example.com
+//   VITE_KEYCLOAK_REALM=your-realm
+//   VITE_KEYCLOAK_CLIENT_ID=your-client-id
+//
+// The actual keycloak.ts uses these values - no need to copy this file.
+
 import Keycloak from 'keycloak-js';
 
 const keycloak = new Keycloak({
-  url: "YOUR_KEYCLOAK_URL",
-  realm: 'YOUR_REALM',
-  clientId: 'YOUR_CLIENT_ID',
+  url: import.meta.env.VITE_KEYCLOAK_URL ?? '',
+  realm: import.meta.env.VITE_KEYCLOAK_REALM ?? '',
+  clientId: import.meta.env.VITE_KEYCLOAK_CLIENT_ID ?? '',
 });
 
 export default keycloak;
