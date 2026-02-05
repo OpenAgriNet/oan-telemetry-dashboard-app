@@ -28,5 +28,4 @@ pnpm-lock.yaml
 package-lock.json
 
 # Environment and authentication config
-# keycloak.ts now uses env vars - no longer gitignored
-src/config/environment.ts
+# keycloak.ts and environment.ts now use env vars - no longer gitignored

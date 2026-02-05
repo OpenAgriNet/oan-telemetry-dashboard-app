@@ -1,11 +1,8 @@
 /**
- * Environment config - now uses env vars in environment.ts.
- * Set these in .env or build args:
- *
- *   VITE_SERVER_URL=https://feedback-dashboard-api.prod.amulai.in
- *   VITE_WATCHTOWER_BASE_URL=
- *   VITE_WATCHTOWER_JWT=
+ * Environment configuration for the application.
+ * Values are read from VITE_* env vars at build time.
  */
+
 export const API_CONFIG = {
   SERVER_URL: import.meta.env.VITE_SERVER_URL ?? '',
 };

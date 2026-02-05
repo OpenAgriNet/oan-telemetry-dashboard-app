@@ -14,7 +14,10 @@ export function setupAuthFetch(): void {
         ? input
         : (input instanceof URL ? input.toString() : input.url);
 
-      const shouldAttachAuth = typeof url === 'string' && url.startsWith(API_CONFIG.SERVER_URL);
+      const shouldAttachAuth =
+        typeof url === 'string' &&
+        API_CONFIG.SERVER_URL &&
+        url.startsWith(API_CONFIG.SERVER_URL);
 
       if (shouldAttachAuth && keycloak?.authenticated) {
         // Refresh token if close to expiry; ignore errors to avoid blocking requests
