@@ -33,7 +33,8 @@ const StatusPage: React.FC<StatusPageProps> = ({
     const endpoints = dashboardStats.data?.endpoints || [];
 
     const networkEndpoints = endpoints.filter(endpoint =>
-      (endpoint.url || '').includes('/network-health') || endpoint.tags?.includes('network')
+      // (endpoint.url || '').includes('/network-health') || endpoint.tags?.includes('network')
+      (endpoint.url || '').includes('/external') || endpoint.tags?.includes('network')
     );
 
     const remaining = endpoints.filter(e => !networkEndpoints.includes(e));
@@ -48,6 +49,7 @@ const StatusPage: React.FC<StatusPageProps> = ({
       endpoint.type === 'api' || 
       endpoint.tags?.includes('backend') ||
       endpoint.tags?.includes('api') ||
+      endpoint.tags?.includes('/internal') ||
       (!endpoint.type && !uiEndpoints.includes(endpoint)) // fallback for untyped endpoints
     );
 
