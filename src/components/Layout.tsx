@@ -106,11 +106,11 @@ const Layout: React.FC<LayoutProps> = ({ children }) => {
         ]
       : []),
 
-    // {
-    //   name: "Service Status",
-    //   path: "/service-status",
-    //   icon: <Activity size={20} />,
-    // },
+    {
+      name: "Service Status",
+      path: "/service-status",
+      icon: <Activity size={20} />,
+    },
   ];
 
   return (
