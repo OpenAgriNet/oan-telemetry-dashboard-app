@@ -102,6 +102,7 @@ const DeviceReport = () => {
   // Extract stats with fallbacks
   const totalUsers = stats?.totalUsers ?? 0;
   const totalNewUsers = stats?.totalNewUsers ?? 0;
+  const totalReturningUsers = stats?.totalReturningUsers ?? 0;
 
   const paginatedDevices = devicesResponse.data;
 
@@ -174,7 +175,7 @@ const DeviceReport = () => {
               {isStatsLoading ? (
                 <div className="h-8 w-16 bg-muted animate-pulse rounded" />
               ) : (
-                (totalUsers-totalNewUsers).toLocaleString() || 0
+                totalReturningUsers.toLocaleString() || 0
               )}
             </div>
             <p className="text-xs text-muted-foreground">

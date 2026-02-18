@@ -7,6 +7,7 @@ import { buildDateRangeParams } from '@/lib/utils';
 interface DashboardStats {
   totalUsers: number;
   totalNewUsers: number;
+  totalReturningUsers: number;
   totalSessions: number;
   totalQuestions: number;
   totalFeedback: number;
