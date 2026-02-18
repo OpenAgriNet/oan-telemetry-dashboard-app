@@ -1403,6 +1403,7 @@ export const fetchDashboardStats = async (
 ): Promise<{
   totalUsers: number;
   totalNewUsers: number;
+  totalReturningUsers: number;
   totalSessions: number;
   totalQuestions: number;
   totalFeedback: number;
@@ -1439,6 +1440,7 @@ export const fetchDashboardStats = async (
     return {
       totalUsers: 0,
       totalNewUsers: 0,
+      totalReturningUsers: 0,
       totalSessions: 0,
       totalQuestions: 0,
       totalFeedback: 0,

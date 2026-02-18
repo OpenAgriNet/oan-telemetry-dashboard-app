@@ -31,7 +31,7 @@ const Dashboard = () => {
 
   const [currentTab, setCurrentTab] = useState<
     "users" | "questions" | "sessions" | "feedback"
-  >("questions");
+  >("users");
 
   // State to track chart type (line or bar)
   const [chartType, setChartType] = useState<"line" | "bar">("line");
@@ -337,13 +337,13 @@ const Dashboard = () => {
           onValueChange={(value) => setCurrentTab(value as typeof currentTab)}
         >
           <TabsList>
-            {/* <TabsTrigger value="users">Devices</TabsTrigger> */}
+            <TabsTrigger value="users">Devices</TabsTrigger> 
             <TabsTrigger value="questions">Questions</TabsTrigger>
             <TabsTrigger value="sessions">Sessions</TabsTrigger>
             <TabsTrigger value="feedback">Feedback</TabsTrigger>
           </TabsList>
 
-          {/* <TabsContent value="users">
+           <TabsContent value="users">
             <TrendChart
               title="Device Activity"
               description={`${
@@ -382,7 +382,7 @@ const Dashboard = () => {
               type={chartType}
               xAxisKey={getXAxisKey()}
             />
-          </TabsContent> */}
+          </TabsContent>
           <TabsContent value="questions">
             <div className="space-y-4">
               <TrendChart
