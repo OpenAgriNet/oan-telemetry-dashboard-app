@@ -22,6 +22,8 @@ import {
   RotateCcw,
   ClipboardCheck,
   AlertTriangle,
+  Mic,
+  Volume2,
 } from "lucide-react";
 import {
   DropdownMenu,
@@ -84,6 +86,16 @@ const Layout: React.FC<LayoutProps> = ({ children }) => {
       name: "Feedback",
       path: "/feedback",
       icon: <ClipboardCheck size={20} />,
+    },
+    {
+      name: "ASR",
+      path: "/asr",
+      icon: <Mic size={20} />,
+    },
+    {
+      name: "TTS",
+      path: "/tts",
+      icon: <Volume2 size={20} />,
     },
     // Conditionally add Errors menu item for super-admin users only
     ...(isSuper

@@ -25,6 +25,8 @@ import { useKeycloak } from "@react-keycloak/web";
 import QuestionsDetails from "./pages/QuestionsDetails";
 import { isSuperAdmin } from "@/utils/roleUtils";
 import DeviceReport from "./pages/DeviceReport";
+import AsrReport from "./pages/AsrReport";
+import TtsReport from "./pages/TtsReport";
 
 const queryClient = new QueryClient({
   defaultOptions: {
@@ -142,6 +144,22 @@ const App = () => {
                     element={
                       <Layout>
                         <FeedbackDetails />
+                      </Layout>
+                    }
+                  />
+                  <Route
+                    path="/asr"
+                    element={
+                      <Layout>
+                        <AsrReport />
+                      </Layout>
+                    }
+                  />
+                  <Route
+                    path="/tts"
+                    element={
+                      <Layout>
+                        <TtsReport />
                       </Layout>
                     }
                   />
