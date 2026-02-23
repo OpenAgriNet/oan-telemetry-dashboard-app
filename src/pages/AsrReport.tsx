@@ -42,7 +42,7 @@ const AsrReport = () => {
   const [pendingSearch, setPendingSearch] = useState("");
   const [searchTerm, setSearchTerm] = useState("");
   const [sortConfig, setSortConfig] = useState({
-    key: "created_at",
+    key: "ets",
     direction: "desc",
   });
 
@@ -275,9 +275,9 @@ const AsrReport = () => {
                     </TableHead>
                     <TableHead
                       className="cursor-pointer hover:bg-muted/50"
-                      onClick={() => handleSort("created_at")}
+                      onClick={() => handleSort("ets")}
                     >
-                      Created At <SortIndicator columnKey="created_at" />
+                      Created At <SortIndicator columnKey="ets" />
                     </TableHead>
                   </TableRow>
                 </TableHeader>
