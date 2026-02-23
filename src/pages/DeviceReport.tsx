@@ -108,8 +108,8 @@ const DeviceReport = () => {
 
   return (
     <div className="space-y-6">
-      <div className="flex items-center justify-between">
-        <h1 className="text-2xl font-bold tracking-tight">Devices Report</h1>
+      <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4">
+        <h1 className="text-2xl font-bold tracking-tight">Unique Devices Report</h1>
         <div className="flex gap-2">
           <Button
             onClick={() => refetch()}
@@ -124,7 +124,7 @@ const DeviceReport = () => {
         </div>
       </div>
            {/* User Stats Metric Cards */}
-      <div className="grid gap-4 md:grid-cols-3">
+      <div className="grid grid-cols-2 gap-3 sm:gap-4 md:grid-cols-3">
         <Card>
           <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
             <CardTitle className="text-sm font-medium">
@@ -190,8 +190,8 @@ const DeviceReport = () => {
         </CardHeader>
         <CardContent>
           <div className="space-y-4">
-            <div className="flex flex-col md:flex-row gap-4">
-              <div className="relative flex-1">
+            <div className="flex flex-col sm:flex-row gap-4 w-full">
+              <div className="relative flex-1 w-full">
                 <Search className="absolute left-2 top-2.5 h-4 w-4 text-muted-foreground" />
                 <Input
                   type="search"
@@ -205,23 +205,25 @@ const DeviceReport = () => {
                   maxLength={1000}
                 />
               </div>
-              <Button
-                onClick={handleSearch}
-                disabled={isLoading}
-                variant="outline"
-                size="icon"
-                title="Search"
-              >
-                <Search className="h-4 w-4" />
-              </Button>
-              <Button
-                onClick={handleResetFilters}
-                variant="outline"
-                size="icon"
-                title="Reset Search"
-              >
-                <RotateCcw className="h-4 w-4" />
-              </Button>
+              <div className="flex gap-2 w-full sm:w-auto">
+                <Button
+                  onClick={handleSearch}
+                  disabled={isLoading}
+                  variant="outline"
+                  size="icon"
+                  title="Search"
+                >
+                  <Search className="h-4 w-4" />
+                </Button>
+                <Button
+                  onClick={handleResetFilters}
+                  variant="outline"
+                  size="icon"
+                  title="Reset Search"
+                >
+                  <RotateCcw className="h-4 w-4" />
+                </Button>
+              </div>
             </div>
             {isLoading ? (
               <div className="flex justify-center items-center p-12 bg-muted/30 rounded-lg">

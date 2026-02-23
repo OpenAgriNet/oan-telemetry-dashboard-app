@@ -39,25 +39,56 @@ const MetricCard: React.FC<MetricCardProps> = ({
 
   return (
     <Card className="card-gradient overflow-hidden">
-      <CardHeader className="flex flex-row items-center justify-between pb-2 space-y-0">
-        <div className="h-10 w-10 rounded-md bg-primary/10 flex items-center justify-center">
+      {/* DESKTOP LAYOUT */}
+      {/* DESKTOP LAYOUT */}
+      <div className="hidden sm:flex flex-col p-6">
+        <div className="h-10 w-10 rounded-md bg-primary/10 flex items-center justify-center mb-4">
           {icon}
         </div>
-      </CardHeader>
-      <CardContent>
-        <div className="text-2xl font-bold">{typeof value === 'number' ? value.toLocaleString() : value}</div>
-        <p className="mt-1 text-sm text-muted-foreground">
+        <div className="text-3xl font-bold tracking-tight">
+          {typeof value === 'number' ? value.toLocaleString() : value}
+        </div>
+        <div className="mt-1 text-sm font-medium text-muted-foreground">
           {title}
           {trend && (
             <span className={`ml-2 ${getTrendColor()}`}>
               {getTrendArrow()} {Math.abs(trend)}%
             </span>
           )}
-        </p>
+        </div>
         {description && (
-          <p className="mt-1 text-xs text-muted-foreground">{description}</p>
+          <div className="mt-1 text-xs text-muted-foreground">
+            {description}
+          </div>
         )}
-      </CardContent>
+      </div>
+
+      {/* MOBILE LAYOUT */}
+      <div className="flex sm:hidden flex-row items-center p-3 gap-3">
+        <div className="h-10 w-10 rounded-lg bg-primary/10 flex items-center justify-center flex-shrink-0">
+          {icon}
+        </div>
+        <div className="flex-1 min-w-0">
+          <p className="text-xs font-medium text-muted-foreground truncate">
+            {title}
+          </p>
+          <div className="flex items-baseline gap-2">
+            <h3 className="text-lg font-bold truncate">
+              {typeof value === 'number' ? value.toLocaleString() : value}
+            </h3>
+            {trend && (
+              <span className={`text-xs ${getTrendColor()} whitespace-nowrap`}>
+                {getTrendArrow()} {Math.abs(trend)}%
+              </span>
+            )}
+          </div>
+          {description && (
+            <p className="mt-0.5 text-[10px] text-muted-foreground truncate leading-tight">
+              {description}
+            </p>
+          )}
+        </div>
+      </div>
     </Card>
   );
 };
