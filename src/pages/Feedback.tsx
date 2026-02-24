@@ -227,7 +227,7 @@ const FeedbackPage = () => {
 
   return (
     <div className="space-y-6">
-      <div className="flex items-center justify-between">
+      <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4">
         <h1 className="text-2xl font-bold tracking-tight">User Feedback</h1>
         <div className="flex gap-2">
           <Button
@@ -243,7 +243,7 @@ const FeedbackPage = () => {
         </div>
       </div>
 
-      <div className="grid gap-4 md:grid-cols-3">
+      <div className="grid grid-cols-2 gap-3 sm:gap-4 md:grid-cols-3">
         <Card>
           <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
             <CardTitle className="text-sm font-medium">
@@ -332,8 +332,8 @@ const FeedbackPage = () => {
         </CardHeader>
         <CardContent>
           <div className="space-y-4">
-            <div className="flex flex-col md:flex-row gap-4">
-              <div className="relative flex-1">
+            <div className="flex flex-col sm:flex-row gap-4 w-full">
+              <div className="relative flex-1 w-full">
                 <Search className="h-4 w-4 absolute left-2 top-2.5 text-muted-foreground" />
                 <Input
                   type="search"
@@ -349,12 +349,14 @@ const FeedbackPage = () => {
                   maxLength={1000}
                 />
               </div>
-              <Button onClick={handleSearch} disabled={isLoading} variant="outline" size="icon" title="Search">
-                <Search className="h-4 w-4" />
-              </Button>
-              <Button onClick={handleResetFilters} variant="outline" size="icon" title="Reset Search">
-                <RotateCcw className="h-4 w-4" />
-              </Button>
+              <div className="flex gap-2 w-full sm:w-auto">
+                <Button onClick={handleSearch} disabled={isLoading} variant="outline" size="icon" title="Search">
+                  <Search className="h-4 w-4" />
+                </Button>
+                <Button onClick={handleResetFilters} variant="outline" size="icon" title="Reset Search">
+                  <RotateCcw className="h-4 w-4" />
+                </Button>
+              </div>
             </div>
 
             {isLoading ? (
@@ -468,7 +470,7 @@ const FeedbackPage = () => {
                       </TableCell>
                       <TableCell>
                         <code className="relative rounded bg-muted px-[0.3rem] py-[0.2rem] font-mono text-sm">
-                          {feedback.user || feedback.userId || "Unknown"}
+                          {(feedback.user || feedback.userId) ? (feedback.user || feedback.userId).substring(0, 6) + "..." : "Unknown"}
                         </code>
                       </TableCell>
                       <TableCell className="max-w-[100px]">

@@ -2383,3 +2383,162 @@ export const fetchDevicesGraph = async (
     };
   }
 };
+
+// ─── ASR / TTS ────────────────────────────────────────────────────────────────
+
+export interface AsrRecord {
+  id: number;
+  sid: string;
+  language: string;
+  text: string;
+  success: boolean;
+  latencyMs: number;
+  statusCode: number;
+  errorCode: string | null;
+  errorMessage: string | null;
+  apiType: string;
+  apiService: string;
+  channel: string;
+  createdAt: string | null;
+  ets: number;
+  [key: string]: unknown;
+}
+
+export interface TtsRecord {
+  id: number;
+  sid: string;
+  language: string;
+  text: string;
+  success: boolean;
+  latencyMs: number;
+  statusCode: number;
+  errorCode: string | null;
+  errorMessage: string | null;
+  apiType: string;
+  apiService: string;
+  channel: string;
+  createdAt: string | null;
+  ets: number;
+  [key: string]: unknown;
+}
+
+export interface AsrTtsStats {
+  totalCalls: number;
+  successCount: number;
+  successRate: number;
+  avgLatency: number;
+}
+
+interface AsrTtsAPIResponse<T> {
+  data: T[];
+  pagination: {
+    currentPage: number;
+    totalPages: number;
+    totalItems: number;
+    itemsPerPage: number;
+    hasNextPage: boolean;
+    hasPreviousPage: boolean;
+    nextPage: number | null;
+    previousPage: number | null;
+  };
+  stats: AsrTtsStats;
+  filters: {
+    search: string;
+    startDate: string | null;
+    endDate: string | null;
+    appliedStartTimestamp: number | null;
+    appliedEndTimestamp: number | null;
+  };
+}
+
+export const fetchAsr = async (
+  params: PaginationParams = {},
+): Promise<PaginatedResponse<AsrRecord> & { stats: AsrTtsStats }> => {
+  try {
+    const {
+      page = DEFAULT_PAGE,
+      limit = DEFAULT_LIMIT,
+      search,
+      startDate,
+      endDate,
+      sortBy,
+      sortOrder,
+    } = params;
+
+    const queryParams = buildQueryParams({
+      page,
+      limit,
+      search: search || "",
+      startDate: startDate || "",
+      endDate: endDate || "",
+      sortBy: sortBy || "",
+      sortOrder: sortOrder || "",
+    });
+
+    const response = await fetch(`${SERVER_URL}/asr?${queryParams}`);
+
+    if (!response.ok) {
+      throw new Error(`HTTP error! status: ${response.status}`);
+    }
+
+    const result: AsrTtsAPIResponse<AsrRecord> = await response.json();
+
+    return {
+      data: result.data,
+      total: result.pagination.totalItems,
+      page: result.pagination.currentPage,
+      pageSize: result.pagination.itemsPerPage,
+      totalPages: result.pagination.totalPages,
+      stats: result.stats,
+    };
+  } catch (error) {
+    console.error("Error fetching ASR data:", error);
+    throw error;
+  }
+};
+
+export const fetchTts = async (
+  params: PaginationParams = {},
+): Promise<PaginatedResponse<TtsRecord> & { stats: AsrTtsStats }> => {
+  try {
+    const {
+      page = DEFAULT_PAGE,
+      limit = DEFAULT_LIMIT,
+      search,
+      startDate,
+      endDate,
+      sortBy,
+      sortOrder,
+    } = params;
+
+    const queryParams = buildQueryParams({
+      page,
+      limit,
+      search: search || "",
+      startDate: startDate || "",
+      endDate: endDate || "",
+      sortBy: sortBy || "",
+      sortOrder: sortOrder || "",
+    });
+
+    const response = await fetch(`${SERVER_URL}/tts?${queryParams}`);
+
+    if (!response.ok) {
+      throw new Error(`HTTP error! status: ${response.status}`);
+    }
+
+    const result: AsrTtsAPIResponse<TtsRecord> = await response.json();
+
+    return {
+      data: result.data,
+      total: result.pagination.totalItems,
+      page: result.pagination.currentPage,
+      pageSize: result.pagination.itemsPerPage,
+      totalPages: result.pagination.totalPages,
+      stats: result.stats,
+    };
+  } catch (error) {
+    console.error("Error fetching TTS data:", error);
+    throw error;
+  }
+};

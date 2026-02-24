@@ -242,11 +242,11 @@ const Dashboard = () => {
 
   return (
     <div className="space-y-6">
-      <div className="flex items-center justify-between">
+      <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4">
         <h1 className="text-2xl font-bold tracking-tight">Dashboard</h1>
       </div>
 
-      <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-4">
+      <div className="grid grid-cols-2 gap-3 sm:gap-4 lg:grid-cols-4">
         {isLoadingUserStats ||
         isLoadingQuestionStats ||
         isLoadingSessionStats ||
@@ -260,10 +260,10 @@ const Dashboard = () => {
         ) : (
           <>
             <MetricCard
-              title="Devices"
+              title="Users"
               value={userStats?.totalUsers || 0}
               icon={<User size={16} />}
-              description="Count of unique devices"
+              description="Count of unique users"
             />
             <MetricCard
               title="Sessions"
@@ -295,9 +295,9 @@ const Dashboard = () => {
       </div>
 
       <Card className="card-gradient">
-        <CardHeader className="flex flex-row items-center justify-between pb-2">
-          <CardTitle>Chart Options</CardTitle>
-          <div className="flex items-center gap-4">
+        <CardHeader className="flex flex-col sm:flex-row items-start sm:items-center justify-between p-4 gap-4">
+          <CardTitle className="text-lg">Chart Options</CardTitle>
+          <div className="flex items-center gap-4 w-full sm:w-auto overflow-x-auto">
             {/* <div className="flex items-center gap-2">
               <span className="text-sm text-muted-foreground">Data:</span>
               <ToggleGroup
@@ -336,8 +336,8 @@ const Dashboard = () => {
           value={currentTab}
           onValueChange={(value) => setCurrentTab(value as typeof currentTab)}
         >
-          <TabsList>
-            <TabsTrigger value="users">Devices</TabsTrigger> 
+          <TabsList className="w-full flex-wrap h-auto justify-start sm:w-auto">
+            <TabsTrigger value="users">Users</TabsTrigger> 
             <TabsTrigger value="questions">Questions</TabsTrigger>
             <TabsTrigger value="sessions">Sessions</TabsTrigger>
             <TabsTrigger value="feedback">Feedback</TabsTrigger>
@@ -345,10 +345,10 @@ const Dashboard = () => {
 
            <TabsContent value="users">
             <TrendChart
-              title="Device Activity"
+              title="User Activity"
               description={`${
                 timeGranularity === "daily" ? "Daily" : "Hourly"
-              } new vs returning vs total devices`}
+              } new vs returning vs total users`}
               data={
                 timeGranularity === "daily"
                   ? transformUsersData(usersGraphData?.data || [])
@@ -361,21 +361,21 @@ const Dashboard = () => {
                 {
                   dataKey: "newUsersCount",
                   color: "#3b82f6",
-                  name: "New Devices",
+                  name: "New Users",
                   strokeDasharray: "5 5",
                   fillOpacity: 0.3,
                 },
                 {
                   dataKey: "returningUsersCount",
                   color: "#10b981",
-                  name: "Returning Devices",
+                  name: "Returning Users",
                   strokeDasharray: "5 5",
                   fillOpacity: 0.3,
                 },
                 {
                   dataKey: "uniqueUsersCount",
                   color: "hsl(var(--foreground))",
-                  name: "Total Active Devices",
+                  name: "Total Active Users",
                   fillOpacity: 1,
                 },
               ]}

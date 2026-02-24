@@ -250,8 +250,8 @@ const ErrorsPage = () => {
           </CardDescription>
         </CardHeader>
         <CardContent className="space-y-4">
-          <div className="flex flex-col md:flex-row gap-4">
-            <div className="flex-1">
+          <div className="flex flex-col sm:flex-row gap-4 w-full">
+            <div className="flex-1 w-full">
               <div className="relative">
                 <Search className="absolute left-2 top-2.5 h-4 w-4 text-muted-foreground" />
                 <Input
@@ -268,12 +268,14 @@ const ErrorsPage = () => {
                 />
               </div>
             </div>
-            <Button onClick={handleSearch} disabled={isLoading} variant="outline" size="icon" title="Search">
-              <Search className="h-4 w-4" />
-            </Button>
-            <Button onClick={handleResetFilters} variant="outline" size="icon" title="Reset Search">
-              <RotateCcw className="h-4 w-4" />
-            </Button>
+            <div className="flex gap-2 w-full sm:w-auto">
+              <Button onClick={handleSearch} disabled={isLoading} variant="outline" size="icon" title="Search">
+                <Search className="h-4 w-4" />
+              </Button>
+              <Button onClick={handleResetFilters} variant="outline" size="icon" title="Reset Search">
+                <RotateCcw className="h-4 w-4" />
+              </Button>
+            </div>
           </div>
         </CardContent>
       </Card>
@@ -364,7 +366,7 @@ const ErrorsPage = () => {
                                 to={`/users?search=${errorItem.userId}`}
                                 className="hover:underline text-sm"
                               >
-                                {errorItem.userId}
+                                {errorItem.userId.substring(0, 6)}...
                               </Link>
                             ) : (
                               <span className="text-muted-foreground text-sm">
@@ -378,7 +380,7 @@ const ErrorsPage = () => {
                                 to={`/sessions/${errorItem.sessionId}`}
                                 className="hover:underline text-sm"
                               >
-                                {errorItem.sessionId.slice(0, 8)}...
+                                {errorItem.sessionId.slice(0, 6)}...
                               </Link>
                             ) : (
                               <span className="text-muted-foreground text-sm">

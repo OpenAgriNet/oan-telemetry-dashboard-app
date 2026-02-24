@@ -101,7 +101,7 @@ const StatusPage: React.FC<StatusPageProps> = ({
   return (
     <div className={cn("space-y-6", className)}>
       {/* Header */}
-      <div className="flex items-center justify-between">
+      <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4">
         <div>
           <h1 className="text-3xl font-bold">Service Status</h1>
           <p className="text-muted-foreground mt-1">
@@ -109,8 +109,8 @@ const StatusPage: React.FC<StatusPageProps> = ({
           </p>
         </div>
         
-        <div className="flex items-center gap-3">
-          <div className="text-sm text-muted-foreground">
+        <div className="flex flex-col sm:flex-row items-start sm:items-center gap-2 sm:gap-3 w-full sm:w-auto">
+          <div className="text-xs sm:text-sm text-muted-foreground">
             Last updated: {formatLastUpdated(dashboardStats.data?.lastUpdated)}
           </div>
           <Button 
@@ -118,7 +118,7 @@ const StatusPage: React.FC<StatusPageProps> = ({
             size="sm"
             onClick={handleRefresh}
             disabled={isLoading}
-            className="flex items-center gap-2"
+            className="flex items-center gap-2 w-full sm:w-auto"
           >
             <RefreshCw className={cn("h-4 w-4", isLoading && "animate-spin")} />
             Refresh

@@ -84,13 +84,13 @@ const DateRangePicker: React.FC<DateRangePickerProps> = ({
   };
 
   return (
-    <div className="flex items-center gap-2">
+    <div className="flex items-center gap-2 flex-nowrap whitespace-nowrap overflow-x-auto sm:overflow-visible sm:flex-wrap w-full sm:w-auto pb-1 sm:pb-0 scrollbar-hide">
       <Popover open={isCalendarOpen} onOpenChange={setIsCalendarOpen}>
         <PopoverTrigger asChild>
           <Button
             variant="outline"
             className={cn(
-              "bg-muted/40 hover:bg-muted/60 rounded-lg px-4 py-2 h-9 font-medium text-sm",
+              "bg-muted/40 hover:bg-muted/60 rounded-lg h-8 px-2 text-xs sm:h-9 sm:px-4 sm:py-2 sm:text-sm font-medium flex-shrink-0",
               !dateRange.from && "text-muted-foreground"
             )}
             onClick={() => {
@@ -159,7 +159,7 @@ const DateRangePicker: React.FC<DateRangePickerProps> = ({
         <DropdownMenuTrigger asChild>
           <Button
             variant="outline"
-            className="bg-muted/40 hover:bg-muted/60 rounded-lg px-3 py-2 h-9 font-medium text-sm"
+            className="bg-muted/40 hover:bg-muted/60 rounded-lg h-8 px-2 text-xs sm:h-9 sm:px-3 sm:py-2 sm:text-sm font-medium flex-shrink-0"
           >
             {selectedOption === "today" && "Today"}
             {selectedOption === "last7" && "Last 7 days"}
@@ -192,7 +192,7 @@ const DateRangePicker: React.FC<DateRangePickerProps> = ({
         variant="outline"
         size="sm"
         onClick={handleReset}
-        className="bg-muted/40 hover:bg-muted/60 rounded-lg h-9 px-3 font-medium"
+        className="bg-muted/40 hover:bg-muted/60 rounded-lg h-8 px-3 text-xs sm:h-9 sm:px-4 sm:py-2 sm:text-sm font-medium flex-shrink-0"
       >
         Reset
       </Button>
