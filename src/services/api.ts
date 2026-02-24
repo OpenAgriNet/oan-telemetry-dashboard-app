@@ -1590,7 +1590,7 @@ export const fetchQuestionsBySessionId = async (
     console.log("Fetching questions for session:", sessionId);
 
     const response = await fetch(
-      `${SERVER_URL}/questions/session/${sessionId}`,
+      `${SERVER_URL}/questions/session/${sessionId}?pagination=false`,
     );
 
     if (!response.ok) {
