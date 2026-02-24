@@ -55,7 +55,7 @@ const SessionsReport = () => {
 
   // Get pagination state from URL params
   const page = parseInt(searchParams.get("page") || "1", 10);
-  const pageSize = 10;
+  const pageSize = 20;
 
   const [selectedUser, setSelectedUser] = useState<string>("all");
   const [searchQuery, setSearchQuery] = useState<string>("");
