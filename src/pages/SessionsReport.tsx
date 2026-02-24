@@ -132,6 +132,7 @@ const SessionsReport = () => {
       const params: SessionPaginationParams = {
         page,
         limit: pageSize,
+        pagination: false,
       };
 
       // Combine user filter and search filter

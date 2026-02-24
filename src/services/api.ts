@@ -200,6 +200,7 @@ export interface UserPaginationParams extends PaginationParams {
 export interface SessionPaginationParams extends PaginationParams {
   sessionId?: string;
   userId?: string;
+  pagination?: boolean;
 }
 
 export interface QuestionPaginationParams extends PaginationParams {
@@ -785,6 +786,7 @@ export const fetchSessions = async (
       endDate: endDate || "",
       sortBy: sortBy || "",
       sortOrder: sortOrder || "",
+      ...(params.pagination === false ? { pagination: false } : {}),
     });
 
     console.log(
