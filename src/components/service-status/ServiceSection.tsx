@@ -96,18 +96,32 @@ const ServiceSection: React.FC<ServiceSectionProps> = ({
       </div>
 
       {/* Section Content */}
-      <div className="flex flex-col gap-3 mt-4">
-        {endpoints.map((endpoint, index) => (
-          <EndpointRow
-            key={endpoint.id}
-            endpoint={endpoint}
-            trends={trendsData[endpoint.id]}
-            trendsLoading={trendsLoading[endpoint.id]}
-            trendsError={trendsErrors[endpoint.id]}
-            latestUpdate={latestUpdates[endpoint.id]}
-            responseMetricStrategy={responseMetricStrategy}
-          />
-        ))}
+      <div className="mt-4 md:border md:rounded-lg md:bg-background">
+        {/* Column Headers - Desktop Only */}
+        <div className="hidden md:flex items-center gap-4 py-2 px-4 border-b bg-muted/50 text-xs font-medium text-muted-foreground rounded-t-lg">
+          <div className="flex-shrink-0 w-4">Status</div>
+          <div className="flex-shrink-0 w-48 ml-6">Service</div>
+          <div className="flex-1 text-center">30-day history</div>
+          <div className="flex-shrink-0 text-right w-20">Uptime</div>
+          <div className="flex-shrink-0 text-right w-20">Response</div>
+          <div className="flex-shrink-0 text-right w-24">Last Check</div>
+        </div>
+
+        {/* Endpoint Rows */}
+        <div className="flex flex-col gap-3 md:gap-0">
+          {endpoints.map((endpoint, index) => (
+            <EndpointRow
+              key={endpoint.id}
+              endpoint={endpoint}
+              trends={trendsData[endpoint.id]}
+              trendsLoading={trendsLoading[endpoint.id]}
+              trendsError={trendsErrors[endpoint.id]}
+              latestUpdate={latestUpdates[endpoint.id]}
+              responseMetricStrategy={responseMetricStrategy}
+              className={index === endpoints.length - 1 ? "md:border-b-0" : ""}
+            />
+          ))}
+        </div>
       </div>
     </div>
   );
