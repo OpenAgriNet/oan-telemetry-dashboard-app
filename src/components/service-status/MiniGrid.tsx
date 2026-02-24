@@ -186,7 +186,7 @@ const MiniGrid: React.FC<MiniGridProps> = ({
   };
 
   return (
-    <div className={cn("flex items-end gap-[1px] sm:gap-[2px] h-8", className)}>
+    <div className={cn("flex items-end gap-[1px] md:gap-[3px] h-8", className)}>
       <TooltipProvider>
         {normalizedData.map((dataPoint, index) => {
           const { color, height } = getBlockStyles(dataPoint, isLoading, error);
@@ -195,7 +195,7 @@ const MiniGrid: React.FC<MiniGridProps> = ({
               <TooltipTrigger asChild>
                 <div 
                   className={cn(
-                    "flex-1 min-w-[2px] rounded-sm transition-all duration-200 hover:scale-105 hover:opacity-80",
+                    "flex-1 min-w-[2px] md:flex-none md:w-2 rounded-sm transition-all duration-200 hover:scale-110 hover:opacity-80",
                     color,
                     height
                   )}
