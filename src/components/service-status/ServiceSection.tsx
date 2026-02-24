@@ -96,9 +96,9 @@ const ServiceSection: React.FC<ServiceSectionProps> = ({
       </div>
 
       {/* Section Content */}
-      <div className="border rounded-lg bg-background">
-        {/* Column Headers */}
-        <div className="flex items-center gap-4 py-2 px-4 border-b bg-muted/50 text-xs font-medium text-muted-foreground">
+      <div className="mt-4 md:border md:rounded-lg md:bg-background">
+        {/* Column Headers - Desktop Only */}
+        <div className="hidden md:flex items-center gap-4 py-2 px-4 border-b bg-muted/50 text-xs font-medium text-muted-foreground rounded-t-lg">
           <div className="flex-shrink-0 w-4">Status</div>
           <div className="flex-shrink-0 w-48 ml-6">Service</div>
           <div className="flex-1 text-center">30-day history</div>
@@ -108,7 +108,7 @@ const ServiceSection: React.FC<ServiceSectionProps> = ({
         </div>
 
         {/* Endpoint Rows */}
-        <div>
+        <div className="flex flex-col gap-3 md:gap-0">
           {endpoints.map((endpoint, index) => (
             <EndpointRow
               key={endpoint.id}
@@ -118,7 +118,7 @@ const ServiceSection: React.FC<ServiceSectionProps> = ({
               trendsError={trendsErrors[endpoint.id]}
               latestUpdate={latestUpdates[endpoint.id]}
               responseMetricStrategy={responseMetricStrategy}
-              className={index === endpoints.length - 1 ? "border-b-0" : ""}
+              className={index === endpoints.length - 1 ? "md:border-b-0" : ""}
             />
           ))}
         </div>

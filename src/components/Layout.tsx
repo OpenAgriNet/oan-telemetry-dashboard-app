@@ -48,6 +48,7 @@ const Layout: React.FC<LayoutProps> = ({ children }) => {
   const { dateRange, setDateRange, resetDateRange } = useDateFilter();
   const location = useLocation();
   const [collapsed, setCollapsed] = useState(false);
+  const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false);
   const { keycloak } = useKeycloak();
 
   const handleLogout = () => {
@@ -155,6 +156,11 @@ const Layout: React.FC<LayoutProps> = ({ children }) => {
             <li key={item.path}>
               <Link
                 to={item.path}
+                onClick={() => {
+                  if (isMobile) {
+                    setIsMobileMenuOpen(false);
+                  }
+                }}
                 className={`flex items-center px-3 py-2 rounded-md transition-colors ${
                   location.pathname === item.path
                     ? "bg-sidebar-accent text-sidebar-accent-foreground font-medium"
@@ -237,7 +243,7 @@ const Layout: React.FC<LayoutProps> = ({ children }) => {
           <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center py-4 px-0 sm:p-6 border-b mb-2 mt-2 gap-4">
             <div className="flex items-center gap-2 sm:gap-4 w-full sm:w-auto">
               <div className="md:hidden">
-                <Sheet>
+                <Sheet open={isMobileMenuOpen} onOpenChange={setIsMobileMenuOpen}>
                   <SheetTrigger asChild>
                     <Button variant="ghost" size="icon">
                       <Menu className="h-6 w-6" />
