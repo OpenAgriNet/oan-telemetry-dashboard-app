@@ -310,7 +310,7 @@ const QuestionDetails = () => {
               <button onClick={() => navigate(`/sessions/${question?.session_id}`)}>
 
               <code className="truncate text-left text-primary hover:underline bg-transparent border-none p-0 m-0 w-full">
-                {question?.session_id ? question.session_id.substring(0, 8) + '...' : 'N/A'}
+                {question?.session_id ? question.session_id.substring(0, 6) + '...' : 'N/A'}
               </code>
               </button>
             </div>

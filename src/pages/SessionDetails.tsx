@@ -309,8 +309,24 @@ const SessionDetails = () => {
 
     // Sort by timestamp
     return events.sort((a, b) => {
-      const timeA = new Date(a.timestamp).getTime();
-      const timeB = new Date(b.timestamp).getTime();
+      // Remove 'IST' if present so that Date parsing works correctly in the browser
+      const cleanA = a.timestamp.replace(' IST', '').trim();
+      const cleanB = b.timestamp.replace(' IST', '').trim();
+      
+      const timeA = new Date(cleanA).getTime();
+      const timeB = new Date(cleanB).getTime();
+
+      // If invalid timestamps, fallback to keeping original relative position (though API usually returns newest-first)
+      // To strictly reverse the API's newest-first default if sorting completely fails:
+      if (isNaN(timeA) || isNaN(timeB)) return -1;
+      
+      // Tie breaker for Question vs Answer if timestamp is perfectly identical
+      if (timeA === timeB) {
+        if (a.type === 'question' && b.type === 'answer') return -1;
+        if (a.type === 'answer' && b.type === 'question') return 1;
+        return 0;
+      }
+
       return timeA - timeB;
     });
   }, [sessionDetail, sessionQuestions, sessionFeedback, sessionErrors, isSuper]);

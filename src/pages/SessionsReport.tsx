@@ -461,7 +461,7 @@ const SessionsReport = () => {
                             className="hover:underline"
                           >
                             <code className="relative rounded bg-muted px-[0.3rem] py-[0.2rem] font-mono text-xs">
-                              {session.sessionId.substring(0, 8)}...
+                              {session.sessionId.substring(0, 6)}...
                             </code>
                           </button>
                         </TableCell>

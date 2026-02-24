@@ -301,7 +301,7 @@ const UsersReport = () => {
         <Card>
           <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
             <CardTitle className="text-sm font-medium">
-              Total Unique Devices
+              Total Unique Users
             </CardTitle>
             <Users className="h-4 w-4 text-muted-foreground" />
           </CardHeader>
@@ -507,7 +507,7 @@ const UsersReport = () => {
                     >
                       <TableCell className="font-medium">
                         <code className="relative rounded bg-muted px-[0.3rem] py-[0.2rem] font-mono text-sm">
-                          {user.username}
+                          {user.username?.substring(0, 6)}...
                         </code>
                       </TableCell>
                       <TableCell className="text-right">
@@ -555,7 +555,7 @@ const UsersReport = () => {
                           className="hover:underline"
                         >
                           <code className="relative rounded bg-muted px-[0.3rem] py-[0.2rem] font-mono text-xs">
-                            {user.sessionId?.substring(0, 8)}...
+                            {user.sessionId?.substring(0, 6)}...
                           </code>
                         </button>
                       </TableCell>

@@ -486,7 +486,7 @@ console.log("Questions from ISO",dateRange.from?.toISOString())
                     </TableCell>
                     <TableCell>
                       <code className="relative rounded bg-muted px-[0.3rem] py-[0.2rem] font-mono text-sm">
-                        {question.user_id}
+                        {question.user_id?.substring(0, 6)}...
                       </code>
                     </TableCell>
                     <TableCell>
@@ -495,7 +495,7 @@ console.log("Questions from ISO",dateRange.from?.toISOString())
                         className="hover:underline"
                       >
                         <code className="relative rounded bg-muted px-[0.3rem] py-[0.2rem] font-mono text-xs">
-                          {question.session_id.substring(0, 8)}...
+                          {question.session_id.substring(0, 6)}...
                         </code>
                       </button>
                     </TableCell>

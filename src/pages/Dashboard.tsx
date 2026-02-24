@@ -260,10 +260,10 @@ const Dashboard = () => {
         ) : (
           <>
             <MetricCard
-              title="Devices"
+              title="Users"
               value={userStats?.totalUsers || 0}
               icon={<User size={16} />}
-              description="Count of unique devices"
+              description="Count of unique users"
             />
             <MetricCard
               title="Sessions"
@@ -337,7 +337,7 @@ const Dashboard = () => {
           onValueChange={(value) => setCurrentTab(value as typeof currentTab)}
         >
           <TabsList className="w-full flex-wrap h-auto justify-start sm:w-auto">
-            <TabsTrigger value="users">Devices</TabsTrigger> 
+            <TabsTrigger value="users">Users</TabsTrigger> 
             <TabsTrigger value="questions">Questions</TabsTrigger>
             <TabsTrigger value="sessions">Sessions</TabsTrigger>
             <TabsTrigger value="feedback">Feedback</TabsTrigger>
@@ -345,10 +345,10 @@ const Dashboard = () => {
 
            <TabsContent value="users">
             <TrendChart
-              title="Device Activity"
+              title="User Activity"
               description={`${
                 timeGranularity === "daily" ? "Daily" : "Hourly"
-              } new vs returning vs total devices`}
+              } new vs returning vs total users`}
               data={
                 timeGranularity === "daily"
                   ? transformUsersData(usersGraphData?.data || [])
@@ -361,21 +361,21 @@ const Dashboard = () => {
                 {
                   dataKey: "newUsersCount",
                   color: "#3b82f6",
-                  name: "New Devices",
+                  name: "New Users",
                   strokeDasharray: "5 5",
                   fillOpacity: 0.3,
                 },
                 {
                   dataKey: "returningUsersCount",
                   color: "#10b981",
-                  name: "Returning Devices",
+                  name: "Returning Users",
                   strokeDasharray: "5 5",
                   fillOpacity: 0.3,
                 },
                 {
                   dataKey: "uniqueUsersCount",
                   color: "hsl(var(--foreground))",
-                  name: "Total Active Devices",
+                  name: "Total Active Users",
                   fillOpacity: 1,
                 },
               ]}

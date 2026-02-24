@@ -272,7 +272,7 @@ const DeviceReport = () => {
                     <TableRow key={device.fingerprint_id || idx}>
                       <TableCell>
                         <code className="relative rounded bg-muted px-[0.3rem] py-[0.2rem] font-mono text-xs">
-                          {device.fingerprint_id}
+                          {device.fingerprint_id?.substring(0, 6)}...
                         </code>
                       </TableCell>
                       <TableCell>

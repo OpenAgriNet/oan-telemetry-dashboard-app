@@ -366,7 +366,7 @@ const ErrorsPage = () => {
                                 to={`/users?search=${errorItem.userId}`}
                                 className="hover:underline text-sm"
                               >
-                                {errorItem.userId}
+                                {errorItem.userId.substring(0, 6)}...
                               </Link>
                             ) : (
                               <span className="text-muted-foreground text-sm">
@@ -380,7 +380,7 @@ const ErrorsPage = () => {
                                 to={`/sessions/${errorItem.sessionId}`}
                                 className="hover:underline text-sm"
                               >
-                                {errorItem.sessionId.slice(0, 8)}...
+                                {errorItem.sessionId.slice(0, 6)}...
                               </Link>
                             ) : (
                               <span className="text-muted-foreground text-sm">

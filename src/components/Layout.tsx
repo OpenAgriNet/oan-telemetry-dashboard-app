@@ -64,7 +64,7 @@ const Layout: React.FC<LayoutProps> = ({ children }) => {
       icon: <LayoutDashboard size={20} />,
     },
     {
-      name: "Devices",
+      name: "Users",
       path: "/devices",
       icon: <Users size={20} />,
     },
@@ -93,16 +93,16 @@ const Layout: React.FC<LayoutProps> = ({ children }) => {
       path: "/feedback",
       icon: <ClipboardCheck size={20} />,
     },
-    {
-      name: "ASR",
-      path: "/asr",
-      icon: <Mic size={20} />,
-    },
-    {
-      name: "TTS",
-      path: "/tts",
-      icon: <Volume2 size={20} />,
-    },
+    // {
+    //   name: "ASR",
+    //   path: "/asr",
+    //   icon: <Mic size={20} />,
+    // },
+    // {
+    //   name: "TTS",
+    //   path: "/tts",
+    //   icon: <Volume2 size={20} />,
+    // },
     // Conditionally add Errors menu item for super-admin users only
     ...(isSuper
       ? [

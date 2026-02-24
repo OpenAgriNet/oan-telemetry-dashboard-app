@@ -470,7 +470,7 @@ const FeedbackPage = () => {
                       </TableCell>
                       <TableCell>
                         <code className="relative rounded bg-muted px-[0.3rem] py-[0.2rem] font-mono text-sm">
-                          {feedback.user || feedback.userId || "Unknown"}
+                          {(feedback.user || feedback.userId) ? (feedback.user || feedback.userId).substring(0, 6) + "..." : "Unknown"}
                         </code>
                       </TableCell>
                       <TableCell className="max-w-[100px]">
