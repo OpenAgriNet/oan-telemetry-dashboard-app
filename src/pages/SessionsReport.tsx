@@ -132,7 +132,6 @@ const SessionsReport = () => {
       const params: SessionPaginationParams = {
         page,
         limit: pageSize,
-        pagination: false,
       };
 
       // Combine user filter and search filter
@@ -485,12 +484,22 @@ const SessionsReport = () => {
               </Table>
             )}
 
-            {sessionReport.data.length > 0 && sessionReport.totalPages > 1 && (
-              <TablePagination
-                currentPage={page}
-                totalPages={sessionReport.totalPages}
-                onPageChange={handlePageChange}
-              />
+            {sessionReport.data.length > 0 && (
+              <div className="flex flex-col sm:flex-row items-center justify-between gap-4 pt-4 border-t mt-4">
+                <p className="text-sm text-muted-foreground whitespace-nowrap">
+                  Showing{" "}
+                  <span className="font-medium text-foreground">{((page - 1) * pageSize + 1).toLocaleString()}</span>
+                  {" "}to{" "}
+                  <span className="font-medium text-foreground">{Math.min(page * pageSize, sessionReport.total).toLocaleString()}</span>
+                  {" "}of{" "}
+                  <span className="font-medium text-foreground">{sessionReport.total.toLocaleString()}</span> sessions
+                </p>
+                <TablePagination
+                  currentPage={page}
+                  totalPages={sessionReport.totalPages}
+                  onPageChange={handlePageChange}
+                />
+              </div>
             )}
           </div>
         </CardContent>
