@@ -147,7 +147,7 @@ const App = () => {
                       </Layout>
                     }
                   />
-                  {/* <Route
+                  <Route
                     path="/asr"
                     element={
                       <Layout>
@@ -162,7 +162,7 @@ const App = () => {
                         <TtsReport />
                       </Layout>
                     }
-                  /> */}
+                  />
                   <Route
                     path="/content"
                     element={
