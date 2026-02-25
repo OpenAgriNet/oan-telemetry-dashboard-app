@@ -50,12 +50,18 @@ const DateRangePicker: React.FC<DateRangePickerProps> = ({
   };
 
   const handleQuickSelect = (option: string) => {
+    const now = new Date();
     const today = new Date();
     today.setHours(23, 59, 59, 999);
     const startOfDay = new Date(today);
     startOfDay.setHours(0, 0, 0, 0);
 
     switch (option) {
+      case "lasthour": {
+        const oneHourAgo = new Date(now.getTime() - 60 * 60 * 1000);
+        setDateRange({ from: oneHourAgo, to: now });
+        break;
+      }
       case "today":
         setDateRange({ from: startOfDay, to: today });
         break;
@@ -161,6 +167,7 @@ const DateRangePicker: React.FC<DateRangePickerProps> = ({
             variant="outline"
             className="bg-muted/40 hover:bg-muted/60 rounded-lg h-8 px-2 text-xs sm:h-9 sm:px-3 sm:py-2 sm:text-sm font-medium flex-shrink-0"
           >
+            {selectedOption === "lasthour" && "Last hour"}
             {selectedOption === "today" && "Today"}
             {selectedOption === "last7" && "Last 7 days"}
             {selectedOption === "last30" && "Last 30 days"}
@@ -170,6 +177,9 @@ const DateRangePicker: React.FC<DateRangePickerProps> = ({
           </Button>
         </DropdownMenuTrigger>
         <DropdownMenuContent align="end">
+          <DropdownMenuItem onClick={() => handleQuickSelect("lasthour")}>
+            Last hour
+          </DropdownMenuItem>
           <DropdownMenuItem onClick={() => handleQuickSelect("today")}>
             Today
           </DropdownMenuItem>

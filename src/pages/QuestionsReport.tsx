@@ -536,15 +536,23 @@ console.log("Questions from ISO",dateRange.from?.toISOString())
         )}
       </div>
 
-      {questionsReport &&
-        questionsReport.data.length > 0 &&
-        questionsReport.totalPages > 1 && (
+      {questionsReport && questionsReport.data.length > 0 && (
+        <div className="flex flex-col sm:flex-row items-center justify-between gap-4 pt-4 border-t mt-4">
+          <p className="text-sm text-muted-foreground whitespace-nowrap">
+            Showing{" "}
+            <span className="font-medium text-foreground">{((page - 1) * pageSize + 1).toLocaleString()}</span>
+            {" "}to{" "}
+            <span className="font-medium text-foreground">{Math.min(page * pageSize, questionsReport.total).toLocaleString()}</span>
+            {" "}of{" "}
+            <span className="font-medium text-foreground">{questionsReport.total.toLocaleString()}</span> questions
+          </p>
           <TablePagination
             currentPage={page}
             totalPages={questionsReport.totalPages}
             onPageChange={handlePageChange}
           />
-        )}
+        </div>
+      )}
     </div>
   );
 };

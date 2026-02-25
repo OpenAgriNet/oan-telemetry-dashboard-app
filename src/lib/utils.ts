@@ -2,7 +2,7 @@ import { clsx, type ClassValue } from "clsx"
 import { twMerge } from "tailwind-merge"
 import { addMinutes, format as formatDateFnsInternal, addHours } from "date-fns"
 import { formatInTimeZone } from "date-fns-tz"
-import { getStartOfDay, getEndOfDay } from "../utils/dateUtils"
+import { getStartOfDay, getEndOfDay, formatDateForAPI } from "../utils/dateUtils"
 
 export function cn(...inputs: ClassValue[]) {
   return twMerge(clsx(inputs))
@@ -34,6 +34,22 @@ export interface DateRangeOptions {
  * This function uses the calendar date components to build ISO strings that
  * the backend will correctly interpret as IST times.
  */
+/**
+ * Returns true if the date has a meaningful sub-day time component
+ * (i.e. it is NOT midnight 00:00:00 and NOT end-of-day 23:59:59).
+ * Used to detect "Last hour"-style ranges that must preserve exact timestamps.
+ */
+function isSubDayTime(date: Date): boolean {
+  const h = date.getHours();
+  const m = date.getMinutes();
+  const s = date.getSeconds();
+  // midnight (00:00:00) → full-day start, treat as day boundary
+  // end-of-day (23:59:59) → treat as day boundary
+  if (h === 0 && m === 0 && s === 0) return false;
+  if (h === 23 && m === 59 && s >= 59) return false;
+  return true;
+}
+
 export function buildDateRangeParams(
   dateRange: { from?: Date; to?: Date },
   options: DateRangeOptions = {}
@@ -47,15 +63,21 @@ export function buildDateRangeParams(
   } = options;
 
   if (dateRange.from) {
-    params.startDate = getStartOfDay(dateRange.from);
+    // If the "from" time is a meaningful sub-day time (e.g. "Last hour"),
+    // preserve the exact timestamp. Otherwise snap to start of day.
+    params.startDate = isSubDayTime(dateRange.from)
+      ? formatDateForAPI(dateRange.from)
+      : getStartOfDay(dateRange.from);
   } else if (includeDefaultStart) {
     params.startDate = getStartOfDay(defaultStartDate);
   }
 
   if (dateRange.to) {
-    params.endDate = getEndOfDay(dateRange.to);
+    // Same logic for the "to" end — preserve exact time for sub-day ranges.
+    params.endDate = isSubDayTime(dateRange.to)
+      ? formatDateForAPI(dateRange.to)
+      : getEndOfDay(dateRange.to);
   } else if (dateRange.from) {
-    // If only 'from' is provided, use same day as end
     params.endDate = getEndOfDay(dateRange.from);
   }
 
