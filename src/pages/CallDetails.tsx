@@ -192,7 +192,7 @@ const CallDetails = () => {
             <div>
               <p className="text-muted-foreground mb-1">User ID</p>
               <p className="font-medium font-mono">
-                {call.userId || "—"}
+                {call.userId ? `${call.userId.substring(0, 8)}...` : "—"}
               </p>
             </div>
             <div>
