@@ -107,7 +107,7 @@ const CallDetails = () => {
             <div className="flex gap-2 justify-center">
               <Button onClick={() => navigate("/calls")} variant="outline" size="sm">
                 <ArrowLeft className="h-4 w-4 mr-2" />
-                Back to Calls
+                Back to Call Logs
               </Button>
               <Button onClick={() => refetch()} variant="outline" size="sm">
                 <RefreshCw className="h-4 w-4 mr-2" />
@@ -177,17 +177,6 @@ const CallDetails = () => {
           </CardContent>
         </Card>
 
-        <Card>
-          <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-            <CardTitle className="text-sm font-medium">Language</CardTitle>
-            <Globe className="h-4 w-4 text-muted-foreground" />
-          </CardHeader>
-          <CardContent>
-            <div className="text-2xl font-bold">
-              {call.languageName || call.currentLanguage || "—"}
-            </div>
-          </CardContent>
-        </Card>
       </div>
 
       {/* Call Info */}
@@ -201,9 +190,9 @@ const CallDetails = () => {
         <CardContent>
           <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4 text-sm">
             <div>
-              <p className="text-muted-foreground mb-1">User Contact</p>
+              <p className="text-muted-foreground mb-1">User ID</p>
               <p className="font-medium font-mono">
-                {call.userContactMasked || "—"}
+                {call.userId || "—"}
               </p>
             </div>
             <div>
@@ -217,14 +206,6 @@ const CallDetails = () => {
             <div>
               <p className="text-muted-foreground mb-1">End Reason</p>
               <p className="font-medium">{call.endReason || "—"}</p>
-            </div>
-            <div>
-              <p className="text-muted-foreground mb-1">Channel</p>
-              <p className="font-medium">
-                {[call.channelType, call.channelProvider, call.channelDirection]
-                  .filter(Boolean)
-                  .join(" / ") || "—"}
-              </p>
             </div>
 
           </div>

@@ -177,7 +177,7 @@ const CallsReport = () => {
   if (error) {
     return (
       <div className="space-y-6">
-        <h1 className="text-2xl font-bold tracking-tight">Calls</h1>
+        <h1 className="text-2xl font-bold tracking-tight">Call Logs</h1>
         <div className="flex justify-center items-center p-8 bg-destructive/10 border border-destructive/20 rounded-lg">
           <div className="text-center">
             <AlertCircle className="h-12 w-12 text-destructive mx-auto mb-4" />
@@ -199,7 +199,7 @@ const CallsReport = () => {
     <div className="space-y-6">
       {/* Header */}
       <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4">
-        <h1 className="text-2xl font-bold tracking-tight">Calls</h1>
+        <h1 className="text-2xl font-bold tracking-tight">Call Logs</h1>
         <Button
           onClick={() => refetch()}
           disabled={isLoading}
@@ -212,11 +212,19 @@ const CallsReport = () => {
         </Button>
       </div>
 
+      {/* Disclaimer */}
+      <div className="flex items-start gap-2 rounded-lg border border-blue-200 bg-blue-50 px-4 py-3 text-sm text-blue-800 dark:border-blue-800/50 dark:bg-blue-950/30 dark:text-blue-300">
+        <AlertCircle className="h-4 w-4 mt-0.5 flex-shrink-0" />
+        <p>
+          This data is updated once a day and is not live. The information shown here may not reflect the most recent activity.
+        </p>
+      </div>
+
       {/* Stat Cards */}
       <div className="grid grid-cols-2 gap-3 sm:gap-4 md:grid-cols-4">
         <Card>
           <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-            <CardTitle className="text-sm font-medium">Total Calls</CardTitle>
+            <CardTitle className="text-sm font-medium">Total Call Logs</CardTitle>
             <Phone className="h-4 w-4 text-muted-foreground" />
           </CardHeader>
           <CardContent>
@@ -296,7 +304,7 @@ const CallsReport = () => {
       {/* Table */}
       <Card>
         <CardHeader>
-          <CardTitle>Recent Calls</CardTitle>
+          <CardTitle>Recent Call Logs</CardTitle>
           <CardDescription>
             Voice agent calls with questions and interaction counts
           </CardDescription>
@@ -309,7 +317,7 @@ const CallsReport = () => {
                 <Search className="absolute left-2 top-2.5 h-4 w-4 text-muted-foreground" />
                 <Input
                   type="search"
-                  placeholder="Search by contact, language, end reason..."
+                  placeholder="Search by user ID, end reason..."
                   className="pl-8"
                   value={pendingSearch}
                   onChange={(e) => setPendingSearch(e.target.value)}
@@ -346,7 +354,7 @@ const CallsReport = () => {
                 <div className="text-center">
                   <RefreshCw className="h-8 w-8 animate-spin mx-auto mb-3 text-muted-foreground" />
                   <p className="text-muted-foreground">
-                    Loading calls data...
+                    Loading call logs...
                   </p>
                 </div>
               </div>
@@ -354,12 +362,12 @@ const CallsReport = () => {
               <div className="text-center py-12">
                 <Phone className="h-12 w-12 text-muted-foreground mx-auto mb-4" />
                 <p className="text-muted-foreground font-medium mb-2">
-                  No calls found
+                  No call logs found
                 </p>
                 <p className="text-sm text-muted-foreground/80 mb-4">
                   {searchQuery || dateRange.from || dateRange.to
                     ? "Try adjusting your filters to see more results."
-                    : "No calls are available in the database."}
+                    : "No call logs are available in the database."}
                 </p>
                 {(searchQuery || dateRange.from || dateRange.to) && (
                   <Button
@@ -376,14 +384,7 @@ const CallsReport = () => {
                 <Table>
                   <TableHeader>
                     <TableRow>
-                      <TableHead>User Contact</TableHead>
-                      <TableHead
-                        className="cursor-pointer hover:bg-muted/50"
-                        onClick={() => handleSort("language_name")}
-                      >
-                        Language
-                        <SortIndicator columnKey="language_name" />
-                      </TableHead>
+                      <TableHead>User ID</TableHead>
                       <TableHead
                         className="text-right cursor-pointer hover:bg-muted/50"
                         onClick={() => handleSort("duration_in_seconds")}
@@ -424,13 +425,8 @@ const CallsReport = () => {
                       >
                         <TableCell className="font-medium">
                           <code className="relative rounded bg-muted px-[0.3rem] py-[0.2rem] font-mono text-xs">
-                            {call.userContactMasked || call.userId || "—"}
+                            {call.userId ? `${call.userId.substring(0, 8)}...` : "—"}
                           </code>
-                        </TableCell>
-                        <TableCell>
-                          <span className="inline-flex items-center rounded-full bg-blue-500/10 px-2 py-0.5 text-xs font-medium text-blue-700 dark:text-blue-300">
-                            {call.languageName || call.currentLanguage || "—"}
-                          </span>
                         </TableCell>
                         <TableCell className="text-right tabular-nums">
                           {formatDuration(call.durationInSeconds)}
@@ -479,7 +475,7 @@ const CallsReport = () => {
                   <span className="font-medium text-foreground">
                     {callsReport.total.toLocaleString()}
                   </span>{" "}
-                  calls
+                  call logs
                 </p>
                 <TablePagination
                   currentPage={page}
