@@ -24,6 +24,7 @@ import {
   AlertTriangle,
   Mic,
   Volume2,
+  Phone,
   Menu,
 } from "lucide-react";
 import {
@@ -103,6 +104,11 @@ const Layout: React.FC<LayoutProps> = ({ children }) => {
       name: "TTS",
       path: "/tts",
       icon: <Volume2 size={20} />,
+    },
+    {
+      name: "Calls",
+      path: "/calls",
+      icon: <Phone size={20} />,
     },
     // Conditionally add Errors menu item for super-admin users only
     ...(isSuper
