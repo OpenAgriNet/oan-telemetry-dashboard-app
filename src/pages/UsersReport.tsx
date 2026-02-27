@@ -314,7 +314,7 @@ const UsersReport = () => {
               )}
             </div>
             <p className="text-xs text-muted-foreground">
-              unique devices in selected period
+              unique users in selected period
             </p>
           </CardContent>
         </Card>

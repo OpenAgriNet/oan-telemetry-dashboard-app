@@ -19,7 +19,7 @@ import { Search, RefreshCw, RotateCcw, MonitorSmartphone, Users, UserPlus, UserC
 import TablePagination from "@/components/TablePagination";
 import { useStats } from "@/contexts/StatsContext";
 
-// DeviceReport page for /devices endpoint
+// User report page backed by /devices endpoint
 const DeviceReport = () => {
   const { dateRange } = useDateFilter();
   const navigate = useNavigate();
@@ -109,7 +109,7 @@ const DeviceReport = () => {
   return (
     <div className="space-y-6">
       <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4">
-        <h1 className="text-2xl font-bold tracking-tight">Unique Devices Report</h1>
+        <h1 className="text-2xl font-bold tracking-tight">Unique Users Report</h1>
         <div className="flex gap-2">
           <Button
             onClick={() => refetch()}
@@ -128,7 +128,7 @@ const DeviceReport = () => {
         <Card>
           <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
             <CardTitle className="text-sm font-medium">
-              Total Unique Devices
+              Total Unique Users
             </CardTitle>
             <Users className="h-4 w-4 text-muted-foreground" />
           </CardHeader>
@@ -141,14 +141,14 @@ const DeviceReport = () => {
               )}
             </div>
             <p className="text-xs text-muted-foreground">
-              unique active devices in selected period
+              unique active users in selected period
             </p>
           </CardContent>
         </Card>
 
            <Card>
           <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-            <CardTitle className="text-sm font-medium">New Devices</CardTitle>
+            <CardTitle className="text-sm font-medium">New Users</CardTitle>
             <UserPlus className="h-4 w-4 text-muted-foreground" />
           </CardHeader>
           <CardContent>
@@ -160,14 +160,14 @@ const DeviceReport = () => {
               )}
             </div>
             <p className="text-xs text-muted-foreground">
-              first-time active devices
+              first-time active users
             </p>
           </CardContent>
         </Card>
 
           <Card>
           <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-            <CardTitle className="text-sm font-medium">Returning Devices</CardTitle>
+            <CardTitle className="text-sm font-medium">Returning Users</CardTitle>
             <UserCheck className="h-4 w-4 text-muted-foreground" />
           </CardHeader>
           <CardContent>
@@ -179,14 +179,14 @@ const DeviceReport = () => {
               )}
             </div>
             <p className="text-xs text-muted-foreground">
-              active devices with prior activity
+              active users with prior activity
             </p>
           </CardContent>
         </Card>
       </div>
       <Card>
         <CardHeader>
-          <CardTitle>Device List</CardTitle>
+          <CardTitle>User List</CardTitle>
         </CardHeader>
         <CardContent>
           <div className="space-y-4">
@@ -230,7 +230,7 @@ const DeviceReport = () => {
                 <div className="text-center">
                   <RefreshCw className="h-8 w-8 animate-spin mx-auto mb-3 text-muted-foreground" />
                   <p className="text-muted-foreground">
-                    Loading devices data...
+                    Loading users data...
                   </p>
                 </div>
               </div>
@@ -238,12 +238,12 @@ const DeviceReport = () => {
               <div className="text-center py-12">
                 <MonitorSmartphone className="h-12 w-12 text-muted-foreground mx-auto mb-4" />
                 <p className="text-muted-foreground font-medium mb-2">
-                  No devices found
+                  No users found
                 </p>
                 <p className="text-sm text-muted-foreground/80 mb-4">
                   {searchQuery
                     ? "Try adjusting your search to see more results."
-                    : "No devices are available in the database."}
+                    : "No users are available in the database."}
                 </p>
                 {searchQuery && (
                   <Button
@@ -261,7 +261,7 @@ const DeviceReport = () => {
                   <TableRow>
                     <TableHead>Fingerprint ID</TableHead>
                     <TableHead>Browser</TableHead>
-                    <TableHead>Device</TableHead>
+                    <TableHead>Client</TableHead>
                     <TableHead>OS</TableHead>
                     {/* <TableHead>First Seen</TableHead>
                     <TableHead>Last Seen</TableHead> */}

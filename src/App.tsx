@@ -86,6 +86,14 @@ const App = () => {
                     }
                   />
                   <Route
+                    path="/users"
+                    element={
+                      <Layout>
+                        <DeviceReport />
+                      </Layout>
+                    }
+                  />
+                  <Route
                     path="/devices"
                     element={
                       <Layout>

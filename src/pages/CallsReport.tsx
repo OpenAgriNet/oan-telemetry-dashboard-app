@@ -62,6 +62,22 @@ function formatDatetime(dt: string | null): string {
   }
 }
 
+function formatDataAvailableUpto(dt: string | null): string {
+  if (!dt) return "—";
+  try {
+    return new Date(dt).toLocaleString("en-IN", {
+      day: "2-digit",
+      month: "short",
+      year: "numeric",
+      hour: "2-digit",
+      minute: "2-digit",
+      hour12: true,
+    });
+  } catch {
+    return dt;
+  }
+}
+
 const CallsReport = () => {
   const navigate = useNavigate();
   const [searchParams, setSearchParams] = useSearchParams();
@@ -169,6 +185,32 @@ const CallsReport = () => {
     staleTime: 60_000,
   });
 
+  const { data: latestCallReport } = useQuery({
+    queryKey: [
+      "calls-latest",
+      dateRange.from?.toISOString(),
+      dateRange.to?.toISOString(),
+    ],
+    queryFn: async () => {
+      const p: PaginationParams = {
+        page: 1,
+        limit: 1,
+        sortBy: "start_datetime",
+        sortOrder: "desc",
+      };
+      if (dateParams.startDate) p.startDate = dateParams.startDate;
+      if (dateParams.endDate) p.endDate = dateParams.endDate;
+      return fetchCalls(p);
+    },
+    refetchOnWindowFocus: false,
+    staleTime: 60_000,
+  });
+
+  const latestCallTimestamp =
+    latestCallReport?.data?.[0]?.startDatetime ||
+    latestCallReport?.data?.[0]?.endDatetime ||
+    null;
+
   const handleCallClick = (interactionId: string) => {
     navigate(`/calls/${interactionId}`);
   };
@@ -216,7 +258,10 @@ const CallsReport = () => {
       <div className="flex items-start gap-2 rounded-lg border border-blue-200 bg-blue-50 px-4 py-3 text-sm text-blue-800 dark:border-blue-800/50 dark:bg-blue-950/30 dark:text-blue-300">
         <AlertCircle className="h-4 w-4 mt-0.5 flex-shrink-0" />
         <p>
-          This data is updated once a day and is not live. The information shown here may not reflect the most recent activity.
+          This data is updated once a day and is not live. The information shown here may not reflect the most recent activity.{" "}
+          {latestCallTimestamp
+            ? `Data available only up to ${formatDataAvailableUpto(latestCallTimestamp)}.`
+            : "Latest available call log date is currently unavailable."}
         </p>
       </div>
 
