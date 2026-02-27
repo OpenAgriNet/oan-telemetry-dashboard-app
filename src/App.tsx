@@ -27,6 +27,8 @@ import { isSuperAdmin } from "@/utils/roleUtils";
 import DeviceReport from "./pages/DeviceReport";
 import AsrReport from "./pages/AsrReport";
 import TtsReport from "./pages/TtsReport";
+import CallsReport from "./pages/CallsReport";
+import CallDetails from "./pages/CallDetails";
 
 const queryClient = new QueryClient({
   defaultOptions: {
@@ -147,7 +149,7 @@ const App = () => {
                       </Layout>
                     }
                   />
-                  {/* <Route
+                  <Route
                     path="/asr"
                     element={
                       <Layout>
@@ -162,7 +164,23 @@ const App = () => {
                         <TtsReport />
                       </Layout>
                     }
-                  /> */}
+                  />
+                  <Route
+                    path="/calls"
+                    element={
+                      <Layout>
+                        <CallsReport />
+                      </Layout>
+                    }
+                  />
+                  <Route
+                    path="/calls/*"
+                    element={
+                      <Layout>
+                        <CallDetails />
+                      </Layout>
+                    }
+                  />
                   <Route
                     path="/content"
                     element={

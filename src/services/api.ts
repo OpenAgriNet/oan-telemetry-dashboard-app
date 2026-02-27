@@ -2544,3 +2544,178 @@ export const fetchTts = async (
     throw error;
   }
 };
+
+// ─── Calls API ─── (BharatVistaar call data from CSV ingestion) ───
+
+export interface Call {
+  id: number;
+  interactionId: string;
+  userId: string | null;
+  userContactMasked: string | null;
+  connectivityStatus: string | null;
+  failureReason: string | null;
+  endReason: string | null;
+  durationInSeconds: number | null;
+  startDatetime: string | null;
+  endDatetime: string | null;
+  languageName: string | null;
+  currentLanguage: string | null;
+  numMessages: number;
+  averageAgentResponseTime: number | null;
+  averageUserResponseTime: number | null;
+  channelDirection: string | null;
+  channelProvider: string | null;
+  channelType: string | null;
+  retryAttempt: number;
+  isDebugCall: boolean;
+  audioUrl: string | null;
+  hasLogIssues: boolean;
+  questionsCount: number;
+  totalInteractions: number;
+}
+
+export interface CallMessage {
+  id: number;
+  role: "user" | "assistant";
+  content: string;
+  messageOrder: number;
+}
+
+export interface CallDetail {
+  call: Call;
+  messages: CallMessage[];
+}
+
+export interface CallsStatsResponse {
+  totalCalls: number;
+  totalQuestions: number;
+  totalInteractions: number;
+  avgDuration: number;
+}
+
+export interface CallsAPIResponse {
+  success: boolean;
+  data: Call[];
+  pagination: {
+    currentPage: number;
+    totalPages: number;
+    totalItems: number;
+    itemsPerPage: number;
+    hasNextPage: boolean;
+    hasPreviousPage: boolean;
+    nextPage: number | null;
+    previousPage: number | null;
+  };
+  filters: {
+    search: string;
+    startDate: string | null;
+    endDate: string | null;
+  };
+}
+
+// Fetch paginated calls list
+export const fetchCalls = async (
+  params: PaginationParams = {},
+): Promise<PaginatedResponse<Call>> => {
+  try {
+    const {
+      page = DEFAULT_PAGE,
+      limit = DEFAULT_LIMIT,
+      search,
+      startDate,
+      endDate,
+      sortBy,
+      sortOrder,
+    } = params;
+
+    const queryParams = buildQueryParams({
+      page,
+      limit,
+      search: search || "",
+      startDate: startDate || "",
+      endDate: endDate || "",
+      sortBy: sortBy || "",
+      sortOrder: sortOrder || "",
+    });
+
+    const response = await fetch(`${SERVER_URL}/calls?${queryParams}`);
+
+    if (!response.ok) {
+      throw new Error(`HTTP error! status: ${response.status}`);
+    }
+
+    const result: CallsAPIResponse = await response.json();
+
+    if (!result.success) {
+      throw new Error("Failed to fetch calls");
+    }
+
+    return {
+      data: result.data,
+      total: result.pagination.totalItems,
+      page: result.pagination.currentPage,
+      pageSize: result.pagination.itemsPerPage,
+      totalPages: result.pagination.totalPages,
+    };
+  } catch (error) {
+    console.error("Error fetching calls:", error);
+    throw error;
+  }
+};
+
+// Fetch single call by interaction_id
+export const fetchCallById = async (
+  callId: string,
+): Promise<CallDetail | null> => {
+  try {
+    const response = await fetch(`${SERVER_URL}/calls/${callId}`);
+
+    if (!response.ok) {
+      if (response.status === 404) return null;
+      throw new Error(`HTTP error! status: ${response.status}`);
+    }
+
+    const result = await response.json();
+    if (!result.success) return null;
+    return result.data;
+  } catch (error) {
+    console.error("Error fetching call by ID:", error);
+    return null;
+  }
+};
+
+// Fetch aggregate stats for header cards
+export const fetchCallsStats = async (
+  params: PaginationParams = {},
+): Promise<CallsStatsResponse> => {
+  try {
+    const { startDate, endDate } = params;
+    const queryParams = buildQueryParams({
+      startDate: startDate || "",
+      endDate: endDate || "",
+    });
+
+    const response = await fetch(
+      `${SERVER_URL}/calls/stats${queryParams ? `?${queryParams}` : ""}`,
+    );
+
+    if (!response.ok) {
+      throw new Error(`HTTP error! status: ${response.status}`);
+    }
+
+    const result = await response.json();
+    if (!result.success) {
+      throw new Error("Failed to fetch calls stats");
+    }
+
+    return result.data;
+  } catch (error) {
+    console.error("Error fetching calls stats:", error);
+    return {
+      totalCalls: 0,
+      totalQuestions: 0,
+      totalInteractions: 0,
+      avgDuration: 0,
+    };
+  }
+};

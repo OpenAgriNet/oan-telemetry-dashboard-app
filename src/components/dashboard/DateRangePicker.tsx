@@ -72,7 +72,7 @@ const DateRangePicker: React.FC<DateRangePickerProps> = ({
         setDateRange({ from: subDays(today, 29), to: today });
         break;
       case "alltime":
-        setDateRange({ from: new Date("2025-05-01T00:00:00.000Z"), to: today });
+        setDateRange({ from: new Date("2026-02-17T00:00:00.000Z"), to: today });
         break;
       case "custom":
         setIsCalendarOpen(true);
