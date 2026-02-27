@@ -49,7 +49,7 @@ const Analytics = () => {
           <TabsList className="grid w-full grid-cols-4">
             <TabsTrigger value="users">User Metrics</TabsTrigger>
             <TabsTrigger value="questions">Questions</TabsTrigger>
-            <TabsTrigger value="devices">Device Usage</TabsTrigger>
+            <TabsTrigger value="devices">User Usage</TabsTrigger>
             <TabsTrigger value="engagement">Engagement</TabsTrigger>
           </TabsList>
           <div className="mt-6">

@@ -72,7 +72,7 @@ const Layout: React.FC<LayoutProps> = ({ children }) => {
   const chatTelemetryChildren = [
     {
       name: "Users",
-      path: "/devices",
+      path: "/users",
       icon: <Users size={16} />,
     },
     {
