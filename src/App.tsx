@@ -29,6 +29,7 @@ import AsrReport from "./pages/AsrReport";
 import TtsReport from "./pages/TtsReport";
 import CallsReport from "./pages/CallsReport";
 import CallDetails from "./pages/CallDetails";
+import CombinedDashboard from "./pages/CombinedDashboard";
 
 const queryClient = new QueryClient({
   defaultOptions: {
@@ -178,6 +179,14 @@ const App = () => {
                     element={
                       <Layout>
                         <CallsReport />
+                      </Layout>
+                    }
+                  />
+                  <Route
+                    path="/combined-dashboard"
+                    element={
+                      <Layout>
+                        <CombinedDashboard />
                       </Layout>
                     }
                   />

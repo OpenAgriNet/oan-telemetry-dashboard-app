@@ -71,6 +71,11 @@ const Layout: React.FC<LayoutProps> = ({ children }) => {
   // Chat Telemetry children
   const chatTelemetryChildren = [
     {
+      name: "Chat Metrics",
+      path: "/",
+      icon: <LayoutDashboard size={16} />,
+    },
+    {
       name: "Users",
       path: "/users",
       icon: <Users size={16} />,
@@ -150,10 +155,9 @@ const Layout: React.FC<LayoutProps> = ({ children }) => {
 
       <nav className="flex-1 overflow-y-auto py-4">
         <ul className="space-y-1 px-2">
-          {/* Dashboard */}
           <li>
             {renderNavLink(
-              { name: "Dashboard", path: "/", icon: <LayoutDashboard size={20} /> },
+              { name: "Unified Metrics", path: "/combined-dashboard", icon: <BarChart3 size={20} /> },
               isMobile,
               !collapsed || isMobile
             )}
