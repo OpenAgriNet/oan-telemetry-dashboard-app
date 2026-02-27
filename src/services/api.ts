@@ -2588,6 +2588,7 @@ export interface CallDetail {
 
 export interface CallsStatsResponse {
   totalCalls: number;
+  totalUsers: number;
   totalQuestions: number;
   totalInteractions: number;
   avgDuration: number;
@@ -2713,6 +2714,7 @@ export const fetchCallsStats = async (
     console.error("Error fetching calls stats:", error);
     return {
       totalCalls: 0,
+      totalUsers: 0,
       totalQuestions: 0,
       totalInteractions: 0,
       avgDuration: 0,
