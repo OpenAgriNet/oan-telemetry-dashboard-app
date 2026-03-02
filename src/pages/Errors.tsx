@@ -301,10 +301,10 @@ const ErrorsPage = () => {
                     <TableRow>
                       <TableHead
                         className="cursor-pointer hover:bg-muted/50"
-                        onClick={() => handleSort("created_at")}
+                        onClick={() => handleSort("ets")}
                       >
                         Date
-                        {SortIndicator({ columnKey: "created_at" })}
+                        {SortIndicator({ columnKey: "ets" })}
                       </TableHead>
                       <TableHead
                         className="cursor-pointer hover:bg-muted/50"
@@ -345,11 +345,16 @@ const ErrorsPage = () => {
                         <TableRow key={errorItem.id}>
                           <TableCell>
                             <div className="space-y-1">
-                              <div className="font-medium">
+                              {/* <div className="font-medium">
                                 {errorItem.date}
                               </div>
                               <div className="text-sm text-muted-foreground">
                                 {errorItem.time}
+                              </div> */}
+                              <div className="font-medium">
+                                {new Date(Number(errorItem.ets))
+                                  .toLocaleString("sv-SE", { timeZone: "Asia/Kolkata" })
+                                  .replace("T", " ") + " IST"}
                               </div>
                             </div>
                           </TableCell>
@@ -362,12 +367,11 @@ const ErrorsPage = () => {
                           </TableCell>
                           <TableCell>
                             {errorItem.userId ? (
-                              <Link
-                                to={`/users?search=${errorItem.userId}`}
-                                className="hover:underline text-sm"
+                              <code
+                                className="rounded bg-muted px-[0.3rem] py-[0.2rem] font-mono text-sm"
                               >
                                 {errorItem.userId.substring(0, 6)}...
-                              </Link>
+                              </code>
                             ) : (
                               <span className="text-muted-foreground text-sm">
                                 N/A

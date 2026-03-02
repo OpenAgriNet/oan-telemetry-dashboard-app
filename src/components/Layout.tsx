@@ -95,6 +95,12 @@ const Layout: React.FC<LayoutProps> = ({ children }) => {
       path: "/feedback",
       icon: <ClipboardCheck size={16} />,
     },
+    // only superadmin can see error details
+    ...(isSuper ? [{
+      name: "Errors",
+      path: "/errors",
+      icon: <AlertTriangle size={16} />
+    }] : []),
     {
       name: "ASR",
       path: "/asr",
