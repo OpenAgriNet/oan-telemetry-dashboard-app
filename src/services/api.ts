@@ -2095,6 +2095,8 @@ export interface ErrorStatsResponse {
   resolvedErrors: number;
   criticalErrors: number;
   avgErrorCount: number;
+  uniqueUsers: number;
+  uniqueSessions: number;
 }
 
 export interface ErrorGraphResponse {
@@ -2227,6 +2229,8 @@ export const fetchErrorStats = async (
       resolvedErrors: 0,
       criticalErrors: 0,
       avgErrorCount: 0,
+      uniqueUsers: 0,
+      uniqueSessions: 0,
     };
   }
 };

@@ -16,7 +16,7 @@ import {
   CardHeader,
   CardTitle,
 } from "@/components/ui/card";
-import { AlertTriangle, Search, RefreshCw, Bug, RotateCcw } from "lucide-react";
+import { AlertTriangle, Search, RefreshCw, Bug, RotateCcw, Users, Activity } from "lucide-react";
 import { format } from "date-fns";
 import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
@@ -79,7 +79,7 @@ const ErrorsPage = () => {
   };
 
   // Fetch error statistics
-  const { data: errorStats = { totalErrors: 0 }, isLoading: isLoadingStats } =
+  const { data: errorStats = { totalErrors: 0, uniqueSessions: 0, uniqueUsers: 0 }, isLoading: isLoadingStats } =
     useQuery({
       queryKey: [
         "error-stats",
@@ -224,7 +224,7 @@ const ErrorsPage = () => {
       </div>
 
       {/* Statistics Card */}
-      <div className="grid gap-4 md:grid-cols-1 lg:grid-cols-1">
+      {/* <div className="grid gap-4 md:grid-cols-1 lg:grid-cols-1">
         <Card>
           <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
             <CardTitle className="text-sm font-medium">Total Errors</CardTitle>
@@ -236,6 +236,52 @@ const ErrorsPage = () => {
             </div>
             <p className="text-xs text-muted-foreground">
               Total error occurrences recorded
+            </p>
+          </CardContent>
+        </Card>
+      </div>   */}
+      <div className="grid grid-cols-2 gap-3 sm:gap-4 md:grid-cols-3">
+        <Card>
+          <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
+            <CardTitle className="text-sm font-medium">Total Errors</CardTitle>
+            <Bug className="h-4 w-4 text-muted-foreground" />
+          </CardHeader>
+          <CardContent>
+            <div className="text-2xl font-bold">
+              {isLoadingStats ? "..." : errorStats.totalErrors.toLocaleString()}
+            </div>
+            <p className="text-xs text-muted-foreground">
+              Total error occurrences recorded
+            </p>
+          </CardContent>
+        </Card>
+
+        <Card>
+          <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
+            <CardTitle className="text-sm font-medium">Total Users</CardTitle>
+            <Users className="h-4 w-4 text-muted-foreground" />
+          </CardHeader>
+          <CardContent>
+            <div className="text-2xl font-bold">
+              {isLoadingStats ? "..." : errorStats.uniqueUsers.toLocaleString()}
+            </div>
+            <p className="text-xs text-muted-foreground">
+              Total users impacted by errors
+            </p>
+          </CardContent>
+        </Card>
+
+        <Card>
+          <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
+            <CardTitle className="text-sm font-medium">Total Sessions</CardTitle>
+            <Activity className="h-4 w-4 text-muted-foreground" />
+          </CardHeader>
+          <CardContent>
+            <div className="text-2xl font-bold">
+              {isLoadingStats ? "..." : errorStats.uniqueSessions.toLocaleString()}
+            </div>
+            <p className="text-xs text-muted-foreground">
+              Total sessions impacted by errors
             </p>
           </CardContent>
         </Card>
