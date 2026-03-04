@@ -24,6 +24,7 @@ import {
   RefreshCw,
   AlertCircle,
   RotateCcw,
+  ClockAlert,
 } from "lucide-react";
 import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
@@ -86,7 +87,7 @@ const TtsReport = () => {
     return <> ↕</>;
   };
 
-  const defaultStats = { totalCalls: 0, successCount: 0, successRate: 0, avgLatency: 0 };
+  const defaultStats = { totalCalls: 0, successCount: 0, successRate: 0, avgLatency: 0, maxLatency: 0 };
 
   const {
     data: ttsResponse = { data: [], total: 0, totalPages: 0, stats: defaultStats },
@@ -195,6 +196,21 @@ const TtsReport = () => {
               <div className="text-2xl font-bold">{stats.avgLatency.toLocaleString()} ms</div>
             )}
             <p className="text-xs text-muted-foreground">Average response latency</p>
+          </CardContent>
+        </Card>
+
+        <Card>
+          <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
+            <CardTitle className="text-sm font-medium">Max Latency</CardTitle>
+            <ClockAlert className="h-4 w-4 text-muted-foreground" />
+          </CardHeader>
+          <CardContent>
+            {isLoading ? (
+              <div className="h-8 w-24 bg-muted animate-pulse rounded mb-2" />
+            ) : (
+              <div className="text-2xl font-bold">{stats.maxLatency.toLocaleString()} ms</div>
+            )}
+            <p className="text-xs text-muted-foreground">Maximum response latency</p>
           </CardContent>
         </Card>
       </div>

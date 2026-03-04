@@ -2433,6 +2433,7 @@ export interface AsrTtsStats {
   successCount: number;
   successRate: number;
   avgLatency: number;
+  maxLatency: number;
 }
 
 interface AsrTtsAPIResponse<T> {
