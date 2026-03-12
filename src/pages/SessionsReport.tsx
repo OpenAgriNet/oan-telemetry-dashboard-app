@@ -8,7 +8,7 @@ import {
   type UserPaginationParams,
   type PaginationParams,
 } from "@/services/api";
-import { useNavigate, useSearchParams } from "react-router-dom";
+import { Link, useNavigate, useSearchParams } from "react-router-dom";
 import { useDateFilter } from "@/contexts/DateFilterContext";
 import { buildDateRangeParams, formatLocal } from "@/lib/utils";
 import {
@@ -454,16 +454,14 @@ const SessionsReport = () => {
                         className="hover:bg-muted/30"
                       >
                         <TableCell className="font-medium">
-                          <button
-                            onClick={() =>
-                              handleSessionClick(session.sessionId)
-                            }
+                          <Link
+                            to={`/sessions/${session.sessionId}`}
                             className="hover:underline"
                           >
                             <code className="relative rounded bg-muted px-[0.3rem] py-[0.2rem] font-mono text-xs">
                               {session.sessionId.substring(0, 6)}...
                             </code>
-                          </button>
+                          </Link>
                         </TableCell>
                         <TableCell>
                           <code className="relative rounded bg-muted px-[0.3rem] py-[0.2rem] font-mono text-sm">
