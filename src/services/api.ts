@@ -135,6 +135,10 @@ export interface PaginationParams {
   sortOrder?: 'asc' | 'desc';
 }
 
+export interface FeedbackPaginationParams extends PaginationParams {
+  rating?: 'like' | 'dislike';
+}
+
 export interface UserPaginationParams extends PaginationParams {
   username?: string;
 }
@@ -987,7 +991,7 @@ export const fetchQuestionsByUserId = async (userId: string, params: QuestionPag
 };
 
 // Feedback API - Updated to match actual backend controller
-export const fetchFeedback = async (params: PaginationParams = {}): Promise<PaginatedResponse<Feedback>> => {
+export const fetchFeedback = async (params: FeedbackPaginationParams = {}): Promise<PaginatedResponse<Feedback>> => {
   try {
     const {
       page = DEFAULT_PAGE,
@@ -995,6 +999,7 @@ export const fetchFeedback = async (params: PaginationParams = {}): Promise<Pagi
       search,
       startDate,
       endDate,
+      rating,
       sortBy,
       sortOrder
     } = params;
@@ -1005,6 +1010,7 @@ export const fetchFeedback = async (params: PaginationParams = {}): Promise<Pagi
       search: search || '',
       startDate: startDate || '',
       endDate: endDate || '',
+      rating: rating || '',
       sortBy: sortBy || '',
       sortOrder: sortOrder || ''
     });

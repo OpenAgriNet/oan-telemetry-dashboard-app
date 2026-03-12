@@ -25,7 +25,6 @@ import {
   AlertCircle,
   RotateCcw,
 } from "lucide-react";
-import { format } from "date-fns";
 import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
 import {
@@ -38,12 +37,14 @@ import {
 import { useDateFilter } from "@/contexts/DateFilterContext";
 import {
   fetchFeedback,
-  fetchUsers,
-  type PaginationParams,
-  type UserPaginationParams,
+  fetchAllPages,
+  type Feedback,
+  type FeedbackPaginationParams,
 } from "@/services/api";
 import TablePagination from "@/components/TablePagination";
 import { buildDateRangeParams } from "@/lib/utils";
+
+type FeedbackRatingFilter = "all" | "like" | "dislike";
 
 const FeedbackPage = () => {
   const [searchParams, setSearchParams] = useSearchParams();
@@ -54,7 +55,9 @@ const FeedbackPage = () => {
   const pageSize = 10;
 
   const [searchTerm, setSearchTerm] = useState("");
-  const [selectedUser, setSelectedUser] = useState("all");
+  const [selectedRating, setSelectedRating] =
+    useState<FeedbackRatingFilter>("all");
+  const [isExporting, setIsExporting] = useState(false);
   const [sortConfig, setSortConfig] = useState({
     key: "created_at",
     direction: "desc",
@@ -83,15 +86,15 @@ const FeedbackPage = () => {
     resetPage();
   };
 
-  const handleUserChange = (value: string) => {
-    setSelectedUser(value);
+  const handleRatingChange = (value: FeedbackRatingFilter) => {
+    setSelectedRating(value);
     resetPage();
   };
 
   const handleResetFilters = () => {
     setSearchTerm("");
     setPendingSearch("");
-    setSelectedUser("all");
+    setSelectedRating("all");
     const newParams = new URLSearchParams();
     newParams.set("page", "1");
     setSearchParams(newParams);
@@ -112,15 +115,94 @@ const FeedbackPage = () => {
     return " ↕";
   };
 
-  // Fetch users for the filter dropdown
-  // const { data: usersResponse = { data: [] }, isLoading: isLoadingUsers } =
-  //   useQuery({
-  //     queryKey: ["users-for-feedback-filter"],
-  //     queryFn: () => fetchUsers({ limit: 1000 } as UserPaginationParams),
-  //     staleTime: 5 * 60 * 1000, // Cache for 5 minutes
-  //   });
+  const buildFeedbackParams = (
+    overrides: Partial<FeedbackPaginationParams> = {}
+  ): FeedbackPaginationParams => {
+    const params: FeedbackPaginationParams = {
+      page,
+      limit: pageSize,
+      ...overrides,
+    };
 
-  // Fetch feedback with server-side pagination and filtering
+    if (searchTerm.trim()) {
+      params.search = searchTerm.trim();
+    }
+
+    const dateParams = buildDateRangeParams(dateRange);
+    if (dateParams.startDate) params.startDate = dateParams.startDate;
+    if (dateParams.endDate) params.endDate = dateParams.endDate;
+
+    if (selectedRating !== "all") {
+      params.rating = selectedRating;
+    }
+
+    if (sortConfig.key) {
+      params.sortBy = sortConfig.key;
+      params.sortOrder = sortConfig.direction as "asc" | "desc";
+    }
+
+    return params;
+  };
+
+  const exportFeedbackAsCsv = (rows: Feedback[]) => {
+    const headers = [
+      "Date",
+      "User",
+      "Rating",
+      "Question",
+      "Answer",
+      "Feedback",
+      "Session ID",
+      "Feedback ID",
+    ];
+
+    const escapeCsv = (value: unknown) => {
+      const normalized = String(value ?? "").replace(/"/g, '""');
+      return `"${normalized}"`;
+    };
+
+    const csvRows = [
+      headers.join(","),
+      ...rows.map((row) =>
+        [
+          row.date,
+          row.user || row.userId || "",
+          row.rating,
+          row.question,
+          row.answer,
+          row.feedback,
+          row.sessionId || "",
+          row.id,
+        ]
+          .map(escapeCsv)
+          .join(",")
+      ),
+    ];
+
+    const blob = new Blob([csvRows.join("\n")], { type: "text/csv;charset=utf-8;" });
+    const url = URL.createObjectURL(blob);
+    const link = document.createElement("a");
+    const from = dateRange.from ? dateRange.from.toISOString().slice(0, 10) : "all";
+    const to = dateRange.to ? dateRange.to.toISOString().slice(0, 10) : "all";
+    const rating = selectedRating === "all" ? "all" : selectedRating;
+
+    link.href = url;
+    link.download = `feedback-${rating}-${from}-to-${to}.csv`;
+    document.body.appendChild(link);
+    link.click();
+    document.body.removeChild(link);
+    URL.revokeObjectURL(url);
+  };
+
+  const handleExport = async () => {
+    try {
+      setIsExporting(true);
+      const allRows = await fetchAllPages(fetchFeedback, buildFeedbackParams(), 500);
+      exportFeedbackAsCsv(allRows);
+    } finally {
+      setIsExporting(false);
+    }
+  };
 
   const {
     data: feedbackResponse = { data: [], total: 0, totalPages: 0, totalLikes: 0, totalDislikes: 0 },
@@ -133,7 +215,7 @@ const FeedbackPage = () => {
       page,
       pageSize,
       searchTerm,
-      selectedUser,
+      selectedRating,
       dateRange.from?.toISOString(),
       dateRange.to?.toISOString(),
       sortConfig.key,
@@ -141,25 +223,7 @@ const FeedbackPage = () => {
     ],
     enabled: dateRange.from !== undefined && dateRange.to !== undefined,
     queryFn: async () => {
-      const params: PaginationParams = {
-        page,
-        limit: pageSize,
-      };
-
-      // Add search filter
-      if (searchTerm.trim()) {
-        params.search = searchTerm.trim();
-      }
-
-      // Add date range filter
-       const dateParams = buildDateRangeParams(dateRange);
-            if (dateParams.startDate) params.startDate = dateParams.startDate;
-            if (dateParams.endDate) params.endDate = dateParams.endDate;
-      
-      if(sortConfig.key){
-        params.sortBy = sortConfig.key;
-        params.sortOrder = sortConfig.direction as 'asc' | 'desc';
-      }      
+      const params = buildFeedbackParams();
 
       console.log("Fetching feedback with params:", params);
       const result = await fetchFeedback(params);
@@ -195,8 +259,6 @@ const FeedbackPage = () => {
   };
   const isLoadingStats = isLoading;
 
-  // const users = usersResponse.data;
-
   const handleApplyFilters = () => {
     refetch();
   };
@@ -230,6 +292,13 @@ const FeedbackPage = () => {
       <div className="flex items-center justify-between">
         <h1 className="text-2xl font-bold tracking-tight">User Feedback</h1>
         <div className="flex gap-2">
+          <Button
+            onClick={handleExport}
+            disabled={isLoading || isExporting || feedbackResponse.total === 0}
+            variant="outline"
+          >
+            {isExporting ? "Exporting..." : "Export CSV"}
+          </Button>
           <Button
             onClick={handleApplyFilters}
             disabled={isLoading}
@@ -349,6 +418,21 @@ const FeedbackPage = () => {
                   maxLength={1000}
                 />
               </div>
+              <Select
+                value={selectedRating}
+                onValueChange={(value) =>
+                  handleRatingChange(value as FeedbackRatingFilter)
+                }
+              >
+                <SelectTrigger className="w-full md:w-[180px]">
+                  <SelectValue placeholder="All ratings" />
+                </SelectTrigger>
+                <SelectContent>
+                  <SelectItem value="all">All ratings</SelectItem>
+                  <SelectItem value="like">Likes only</SelectItem>
+                  <SelectItem value="dislike">Dislikes only</SelectItem>
+                </SelectContent>
+              </Select>
               <Button onClick={handleSearch} disabled={isLoading} variant="outline" size="icon" title="Search">
                 <Search className="h-4 w-4" />
               </Button>
@@ -374,14 +458,14 @@ const FeedbackPage = () => {
                 </p>
                 <p className="text-sm text-muted-foreground/80 mb-4">
                   {searchTerm ||
-                  selectedUser !== "all" ||
+                  selectedRating !== "all" ||
                   dateRange.from ||
                   dateRange.to
                     ? "Try adjusting your filters to see more results."
                     : "No feedback is available in the database."}
                 </p>
                 {(searchTerm ||
-                  selectedUser !== "all" ||
+                  selectedRating !== "all" ||
                   dateRange.from ||
                   dateRange.to) && (
                   <Button
