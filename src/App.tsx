@@ -118,6 +118,7 @@ const App = () => {
                       </Layout>
                     }
                   />
+                  {isSuper && (
                   <Route
                     path="/questions/:id"
                     element={
@@ -125,7 +126,7 @@ const App = () => {
                         <QuestionsDetails />
                       </Layout>
                     }
-                  />
+                  />)}
                   <Route
                     path="/analytics"
                     element={
@@ -134,6 +135,7 @@ const App = () => {
                       </Layout>
                     }
                   />
+                  {isSuper && ( 
                   <Route
                     path="/sessions/:sessionId"
                     element={
@@ -141,7 +143,7 @@ const App = () => {
                         <SessionDetails />
                       </Layout>
                     }
-                  />
+                  /> )}
                   <Route
                     path="/feedback"
                     element={
@@ -150,6 +152,7 @@ const App = () => {
                       </Layout>
                     }
                   />
+                  {isSuper && (
                   <Route
                     path="/feedback/:feedbackId"
                     element={
@@ -157,7 +160,7 @@ const App = () => {
                         <FeedbackDetails />
                       </Layout>
                     }
-                  />
+                  /> )}
                   <Route
                     path="/asr"
                     element={
@@ -190,6 +193,7 @@ const App = () => {
                       </Layout>
                     }
                   />
+                  {isSuper && (
                   <Route
                     path="/calls/*"
                     element={
@@ -197,7 +201,7 @@ const App = () => {
                         <CallDetails />
                       </Layout>
                     }
-                  />
+                  /> )}
                   <Route
                     path="/content"
                     element={

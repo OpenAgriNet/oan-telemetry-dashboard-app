@@ -46,10 +46,16 @@ import {
 } from "@/lib/utils";
 import { Link, useNavigate, useSearchParams } from "react-router-dom";
 import { set } from "date-fns";
+import { useKeycloak } from "@react-keycloak/web";
+import { isSuperAdmin } from "@/utils/roleUtils";
+
 const QuestionsReport = () => {
   const { dateRange } = useDateFilter();
   const navigate = useNavigate();
   const [searchParams, setSearchParams] = useSearchParams();
+
+  const { keycloak } = useKeycloak();
+  const isSuper = isSuperAdmin(keycloak);
 
   // Get pagination state from URL params
   const page = parseInt(searchParams.get("page") || "1", 10);
@@ -339,7 +345,9 @@ console.log("Questions from ISO",dateRange.from?.toISOString())
           </CardContent>
         </Card>
       </div>
-
+      
+      {isSuper && (
+        <>
       <div className="flex flex-col sm:flex-row gap-4 w-full">
         <div className="relative flex-1 w-full">
           <Search className="absolute left-2 top-2.5 h-4 w-4 text-muted-foreground" />
@@ -553,6 +561,9 @@ console.log("Questions from ISO",dateRange.from?.toISOString())
           />
         </div>
       )}
+      </>
+    )}
+
     </div>
   );
 };

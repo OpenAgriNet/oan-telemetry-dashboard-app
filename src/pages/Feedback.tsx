@@ -44,10 +44,15 @@ import {
 } from "@/services/api";
 import TablePagination from "@/components/TablePagination";
 import { buildDateRangeParams } from "@/lib/utils";
+import { useKeycloak } from "@react-keycloak/web";
+import { isSuperAdmin } from "@/utils/roleUtils";
 
 const FeedbackPage = () => {
   const [searchParams, setSearchParams] = useSearchParams();
   const { dateRange } = useDateFilter();
+
+  const { keycloak } = useKeycloak();
+  const isSuper = isSuperAdmin(keycloak);
 
   // Get pagination state from URL params
   const page = parseInt(searchParams.get("page") || "1", 10);
@@ -322,7 +327,8 @@ const FeedbackPage = () => {
           </CardContent>
         </Card>
       </div>
-
+      
+      {isSuper && (
       <Card>
         <CardHeader>
           <CardTitle>Recent Feedback</CardTitle>
@@ -531,7 +537,7 @@ const FeedbackPage = () => {
               )}
           </div>
         </CardContent>
-      </Card>
+      </Card> )}
     </div>
   );
 };

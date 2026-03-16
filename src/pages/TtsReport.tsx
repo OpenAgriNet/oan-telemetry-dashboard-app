@@ -32,10 +32,15 @@ import { useDateFilter } from "@/contexts/DateFilterContext";
 import { fetchTts, type PaginationParams } from "@/services/api";
 import TablePagination from "@/components/TablePagination";
 import { buildDateRangeParams } from "@/lib/utils";
+import { useKeycloak } from "@react-keycloak/web";
+import { isSuperAdmin } from "@/utils/roleUtils";
 
 const TtsReport = () => {
   const [searchParams, setSearchParams] = useSearchParams();
   const { dateRange } = useDateFilter();
+
+  const { keycloak } = useKeycloak();
+  const isSuper = isSuperAdmin(keycloak);
 
   const page = parseInt(searchParams.get("page") || "1", 10);
   const pageSize = 10;
@@ -216,6 +221,7 @@ const TtsReport = () => {
       </div>
 
       {/* Table */}
+      {isSuper && (
       <Card>
         <CardHeader>
           <CardTitle>TTS Records</CardTitle>
@@ -336,7 +342,7 @@ const TtsReport = () => {
             )}
           </div>
         </CardContent>
-      </Card>
+      </Card> )}
     </div>
   );
 };
