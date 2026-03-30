@@ -25,6 +25,7 @@ import users from "@/data/users.json";
 import sessions from "@/data/sessions.json";
 import ReactMarkdown from "react-markdown";
 import remarkGfm from "remark-gfm";
+import rehypeSanitize from "rehype-sanitize"
 import rehypeRaw from "rehype-raw";
 import type { Components } from "react-markdown";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
@@ -390,7 +391,7 @@ const FeedbackDetails = () => {
                     <div className="prose-code:bg-muted prose-pre:bg-muted/80 prose-pre:border prose-pre:border-border prose-headings:text-foreground prose-p:text-foreground prose-a:text-primary">
                       <ReactMarkdown
                         remarkPlugins={[remarkGfm]}
-                        rehypePlugins={[rehypeRaw]}
+                        rehypePlugins={[rehypeSanitize]}
                         components={markdownComponents}
                       >
                         {feedback.answer}
