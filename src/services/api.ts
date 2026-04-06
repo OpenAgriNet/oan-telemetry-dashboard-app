@@ -1399,6 +1399,30 @@ export const fetchComprehensiveFeedbackStats = async (
   }
 };
 
+export interface LangfuseToolNode {
+  toolName: string;
+  count: number;
+}
+
+export interface LangfuseCategoryNode {
+  categoryKey: string;
+  count: number;
+  tools: LangfuseToolNode[];
+}
+
+export interface LangfuseQuestionTreeDay {
+  reportDate: string;
+  totalQuestions: number;
+  questionsAgri: number;
+  questionsNonAgri: number;
+  agri: {
+    categories: LangfuseCategoryNode[];
+  };
+  nonAgri: {
+    categories: LangfuseCategoryNode[];
+  };
+}
+
 // Get comprehensive dashboard statistics - OPTIMIZED
 export const fetchDashboardStats = async (
   params: PaginationParams = {},
@@ -1449,6 +1473,39 @@ export const fetchDashboardStats = async (
       totalLikes: 0,
       totalDislikes: 0,
     };
+  }
+};
+
+export const fetchLangfuseQuestionsTree = async (
+  params: PaginationParams = {},
+): Promise<LangfuseQuestionTreeDay[]> => {
+  try {
+    const { startDate, endDate } = params;
+
+    const queryParams = buildQueryParams({
+      startDate: startDate || "",
+      endDate: endDate || "",
+    });
+
+    const url = `${SERVER_URL}/langfuse/questions${queryParams ? `?${queryParams}` : ""}`;
+    console.log("Fetching langfuse questions tree with URL:", url);
+
+    const response = await fetch(url);
+
+    if (!response.ok) {
+      throw new Error(`HTTP error! status: ${response.status}`);
+    }
+
+    const result = await response.json();
+
+    if (!result.success) {
+      throw new Error("Failed to fetch langfuse questions tree");
+    }
+
+    return result.data || [];
+  } catch (error) {
+    console.error("Error fetching langfuse questions tree:", error);
+    throw error;
   }
 };
 

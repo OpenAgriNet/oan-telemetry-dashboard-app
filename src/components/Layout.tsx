@@ -33,6 +33,7 @@ import {
   Menu,
   ChevronRight,
   PhoneCall,
+  Network,
 } from "lucide-react";
 import {
   DropdownMenu,
@@ -89,6 +90,11 @@ const Layout: React.FC<LayoutProps> = ({ children }) => {
       name: "Questions",
       path: "/questions",
       icon: <MessageSquare size={16} />,
+    },
+    {
+      name: "Langfuse Questions",
+      path: "/langfuse-questions",
+      icon: <Network size={16} />,
     },
     {
       name: "Feedback",
