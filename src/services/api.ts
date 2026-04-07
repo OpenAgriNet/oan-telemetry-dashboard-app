@@ -1488,7 +1488,7 @@ export const fetchLangfuseQuestionsTree = async (
     });
 
     const url = `${SERVER_URL}/langfuse/questions${queryParams ? `?${queryParams}` : ""}`;
-    console.log("Fetching langfuse questions tree with URL:", url);
+    console.log("Fetching langfuse toolcall tree with URL:", url);
 
     const response = await fetch(url);
 
@@ -1499,12 +1499,12 @@ export const fetchLangfuseQuestionsTree = async (
     const result = await response.json();
 
     if (!result.success) {
-      throw new Error("Failed to fetch langfuse questions tree");
+      throw new Error("Failed to fetch langfuse toolcall tree");
     }
 
     return result.data || [];
   } catch (error) {
-    console.error("Error fetching langfuse questions tree:", error);
+    console.error("Error fetching langfuse toolcall tree:", error);
     throw error;
   }
 };

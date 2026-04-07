@@ -92,7 +92,7 @@ const Layout: React.FC<LayoutProps> = ({ children }) => {
       icon: <MessageSquare size={16} />,
     },
     {
-      name: "Langfuse Questions",
+      name: "Langfuse Toolcall",
       path: "/langfuse-questions",
       icon: <Network size={16} />,
     },

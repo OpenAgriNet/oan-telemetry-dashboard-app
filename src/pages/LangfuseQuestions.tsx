@@ -1,14 +1,28 @@
 import React, { useMemo, useState } from "react";
 import { useQuery } from "@tanstack/react-query";
-import { AlertCircle, ChevronRight, RefreshCw, TreePine } from "lucide-react";
+import {
+  AlertCircle,
+  ChevronRight,
+  RefreshCw,
+  TreePine,
+} from "lucide-react";
+import ReactFlow, {
+  Background,
+  Controls,
+  type Edge,
+  type Node,
+  Position,
+} from "reactflow";
+import "reactflow/dist/style.css";
+
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { useDateFilter } from "@/contexts/DateFilterContext";
 import { buildDateRangeParams } from "@/lib/utils";
 import {
   fetchLangfuseQuestionsTree,
-  type LangfuseCategoryNode,
   type LangfuseQuestionTreeDay,
+  type LangfuseCategoryNode,
 } from "@/services/api";
 
 const formatLabel = (value: string): string =>
@@ -30,19 +44,13 @@ const formatDay = (value: string): string => {
 
 const LangfuseQuestions = () => {
   const { dateRange } = useDateFilter();
-  const [expanded, setExpanded] = useState<Record<string, boolean>>({});
+  const [openDayKey, setOpenDayKey] = useState<string | null>(null);
 
-  const toggleNode = (key: string) => {
-    setExpanded((prev) => ({ ...prev, [key]: !prev[key] }));
+  const toggleDay = (key: string) => {
+    setOpenDayKey((current) => (current === key ? null : key));
   };
 
-  const {
-    data = [],
-    isLoading,
-    error,
-    refetch,
-    isFetching,
-  } = useQuery({
+  const { data = [], isLoading, error, refetch, isFetching } = useQuery({
     queryKey: [
       "langfuse-questions-tree",
       dateRange.from?.toISOString(),
@@ -55,11 +63,13 @@ const LangfuseQuestions = () => {
         endDate: dateParams.endDate,
       });
     },
+    enabled: !!dateRange.from && !!dateRange.to,
     refetchOnWindowFocus: false,
     retry: 1,
   });
 
   const totalDays = data.length;
+
   const totals = useMemo(() => {
     return data.reduce(
       (acc, day) => {
@@ -68,122 +78,234 @@ const LangfuseQuestions = () => {
         acc.nonAgri += day.questionsNonAgri;
         return acc;
       },
-      { total: 0, agri: 0, nonAgri: 0 }
+      { total: 0, agri: 0, nonAgri: 0 },
     );
   }, [data]);
 
-  const renderCategoryTree = (
-    categories: LangfuseCategoryNode[],
-    parentKey: string
-  ) => {
-    if (!categories.length) {
-      return (
-        <div className="ml-8 text-sm text-muted-foreground py-1">
-          No category/tool mapping available.
-        </div>
-      );
-    }
+  const buildFlowForDay = (
+    day: LangfuseQuestionTreeDay,
+    dayKey: string,
+  ): { nodes: Node[]; edges: Edge[] } => {
+    const nodes: Node[] = [];
+    const edges: Edge[] = [];
 
-    return categories.map((category) => {
-      const categoryKey = `${parentKey}:category:${category.categoryKey}`;
-      const isCategoryOpen = !!expanded[categoryKey];
-      return (
-        <div key={categoryKey} className="ml-4">
-          <button
-            type="button"
-            className="flex items-center gap-2 py-1 text-sm hover:text-primary"
-            onClick={() => toggleNode(categoryKey)}
-          >
-            <ChevronRight
-              className={`h-4 w-4 transition-transform ${isCategoryOpen ? "rotate-90" : ""}`}
-            />
-            <span className="font-medium">{formatLabel(category.categoryKey)}</span>
-            <span className="text-muted-foreground">({category.count})</span>
-          </button>
+    const levelGapX = 260;
+    const levelGapY = 110;
 
-          {isCategoryOpen && (
-            <div className="ml-8 py-1 space-y-1">
-              {category.tools.length ? (
-                category.tools.map((tool) => (
-                  <div
-                    key={`${categoryKey}:tool:${tool.toolName}`}
-                    className="text-sm text-muted-foreground"
-                  >
-                    {tool.toolName}: <span className="font-medium">{tool.count}</span>
-                  </div>
-                ))
-              ) : (
-                <div className="text-sm text-muted-foreground">No tool calls found.</div>
-              )}
-            </div>
-          )}
-        </div>
-      );
+    // ROOT
+    const rootId = `${dayKey}-root`;
+    nodes.push({
+      id: rootId,
+      position: { x: 0, y: 0 },
+      // data: { label: formatDay(day.reportDate) },
+      // data: { label: `Total Questions (${day.totalQuestions})` },
+      data: {
+        label: (
+          <div className="hover-node">
+            Total Questions ({day.totalQuestions})
+          </div>
+        ),
+      },
+      sourcePosition: Position.Right,
+      targetPosition: Position.Left,
+      style: {
+        padding: "8px 18px",
+        borderRadius: 999,
+        border: "1px solid hsl(var(--border))",
+        background: "hsl(var(--background))",
+        fontWeight: 700,
+        color: "#fff",
+        whiteSpace: "normal",
+        wordBreak: "break-word",
+        maxWidth: "180px",
+        textAlign: "center",
+        width: "fit-content",
+        minWidth: "80px",
+      },
     });
+
+    // LEVEL 1
+    const agriId = `${dayKey}-agri`;
+    const nonAgriId = `${dayKey}-nonagri`;
+
+    nodes.push(
+      {
+        id: agriId,
+        position: { x: levelGapX, y: -70 },
+        data: { label: `Agri Related Questions (${day.questionsAgri})` },
+        sourcePosition: Position.Right,
+        targetPosition: Position.Left,
+        style: {
+          padding: "8px 16px",
+          borderRadius: 999,
+          border: "1px solid rgba(16,185,129,0.7)",
+          background: "rgba(15,23,42,0.95)",
+          color: "#fff",
+          whiteSpace: "normal",
+          wordBreak: "break-word",
+          maxWidth: "180px",
+          textAlign: "center",
+          width: "fit-content",
+          minWidth: "80px",
+        },
+      },
+      {
+        id: nonAgriId,
+        position: { x: levelGapX, y: 70 },
+        data: { label: `Non-Agri Related Questions (${day.questionsNonAgri})` },
+        sourcePosition: Position.Right,
+        targetPosition: Position.Left,
+        style: {
+          padding: "8px 16px",
+          borderRadius: 999,
+          border: "1px solid rgba(59,130,246,0.7)",
+          background: "rgba(15,23,42,0.95)",
+          color: "#fff",
+          whiteSpace: "normal",
+          wordBreak: "break-word",
+          maxWidth: "180px",
+          textAlign: "center",
+          width: "fit-content",
+          minWidth: "80px",
+        },
+      },
+    );
+
+    edges.push(
+      { id: `${rootId}-a`, source: rootId, target: agriId },
+      { id: `${rootId}-n`, source: rootId, target: nonAgriId },
+    );
+
+    const addBranch = (
+      parentId: string,
+      categories: LangfuseCategoryNode[],
+      startY: number,
+    ) => {
+      // categories.forEach((cat, i) => {
+      //   const catId = `${parentId}-cat-${i}`;
+      //   const y = startY + i * levelGapY;
+
+      let currentY = startY;
+
+      categories.forEach((cat, i) => {
+        const catId = `${parentId}-cat-${i}`;
+
+        const toolCount = cat.tools?.length || 0;
+
+        // height needed for this category block
+        const blockHeight = Math.max(levelGapY, toolCount * 65);
+
+        const y = currentY;
+
+        currentY += blockHeight; // 👈 KEY FIX (accumulating)
+
+        // CATEGORY
+        nodes.push({
+          id: catId,
+          position: { x: levelGapX * 2, y },
+          data: {
+            label: `${formatLabel(cat.categoryKey)} (${cat.count})`,
+          },
+          sourcePosition: Position.Right,
+          targetPosition: Position.Left,
+          style: {
+            padding: "6px 12px",
+            borderRadius: 999,
+            border: "1px solid rgba(148,163,184,0.7)",
+            background: "rgba(15,23,42,0.9)",
+            color: "#fff",
+            whiteSpace: "normal",
+            wordBreak: "break-word",
+            maxWidth: "180px",
+            textAlign: "center",
+            width: "fit-content",
+            minWidth: "80px",
+          },
+        });
+
+        edges.push({
+          id: `${parentId}-${catId}`,
+          source: parentId,
+          target: catId,
+        });
+
+        // TOOLS
+        (cat.tools || []).forEach((tool, tIndex) => {
+          const toolId = `${catId}-tool-${tIndex}`;
+
+          nodes.push({
+            id: toolId,
+            position: {
+              x: levelGapX * 3,
+              y: y + tIndex * 65,
+            },
+            data: {
+              label: `${tool.toolName} (${tool.count})`,
+            },
+            sourcePosition: Position.Right,
+            targetPosition: Position.Left,
+            style: {
+              padding: "5px 10px",
+              borderRadius: 999,
+              border: "1px solid rgba(148,163,184,0.6)",
+              background: "rgba(15,23,42,0.85)",
+              fontSize: "10px",
+              color: "#fff",
+              whiteSpace: "normal",
+              wordBreak: "break-word",
+              maxWidth: "180px",
+              textAlign: "center",
+              width: "fit-content",
+              minWidth: "80px",
+            },
+          });
+
+          edges.push({
+            id: `${catId}-${toolId}`,
+            source: catId,
+            target: toolId,
+          });
+        });
+      });
+    };
+
+    addBranch(agriId, day.agri.categories, -200);
+    addBranch(nonAgriId, day.nonAgri.categories, 200);
+
+    return { nodes, edges };
   };
 
   const renderDayNode = (day: LangfuseQuestionTreeDay) => {
-    const dayKey = `day:${day.reportDate}`;
-    const agriKey = `${dayKey}:agri`;
-    const nonAgriKey = `${dayKey}:non-agri`;
-    const isDayOpen = !!expanded[dayKey];
-    const isAgriOpen = !!expanded[agriKey];
-    const isNonAgriOpen = !!expanded[nonAgriKey];
+    const key = `day:${day.reportDate}`;
+    const open = openDayKey === key;
+    const { nodes, edges } = buildFlowForDay(day, key);
 
     return (
-      <div key={dayKey} className="border rounded-lg p-3">
+      <div key={key} className="border rounded-xl overflow-hidden">
         <button
-          type="button"
-          className="w-full flex items-center justify-between gap-3 text-left"
-          onClick={() => toggleNode(dayKey)}
+          className="w-full flex justify-between p-3"
+          onClick={() => toggleDay(key)}
         >
           <div className="flex items-center gap-2">
-            <ChevronRight
-              className={`h-4 w-4 transition-transform ${isDayOpen ? "rotate-90" : ""}`}
-            />
-            <span className="font-semibold">{formatDay(day.reportDate)}</span>
-          </div>
-          <div className="text-sm text-muted-foreground">
-            Total: <span className="font-medium text-foreground">{day.totalQuestions}</span>
+            <ChevronRight className={open ? "rotate-90" : ""} />
+            {formatDay(day.reportDate)}
           </div>
         </button>
 
-        {isDayOpen && (
-          <div className="mt-3 space-y-2">
-            <div className="text-sm text-muted-foreground">
-              Agri: <span className="font-medium text-foreground">{day.questionsAgri}</span> | Non-Agri:{" "}
-              <span className="font-medium text-foreground">{day.questionsNonAgri}</span>
-            </div>
-
-            <div className="ml-2">
-              <button
-                type="button"
-                className="flex items-center gap-2 py-1 text-sm hover:text-primary"
-                onClick={() => toggleNode(agriKey)}
-              >
-                <ChevronRight
-                  className={`h-4 w-4 transition-transform ${isAgriOpen ? "rotate-90" : ""}`}
-                />
-                <span className="font-medium">Agri Questions</span>
-                <span className="text-muted-foreground">({day.questionsAgri})</span>
-              </button>
-              {isAgriOpen && renderCategoryTree(day.agri.categories, agriKey)}
-            </div>
-
-            <div className="ml-2">
-              <button
-                type="button"
-                className="flex items-center gap-2 py-1 text-sm hover:text-primary"
-                onClick={() => toggleNode(nonAgriKey)}
-              >
-                <ChevronRight
-                  className={`h-4 w-4 transition-transform ${isNonAgriOpen ? "rotate-90" : ""}`}
-                />
-                <span className="font-medium">Non-Agri Questions</span>
-                <span className="text-muted-foreground">({day.questionsNonAgri})</span>
-              </button>
-              {isNonAgriOpen && renderCategoryTree(day.nonAgri.categories, nonAgriKey)}
-            </div>
+        {open && (
+          <div className="h-[600px] w-full overflow-x-auto">
+            <ReactFlow
+              nodes={nodes}
+              edges={edges}
+              fitView
+              nodesDraggable={false}
+              zoomOnScroll={true}
+              panOnDrag={true}
+              proOptions={{ hideAttribution: true }}
+            >
+              <Controls position="top-right" showInteractive={false} />
+              <Background gap={20} size={1} />
+            </ReactFlow>
           </div>
         )}
       </div>
@@ -192,8 +314,12 @@ const LangfuseQuestions = () => {
 
   return (
     <div className="space-y-6">
+      {/* <div className="flex justify-between">
+        <h1 className="text-xl font-bold">Langfuse Toolcall</h1>
+        <Button onClick={refetch} disabled={isFetching}>
+          <RefreshCw className={isFetching ? "animate-spin" : ""} /> */}
       <div className="flex items-center justify-between gap-3">
-        <h1 className="text-2xl font-bold tracking-tight">Langfuse Questions</h1>
+        <h1 className="text-2xl font-bold tracking-tight">Langfuse Toolcall</h1>
         <Button onClick={() => refetch()} variant="outline" disabled={isFetching}>
           <RefreshCw className={`h-4 w-4 mr-2 ${isFetching ? "animate-spin" : ""}`} />
           Refresh
@@ -209,52 +335,44 @@ const LangfuseQuestions = () => {
         </Card>
         <Card>
           <CardHeader className="pb-2">
-            <CardTitle className="text-sm font-medium">Total Questions</CardTitle>
+            <CardTitle className="text-sm font-medium">
+              Total Questions
+            </CardTitle>
           </CardHeader>
-          <CardContent className="text-2xl font-bold">{totals.total}</CardContent>
+          <CardContent className="text-2xl font-bold">
+            {totals.total}
+          </CardContent>
         </Card>
         <Card>
           <CardHeader className="pb-2">
-            <CardTitle className="text-sm font-medium">Agri Questions</CardTitle>
+            <CardTitle className="text-sm font-medium">
+              Agri Questions
+            </CardTitle>
           </CardHeader>
-          <CardContent className="text-2xl font-bold">{totals.agri}</CardContent>
+          <CardContent className="text-2xl font-bold">
+            {totals.agri}
+          </CardContent>
         </Card>
         <Card>
           <CardHeader className="pb-2">
-            <CardTitle className="text-sm font-medium">Non-Agri Questions</CardTitle>
+            <CardTitle className="text-sm font-medium">
+              Non-Agri Questions
+            </CardTitle>
           </CardHeader>
-          <CardContent className="text-2xl font-bold">{totals.nonAgri}</CardContent>
+          <CardContent className="text-2xl font-bold">
+            {totals.nonAgri}
+          </CardContent>
         </Card>
       </div>
 
-      <Card>
-        <CardHeader>
-          <CardTitle className="flex items-center gap-2">
-            <TreePine className="h-5 w-5" />
-            Category and Tool Call Tree
-          </CardTitle>
-        </CardHeader>
-        <CardContent>
-          {isLoading ? (
-            <div className="text-sm text-muted-foreground">Loading Langfuse question tree...</div>
-          ) : error ? (
-            <div className="flex items-center gap-2 text-destructive">
-              <AlertCircle className="h-4 w-4" />
-              <span>
-                {error instanceof Error
-                  ? error.message
-                  : "No data fetched due to an error."}
-              </span>
-            </div>
-          ) : data.length === 0 ? (
-            <div className="text-sm text-muted-foreground">
-              No Langfuse data found for the selected date range.
-            </div>
-          ) : (
-            <div className="space-y-3">{data.map(renderDayNode)}</div>
-          )}
-        </CardContent>
-      </Card>
+
+      {isLoading ? (
+        <div>Loading...</div>
+      ) : error ? (
+        <div>Error</div>
+      ) : (
+        data.map(renderDayNode)
+      )}
     </div>
   );
 };
