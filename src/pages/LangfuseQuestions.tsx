@@ -270,7 +270,7 @@ const LangfuseQuestions = () => {
     };
 
     addBranch(agriId, day.agri.categories, -200);
-    addBranch(nonAgriId, day.nonAgri.categories, 200);
+    // addBranch(nonAgriId, day.nonAgri.categories, 200);
 
     return { nodes, edges };
   };
