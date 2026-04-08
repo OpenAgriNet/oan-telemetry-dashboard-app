@@ -30,6 +30,7 @@ import TtsReport from "./pages/TtsReport";
 import CallsReport from "./pages/CallsReport";
 import CallDetails from "./pages/CallDetails";
 import CombinedDashboard from "./pages/CombinedDashboard";
+import LangfuseQuestions from "./pages/LangfuseQuestions";
 
 const queryClient = new QueryClient({
   defaultOptions: {
@@ -115,6 +116,14 @@ const App = () => {
                     element={
                       <Layout>
                         <QuestionsReport />
+                      </Layout>
+                    }
+                  />
+                  <Route
+                    path="/langfuse-questions"
+                    element={
+                      <Layout>
+                        <LangfuseQuestions />
                       </Layout>
                     }
                   />
