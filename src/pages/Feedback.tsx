@@ -38,7 +38,6 @@ import {
 import { useDateFilter } from "@/contexts/DateFilterContext";
 import {
   fetchFeedback,
-  fetchFeedbackChannels,
   fetchUsers,
   type PaginationParams,
   type UserPaginationParams,
@@ -67,7 +66,7 @@ const FeedbackPage = () => {
   });
   const [selectedSource, setSelectedSource] = useState("all");
   const [selectedFeedbackType, setSelectedFeedbackType] = useState("all");
-  const [selectedChannel, setSelectedChannel] = useState("all");
+
 
   // Reset page when filters change
   const resetPage = () => {
@@ -107,18 +106,12 @@ const FeedbackPage = () => {
     resetPage();
   };
 
-  const handleChannelChange = (value: string) => {
-    setSelectedChannel(value);
-    resetPage();
-  };
-
   const handleResetFilters = () => {
     setSearchTerm("");
     setPendingSearch("");
     setSelectedUser("all");
     setSelectedSource("all");
     setSelectedFeedbackType("all");
-    setSelectedChannel("all");
     const newParams = new URLSearchParams();
     newParams.set("page", "1");
     setSearchParams(newParams);
@@ -147,13 +140,6 @@ const FeedbackPage = () => {
   //     staleTime: 5 * 60 * 1000, // Cache for 5 minutes
   //   });
 
-  // Fetch distinct channels for filter dropdown
-  const { data: channels = [] } = useQuery({
-    queryKey: ["feedback-channels"],
-    queryFn: () => fetchFeedbackChannels(),
-    staleTime: 5 * 60 * 1000,
-  });
-
   // Fetch feedback with server-side pagination and filtering
 
   const {
@@ -174,7 +160,6 @@ const FeedbackPage = () => {
       sortConfig.direction,
       selectedSource,
       selectedFeedbackType,
-      selectedChannel,
     ],
     enabled: dateRange.from !== undefined && dateRange.to !== undefined,
     queryFn: async () => {
@@ -201,8 +186,6 @@ const FeedbackPage = () => {
       // Add feedback-specific filters
       if (selectedSource !== 'all') params.feedbackSource = selectedSource;
       if (selectedFeedbackType !== 'all') params.feedbackType = selectedFeedbackType;
-      if (selectedChannel !== 'all') params.channel = selectedChannel;
-
       console.log("Fetching feedback with params:", params);
       const result = await fetchFeedback(params);
 
@@ -425,17 +408,6 @@ const FeedbackPage = () => {
                 </SelectContent>
               </Select>
 
-              <Select value={selectedChannel} onValueChange={handleChannelChange}>
-                <SelectTrigger className="w-full sm:w-[200px]">
-                  <SelectValue placeholder="Channel" />
-                </SelectTrigger>
-                <SelectContent>
-                  <SelectItem value="all">All Channels</SelectItem>
-                  {channels.map((ch) => (
-                    <SelectItem key={ch} value={ch}>{ch}</SelectItem>
-                  ))}
-                </SelectContent>
-              </Select>
             </div>
 
             {isLoading ? (
@@ -458,7 +430,6 @@ const FeedbackPage = () => {
                   selectedUser !== "all" ||
                   selectedSource !== "all" ||
                   selectedFeedbackType !== "all" ||
-                  selectedChannel !== "all" ||
                   dateRange.from ||
                   dateRange.to
                     ? "Try adjusting your filters to see more results."
@@ -468,7 +439,6 @@ const FeedbackPage = () => {
                   selectedUser !== "all" ||
                   selectedSource !== "all" ||
                   selectedFeedbackType !== "all" ||
-                  selectedChannel !== "all" ||
                   dateRange.from ||
                   dateRange.to) && (
                   <Button
