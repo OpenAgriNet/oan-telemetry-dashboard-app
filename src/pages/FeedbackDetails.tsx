@@ -169,11 +169,11 @@ const FeedbackDetails = () => {
     ? sessions.find((s) => s.sessionId === feedback.sessionId)
     : null;
 
-  const handleSessionClick = (sessionId: string) => {
+  const handleSessionClick = (sessionId: string, source?: 'chat' | 'voice') => {
     console.log('Session ID:', sessionId);
     const SessionId = sessionId;
-    // Add your logic here to handlne the session click
-    navigate(`/sessions/${SessionId}`);
+    const path = source === 'voice' ? `/calls/${SessionId}` : `/sessions/${SessionId}`;
+    navigate(path);
   };
 
   // Show loading state
@@ -300,6 +300,21 @@ const FeedbackDetails = () => {
 
         <Card>
           <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
+            <CardTitle className="text-sm font-medium">Source</CardTitle>
+          </CardHeader>
+          <CardContent>
+            <span className={`inline-flex items-center rounded-full px-2.5 py-1 text-xs font-medium ${
+              feedback.feedbackSource === 'voice'
+                ? 'bg-purple-100 text-purple-700 dark:bg-purple-900/30 dark:text-purple-300'
+                : 'bg-blue-100 text-blue-700 dark:bg-blue-900/30 dark:text-blue-300'
+            }`}>
+              {feedback.feedbackSource === 'voice' ? 'Voice' : 'Chat'}
+            </span>
+          </CardContent>
+        </Card>
+
+        <Card>
+          <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
             <CardTitle className="text-sm font-medium">Session</CardTitle>
             <MessageCircle className="h-4 w-4 text-muted-foreground" />
           </CardHeader>
@@ -307,7 +322,7 @@ const FeedbackDetails = () => {
             <div className="text-sm">
               {feedback.sessionId ? (
                 <button
-                  onClick={() => handleSessionClick(feedback.sessionId)}
+                  onClick={() => handleSessionClick(feedback.sessionId, feedback.feedbackSource)}
                   className="text-primary hover:underline"
                 >
                   <code className="relative rounded bg-muted px-[0.3rem] py-[0.2rem] font-mono text-xs">
@@ -360,7 +375,7 @@ const FeedbackDetails = () => {
                 <span className="text-xs text-muted-foreground">(Click to view session)</span>
               )}
             </div>
-            <p className="text-foreground">{feedback.question}</p>
+            <p className="text-foreground">{feedback.question || <span className="text-muted-foreground italic">N/A (Voice feedback)</span>}</p>
             {translation?.questionMarathi && (
               <div className="mt-4 pt-4 border-t border-border">
                 <div className="flex items-center gap-2 mb-2">
@@ -374,6 +389,7 @@ const FeedbackDetails = () => {
             )}
           </div>
 
+          {feedback.answer ? (
           <div className="space-y-4">
             <div>
               <h3 className="font-medium mb-2">AI Response</h3>
@@ -425,6 +441,11 @@ const FeedbackDetails = () => {
               </div>
             </div>
           </div>
+          ) : (
+          <div className="p-4 rounded-lg border border-border bg-muted/30">
+            <p className="text-muted-foreground italic">No AI response available (Voice feedback)</p>
+          </div>
+          )}
         </CardContent>
       </Card>
     </div>
