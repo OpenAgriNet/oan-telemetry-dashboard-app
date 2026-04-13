@@ -38,6 +38,7 @@ import {
 import { useDateFilter } from "@/contexts/DateFilterContext";
 import {
   fetchFeedback,
+  fetchFeedbackChannels,
   fetchUsers,
   type PaginationParams,
   type UserPaginationParams,
@@ -64,6 +65,9 @@ const FeedbackPage = () => {
     key: "created_at",
     direction: "desc",
   });
+  const [selectedSource, setSelectedSource] = useState("all");
+  const [selectedFeedbackType, setSelectedFeedbackType] = useState("all");
+  const [selectedChannel, setSelectedChannel] = useState("all");
 
   // Reset page when filters change
   const resetPage = () => {
@@ -93,10 +97,28 @@ const FeedbackPage = () => {
     resetPage();
   };
 
+  const handleSourceChange = (value: string) => {
+    setSelectedSource(value);
+    resetPage();
+  };
+
+  const handleFeedbackTypeChange = (value: string) => {
+    setSelectedFeedbackType(value);
+    resetPage();
+  };
+
+  const handleChannelChange = (value: string) => {
+    setSelectedChannel(value);
+    resetPage();
+  };
+
   const handleResetFilters = () => {
     setSearchTerm("");
     setPendingSearch("");
     setSelectedUser("all");
+    setSelectedSource("all");
+    setSelectedFeedbackType("all");
+    setSelectedChannel("all");
     const newParams = new URLSearchParams();
     newParams.set("page", "1");
     setSearchParams(newParams);
@@ -125,6 +147,13 @@ const FeedbackPage = () => {
   //     staleTime: 5 * 60 * 1000, // Cache for 5 minutes
   //   });
 
+  // Fetch distinct channels for filter dropdown
+  const { data: channels = [] } = useQuery({
+    queryKey: ["feedback-channels"],
+    queryFn: () => fetchFeedbackChannels(),
+    staleTime: 5 * 60 * 1000,
+  });
+
   // Fetch feedback with server-side pagination and filtering
 
   const {
@@ -143,6 +172,9 @@ const FeedbackPage = () => {
       dateRange.to?.toISOString(),
       sortConfig.key,
       sortConfig.direction,
+      selectedSource,
+      selectedFeedbackType,
+      selectedChannel,
     ],
     enabled: dateRange.from !== undefined && dateRange.to !== undefined,
     queryFn: async () => {
@@ -160,11 +192,16 @@ const FeedbackPage = () => {
        const dateParams = buildDateRangeParams(dateRange);
             if (dateParams.startDate) params.startDate = dateParams.startDate;
             if (dateParams.endDate) params.endDate = dateParams.endDate;
-      
+
       if(sortConfig.key){
         params.sortBy = sortConfig.key;
         params.sortOrder = sortConfig.direction as 'asc' | 'desc';
-      }      
+      }
+
+      // Add feedback-specific filters
+      if (selectedSource !== 'all') params.feedbackSource = selectedSource;
+      if (selectedFeedbackType !== 'all') params.feedbackType = selectedFeedbackType;
+      if (selectedChannel !== 'all') params.channel = selectedChannel;
 
       console.log("Fetching feedback with params:", params);
       const result = await fetchFeedback(params);
@@ -365,6 +402,42 @@ const FeedbackPage = () => {
               </div>
             </div>
 
+            <div className="flex flex-col sm:flex-row gap-3">
+              <Select value={selectedSource} onValueChange={handleSourceChange}>
+                <SelectTrigger className="w-full sm:w-[150px]">
+                  <SelectValue placeholder="Source" />
+                </SelectTrigger>
+                <SelectContent>
+                  <SelectItem value="all">All Sources</SelectItem>
+                  <SelectItem value="chat">Chat</SelectItem>
+                  <SelectItem value="voice">Voice</SelectItem>
+                </SelectContent>
+              </Select>
+
+              <Select value={selectedFeedbackType} onValueChange={handleFeedbackTypeChange}>
+                <SelectTrigger className="w-full sm:w-[150px]">
+                  <SelectValue placeholder="Type" />
+                </SelectTrigger>
+                <SelectContent>
+                  <SelectItem value="all">All Types</SelectItem>
+                  <SelectItem value="like">Like</SelectItem>
+                  <SelectItem value="dislike">Dislike</SelectItem>
+                </SelectContent>
+              </Select>
+
+              <Select value={selectedChannel} onValueChange={handleChannelChange}>
+                <SelectTrigger className="w-full sm:w-[200px]">
+                  <SelectValue placeholder="Channel" />
+                </SelectTrigger>
+                <SelectContent>
+                  <SelectItem value="all">All Channels</SelectItem>
+                  {channels.map((ch) => (
+                    <SelectItem key={ch} value={ch}>{ch}</SelectItem>
+                  ))}
+                </SelectContent>
+              </Select>
+            </div>
+
             {isLoading ? (
               <div className="flex justify-center items-center p-12 bg-muted/30 rounded-lg">
                 <div className="text-center">
@@ -383,6 +456,9 @@ const FeedbackPage = () => {
                 <p className="text-sm text-muted-foreground/80 mb-4">
                   {searchTerm ||
                   selectedUser !== "all" ||
+                  selectedSource !== "all" ||
+                  selectedFeedbackType !== "all" ||
+                  selectedChannel !== "all" ||
                   dateRange.from ||
                   dateRange.to
                     ? "Try adjusting your filters to see more results."
@@ -390,6 +466,9 @@ const FeedbackPage = () => {
                 </p>
                 {(searchTerm ||
                   selectedUser !== "all" ||
+                  selectedSource !== "all" ||
+                  selectedFeedbackType !== "all" ||
+                  selectedChannel !== "all" ||
                   dateRange.from ||
                   dateRange.to) && (
                   <Button
@@ -433,20 +512,24 @@ const FeedbackPage = () => {
                       User
                       <SortIndicator columnKey="user_id" />
                     </TableHead>
-                    <TableHead
-                      // className="cursor-pointer hover:bg-muted/50"
-                      // onClick={() => handleSort("question")}
-                    >
-                      Question
-                      {/* <SortIndicator columnKey="question" /> */}
-                    </TableHead>
-                    <TableHead
-                      // className="cursor-pointer hover:bg-muted/50"
-                      // onClick={() => handleSort("answer")}
-                    >
-                      Answer
-                      {/* <SortIndicator columnKey="answer" /> */}
-                    </TableHead>
+                    {selectedSource !== 'voice' && (
+                      <>
+                        <TableHead
+                          // className="cursor-pointer hover:bg-muted/50"
+                          // onClick={() => handleSort("question")}
+                        >
+                          Question
+                          {/* <SortIndicator columnKey="question" /> */}
+                        </TableHead>
+                        <TableHead
+                          // className="cursor-pointer hover:bg-muted/50"
+                          // onClick={() => handleSort("answer")}
+                        >
+                          Answer
+                          {/* <SortIndicator columnKey="answer" /> */}
+                        </TableHead>
+                      </>
+                    )}
                     <TableHead
                       className="cursor-pointer hover:bg-muted/50"
                       // onClick={() => handleSort("feedbacktype")}
@@ -461,6 +544,7 @@ const FeedbackPage = () => {
                       Feedback
                       <SortIndicator columnKey="feedbacktext" />
                     </TableHead>
+                    <TableHead>Source</TableHead>
                     <TableHead>Details</TableHead>
                   </TableRow>
                 </TableHeader>
@@ -479,16 +563,20 @@ const FeedbackPage = () => {
                           {(feedback.user || feedback.userId) ? (feedback.user || feedback.userId).substring(0, 6) + "..." : "Unknown"}
                         </code>
                       </TableCell>
-                      <TableCell className="max-w-[100px]">
-                        <div className="truncate" title={feedback.question}>
-                          {feedback.question}
-                        </div>
-                      </TableCell>
-                      <TableCell className="max-w-[100px]">
-                        <div className="truncate" title={feedback.answer}>
-                          {feedback.answer}
-                        </div>
-                      </TableCell>
+                      {selectedSource !== 'voice' && (
+                        <>
+                          <TableCell className="max-w-[100px]">
+                            <div className="truncate" title={feedback.question}>
+                              {feedback.question || <span className="text-muted-foreground italic">N/A</span>}
+                            </div>
+                          </TableCell>
+                          <TableCell className="max-w-[100px]">
+                            <div className="truncate" title={feedback.answer}>
+                              {feedback.answer || <span className="text-muted-foreground italic">N/A</span>}
+                            </div>
+                          </TableCell>
+                        </>
+                      )}
                       <TableCell>
                         {feedback.rating === "like" ? (
                           <div className="flex items-center gap-1">
@@ -512,6 +600,15 @@ const FeedbackPage = () => {
                         <div className="truncate" title={feedback.feedback}>
                           {feedback.feedback}
                         </div>
+                      </TableCell>
+                      <TableCell>
+                        <span className={`inline-flex items-center rounded-full px-2 py-1 text-xs font-medium ${
+                          feedback.feedbackSource === 'voice'
+                            ? 'bg-purple-100 text-purple-700 dark:bg-purple-900/30 dark:text-purple-300'
+                            : 'bg-blue-100 text-blue-700 dark:bg-blue-900/30 dark:text-blue-300'
+                        }`}>
+                          {feedback.feedbackSource === 'voice' ? 'Voice' : 'Chat'}
+                        </span>
                       </TableCell>
                       <TableCell>
                         <Link
