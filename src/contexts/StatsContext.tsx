@@ -3,6 +3,7 @@ import { useQuery } from '@tanstack/react-query';
 import { fetchDashboardStats } from '@/services/api';
 import { useDateFilter } from './DateFilterContext';
 import { buildDateRangeParams } from '@/lib/utils';
+import { useTelemetryState } from './TelemetryStateContext';
 
 interface DashboardStats {
   totalUsers: number;
@@ -38,6 +39,7 @@ interface StatsProviderProps {
 
 export const StatsProvider: React.FC<StatsProviderProps> = ({ children }) => {
   const { dateRange } = useDateFilter();
+  const { selectedStateId } = useTelemetryState();
 
   // Centralized stats query that all pages can reuse
   const { 
@@ -48,10 +50,14 @@ export const StatsProvider: React.FC<StatsProviderProps> = ({ children }) => {
   } = useQuery({
     queryKey: [
       'dashboard-stats',
+      selectedStateId,
       dateRange.from?.toISOString(),
       dateRange.to?.toISOString(),
     ],
-    enabled: dateRange.from !== undefined && dateRange.to !== undefined,
+    enabled:
+      !!selectedStateId &&
+      dateRange.from !== undefined &&
+      dateRange.to !== undefined,
     queryFn: () => {
       const params = buildDateRangeParams(dateRange, {
         includeDefaultStart: false,

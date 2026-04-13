@@ -35,8 +35,8 @@ import {
   type ErrorDetail
 } from "@/services/api";
 import { formatUTCToIST } from "@/lib/utils";
-import { useKeycloak } from "@react-keycloak/web";
-import { isSuperAdmin } from "@/utils/roleUtils";
+import { useTelemetryState } from "@/contexts/TelemetryStateContext";
+import { canAccessTabForState } from "@/utils/roleUtils";
 
 // Helper function to get a safe timestamp string from question data
 // Now handles IST-formatted dates from backend directly
@@ -156,10 +156,10 @@ function getErrorTimestampISO(error: ErrorDetail): string {
 const SessionDetails = () => {
   const { sessionId } = useParams();
   const navigate = useNavigate();
-  const { keycloak } = useKeycloak();
-  
-  // Check if current user is super admin
-  const isSuper = isSuperAdmin(keycloak);
+  const { selectedState, selectedStateId } = useTelemetryState();
+  const canShowErrors = selectedState
+    ? canAccessTabForState(selectedState.id, "errors")
+    : false;
 
   // Fetch session details
   const { 
@@ -168,7 +168,7 @@ const SessionDetails = () => {
     error: sessionError,
     refetch: refetchSession
   } = useQuery({
-    queryKey: ["sessionDetails", sessionId],
+    queryKey: ["sessionDetails", selectedStateId, sessionId],
     queryFn: () => fetchSessionById(sessionId || ""),
     enabled: !!sessionId,
     retry: 3,
@@ -182,7 +182,7 @@ const SessionDetails = () => {
     error: questionsError,
     refetch: refetchQuestions
   } = useQuery({
-    queryKey: ["sessionQuestions", sessionId],
+    queryKey: ["sessionQuestions", selectedStateId, sessionId],
     queryFn: () => fetchQuestionsBySessionId(sessionId || ""),
     enabled: !!sessionId,
     retry: 3,
@@ -196,7 +196,7 @@ const SessionDetails = () => {
     error: feedbackError,
     refetch: refetchFeedback
   } = useQuery({
-    queryKey: ["sessionFeedback", sessionId],
+    queryKey: ["sessionFeedback", selectedStateId, sessionId],
     queryFn: () => fetchFeedbackBySessionId(sessionId || ""),
     enabled: !!sessionId,
     retry: 3,
@@ -210,15 +210,23 @@ const SessionDetails = () => {
     error: errorsError,
     refetch: refetchErrors
   } = useQuery({
-    queryKey: ["sessionErrors", sessionId],
+    queryKey: ["sessionErrors", selectedStateId, sessionId],
     queryFn: () => fetchErrorsBySessionId(sessionId || ""),
-    enabled: !!sessionId && isSuper,
+    enabled: !!sessionId && canShowErrors,
     retry: 3,
     retryDelay: (attemptIndex) => Math.min(1000 * 2 ** attemptIndex, 30000),
   });
 
-  const isLoading = isLoadingSession || isLoadingQuestions || isLoadingFeedback || (isSuper && isLoadingErrors);
-  const error = sessionError || questionsError || feedbackError || (isSuper && errorsError);
+  const isLoading =
+    isLoadingSession ||
+    isLoadingQuestions ||
+    isLoadingFeedback ||
+    (canShowErrors && isLoadingErrors);
+  const error =
+    sessionError ||
+    questionsError ||
+    feedbackError ||
+    (canShowErrors && errorsError);
 
   // Create chronological conversation flow
   const conversationFlow = React.useMemo(() => {
@@ -289,8 +297,7 @@ const SessionDetails = () => {
       });
     });
 
-    // Add error events (only for super admins)
-    if (isSuper) {
+    if (canShowErrors) {
       sessionErrors.forEach((error: ErrorDetail) => {
         events.push({
           id: `e-${error.id}`,
@@ -329,7 +336,7 @@ const SessionDetails = () => {
 
       return timeA - timeB;
     });
-  }, [sessionDetail, sessionQuestions, sessionFeedback, sessionErrors, isSuper]);
+  }, [canShowErrors, sessionDetail, sessionQuestions, sessionFeedback, sessionErrors]);
 
   const formatTimestamp = (timestamp: string) => {
     try {
@@ -517,7 +524,10 @@ const SessionDetails = () => {
             <AlertCircle className="h-12 w-12 text-destructive mx-auto mb-4" />
             <p className="text-destructive font-medium mb-2">Error loading session data</p>
             <p className="text-destructive/80 text-sm mb-4">
-              {sessionError?.message || questionsError?.message || feedbackError?.message || (isSuper && errorsError?.message)}
+              {sessionError?.message ||
+                questionsError?.message ||
+                feedbackError?.message ||
+                (canShowErrors && errorsError?.message)}
             </p>
             <div className="flex gap-2 justify-center">
               <Button onClick={() => refetchSession()} variant="outline" size="sm">
@@ -532,7 +542,7 @@ const SessionDetails = () => {
                 <RefreshCw className="h-4 w-4 mr-2" />
                 Retry Feedback
               </Button>
-              {isSuper && (
+              {canShowErrors && (
                 <Button onClick={() => refetchErrors()} variant="outline" size="sm">
                   <RefreshCw className="h-4 w-4 mr-2" />
                   Retry Errors
@@ -587,7 +597,7 @@ const SessionDetails = () => {
         </Button>
       </div>
 
-      <div className={`grid gap-4 ${isSuper ? 'md:grid-cols-5' : 'md:grid-cols-4'}`}>
+      <div className={`grid gap-4 ${canShowErrors ? 'md:grid-cols-5' : 'md:grid-cols-4'}`}>
         <Card>
           <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
             <CardTitle className="text-sm font-medium">User</CardTitle>
@@ -642,7 +652,7 @@ const SessionDetails = () => {
           </CardContent>
         </Card>
 
-        {isSuper && (
+        {canShowErrors && (
           <Card>
             <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
             <CardTitle className="text-sm font-medium">Errors</CardTitle>
@@ -716,7 +726,7 @@ const SessionDetails = () => {
         </Card>
       )}
 
-      {isSuper && totalErrors > 0 && sessionErrors.length > 0 && (
+      {canShowErrors && totalErrors > 0 && sessionErrors.length > 0 && (
         <Card>
           <CardHeader>
             <CardTitle className="text-lg">System Errors</CardTitle>

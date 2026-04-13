@@ -18,17 +18,13 @@ import {
 import { Search, RefreshCw, RotateCcw, MonitorSmartphone, Users, UserPlus, UserCheck } from "lucide-react";
 import TablePagination from "@/components/TablePagination";
 import { useStats } from "@/contexts/StatsContext";
-import { isSuperAdmin } from "@/utils/roleUtils";
-import { useKeycloak } from "@react-keycloak/web";
+import { useTelemetryState } from "@/contexts/TelemetryStateContext";
 
 // User report page backed by /devices endpoint
 const DeviceReport = () => {
   const { dateRange } = useDateFilter();
   const navigate = useNavigate();
-  const { keycloak } = useKeycloak();
-    
-  // Check if current user is super admin
-  const isSuper = isSuperAdmin(keycloak);
+  const { selectedStateId } = useTelemetryState();
   const [searchParams, setSearchParams] = useSearchParams();
   const page = parseInt(searchParams.get("page") || "1", 10);
   const pageSize = 10;
@@ -68,6 +64,7 @@ const DeviceReport = () => {
   } = useQuery<{ data: Device[]; total: number; totalPages: number }>({
     queryKey: [
       "devices",
+      selectedStateId,
       searchQuery,
       page,
       pageSize,
@@ -190,7 +187,6 @@ const DeviceReport = () => {
           </CardContent>
         </Card>
       </div>
-      { isSuper && (
       <Card>
         <CardHeader>
           <CardTitle>User List</CardTitle>
@@ -307,7 +303,7 @@ const DeviceReport = () => {
             )}
           </div>
         </CardContent>
-      </Card> )}
+      </Card>
     </div>
   );
 };
