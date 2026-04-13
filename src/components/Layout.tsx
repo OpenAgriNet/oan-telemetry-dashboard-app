@@ -33,6 +33,7 @@ import {
   Menu,
   ChevronRight,
   PhoneCall,
+  Network,
 } from "lucide-react";
 import {
   DropdownMenu,

@@ -1399,6 +1399,30 @@ export const fetchComprehensiveFeedbackStats = async (
   }
 };
 
+export interface LangfuseToolNode {
+  toolName: string;
+  count: number;
+}
+
+export interface LangfuseCategoryNode {
+  categoryKey: string;
+  count: number;
+  tools: LangfuseToolNode[];
+}
+
+export interface LangfuseQuestionTreeDay {
+  reportDate: string;
+  totalQuestions: number;
+  questionsAgri: number;
+  questionsNonAgri: number;
+  agri: {
+    categories: LangfuseCategoryNode[];
+  };
+  nonAgri: {
+    categories: LangfuseCategoryNode[];
+  };
+}
+
 // Get comprehensive dashboard statistics - OPTIMIZED
 export const fetchDashboardStats = async (
   params: PaginationParams = {},
