@@ -2,10 +2,14 @@ import React, { useState } from "react";
 import { Link, useLocation } from "react-router-dom";
 import { useTheme } from "@/contexts/ThemeContext";
 import { useDateFilter } from "@/contexts/DateFilterContext";
+import { useTelemetryState } from "@/contexts/TelemetryStateContext";
 import { Button } from "@/components/ui/button";
 import { useKeycloak } from "@react-keycloak/web";
 import DateRangePicker from "@/components/dashboard/DateRangePicker";
-import { isSuperAdmin } from "@/utils/roleUtils";
+import {
+  canAccessTabForState,
+  type TelemetryStateId,
+} from "@/utils/roleUtils";
 import {
   Collapsible,
   CollapsibleContent,
@@ -20,16 +24,12 @@ import {
   Sun,
   LayoutDashboard,
   LogOut,
-  UserRound,
-  FileText,
   Activity,
   CalendarIcon,
-  RotateCcw,
   ClipboardCheck,
   AlertTriangle,
   Mic,
   Volume2,
-  Phone,
   Menu,
   ChevronRight,
   PhoneCall,
@@ -41,12 +41,14 @@ import {
   DropdownMenuItem,
   DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu";
-import { Avatar, AvatarFallback } from "@/components/ui/avatar";
+import { Sheet, SheetContent, SheetTrigger } from "@/components/ui/sheet";
 import {
-  Sheet,
-  SheetContent,
-  SheetTrigger,
-} from "@/components/ui/sheet";
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from "@/components/ui/select";
 
 interface LayoutProps {
   children: React.ReactNode;
@@ -54,80 +56,86 @@ interface LayoutProps {
 
 const Layout: React.FC<LayoutProps> = ({ children }) => {
   const { theme, setTheme } = useTheme();
-  const { dateRange, setDateRange, resetDateRange } = useDateFilter();
+  const { dateRange, setDateRange } = useDateFilter();
+  const { allowedStates, isSuper, selectedState, selectedStateId, setSelectedStateId } =
+    useTelemetryState();
   const location = useLocation();
   const [collapsed, setCollapsed] = useState(false);
   const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false);
+  const [chatTelemetryOpen, setChatTelemetryOpen] = useState(true);
   const { keycloak } = useKeycloak();
 
   const handleLogout = () => {
     keycloak.logout();
   };
 
-  // Check if current user is super admin
-  const isSuper = isSuperAdmin(keycloak);
+  const activeState = selectedState ?? allowedStates[0] ?? null;
 
-  const [chatTelemetryOpen, setChatTelemetryOpen] = useState(true);
-
-  // Chat Telemetry children
-  const chatTelemetryChildren = [
+  const allChatTelemetryChildren = [
     {
+      tab: "dashboard",
       name: "Chat Metrics",
       path: "/",
       icon: <LayoutDashboard size={16} />,
     },
     {
+      tab: "users",
       name: "Users",
       path: "/users",
       icon: <Users size={16} />,
     },
     {
+      tab: "sessions",
       name: "Sessions",
       path: "/sessions",
       icon: <Calendar size={16} />,
     },
     {
+      tab: "questions",
       name: "Questions",
       path: "/questions",
       icon: <MessageSquare size={16} />,
     },
     {
-      name: "Langfuse Toolcall",
-      path: "/langfuse-questions",
-      icon: <Network size={16} />,
-    },
-    {
+      tab: "feedback",
       name: "Feedback",
       path: "/feedback",
       icon: <ClipboardCheck size={16} />,
     },
-    // only superadmin can see error details
-    ...(isSuper ? [{
+    {
+      tab: "errors",
       name: "Errors",
       path: "/errors",
-      icon: <AlertTriangle size={16} />
-    }] : []),
+      icon: <AlertTriangle size={16} />,
+    },
     {
+      tab: "asr",
       name: "ASR",
       path: "/asr",
       icon: <Mic size={16} />,
     },
     {
+      tab: "tts",
       name: "TTS",
       path: "/tts",
       icon: <Volume2 size={16} />,
     },
-  ];
+  ] as const;
 
-  // Check if any chat telemetry child is active
+  const chatTelemetryChildren = activeState
+    ? allChatTelemetryChildren.filter((item) =>
+        canAccessTabForState(activeState.id, item.tab),
+      )
+    : [];
+
   const isChatTelemetryActive = chatTelemetryChildren.some(
-    (item) => location.pathname === item.path
+    (item) => location.pathname === item.path,
   );
 
   const renderNavLink = (
     item: { name: string; path: string; icon: React.ReactNode },
     isMobile: boolean,
-    showLabel = true
+    showLabel = true,
   ) => (
     <Link
       to={item.path}
@@ -151,7 +159,9 @@ const Layout: React.FC<LayoutProps> = ({ children }) => {
     <div className="flex flex-col h-full bg-sidebar text-sidebar-foreground">
       <div className="p-4 border-b border-sidebar-border flex justify-between items-center h-[60px]">
         {(!collapsed || isMobile) && (
-          <h2 className="text-lg font-semibold truncate pr-2 mr-2">Bharat Vistaar Insights</h2>
+          <h2 className="text-lg font-semibold truncate pr-2 mr-2">
+            {activeState ? `${activeState.label} Insights` : "Telemetry Insights"}
+          </h2>
         )}
         {!isMobile && (
           <Button
@@ -167,15 +177,20 @@ const Layout: React.FC<LayoutProps> = ({ children }) => {
 
       <nav className="flex-1 overflow-y-auto py-4">
         <ul className="space-y-1 px-2">
-          <li>
-            {renderNavLink(
-              { name: "Unified Metrics", path: "/combined-dashboard", icon: <BarChart3 size={20} /> },
-              isMobile,
-              !collapsed || isMobile
-            )}
-          </li>
+          {isSuper && (
+            <li>
+              {renderNavLink(
+                {
+                  name: "Unified Metrics",
+                  path: "/combined-dashboard",
+                  icon: <BarChart3 size={20} />,
+                },
+                isMobile,
+                !collapsed || isMobile,
+              )}
+            </li>
+          )}
 
-          {/* Chat Telemetry - Collapsible Group */}
           <li>
             {(!collapsed || isMobile) ? (
               <Collapsible
@@ -190,7 +205,9 @@ const Layout: React.FC<LayoutProps> = ({ children }) => {
                         : "text-sidebar-foreground hover:bg-sidebar-accent/50"
                     }`}
                   >
-                    <span className="mr-3"><BarChart3 size={20} /></span>
+                    <span className="mr-3">
+                      <BarChart3 size={20} />
+                    </span>
                     <span className="flex-1">Chat Telemetry</span>
                     <ChevronRight
                       size={16}
@@ -226,7 +243,6 @@ const Layout: React.FC<LayoutProps> = ({ children }) => {
                 </CollapsibleContent>
               </Collapsible>
             ) : (
-              /* Collapsed: show children icons directly */
               <>
                 {chatTelemetryChildren.map((item) => (
                   <Link
@@ -245,23 +261,33 @@ const Layout: React.FC<LayoutProps> = ({ children }) => {
             )}
           </li>
 
-          {/* Call Logs */}
-          <li>
-            {renderNavLink(
-              { name: "Call Logs", path: "/calls", icon: <PhoneCall size={20} /> },
-              isMobile,
-              !collapsed || isMobile
-            )}
-          </li>
+          {isSuper && (
+            <li>
+              {renderNavLink(
+                {
+                  name: "Call Logs",
+                  path: "/calls",
+                  icon: <PhoneCall size={20} />,
+                },
+                isMobile,
+                !collapsed || isMobile,
+              )}
+            </li>
+          )}
 
-          {/* Service Status */}
-          <li>
-            {renderNavLink(
-              { name: "Service Status", path: "/service-status", icon: <Activity size={20} /> },
-              isMobile,
-              !collapsed || isMobile
-            )}
-          </li>
+          {isSuper && (
+            <li>
+              {renderNavLink(
+                {
+                  name: "Service Status",
+                  path: "/service-status",
+                  icon: <Activity size={20} />,
+                },
+                isMobile,
+                !collapsed || isMobile,
+              )}
+            </li>
+          )}
         </ul>
       </nav>
 
@@ -272,13 +298,11 @@ const Layout: React.FC<LayoutProps> = ({ children }) => {
               variant="ghost"
               size="sm"
               className={`w-full hover:bg-sidebar-accent mb-2 ${
-                (collapsed && !isMobile) ? "justify-center" : "justify-start"
+                collapsed && !isMobile ? "justify-center" : "justify-start"
               }`}
             >
               {theme === "dark" ? (
                 <Moon size={20} className="mr-2 flex-shrink-0" />
-              ) : theme === "light" ? (
-                <Sun size={20} className="mr-2 flex-shrink-0" />
               ) : (
                 <Sun size={20} className="mr-2 flex-shrink-0" />
               )}
@@ -302,7 +326,7 @@ const Layout: React.FC<LayoutProps> = ({ children }) => {
               variant="ghost"
               size="sm"
               className={`w-full hover:bg-sidebar-accent ${
-                (collapsed && !isMobile) ? "justify-center" : "justify-start"
+                collapsed && !isMobile ? "justify-center" : "justify-start"
               }`}
               onClick={handleLogout}
             >
@@ -317,7 +341,6 @@ const Layout: React.FC<LayoutProps> = ({ children }) => {
 
   return (
     <div className="flex h-screen overflow-hidden bg-background">
-      {/* Sidebar */}
       <aside
         className={`bg-sidebar text-sidebar-foreground border-r border-sidebar-border transition-all duration-300 ease-in-out hidden md:block ${
           collapsed ? "w-[70px]" : "w-[280px]"
@@ -326,10 +349,8 @@ const Layout: React.FC<LayoutProps> = ({ children }) => {
         {renderSidebarContent(false)}
       </aside>
 
-      {/* Main content */}
       <main className="flex-1 overflow-x-hidden overflow-y-auto">
         <div className="container mx-auto">
-          {/* Header with Global Date Filter and User Profile */}
           <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center py-4 px-0 sm:p-6 border-b mb-2 mt-2 gap-4">
             <div className="flex items-center gap-2 sm:gap-4 w-full sm:w-auto">
               <div className="md:hidden">
@@ -353,32 +374,35 @@ const Layout: React.FC<LayoutProps> = ({ children }) => {
                   dateRange={dateRange}
                   setDateRange={setDateRange}
                 />
+                {activeState && (
+                  <div className="min-w-[180px]">
+                    {isSuper ? (
+                      <Select
+                        value={selectedStateId ?? undefined}
+                        onValueChange={(value) =>
+                          setSelectedStateId(value as TelemetryStateId)
+                        }
+                      >
+                        <SelectTrigger>
+                          <SelectValue placeholder="Select state" />
+                        </SelectTrigger>
+                        <SelectContent>
+                          {allowedStates.map((state) => (
+                            <SelectItem key={state.id} value={state.id}>
+                              {state.label}
+                            </SelectItem>
+                          ))}
+                        </SelectContent>
+                      </Select>
+                    ) : (
+                      <div className="h-10 rounded-md border border-input bg-background px-3 py-2 text-sm flex items-center whitespace-nowrap">
+                        {activeState.label}
+                      </div>
+                    )}
+                  </div>
+                )}
               </div>
             </div>
-
-            <DropdownMenu>
-              {/* <DropdownMenuTrigger asChild> */}
-              {/* <Button variant="ghost" className="relative h-10 w-10 rounded-full">
-                  <Avatar>
-                    <AvatarFallback>
-                      <UserRound className="h-6 w-6" />
-                    </AvatarFallback>
-                  </Avatar>
-                </Button> */}
-              {/* </DropdownMenuTrigger> */}
-              {/* <DropdownMenuContent className="w-56" align="end">
-                <DropdownMenuItem className="flex items-center">
-                  <UserRound className="mr-2 h-4 w-4" />
-                </DropdownMenuItem>
-                <DropdownMenuItem
-                  className="flex items-center text-red-600 focus:text-red-600"
-                  onClick={handleLogout}
-                >
-                  <LogOut className="mr-2 h-4 w-4" />
-                  <span>Log out</span>
-                </DropdownMenuItem>
-              </DropdownMenuContent> */}
-            </DropdownMenu>
           </div>
 
           <div className="py-4 px-0 sm:p-6">{children}</div>

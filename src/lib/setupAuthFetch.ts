@@ -1,5 +1,67 @@
+// import keycloak from './keycloak';
+// import { API_CONFIG } from '../config/environment';
+// import { TELEMETRY_STATE_STORAGE_KEY } from '@/utils/roleUtils';
+
+// // Install a global fetch wrapper that attaches Keycloak JWT to backend API requests
+// export function setupAuthFetch(): void {
+//   if ((window as any).__authFetchInstalled) return;
+
+//   const originalFetch = window.fetch.bind(window);
+
+//   window.fetch = async (input: RequestInfo | URL, init?: RequestInit): Promise<Response> => {
+//     try {
+//       // Resolve URL string from input
+//       const url = typeof input === 'string'
+//         ? input
+//         : (input instanceof URL ? input.toString() : input.url);
+
+//       const shouldAttachAuth = typeof url === 'string' && url.startsWith(API_CONFIG.SERVER_URL);
+
+//       if (shouldAttachAuth && keycloak?.authenticated) {
+//         // Refresh token if close to expiry; ignore errors to avoid blocking requests
+//         try {
+//           await keycloak.updateToken(30);
+//         } catch {
+//           // Best-effort; if refresh fails, continue with existing token
+//         }
+
+//         const token = keycloak?.token;
+//         if (token) {
+//           const mergedHeaders = new Headers(
+//             init?.headers || (input instanceof Request ? input.headers : undefined) || {}
+//           );
+//           mergedHeaders.set('Authorization', `Bearer ${token}`);
+
+//           const selectedState = window.localStorage.getItem(
+//             TELEMETRY_STATE_STORAGE_KEY,
+//           );
+//           if (selectedState) {
+//             mergedHeaders.set('x-telemetry-state', selectedState);
+//           }
+
+//           const newInit: RequestInit = { ...init, headers: mergedHeaders };
+
+//           if (input instanceof Request) {
+//             // Recreate Request to apply new headers
+//             const reqWithAuth = new Request(input, newInit);
+//             return originalFetch(reqWithAuth);
+//           }
+//           return originalFetch(url, newInit);
+//         }
+//       }
+//     } catch {
+//       // In case of any wrapper error, fall back to the original fetch
+//     }
+
+//     return originalFetch(input as any, init as any);
+//   };
+
+//   (window as any).__authFetchInstalled = true;
+// }
+
 import keycloak from './keycloak';
 import { API_CONFIG } from '../config/environment';
+import { TELEMETRY_STATE_STORAGE_KEY } from '@/utils/roleUtils';
 
 // Install a global fetch wrapper that attaches Keycloak JWT to backend API requests
 export function setupAuthFetch(): void {
@@ -10,39 +72,64 @@ export function setupAuthFetch(): void {
   window.fetch = async (input: RequestInfo | URL, init?: RequestInit): Promise<Response> => {
     try {
       // Resolve URL string from input
-      const url = typeof input === 'string'
-        ? input
-        : (input instanceof URL ? input.toString() : input.url);
+      const url =
+        typeof input === 'string'
+          ? input
+          : input instanceof URL
+          ? input.toString()
+          : input.url;
 
-      const shouldAttachAuth = typeof url === 'string' && url.startsWith(API_CONFIG.SERVER_URL);
+      const shouldAttachAuth =
+        typeof url === 'string' && url.startsWith(API_CONFIG.SERVER_URL);
 
-      if (shouldAttachAuth && keycloak?.authenticated) {
-        // Refresh token if close to expiry; ignore errors to avoid blocking requests
+      if (shouldAttachAuth) {
+        // ✅ Ensure Keycloak is initialized and authenticated
+        if (!keycloak || !keycloak.authenticated) {
+          return originalFetch(input as any, init as any);
+        }
+
+        // ✅ Try refreshing token (safe)
         try {
           await keycloak.updateToken(30);
         } catch {
-          // Best-effort; if refresh fails, continue with existing token
+          // Ignore refresh errors
         }
 
-        const token = keycloak?.token;
+        const token = keycloak.token;
+
         if (token) {
           const mergedHeaders = new Headers(
-            init?.headers || (input instanceof Request ? input.headers : undefined) || {}
+            init?.headers ||
+              (input instanceof Request ? input.headers : undefined) ||
+              {}
           );
+
           mergedHeaders.set('Authorization', `Bearer ${token}`);
 
-          const newInit: RequestInit = { ...init, headers: mergedHeaders };
+          // Optional custom header
+          const selectedState = window.localStorage.getItem(
+            TELEMETRY_STATE_STORAGE_KEY
+          );
+          if (selectedState) {
+            mergedHeaders.set('x-telemetry-state', selectedState);
+          }
+
+          const newInit: RequestInit = {
+            ...init,
+            headers: mergedHeaders,
+          };
 
           if (input instanceof Request) {
-            // Recreate Request to apply new headers
             const reqWithAuth = new Request(input, newInit);
             return originalFetch(reqWithAuth);
           }
+
           return originalFetch(url, newInit);
         }
       }
-    } catch {
-      // In case of any wrapper error, fall back to the original fetch
+    } catch (error) {
+      console.error("Auth fetch wrapper error:", error);
+      // fallback to original fetch
     }
 
     return originalFetch(input as any, init as any);
@@ -50,5 +137,3 @@ export function setupAuthFetch(): void {
 
   (window as any).__authFetchInstalled = true;
 }
-
-

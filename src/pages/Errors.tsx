@@ -22,8 +22,7 @@ import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { useDateFilter } from "@/contexts/DateFilterContext";
-import { useKeycloak } from "@react-keycloak/web";
-import { isSuperAdmin } from "@/utils/roleUtils";
+import { useTelemetryState } from "@/contexts/TelemetryStateContext";
 import { buildDateRangeParams } from "@/lib/utils";
 import {
   fetchErrors,
@@ -34,9 +33,9 @@ import {
 import TablePagination from "@/components/TablePagination";
 
 const ErrorsPage = () => {
-  const { keycloak } = useKeycloak();
   const [searchTerm, setSearchTerm] = useState("");
   const { dateRange } = useDateFilter();
+  const { selectedStateId } = useTelemetryState();
   const [page, setPage] = useState(1);
   const pageSize = 10;
   const [sortConfig, setSortConfig] = useState({
@@ -83,6 +82,7 @@ const ErrorsPage = () => {
     useQuery({
       queryKey: [
         "error-stats",
+        selectedStateId,
         dateRange.from?.toISOString(),
         dateRange.to?.toISOString(),
       ],
@@ -115,6 +115,7 @@ const ErrorsPage = () => {
   } = useQuery({
     queryKey: [
       "errors",
+      selectedStateId,
       page,
       pageSize,
       searchTerm,
@@ -170,22 +171,6 @@ const ErrorsPage = () => {
     gcTime: 5 * 60 * 1000,
     refetchOnMount: false,
   });
-
-  // Check if user has super-admin role (after all hooks)
-  if (!isSuperAdmin(keycloak)) {
-    return (
-      <div className="flex justify-center items-center p-8 bg-destructive/10 border border-destructive/20 rounded-lg">
-        <div className="text-center">
-          <AlertTriangle className="h-12 w-12 text-destructive mx-auto mb-4" />
-          <p className="text-destructive font-medium mb-2">Access Denied</p>
-          <p className="text-destructive/80 text-sm">
-            You don't have permission to access this page. Only super-admin
-            users can view errors.
-          </p>
-        </div>
-      </div>
-    );
-  }
 
   const handleApplyFilters = () => {
     refetch();

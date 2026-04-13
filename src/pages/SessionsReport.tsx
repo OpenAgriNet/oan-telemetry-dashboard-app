@@ -47,16 +47,13 @@ import {
 } from "lucide-react";
 import TablePagination from "@/components/TablePagination";
 import { formatUtcDateWithPMCorrection, formatUTCToIST } from "@/lib/utils";
-import { useKeycloak } from "@react-keycloak/web";
-import { isSuperAdmin } from "@/utils/roleUtils";
+import { useTelemetryState } from "@/contexts/TelemetryStateContext";
 
 const SessionsReport = () => {
   const navigate = useNavigate();
   const [searchParams, setSearchParams] = useSearchParams();
   const { dateRange } = useDateFilter();
-
-  const { keycloak } = useKeycloak();
-  const isSuper = isSuperAdmin(keycloak);
+  const { selectedStateId } = useTelemetryState();
 
   // Get pagination state from URL params
   const page = parseInt(searchParams.get("page") || "1", 10);
@@ -123,6 +120,7 @@ const SessionsReport = () => {
   } = useQuery({
     queryKey: [
       "sessions",
+      selectedStateId,
       selectedUser,
       dateRange.from?.toISOString(),
       dateRange.to?.toISOString(),
@@ -330,7 +328,6 @@ const SessionsReport = () => {
         </Card> */}
       </div>
 
-     {isSuper && (
       <Card>
         <CardHeader>
           <CardTitle>Recent Sessions</CardTitle>
@@ -507,7 +504,7 @@ const SessionsReport = () => {
             )}
           </div>
         </CardContent>
-      </Card> )}
+      </Card>
     </div>
   );
 };

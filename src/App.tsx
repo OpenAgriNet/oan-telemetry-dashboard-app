@@ -2,13 +2,16 @@ import { Toaster } from "@/components/ui/toaster";
 import { Toaster as Sonner } from "@/components/ui/sonner";
 import { TooltipProvider } from "@/components/ui/tooltip";
 import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
-import { BrowserRouter, Routes, Route } from "react-router-dom";
+import { BrowserRouter, Navigate, Route, Routes } from "react-router-dom";
 import { ThemeProvider } from "@/contexts/ThemeContext";
 import { DateFilterProvider } from "@/contexts/DateFilterContext";
 import { StatsProvider } from "@/contexts/StatsContext";
+import {
+  TelemetryStateProvider,
+  useTelemetryState,
+} from "@/contexts/TelemetryStateContext";
 import Layout from "@/components/Layout";
 import Dashboard from "./pages/Dashboard";
-import UsersReport from "./pages/UsersReport";
 import SessionsReport from "./pages/SessionsReport";
 import QuestionsReport from "./pages/QuestionsReport";
 import Analytics from "./pages/Analytics";
@@ -20,10 +23,12 @@ import Errors from "./pages/Errors";
 import ErrorDetails from "./pages/ErrorDetails";
 import Content from "./pages/Content";
 import ServiceStatus from "./pages/ServiceStatus";
-import HealthMonitor from "./pages/HealthMonitor";
 import { useKeycloak } from "@react-keycloak/web";
 import QuestionsDetails from "./pages/QuestionsDetails";
-import { isSuperAdmin } from "@/utils/roleUtils";
+import {
+  canAccessTabForState,
+  isSuperAdmin,
+} from "@/utils/roleUtils";
 import DeviceReport from "./pages/DeviceReport";
 import AsrReport from "./pages/AsrReport";
 import TtsReport from "./pages/TtsReport";
@@ -41,10 +46,224 @@ const queryClient = new QueryClient({
   },
 });
 
+type ChatTelemetryTab =
+  | "dashboard"
+  | "users"
+  | "sessions"
+  | "questions"
+  | "feedback"
+  | "errors"
+  | "asr"
+  | "tts";
+
+const AccessDenied = () => (
+  <div className="min-h-screen bg-background text-foreground flex items-center justify-center px-6">
+    <div className="max-w-md text-center space-y-3">
+      <h1 className="text-2xl font-semibold">Access Restricted</h1>
+      <p className="text-muted-foreground">
+        Your current role does not have access to any telemetry state in this
+        environment.
+      </p>
+    </div>
+  </div>
+);
+
+const AppLayout = ({ children }: { children: React.ReactNode }) => (
+  <Layout>{children}</Layout>
+);
+
+const TelemetryRoute = ({
+  children,
+  requiredTab,
+}: {
+  children: React.ReactNode;
+  requiredTab: ChatTelemetryTab;
+}) => {
+  const { selectedState } = useTelemetryState();
+
+  if (!selectedState) {
+    return <AccessDenied />;
+  }
+
+  if (!canAccessTabForState(selectedState.id, requiredTab)) {
+    return <Navigate to="/" replace />;
+  }
+
+  return <AppLayout>{children}</AppLayout>;
+};
+
+const SuperAdminRoute = ({ children }: { children: React.ReactNode }) => {
+  const { keycloak } = useKeycloak();
+
+  if (!isSuperAdmin(keycloak)) {
+    return <Navigate to="/" replace />;
+  }
+
+  return <AppLayout>{children}</AppLayout>;
+};
+
+const AppRoutes = () => {
+  const { allowedStates } = useTelemetryState();
+
+  if (allowedStates.length === 0) {
+    return <AccessDenied />;
+  }
+
+  return (
+    <Routes>
+      <Route
+        path="/"
+        element={
+          <TelemetryRoute requiredTab="dashboard">
+            <Dashboard />
+          </TelemetryRoute>
+        }
+      />
+      <Route
+        path="/users"
+        element={
+          <TelemetryRoute requiredTab="users">
+            <DeviceReport />
+          </TelemetryRoute>
+        }
+      />
+      <Route path="/devices" element={<Navigate to="/users" replace />} />
+      <Route
+        path="/sessions"
+        element={
+          <TelemetryRoute requiredTab="sessions">
+            <SessionsReport />
+          </TelemetryRoute>
+        }
+      />
+      <Route
+        path="/questions"
+        element={
+          <TelemetryRoute requiredTab="questions">
+            <QuestionsReport />
+          </TelemetryRoute>
+        }
+      />
+      <Route
+        path="/questions/:id"
+        element={
+          <TelemetryRoute requiredTab="questions">
+            <QuestionsDetails />
+          </TelemetryRoute>
+        }
+      />
+      <Route
+        path="/analytics"
+        element={
+          <AppLayout>
+            <Analytics />
+          </AppLayout>
+        }
+      />
+      <Route
+        path="/sessions/:sessionId"
+        element={
+          <TelemetryRoute requiredTab="sessions">
+            <SessionDetails />
+          </TelemetryRoute>
+        }
+      />
+      <Route
+        path="/feedback"
+        element={
+          <TelemetryRoute requiredTab="feedback">
+            <Feedback />
+          </TelemetryRoute>
+        }
+      />
+      <Route
+        path="/feedback/:feedbackId"
+        element={
+          <TelemetryRoute requiredTab="feedback">
+            <FeedbackDetails />
+          </TelemetryRoute>
+        }
+      />
+      <Route
+        path="/errors"
+        element={
+          <TelemetryRoute requiredTab="errors">
+            <Errors />
+          </TelemetryRoute>
+        }
+      />
+      <Route
+        path="/errors/:errorId"
+        element={
+          <TelemetryRoute requiredTab="errors">
+            <ErrorDetails />
+          </TelemetryRoute>
+        }
+      />
+      <Route
+        path="/asr"
+        element={
+          <TelemetryRoute requiredTab="asr">
+            <AsrReport />
+          </TelemetryRoute>
+        }
+      />
+      <Route
+        path="/tts"
+        element={
+          <TelemetryRoute requiredTab="tts">
+            <TtsReport />
+          </TelemetryRoute>
+        }
+      />
+      <Route
+        path="/calls"
+        element={
+          <SuperAdminRoute>
+            <CallsReport />
+          </SuperAdminRoute>
+        }
+      />
+      <Route
+        path="/combined-dashboard"
+        element={
+          <SuperAdminRoute>
+            <CombinedDashboard />
+          </SuperAdminRoute>
+        }
+      />
+      <Route
+        path="/calls/*"
+        element={
+          <SuperAdminRoute>
+            <CallDetails />
+          </SuperAdminRoute>
+        }
+      />
+      <Route
+        path="/content"
+        element={
+          <AppLayout>
+            <Content />
+          </AppLayout>
+        }
+      />
+      <Route
+        path="/service-status"
+        element={
+          <SuperAdminRoute>
+            <ServiceStatus />
+          </SuperAdminRoute>
+        }
+      />
+      <Route path="*" element={<NotFound />} />
+    </Routes>
+  );
+};
+
 const App = () => {
   const { keycloak, initialized } = useKeycloak();
 
-  // Show loading state while Keycloak is initializing
   if (!initialized) {
     return (
       <div className=" bg-foreground/80 flex justify-center items-center h-screen text-background">
@@ -53,211 +272,25 @@ const App = () => {
     );
   }
 
-  // If not authenticated, don't render the app
   if (!keycloak.authenticated) {
     return null;
   }
-
-  // Check if current user is super admin
-  const isSuper = isSuperAdmin(keycloak);
 
   return (
     <QueryClientProvider client={queryClient}>
       <ThemeProvider>
         <DateFilterProvider>
-          <StatsProvider>
-            <TooltipProvider>
-              <Toaster />
-              <Sonner />
-              <BrowserRouter>
-                <Routes>
-                  <Route
-                    path="/"
-                    element={
-                      <Layout>
-                        <Dashboard />
-                      </Layout>
-                    }
-                  />
-                  <Route
-                    path="/"
-                    element={
-                      <Layout>
-                        <DeviceReport />
-                      </Layout>
-                    }
-                  />
-                  <Route
-                    path="/users"
-                    element={
-                      <Layout>
-                        <DeviceReport />
-                      </Layout>
-                    }
-                  />
-                  <Route
-                    path="/devices"
-                    element={
-                      <Layout>
-                        <DeviceReport />
-                      </Layout>
-                    }
-                  />
-                  <Route
-                    path="/sessions"
-                    element={
-                      <Layout>
-                        <SessionsReport />
-                      </Layout>
-                    }
-                  />
-                  <Route
-                    path="/questions"
-                    element={
-                      <Layout>
-                        <QuestionsReport />
-                      </Layout>
-                    }
-                  />
-                  <Route
-                    path="/langfuse-questions"
-                    element={
-                      <Layout>
-                        <LangfuseQuestions />
-                      </Layout>
-                    }
-                  />
-                  {isSuper && (
-                  <Route
-                    path="/questions/:id"
-                    element={
-                      <Layout>
-                        <QuestionsDetails />
-                      </Layout>
-                    }
-                  />)}
-                  <Route
-                    path="/analytics"
-                    element={
-                      <Layout>
-                        <Analytics />
-                      </Layout>
-                    }
-                  />
-                  {isSuper && ( 
-                  <Route
-                    path="/sessions/:sessionId"
-                    element={
-                      <Layout>
-                        <SessionDetails />
-                      </Layout>
-                    }
-                  /> )}
-                  <Route
-                    path="/feedback"
-                    element={
-                      <Layout>
-                        <Feedback />
-                      </Layout>
-                    }
-                  />
-                  {isSuper && (
-                  <Route
-                    path="/feedback/:feedbackId"
-                    element={
-                      <Layout>
-                        <FeedbackDetails />
-                      </Layout>
-                    }
-                  /> )}
-                  <Route
-                    path="/asr"
-                    element={
-                      <Layout>
-                        <AsrReport />
-                      </Layout>
-                    }
-                  />
-                  <Route
-                    path="/tts"
-                    element={
-                      <Layout>
-                        <TtsReport />
-                      </Layout>
-                    }
-                  />
-                  <Route
-                    path="/calls"
-                    element={
-                      <Layout>
-                        <CallsReport />
-                      </Layout>
-                    }
-                  />
-                  <Route
-                    path="/combined-dashboard"
-                    element={
-                      <Layout>
-                        <CombinedDashboard />
-                      </Layout>
-                    }
-                  />
-                  {isSuper && (
-                  <Route
-                    path="/calls/*"
-                    element={
-                      <Layout>
-                        <CallDetails />
-                      </Layout>
-                    }
-                  /> )}
-                  <Route
-                    path="/content"
-                    element={
-                      <Layout>
-                        <Content />
-                      </Layout>
-                    }
-                  />
-                  <Route
-                    path="/service-status"
-                    element={
-                      <Layout>
-                        <ServiceStatus />
-                      </Layout>
-                    }
-                  />
-                  {/* <Route path="/health-monitor" element={
-                <Layout>
-                  <HealthMonitor />
-                </Layout>
-              } /> */}
-                  {/* Conditionally render error routes for super-admin users only */}
-                  {isSuper && (
-                    <>
-                      <Route
-                        path="/errors"
-                        element={
-                          <Layout>
-                            <Errors />
-                          </Layout>
-                        }
-                      />
-                      <Route
-                        path="/errors/:errorId"
-                        element={
-                          <Layout>
-                            <ErrorDetails />
-                          </Layout>
-                        }
-                      />
-                    </>
-                  )}
-                  <Route path="*" element={<NotFound />} />
-                </Routes>
-              </BrowserRouter>
-            </TooltipProvider>
-          </StatsProvider>
+          <TooltipProvider>
+            <Toaster />
+            <Sonner />
+            <BrowserRouter>
+              <TelemetryStateProvider>
+                <StatsProvider>
+                  <AppRoutes />
+                </StatsProvider>
+              </TelemetryStateProvider>
+            </BrowserRouter>
+          </TooltipProvider>
         </DateFilterProvider>
       </ThemeProvider>
     </QueryClientProvider>
