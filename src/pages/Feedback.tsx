@@ -25,7 +25,7 @@ import {
   AlertCircle,
   RotateCcw,
 } from "lucide-react";
-import { format } from "date-fns";
+import { formatInTimeZone } from "date-fns-tz";
 import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
 import {
@@ -38,14 +38,70 @@ import {
 import { useDateFilter } from "@/contexts/DateFilterContext";
 import {
   fetchFeedback,
-  fetchUsers,
+  type Feedback,
   type PaginationParams,
-  type UserPaginationParams,
 } from "@/services/api";
 import TablePagination from "@/components/TablePagination";
 import { buildDateRangeParams } from "@/lib/utils";
 import { useKeycloak } from "@react-keycloak/web";
 import { isSuperAdmin } from "@/utils/roleUtils";
+
+const getFeedbackTimestamp = (feedback: Feedback): number | null => {
+  const values = [feedback.timestamp, feedback.date];
+
+  for (const value of values) {
+    if (!value) continue;
+
+    const numericValue = Number(value);
+    if (!Number.isNaN(numericValue) && numericValue > 0) {
+      return numericValue;
+    }
+
+    const normalizedValue =
+      typeof value === "string" && value.includes(" IST")
+        ? value.replace(" IST", "+05:30")
+        : value;
+    const parsedValue = Date.parse(normalizedValue);
+
+    if (!Number.isNaN(parsedValue)) {
+      return parsedValue;
+    }
+  }
+
+  return null;
+};
+
+const formatFeedbackDate = (
+  feedback: Feedback,
+  outputFormat = "yyyy-MM-dd HH:mm:ss 'IST'",
+): string => {
+  const timestamp = getFeedbackTimestamp(feedback);
+
+  if (timestamp === null) {
+    return feedback.date || "N/A";
+  }
+
+  return formatInTimeZone(
+    new Date(timestamp),
+    "Asia/Kolkata",
+    outputFormat,
+  );
+};
+
+const getFeedbackSortValue = (feedback: Feedback, key: string) => {
+  switch (key) {
+    case "ets":
+      return getFeedbackTimestamp(feedback) ?? 0;
+    case "user_id":
+      return (feedback.user || feedback.userId || "").toLowerCase();
+    case "feedbacktext":
+      return (feedback.feedback || "").toLowerCase();
+    case "feedbacktype":
+      return (feedback.rating || "").toLowerCase();
+    default:
+      return feedback[key] ?? "";
+  }
+};
 
 const FeedbackPage = () => {
   const [searchParams, setSearchParams] = useSearchParams();
@@ -61,7 +117,7 @@ const FeedbackPage = () => {
   const [searchTerm, setSearchTerm] = useState("");
   const [selectedUser, setSelectedUser] = useState("all");
   const [sortConfig, setSortConfig] = useState({
-    key: "created_at",
+    key: "ets",
     direction: "desc",
   });
   const [selectedSource, setSelectedSource] = useState("all");
@@ -191,12 +247,8 @@ const FeedbackPage = () => {
 
       // Client-side sorting
       const sortedData = [...result.data].sort((a, b) => {
-        let aValue = a[sortConfig.key] ?? "";
-        let bValue = b[sortConfig.key] ?? "";
-        if (sortConfig.key === "date") {
-          aValue = new Date(String(aValue)).getTime();
-          bValue = new Date(String(bValue)).getTime();
-        }
+        const aValue = getFeedbackSortValue(a, sortConfig.key);
+        const bValue = getFeedbackSortValue(b, sortConfig.key);
         if (aValue < bValue) return sortConfig.direction === "asc" ? -1 : 1;
         if (aValue > bValue) return sortConfig.direction === "asc" ? 1 : -1;
         return 0;
@@ -470,10 +522,10 @@ const FeedbackPage = () => {
                   <TableRow>
                     <TableHead
                       className="cursor-pointer hover:bg-muted/50"
-                      onClick={() => handleSort("created_at")}
+                      onClick={() => handleSort("ets")}
                     >
                       Date
-                      <SortIndicator columnKey="created_at" />
+                      <SortIndicator columnKey="ets" />
                     </TableHead>
                     <TableHead
                       className="cursor-pointer hover:bg-muted/50"
@@ -525,8 +577,7 @@ const FeedbackPage = () => {
                       className="hover:bg-muted/30"
                     >
                       <TableCell>
-                        {feedback.date}
-                        {/* {format(new Date(feedback.date), "MMM dd, yyyy")} */}
+                        {formatFeedbackDate(feedback)}
                       </TableCell>
                       <TableCell>
                         <code className="relative rounded bg-muted px-[0.3rem] py-[0.2rem] font-mono text-sm">

@@ -18,7 +18,7 @@ import {
   RefreshCw,
   AlertCircle,
 } from "lucide-react";
-import { format } from "date-fns";
+import { formatInTimeZone } from "date-fns-tz";
 import { Button } from "@/components/ui/button";
 import { fetchFeedbackById, fetchTranslation } from "@/services/api";
 import users from "@/data/users.json";
@@ -28,6 +28,50 @@ import remarkGfm from "remark-gfm";
 import rehypeRaw from "rehype-raw";
 import type { Components } from "react-markdown";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
+
+const getFeedbackTimestamp = (
+  feedback: { timestamp?: string; date?: string },
+): number | null => {
+  const values = [feedback.timestamp, feedback.date];
+
+  for (const value of values) {
+    if (!value) continue;
+
+    const numericValue = Number(value);
+    if (!Number.isNaN(numericValue) && numericValue > 0) {
+      return numericValue;
+    }
+
+    const normalizedValue =
+      typeof value === "string" && value.includes(" IST")
+        ? value.replace(" IST", "+05:30")
+        : value;
+    const parsedValue = Date.parse(normalizedValue);
+
+    if (!Number.isNaN(parsedValue)) {
+      return parsedValue;
+    }
+  }
+
+  return null;
+};
+
+const formatFeedbackDate = (
+  feedback: { timestamp?: string; date?: string },
+  outputFormat = "MMM dd, yyyy",
+): string => {
+  const timestamp = getFeedbackTimestamp(feedback);
+
+  if (timestamp === null) {
+    return feedback.date || "N/A";
+  }
+
+  return formatInTimeZone(
+    new Date(timestamp),
+    "Asia/Kolkata",
+    outputFormat,
+  );
+};
 
 const FeedbackDetails = () => {
   const { feedbackId } = useParams();
@@ -267,7 +311,7 @@ const FeedbackDetails = () => {
           </CardHeader>
           <CardContent>
             <div className="text-lg font-bold">
-              {format(new Date(feedback.date), "MMM dd, yyyy")}
+              {formatFeedbackDate(feedback)}
             </div>
           </CardContent>
         </Card>

@@ -1172,6 +1172,7 @@ export const fetchFeedback = async (
       (item: FeedbackSessionAPIResponse) => ({
         id: item.id,
         date: item.date || item.timestamp || new Date().toISOString(),
+        timestamp: item.timestamp,
         question: item.question || "",
         answer: item.answer || "",
         user: item.user || "Unknown",
@@ -1232,7 +1233,9 @@ export const fetchFeedbackById = async (
 
     return {
       id: feedbackData.id || id,
-      date: feedbackData.created_at || new Date().toISOString(),
+      date: feedbackData.ets
+        ? new Date(Number(feedbackData.ets)).toISOString()
+        : feedbackData.created_at || new Date().toISOString(),
       question: feedbackData.questiontext || "",
       answer: feedbackData.answertext || "",
       user: feedbackData.user_id || "Unknown",
@@ -1240,6 +1243,7 @@ export const fetchFeedbackById = async (
       feedback: feedbackData.feedbacktext || "",
       sessionId: feedbackData.session_id || "",
       userId: feedbackData.user_id || "",
+      timestamp: feedbackData.ets ? String(feedbackData.ets) : undefined,
       feedbackSource: feedbackData.feedback_source || 'chat',
       channel: feedbackData.channel || "",
     };
