@@ -53,6 +53,7 @@ function formatDatetime(dt: string | null): string {
   if (!dt) return "—";
   try {
     return new Date(dt).toLocaleString("en-IN", {
+      timeZone: "Asia/Kolkata",
       day: "2-digit",
       month: "short",
       year: "numeric",
@@ -69,6 +70,7 @@ function formatDataAvailableUpto(dt: string | null): string {
   if (!dt) return "—";
   try {
     return new Date(dt).toLocaleString("en-IN", {
+      timeZone: "Asia/Kolkata",
       day: "2-digit",
       month: "short",
       year: "numeric",
@@ -260,8 +262,8 @@ const CallsReport = () => {
         </Button>
       </div>
 
-      {/* Disclaimer */}
-      <div className="flex items-start gap-2 rounded-lg border border-blue-200 bg-blue-50 px-4 py-3 text-sm text-blue-800 dark:border-blue-800/50 dark:bg-blue-950/30 dark:text-blue-300">
+      {/* TODO: Uncomment after migration - disclaimer about data freshness */}
+      {/* <div className="flex items-start gap-2 rounded-lg border border-blue-200 bg-blue-50 px-4 py-3 text-sm text-blue-800 dark:border-blue-800/50 dark:bg-blue-950/30 dark:text-blue-300">
         <AlertCircle className="h-4 w-4 mt-0.5 flex-shrink-0" />
         <p>
           This data is updated once a day and is not live. The information shown here may not reflect the most recent activity.{" "}
@@ -269,7 +271,7 @@ const CallsReport = () => {
             ? `Data available only up to ${formatDataAvailableUpto(latestCallTimestamp)}.`
             : "Latest available call log date is currently unavailable."}
         </p>
-      </div>
+      </div> */}
 
       {/* Stat Cards */}
       <div className="grid grid-cols-2 gap-3 sm:gap-4 md:grid-cols-5">

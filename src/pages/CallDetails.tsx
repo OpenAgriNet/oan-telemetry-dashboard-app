@@ -34,6 +34,7 @@ function formatDatetime(dt: string | null): string {
   if (!dt) return "—";
   try {
     return new Date(dt).toLocaleString("en-IN", {
+      timeZone: "Asia/Kolkata",
       day: "2-digit",
       month: "short",
       year: "numeric",
