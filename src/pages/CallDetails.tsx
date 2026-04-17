@@ -30,19 +30,20 @@ function formatDuration(seconds: number | null): string {
   return `${mins}m ${secs}s`;
 }
 
+const MONTH_NAMES = ["Jan", "Feb", "Mar", "Apr", "May", "Jun", "Jul", "Aug", "Sep", "Oct", "Nov", "Dec"];
+
+/** Parse an IST timestamp string (from backend) and format for display.
+ *  Backend returns IST as 'YYYY-MM-DDTHH:MM:SS.mmm' without timezone suffix. */
 function formatDatetime(dt: string | null): string {
   if (!dt) return "—";
   try {
-    return new Date(dt).toLocaleString("en-IN", {
-      timeZone: "Asia/Kolkata",
-      day: "2-digit",
-      month: "short",
-      year: "numeric",
-      hour: "2-digit",
-      minute: "2-digit",
-      second: "2-digit",
-      hour12: true,
-    });
+    const m = dt.match(/^(\d{4})-(\d{2})-(\d{2})T(\d{2}):(\d{2}):(\d{2})/);
+    if (!m) return dt;
+    const [, year, month, day, hours, minutes, seconds] = m;
+    const h = parseInt(hours, 10);
+    const hour12 = h % 12 || 12;
+    const ampm = h < 12 ? "am" : "pm";
+    return `${day} ${MONTH_NAMES[parseInt(month, 10) - 1]} ${year}, ${hour12.toString().padStart(2, "0")}:${minutes}:${seconds} ${ampm}`;
   } catch {
     return dt;
   }
