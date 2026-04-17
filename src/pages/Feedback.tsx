@@ -25,7 +25,7 @@ import {
   AlertCircle,
   RotateCcw,
 } from "lucide-react";
-import { format } from "date-fns";
+import { formatInTimeZone } from "date-fns-tz";
 import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
 import {
@@ -38,14 +38,70 @@ import {
 import { useDateFilter } from "@/contexts/DateFilterContext";
 import {
   fetchFeedback,
-  fetchUsers,
+  type Feedback,
   type PaginationParams,
-  type UserPaginationParams,
 } from "@/services/api";
 import TablePagination from "@/components/TablePagination";
 import { buildDateRangeParams } from "@/lib/utils";
 import { useKeycloak } from "@react-keycloak/web";
 import { isSuperAdmin } from "@/utils/roleUtils";
+
+const getFeedbackTimestamp = (feedback: Feedback): number | null => {
+  const values = [feedback.timestamp, feedback.date];
+
+  for (const value of values) {
+    if (!value) continue;
+
+    const numericValue = Number(value);
+    if (!Number.isNaN(numericValue) && numericValue > 0) {
+      return numericValue;
+    }
+
+    const normalizedValue =
+      typeof value === "string" && value.includes(" IST")
+        ? value.replace(" IST", "+05:30")
+        : value;
+    const parsedValue = Date.parse(normalizedValue);
+
+    if (!Number.isNaN(parsedValue)) {
+      return parsedValue;
+    }
+  }
+
+  return null;
+};
+
+const formatFeedbackDate = (
+  feedback: Feedback,
+  outputFormat = "yyyy-MM-dd HH:mm:ss 'IST'",
+): string => {
+  const timestamp = getFeedbackTimestamp(feedback);
+
+  if (timestamp === null) {
+    return feedback.date || "N/A";
+  }
+
+  return formatInTimeZone(
+    new Date(timestamp),
+    "Asia/Kolkata",
+    outputFormat,
+  );
+};
+
+const getFeedbackSortValue = (feedback: Feedback, key: string) => {
+  switch (key) {
+    case "ets":
+      return getFeedbackTimestamp(feedback) ?? 0;
+    case "user_id":
+      return (feedback.user || feedback.userId || "").toLowerCase();
+    case "feedbacktext":
+      return (feedback.feedback || "").toLowerCase();
+    case "feedbacktype":
+      return (feedback.rating || "").toLowerCase();
+    default:
+      return feedback[key] ?? "";
+  }
+};
 
 const FeedbackPage = () => {
   const [searchParams, setSearchParams] = useSearchParams();
@@ -61,9 +117,12 @@ const FeedbackPage = () => {
   const [searchTerm, setSearchTerm] = useState("");
   const [selectedUser, setSelectedUser] = useState("all");
   const [sortConfig, setSortConfig] = useState({
-    key: "created_at",
+    key: "ets",
     direction: "desc",
   });
+  const [selectedSource, setSelectedSource] = useState("all");
+  const [selectedFeedbackType, setSelectedFeedbackType] = useState("all");
+
 
   // Reset page when filters change
   const resetPage = () => {
@@ -93,10 +152,22 @@ const FeedbackPage = () => {
     resetPage();
   };
 
+  const handleSourceChange = (value: string) => {
+    setSelectedSource(value);
+    resetPage();
+  };
+
+  const handleFeedbackTypeChange = (value: string) => {
+    setSelectedFeedbackType(value);
+    resetPage();
+  };
+
   const handleResetFilters = () => {
     setSearchTerm("");
     setPendingSearch("");
     setSelectedUser("all");
+    setSelectedSource("all");
+    setSelectedFeedbackType("all");
     const newParams = new URLSearchParams();
     newParams.set("page", "1");
     setSearchParams(newParams);
@@ -143,6 +214,8 @@ const FeedbackPage = () => {
       dateRange.to?.toISOString(),
       sortConfig.key,
       sortConfig.direction,
+      selectedSource,
+      selectedFeedbackType,
     ],
     enabled: dateRange.from !== undefined && dateRange.to !== undefined,
     queryFn: async () => {
@@ -160,23 +233,22 @@ const FeedbackPage = () => {
        const dateParams = buildDateRangeParams(dateRange);
             if (dateParams.startDate) params.startDate = dateParams.startDate;
             if (dateParams.endDate) params.endDate = dateParams.endDate;
-      
+
       if(sortConfig.key){
         params.sortBy = sortConfig.key;
         params.sortOrder = sortConfig.direction as 'asc' | 'desc';
-      }      
+      }
 
+      // Add feedback-specific filters
+      if (selectedSource !== 'all') params.feedbackSource = selectedSource;
+      if (selectedFeedbackType !== 'all') params.feedbackType = selectedFeedbackType;
       console.log("Fetching feedback with params:", params);
       const result = await fetchFeedback(params);
 
       // Client-side sorting
       const sortedData = [...result.data].sort((a, b) => {
-        let aValue = a[sortConfig.key] ?? "";
-        let bValue = b[sortConfig.key] ?? "";
-        if (sortConfig.key === "date") {
-          aValue = new Date(String(aValue)).getTime();
-          bValue = new Date(String(bValue)).getTime();
-        }
+        const aValue = getFeedbackSortValue(a, sortConfig.key);
+        const bValue = getFeedbackSortValue(b, sortConfig.key);
         if (aValue < bValue) return sortConfig.direction === "asc" ? -1 : 1;
         if (aValue > bValue) return sortConfig.direction === "asc" ? 1 : -1;
         return 0;
@@ -365,6 +437,31 @@ const FeedbackPage = () => {
               </div>
             </div>
 
+            <div className="flex flex-col sm:flex-row gap-3">
+              <Select value={selectedSource} onValueChange={handleSourceChange}>
+                <SelectTrigger className="w-full sm:w-[150px]">
+                  <SelectValue placeholder="Source" />
+                </SelectTrigger>
+                <SelectContent>
+                  <SelectItem value="all">All Sources</SelectItem>
+                  <SelectItem value="chat">Chat</SelectItem>
+                  <SelectItem value="voice">Voice</SelectItem>
+                </SelectContent>
+              </Select>
+
+              <Select value={selectedFeedbackType} onValueChange={handleFeedbackTypeChange}>
+                <SelectTrigger className="w-full sm:w-[150px]">
+                  <SelectValue placeholder="Type" />
+                </SelectTrigger>
+                <SelectContent>
+                  <SelectItem value="all">All Types</SelectItem>
+                  <SelectItem value="like">Like</SelectItem>
+                  <SelectItem value="dislike">Dislike</SelectItem>
+                </SelectContent>
+              </Select>
+
+            </div>
+
             {isLoading ? (
               <div className="flex justify-center items-center p-12 bg-muted/30 rounded-lg">
                 <div className="text-center">
@@ -383,6 +480,8 @@ const FeedbackPage = () => {
                 <p className="text-sm text-muted-foreground/80 mb-4">
                   {searchTerm ||
                   selectedUser !== "all" ||
+                  selectedSource !== "all" ||
+                  selectedFeedbackType !== "all" ||
                   dateRange.from ||
                   dateRange.to
                     ? "Try adjusting your filters to see more results."
@@ -390,6 +489,8 @@ const FeedbackPage = () => {
                 </p>
                 {(searchTerm ||
                   selectedUser !== "all" ||
+                  selectedSource !== "all" ||
+                  selectedFeedbackType !== "all" ||
                   dateRange.from ||
                   dateRange.to) && (
                   <Button
@@ -421,10 +522,10 @@ const FeedbackPage = () => {
                   <TableRow>
                     <TableHead
                       className="cursor-pointer hover:bg-muted/50"
-                      onClick={() => handleSort("created_at")}
+                      onClick={() => handleSort("ets")}
                     >
                       Date
-                      <SortIndicator columnKey="created_at" />
+                      <SortIndicator columnKey="ets" />
                     </TableHead>
                     <TableHead
                       className="cursor-pointer hover:bg-muted/50"
@@ -433,20 +534,24 @@ const FeedbackPage = () => {
                       User
                       <SortIndicator columnKey="user_id" />
                     </TableHead>
-                    <TableHead
-                      // className="cursor-pointer hover:bg-muted/50"
-                      // onClick={() => handleSort("question")}
-                    >
-                      Question
-                      {/* <SortIndicator columnKey="question" /> */}
-                    </TableHead>
-                    <TableHead
-                      // className="cursor-pointer hover:bg-muted/50"
-                      // onClick={() => handleSort("answer")}
-                    >
-                      Answer
-                      {/* <SortIndicator columnKey="answer" /> */}
-                    </TableHead>
+                    {selectedSource !== 'voice' && (
+                      <>
+                        <TableHead
+                          // className="cursor-pointer hover:bg-muted/50"
+                          // onClick={() => handleSort("question")}
+                        >
+                          Question
+                          {/* <SortIndicator columnKey="question" /> */}
+                        </TableHead>
+                        <TableHead
+                          // className="cursor-pointer hover:bg-muted/50"
+                          // onClick={() => handleSort("answer")}
+                        >
+                          Answer
+                          {/* <SortIndicator columnKey="answer" /> */}
+                        </TableHead>
+                      </>
+                    )}
                     <TableHead
                       className="cursor-pointer hover:bg-muted/50"
                       // onClick={() => handleSort("feedbacktype")}
@@ -461,6 +566,7 @@ const FeedbackPage = () => {
                       Feedback
                       <SortIndicator columnKey="feedbacktext" />
                     </TableHead>
+                    <TableHead>Source</TableHead>
                     <TableHead>Details</TableHead>
                   </TableRow>
                 </TableHeader>
@@ -471,24 +577,27 @@ const FeedbackPage = () => {
                       className="hover:bg-muted/30"
                     >
                       <TableCell>
-                        {feedback.date}
-                        {/* {format(new Date(feedback.date), "MMM dd, yyyy")} */}
+                        {formatFeedbackDate(feedback)}
                       </TableCell>
                       <TableCell>
                         <code className="relative rounded bg-muted px-[0.3rem] py-[0.2rem] font-mono text-sm">
                           {(feedback.user || feedback.userId) ? (feedback.user || feedback.userId).substring(0, 6) + "..." : "Unknown"}
                         </code>
                       </TableCell>
-                      <TableCell className="max-w-[100px]">
-                        <div className="truncate" title={feedback.question}>
-                          {feedback.question}
-                        </div>
-                      </TableCell>
-                      <TableCell className="max-w-[100px]">
-                        <div className="truncate" title={feedback.answer}>
-                          {feedback.answer}
-                        </div>
-                      </TableCell>
+                      {selectedSource !== 'voice' && (
+                        <>
+                          <TableCell className="max-w-[100px]">
+                            <div className="truncate" title={feedback.question}>
+                              {feedback.question || <span className="text-muted-foreground italic">N/A</span>}
+                            </div>
+                          </TableCell>
+                          <TableCell className="max-w-[100px]">
+                            <div className="truncate" title={feedback.answer}>
+                              {feedback.answer || <span className="text-muted-foreground italic">N/A</span>}
+                            </div>
+                          </TableCell>
+                        </>
+                      )}
                       <TableCell>
                         {feedback.rating === "like" ? (
                           <div className="flex items-center gap-1">
@@ -512,6 +621,15 @@ const FeedbackPage = () => {
                         <div className="truncate" title={feedback.feedback}>
                           {feedback.feedback}
                         </div>
+                      </TableCell>
+                      <TableCell>
+                        <span className={`inline-flex items-center rounded-full px-2 py-1 text-xs font-medium ${
+                          feedback.feedbackSource === 'voice'
+                            ? 'bg-purple-100 text-purple-700 dark:bg-purple-900/30 dark:text-purple-300'
+                            : 'bg-blue-100 text-blue-700 dark:bg-blue-900/30 dark:text-blue-300'
+                        }`}>
+                          {feedback.feedbackSource === 'voice' ? 'Voice' : 'Chat'}
+                        </span>
                       </TableCell>
                       <TableCell>
                         <Link

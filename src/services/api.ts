@@ -142,6 +142,8 @@ export interface Feedback {
   sessionId?: string;
   userId?: string;
   timestamp?: string;
+  feedbackSource?: 'chat' | 'voice';
+  channel?: string;
   [key: string]: unknown;
 }
 
@@ -156,6 +158,8 @@ export interface FeedbackResponse {
   feedback: string;
   id: string;
   timestamp: string;
+  feedbackSource?: 'chat' | 'voice';
+  channel?: string;
 }
 
 export interface Translation {
@@ -189,6 +193,9 @@ export interface PaginationParams {
   granularity?: string;
   sortBy?: string;
   sortOrder?: 'asc' | 'desc';
+  feedbackSource?: string;
+  feedbackType?: string;
+  channel?: string;
 }
 
 export interface UserPaginationParams extends PaginationParams {
@@ -324,6 +331,8 @@ export interface FeedbackSessionAPIResponse {
   feedback: string;
   id: string;
   timestamp: string;
+  feedbackSource?: string;
+  channel?: string;
 }
 
 // Detailed session data from getSessionById
@@ -1125,6 +1134,9 @@ export const fetchFeedback = async (
       endDate,
       sortBy,
       sortOrder,
+      feedbackSource,
+      feedbackType,
+      channel,
     } = params;
 
     const queryParams = buildQueryParams({
@@ -1135,6 +1147,9 @@ export const fetchFeedback = async (
       endDate: endDate || "",
       sortBy: sortBy || "",
       sortOrder: sortOrder || "",
+      feedbackSource: feedbackSource || "",
+      feedbackType: feedbackType || "",
+      channel: channel || "",
     });
 
     console.log(
@@ -1157,6 +1172,7 @@ export const fetchFeedback = async (
       (item: FeedbackSessionAPIResponse) => ({
         id: item.id,
         date: item.date || item.timestamp || new Date().toISOString(),
+        timestamp: item.timestamp,
         question: item.question || "",
         answer: item.answer || "",
         user: item.user || "Unknown",
@@ -1164,6 +1180,8 @@ export const fetchFeedback = async (
         feedback: item.feedback || "",
         sessionId: item.sessionId || "",
         userId: item.user || "",
+        feedbackSource: (item.feedbackSource as 'chat' | 'voice') || 'chat',
+        channel: item.channel || "",
       }),
     );
 
@@ -1179,6 +1197,18 @@ export const fetchFeedback = async (
   } catch (error) {
     console.error("Error fetching feedback:", error);
     throw error;
+  }
+};
+
+export const fetchFeedbackChannels = async (): Promise<string[]> => {
+  try {
+    const response = await fetch(`${SERVER_URL}/feedback/channels`);
+    if (!response.ok) throw new Error(`HTTP error! status: ${response.status}`);
+    const result = await response.json();
+    return result.data || [];
+  } catch (error) {
+    console.error("Error fetching feedback channels:", error);
+    return [];
   }
 };
 
@@ -1203,7 +1233,9 @@ export const fetchFeedbackById = async (
 
     return {
       id: feedbackData.id || id,
-      date: feedbackData.created_at || new Date().toISOString(),
+      date: feedbackData.ets
+        ? new Date(Number(feedbackData.ets)).toISOString()
+        : feedbackData.created_at || new Date().toISOString(),
       question: feedbackData.questiontext || "",
       answer: feedbackData.answertext || "",
       user: feedbackData.user_id || "Unknown",
@@ -1211,6 +1243,9 @@ export const fetchFeedbackById = async (
       feedback: feedbackData.feedbacktext || "",
       sessionId: feedbackData.session_id || "",
       userId: feedbackData.user_id || "",
+      timestamp: feedbackData.ets ? String(feedbackData.ets) : undefined,
+      feedbackSource: feedbackData.feedback_source || 'chat',
+      channel: feedbackData.channel || "",
     };
   } catch (error) {
     console.error("Error fetching feedback by ID:", error);

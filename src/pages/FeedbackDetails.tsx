@@ -18,7 +18,7 @@ import {
   RefreshCw,
   AlertCircle,
 } from "lucide-react";
-import { format } from "date-fns";
+import { formatInTimeZone } from "date-fns-tz";
 import { Button } from "@/components/ui/button";
 import { fetchFeedbackById, fetchTranslation } from "@/services/api";
 import users from "@/data/users.json";
@@ -28,6 +28,50 @@ import remarkGfm from "remark-gfm";
 import rehypeRaw from "rehype-raw";
 import type { Components } from "react-markdown";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
+
+const getFeedbackTimestamp = (
+  feedback: { timestamp?: string; date?: string },
+): number | null => {
+  const values = [feedback.timestamp, feedback.date];
+
+  for (const value of values) {
+    if (!value) continue;
+
+    const numericValue = Number(value);
+    if (!Number.isNaN(numericValue) && numericValue > 0) {
+      return numericValue;
+    }
+
+    const normalizedValue =
+      typeof value === "string" && value.includes(" IST")
+        ? value.replace(" IST", "+05:30")
+        : value;
+    const parsedValue = Date.parse(normalizedValue);
+
+    if (!Number.isNaN(parsedValue)) {
+      return parsedValue;
+    }
+  }
+
+  return null;
+};
+
+const formatFeedbackDate = (
+  feedback: { timestamp?: string; date?: string },
+  outputFormat = "MMM dd, yyyy",
+): string => {
+  const timestamp = getFeedbackTimestamp(feedback);
+
+  if (timestamp === null) {
+    return feedback.date || "N/A";
+  }
+
+  return formatInTimeZone(
+    new Date(timestamp),
+    "Asia/Kolkata",
+    outputFormat,
+  );
+};
 
 const FeedbackDetails = () => {
   const { feedbackId } = useParams();
@@ -169,11 +213,11 @@ const FeedbackDetails = () => {
     ? sessions.find((s) => s.sessionId === feedback.sessionId)
     : null;
 
-  const handleSessionClick = (sessionId: string) => {
+  const handleSessionClick = (sessionId: string, source?: 'chat' | 'voice') => {
     console.log('Session ID:', sessionId);
     const SessionId = sessionId;
-    // Add your logic here to handlne the session click
-    navigate(`/sessions/${SessionId}`);
+    const path = source === 'voice' ? `/calls/${SessionId}` : `/sessions/${SessionId}`;
+    navigate(path);
   };
 
   // Show loading state
@@ -267,7 +311,7 @@ const FeedbackDetails = () => {
           </CardHeader>
           <CardContent>
             <div className="text-lg font-bold">
-              {format(new Date(feedback.date), "MMM dd, yyyy")}
+              {formatFeedbackDate(feedback)}
             </div>
           </CardContent>
         </Card>
@@ -300,6 +344,21 @@ const FeedbackDetails = () => {
 
         <Card>
           <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
+            <CardTitle className="text-sm font-medium">Source</CardTitle>
+          </CardHeader>
+          <CardContent>
+            <span className={`inline-flex items-center rounded-full px-2.5 py-1 text-xs font-medium ${
+              feedback.feedbackSource === 'voice'
+                ? 'bg-purple-100 text-purple-700 dark:bg-purple-900/30 dark:text-purple-300'
+                : 'bg-blue-100 text-blue-700 dark:bg-blue-900/30 dark:text-blue-300'
+            }`}>
+              {feedback.feedbackSource === 'voice' ? 'Voice' : 'Chat'}
+            </span>
+          </CardContent>
+        </Card>
+
+        <Card>
+          <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
             <CardTitle className="text-sm font-medium">Session</CardTitle>
             <MessageCircle className="h-4 w-4 text-muted-foreground" />
           </CardHeader>
@@ -307,7 +366,7 @@ const FeedbackDetails = () => {
             <div className="text-sm">
               {feedback.sessionId ? (
                 <button
-                  onClick={() => handleSessionClick(feedback.sessionId)}
+                  onClick={() => handleSessionClick(feedback.sessionId, feedback.feedbackSource)}
                   className="text-primary hover:underline"
                 >
                   <code className="relative rounded bg-muted px-[0.3rem] py-[0.2rem] font-mono text-xs">
@@ -360,7 +419,7 @@ const FeedbackDetails = () => {
                 <span className="text-xs text-muted-foreground">(Click to view session)</span>
               )}
             </div>
-            <p className="text-foreground">{feedback.question}</p>
+            <p className="text-foreground">{feedback.question || <span className="text-muted-foreground italic">N/A (Voice feedback)</span>}</p>
             {translation?.questionMarathi && (
               <div className="mt-4 pt-4 border-t border-border">
                 <div className="flex items-center gap-2 mb-2">
@@ -374,6 +433,7 @@ const FeedbackDetails = () => {
             )}
           </div>
 
+          {feedback.answer ? (
           <div className="space-y-4">
             <div>
               <h3 className="font-medium mb-2">AI Response</h3>
@@ -425,6 +485,11 @@ const FeedbackDetails = () => {
               </div>
             </div>
           </div>
+          ) : (
+          <div className="p-4 rounded-lg border border-border bg-muted/30">
+            <p className="text-muted-foreground italic">No AI response available (Voice feedback)</p>
+          </div>
+          )}
         </CardContent>
       </Card>
     </div>
