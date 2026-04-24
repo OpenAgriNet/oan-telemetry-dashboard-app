@@ -52,6 +52,7 @@ type ChatTelemetryTab =
   | "sessions"
   | "questions"
   | "feedback"
+  | "langfuse-questions"
   | "errors"
   | "asr"
   | "tts";
@@ -184,6 +185,14 @@ const AppRoutes = () => {
           </TelemetryRoute>
         }
       />
+      <Route 
+        path="/langfuse-questions"
+        element={
+          <TelemetryRoute requiredTab="langfuse-questions">
+            <LangfuseQuestions />
+          </TelemetryRoute>
+        }
+      />  
       <Route
         path="/errors"
         element={

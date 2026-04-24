@@ -1636,6 +1636,40 @@ export const generateSessionReport = async (
   return [];
 };
 
+export const fetchLangfuseQuestionsTree = async (
+  params: PaginationParams = {},
+): Promise<LangfuseQuestionTreeDay[]> => {
+  try {
+    const { startDate, endDate } = params;
+
+    const queryParams = buildQueryParams({
+      startDate: startDate || "",
+      endDate: endDate || "",
+    });
+
+    const url = `${SERVER_URL}/langfuse/questions${queryParams ? `?${queryParams}` : ""}`;
+    console.log("Fetching langfuse toolcall tree with URL:", url);
+
+    const response = await fetch(url);
+
+    if (!response.ok) {
+      throw new Error(`HTTP error! status: ${response.status}`);
+    }
+
+    const result = await response.json();
+
+    if (!result.success) {
+      throw new Error("Failed to fetch langfuse toolcall tree");
+    }
+
+    return result.data || [];
+  } catch (error) {
+    console.error("Error fetching langfuse toolcall tree:", error);
+    throw error;
+  }
+};
+
+
 export const generateQuestionsReport = async (
   paginationParams: { page: number; pageSize: number },
   userId?: string,

@@ -369,7 +369,25 @@ const LangfuseQuestions = () => {
       {isLoading ? (
         <div>Loading...</div>
       ) : error ? (
-        <div>Error</div>
+        // <div>Error</div>
+        <div className="space-y-6">
+                <div className="flex items-center justify-between">
+                  <h1 className="text-2xl font-bold tracking-tight">Langfuse Toolcall Data</h1>
+                </div>
+                <div className="flex justify-center items-center p-8 bg-destructive/10 border border-destructive/20 rounded-lg">
+                  <div className="text-center">
+                    <AlertCircle className="h-12 w-12 text-destructive mx-auto mb-4" />
+                    <p className="text-destructive font-medium mb-2">
+                      Error loading langfuse data
+                    </p>
+                    <p className="text-destructive/80 text-sm mb-4">{error.message}</p>
+                    <Button onClick={() => refetch()} variant="outline" size="sm">
+                      <RefreshCw className="h-4 w-4 mr-2" />
+                      Retry
+                    </Button>
+                  </div>
+                </div>
+        </div>
       ) : (
         data.map(renderDayNode)
       )}
