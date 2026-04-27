@@ -3,7 +3,7 @@ import { useQuery } from "@tanstack/react-query";
 import { useDateFilter } from "@/contexts/DateFilterContext";
 import {
   fetchCallsStats,
-  fetchDashboardStats,
+  fetchDashboardStatsUnified,
   type PaginationParams,
 } from "@/services/api";
 import { buildDateRangeParams } from "@/lib/utils";
@@ -132,7 +132,7 @@ const CombinedDashboard = () => {
       dateRange.from?.toISOString(),
       dateRange.to?.toISOString(),
     ],
-    queryFn: () => fetchDashboardStats(buildParams()),
+    queryFn: () => fetchDashboardStatsUnified(buildParams()),
     staleTime: 60_000,
     refetchOnWindowFocus: false,
   });

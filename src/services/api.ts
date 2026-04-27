@@ -1434,6 +1434,30 @@ export const fetchComprehensiveFeedbackStats = async (
   }
 };
 
+export interface LangfuseToolNode {
+  toolName: string;
+  count: number;
+}
+
+export interface LangfuseCategoryNode {
+  categoryKey: string;
+  count: number;
+  tools: LangfuseToolNode[];
+}
+
+export interface LangfuseQuestionTreeDay {
+  reportDate: string;
+  totalQuestions: number;
+  questionsAgri: number;
+  questionsNonAgri: number;
+  agri: {
+    categories: LangfuseCategoryNode[];
+  };
+  nonAgri: {
+    categories: LangfuseCategoryNode[];
+  };
+}
+
 // Get comprehensive dashboard statistics - OPTIMIZED
 export const fetchDashboardStats = async (
   params: PaginationParams = {},
@@ -1474,6 +1498,59 @@ export const fetchDashboardStats = async (
     return result.data;
   } catch (error) {
     console.error("Error fetching dashboard stats:", error);
+    return {
+      totalUsers: 0,
+      totalNewUsers: 0,
+      totalReturningUsers: 0,
+      totalSessions: 0,
+      totalQuestions: 0,
+      totalFeedback: 0,
+      totalLikes: 0,
+      totalDislikes: 0,
+    };
+  }
+};
+
+// Get unified dashboard statistics (always Bharat Vistaar)
+export const fetchDashboardStatsUnified = async (
+  params: PaginationParams = {},
+): Promise<{
+  totalUsers: number;
+  totalNewUsers: number;
+  totalReturningUsers: number;
+  totalSessions: number;
+  totalQuestions: number;
+  totalFeedback: number;
+  totalLikes: number;
+  totalDislikes: number;
+}> => {
+  try {
+    const { startDate, endDate, granularity } = params;
+
+    const queryParams = buildQueryParams({
+      startDate: startDate || "",
+      endDate: endDate || "",
+      granularity: granularity || "",
+    });
+
+    const url = `${SERVER_URL}/dashboard/stats-unified${queryParams ? `?${queryParams}` : ""}`;
+    console.log("Fetching unified dashboard stats with URL:", url);
+
+    const response = await fetch(url);
+
+    if (!response.ok) {
+      throw new Error(`HTTP error! status: ${response.status}`);
+    }
+
+    const result = await response.json();
+
+    if (!result.success) {
+      throw new Error("Failed to fetch unified dashboard stats");
+    }
+
+    return result.data;
+  } catch (error) {
+    console.error("Error fetching unified dashboard stats:", error);
     return {
       totalUsers: 0,
       totalNewUsers: 0,

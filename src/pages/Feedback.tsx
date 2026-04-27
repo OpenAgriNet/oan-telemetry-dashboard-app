@@ -43,8 +43,7 @@ import {
 } from "@/services/api";
 import TablePagination from "@/components/TablePagination";
 import { buildDateRangeParams } from "@/lib/utils";
-import { useKeycloak } from "@react-keycloak/web";
-import { isSuperAdmin } from "@/utils/roleUtils";
+import { useTelemetryState } from "@/contexts/TelemetryStateContext";
 
 const getFeedbackTimestamp = (feedback: Feedback): number | null => {
   const values = [feedback.timestamp, feedback.date];
@@ -106,9 +105,7 @@ const getFeedbackSortValue = (feedback: Feedback, key: string) => {
 const FeedbackPage = () => {
   const [searchParams, setSearchParams] = useSearchParams();
   const { dateRange } = useDateFilter();
-
-  const { keycloak } = useKeycloak();
-  const isSuper = isSuperAdmin(keycloak);
+  const { selectedStateId } = useTelemetryState();
 
   // Get pagination state from URL params
   const page = parseInt(searchParams.get("page") || "1", 10);
@@ -206,6 +203,7 @@ const FeedbackPage = () => {
   } = useQuery({
     queryKey: [
       "feedback",
+      selectedStateId,
       page,
       pageSize,
       searchTerm,
@@ -400,7 +398,6 @@ const FeedbackPage = () => {
         </Card>
       </div>
       
-      {isSuper && (
       <Card>
         <CardHeader>
           <CardTitle>Recent Feedback</CardTitle>
@@ -655,7 +652,7 @@ const FeedbackPage = () => {
               )}
           </div>
         </CardContent>
-      </Card> )}
+      </Card>
     </div>
   );
 };

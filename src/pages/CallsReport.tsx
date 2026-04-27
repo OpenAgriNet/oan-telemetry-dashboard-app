@@ -38,8 +38,6 @@ import {
   RotateCcw,
 } from "lucide-react";
 import TablePagination from "@/components/TablePagination";
-import { useKeycloak } from "@react-keycloak/web";
-import { isSuperAdmin } from "@/utils/roleUtils";
 
 function formatDuration(seconds: number | null): string {
   if (seconds === null || seconds === undefined) return "—";
@@ -76,9 +74,6 @@ const CallsReport = () => {
   const navigate = useNavigate();
   const [searchParams, setSearchParams] = useSearchParams();
   const { dateRange } = useDateFilter();
-
-  const { keycloak } = useKeycloak();
-  const isSuper = isSuperAdmin(keycloak);
 
   const page = parseInt(searchParams.get("page") || "1", 10);
   const pageSize = 20;
@@ -364,7 +359,6 @@ const CallsReport = () => {
       </div>
 
       {/* Table */}
-      {isSuper && (
       <Card>
         <CardHeader>
           <CardTitle>Recent Call Logs</CardTitle>
@@ -549,7 +543,7 @@ const CallsReport = () => {
             )}
           </div>
         </CardContent>
-      </Card> )}
+      </Card>
     </div>
   );
 };
