@@ -7,7 +7,7 @@ export interface TelemetryStateConfig {
   label: string;
   adminRole: string;
   chatTelemetryTabs: Array<
-    "dashboard" | "users" | "sessions" | "questions" | "feedback" | "errors" | "asr" | "tts"
+    "dashboard" | "users" | "sessions" | "questions" | "feedback" | "langfuse-questions" | "errors" | "asr" | "tts"
   >;
   showUnifiedMetrics: boolean;
 }
@@ -23,6 +23,7 @@ export const TELEMETRY_STATES: Record<TelemetryStateId, TelemetryStateConfig> = 
       "sessions",
       "questions",
       "feedback",
+      "langfuse-questions",
       "errors",
       "asr",
       "tts",

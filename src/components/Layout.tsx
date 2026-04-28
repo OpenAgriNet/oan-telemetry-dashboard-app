@@ -103,6 +103,12 @@ const Layout: React.FC<LayoutProps> = ({ children }) => {
       icon: <ClipboardCheck size={16} />,
     },
     {
+      tab: "langfuse-questions",
+      name: "Langfuse Toolcall",
+      path: "/langfuse-questions",
+      icon: <Network size={16} />,
+    },
+    {
       tab: "errors",
       name: "Errors",
       path: "/errors",
