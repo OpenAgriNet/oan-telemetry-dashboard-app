@@ -43,8 +43,7 @@ import {
 } from "@/services/api";
 import TablePagination from "@/components/TablePagination";
 import { buildDateRangeParams } from "@/lib/utils";
-import { useKeycloak } from "@react-keycloak/web";
-import { isSuperAdmin } from "@/utils/roleUtils";
+import { useTelemetryState } from "@/contexts/TelemetryStateContext";
 
 const getFeedbackTimestamp = (feedback: Feedback): number | null => {
   const values = [feedback.timestamp, feedback.date];
@@ -106,9 +105,7 @@ const getFeedbackSortValue = (feedback: Feedback, key: string) => {
 const FeedbackPage = () => {
   const [searchParams, setSearchParams] = useSearchParams();
   const { dateRange } = useDateFilter();
-
-  const { keycloak } = useKeycloak();
-  const isSuper = isSuperAdmin(keycloak);
+  const { selectedStateId } = useTelemetryState();
 
   // Get pagination state from URL params
   const page = parseInt(searchParams.get("page") || "1", 10);
@@ -120,7 +117,9 @@ const FeedbackPage = () => {
     key: "ets",
     direction: "desc",
   });
-  const [selectedSource, setSelectedSource] = useState("all");
+  // For non-Bharat Vistaar states, default to "chat" and disable dropdown
+  const isBharatVistaar = selectedStateId === "bharat-vistaar";
+  const [selectedSource, setSelectedSource] = useState(isBharatVistaar ? "all" : "chat");
   const [selectedFeedbackType, setSelectedFeedbackType] = useState("all");
 
 
@@ -166,7 +165,7 @@ const FeedbackPage = () => {
     setSearchTerm("");
     setPendingSearch("");
     setSelectedUser("all");
-    setSelectedSource("all");
+    setSelectedSource(isBharatVistaar ? "all" : "chat");
     setSelectedFeedbackType("all");
     const newParams = new URLSearchParams();
     newParams.set("page", "1");
@@ -206,6 +205,7 @@ const FeedbackPage = () => {
   } = useQuery({
     queryKey: [
       "feedback",
+      selectedStateId,
       page,
       pageSize,
       searchTerm,
@@ -400,7 +400,6 @@ const FeedbackPage = () => {
         </Card>
       </div>
       
-      {isSuper && (
       <Card>
         <CardHeader>
           <CardTitle>Recent Feedback</CardTitle>
@@ -438,16 +437,22 @@ const FeedbackPage = () => {
             </div>
 
             <div className="flex flex-col sm:flex-row gap-3">
-              <Select value={selectedSource} onValueChange={handleSourceChange}>
-                <SelectTrigger className="w-full sm:w-[150px]">
-                  <SelectValue placeholder="Source" />
-                </SelectTrigger>
-                <SelectContent>
-                  <SelectItem value="all">All Sources</SelectItem>
-                  <SelectItem value="chat">Chat</SelectItem>
-                  <SelectItem value="voice">Voice</SelectItem>
-                </SelectContent>
-              </Select>
+              {isBharatVistaar ? (
+                <Select value={selectedSource} onValueChange={handleSourceChange}>
+                  <SelectTrigger className="w-full sm:w-[150px]">
+                    <SelectValue placeholder="Source" />
+                  </SelectTrigger>
+                  <SelectContent>
+                    <SelectItem value="all">All Sources</SelectItem>
+                    <SelectItem value="chat">Chat</SelectItem>
+                    <SelectItem value="voice">Voice</SelectItem>
+                  </SelectContent>
+                </Select>
+              ) : (
+                <div className="flex items-center px-3 py-2 border border-input rounded-md bg-muted text-sm text-muted-foreground">
+                  Source: <span className="ml-2 font-medium text-foreground">Chat</span>
+                </div>
+              )}
 
               <Select value={selectedFeedbackType} onValueChange={handleFeedbackTypeChange}>
                 <SelectTrigger className="w-full sm:w-[150px]">
@@ -655,7 +660,7 @@ const FeedbackPage = () => {
               )}
           </div>
         </CardContent>
-      </Card> )}
+      </Card>
     </div>
   );
 };
