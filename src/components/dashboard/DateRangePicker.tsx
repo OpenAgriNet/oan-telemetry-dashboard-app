@@ -23,12 +23,19 @@ interface DateRangePickerProps {
   >;
 }
 
-const ALL_TIME_START_DATE = "2026-02-17T00:00:00.000Z";
+const getLast7DaysRange = () => {
+  const today = new Date();
+  today.setHours(23, 59, 59, 999);
+  const from = new Date(today);
+  from.setDate(today.getDate() - 6);
+  from.setHours(0, 0, 0, 0);
+  return { from, to: today };
+};
 
 const getAllTimeRange = () => {
   const today = new Date();
   today.setHours(23, 59, 59, 999);
-  return { from: new Date(ALL_TIME_START_DATE), to: today };
+  return { from: new Date("2026-02-17T00:00:00.000Z"), to: today };
 };
 
 const DateRangePicker: React.FC<DateRangePickerProps> = ({
@@ -36,13 +43,14 @@ const DateRangePicker: React.FC<DateRangePickerProps> = ({
   setDateRange,
 }) => {
   const [isCalendarOpen, setIsCalendarOpen] = React.useState(false);
-  const [selectedOption, setSelectedOption] = React.useState("alltime");
+  const [selectedOption, setSelectedOption] = React.useState("last7");
   const hasInitialized = React.useRef(false);
 
-  // Set default to all time on component mount
+  // Set default to last 7 days on component mount
   React.useEffect(() => {
     if (!hasInitialized.current && !dateRange.from && !dateRange.to) {
-      setDateRange(getAllTimeRange());
+      setDateRange(getLast7DaysRange());
+      setSelectedOption("last7");
       hasInitialized.current = true;
     }
   }, [dateRange.from, dateRange.to, setDateRange]);
@@ -88,9 +96,9 @@ const DateRangePicker: React.FC<DateRangePickerProps> = ({
   };
 
   const handleReset = () => {
-    // Reset to all time (default)
-    setDateRange(getAllTimeRange());
-    setSelectedOption("alltime");
+    // Reset to last 7 days (default)
+    setDateRange(getLast7DaysRange());
+    setSelectedOption("last7");
   };
 
   return (
