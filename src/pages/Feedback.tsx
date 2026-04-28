@@ -117,7 +117,9 @@ const FeedbackPage = () => {
     key: "ets",
     direction: "desc",
   });
-  const [selectedSource, setSelectedSource] = useState("all");
+  // For non-Bharat Vistaar states, default to "chat" and disable dropdown
+  const isBharatVistaar = selectedStateId === "bharat-vistaar";
+  const [selectedSource, setSelectedSource] = useState(isBharatVistaar ? "all" : "chat");
   const [selectedFeedbackType, setSelectedFeedbackType] = useState("all");
 
 
@@ -163,7 +165,7 @@ const FeedbackPage = () => {
     setSearchTerm("");
     setPendingSearch("");
     setSelectedUser("all");
-    setSelectedSource("all");
+    setSelectedSource(isBharatVistaar ? "all" : "chat");
     setSelectedFeedbackType("all");
     const newParams = new URLSearchParams();
     newParams.set("page", "1");
@@ -435,16 +437,22 @@ const FeedbackPage = () => {
             </div>
 
             <div className="flex flex-col sm:flex-row gap-3">
-              <Select value={selectedSource} onValueChange={handleSourceChange}>
-                <SelectTrigger className="w-full sm:w-[150px]">
-                  <SelectValue placeholder="Source" />
-                </SelectTrigger>
-                <SelectContent>
-                  <SelectItem value="all">All Sources</SelectItem>
-                  <SelectItem value="chat">Chat</SelectItem>
-                  <SelectItem value="voice">Voice</SelectItem>
-                </SelectContent>
-              </Select>
+              {isBharatVistaar ? (
+                <Select value={selectedSource} onValueChange={handleSourceChange}>
+                  <SelectTrigger className="w-full sm:w-[150px]">
+                    <SelectValue placeholder="Source" />
+                  </SelectTrigger>
+                  <SelectContent>
+                    <SelectItem value="all">All Sources</SelectItem>
+                    <SelectItem value="chat">Chat</SelectItem>
+                    <SelectItem value="voice">Voice</SelectItem>
+                  </SelectContent>
+                </Select>
+              ) : (
+                <div className="flex items-center px-3 py-2 border border-input rounded-md bg-muted text-sm text-muted-foreground">
+                  Source: <span className="ml-2 font-medium text-foreground">Chat</span>
+                </div>
+              )}
 
               <Select value={selectedFeedbackType} onValueChange={handleFeedbackTypeChange}>
                 <SelectTrigger className="w-full sm:w-[150px]">
