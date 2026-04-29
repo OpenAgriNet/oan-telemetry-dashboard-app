@@ -23,14 +23,14 @@ const getConfig = () => window.__APP_CONFIG__ || {};
 
 // Keycloak Configuration
 export const KEYCLOAK_CONFIG = {
-  url: getConfig().KEYCLOAK_URL || import.meta.env.VITE_KEYCLOAK_URL || "https://dev-auth-vistaar.da.gov.in/auth",
+  url: getConfig().KEYCLOAK_URL || import.meta.env.VITE_KEYCLOAK_URL || "https://auth-vistaar.da.gov.in/auth",
   realm: getConfig().KEYCLOAK_REALM || import.meta.env.VITE_KEYCLOAK_REALM || "bharat-vistaar",
   clientId: getConfig().KEYCLOAK_CLIENT_ID || import.meta.env.VITE_KEYCLOAK_CLIENT_ID || "bharat-vistaar",
 };
 
 // API Configuration
 export const API_CONFIG = {
-  SERVER_URL: getConfig().API_SERVER_URL || import.meta.env.VITE_API_SERVER_URL || "https://dev-dashboard-vistaar.da.gov.in/v1",
+  SERVER_URL: getConfig().API_SERVER_URL || import.meta.env.VITE_API_SERVER_URL || "http://localhost:4000/v1",
 };
 
 // Watchtower Status API Configuration
