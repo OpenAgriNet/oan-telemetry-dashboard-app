@@ -19,6 +19,7 @@ import {
   BarChart3,
   Users,
   MessageSquare,
+  Download,
   Calendar,
   Moon,
   Sun,
@@ -101,6 +102,12 @@ const Layout: React.FC<LayoutProps> = ({ children }) => {
       name: "Feedback",
       path: "/feedback",
       icon: <ClipboardCheck size={16} />,
+    },
+    {
+      tab: "downloads",
+      name: "App Downloads",
+      path: "/downloads",
+      icon: <Download size={16} />,
     },
     {
       tab: "langfuse-questions",
