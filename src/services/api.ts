@@ -122,6 +122,12 @@ export interface DailyMetric {
   desktopUsers: number;
 }
 
+export interface AppDownloadsDataPoint {
+  date: string;
+  iosInstalls: number;
+  androidInstalls: number;
+}
+
 export interface UserReport {
   id: string;
   name: string;
@@ -1561,6 +1567,43 @@ export const fetchDashboardStatsUnified = async (
       totalLikes: 0,
       totalDislikes: 0,
     };
+  }
+};
+
+export const fetchAppDownloads = async (
+  params: PaginationParams = {},
+): Promise<AppDownloadsDataPoint[]> => {
+  try {
+    const { startDate, endDate } = params;
+
+    const queryParams = buildQueryParams({
+      startDate: startDate || "",
+      endDate: endDate || "",
+    });
+
+    const url = `${SERVER_URL}/dashboard/downloads${queryParams ? `?${queryParams}` : ""}`;
+    console.log("Fetching app downloads with URL:", url);
+
+    const response = await fetch(url);
+
+    if (!response.ok) {
+      throw new Error(`HTTP error! status: ${response.status}`);
+    }
+
+    const result = await response.json();
+
+    if (!result.success || !Array.isArray(result.data)) {
+      throw new Error("Failed to fetch app downloads");
+    }
+
+    return result.data.map((item: AppDownloadsDataPoint) => ({
+      date: item.date,
+      iosInstalls: Number(item.iosInstalls) || 0,
+      androidInstalls: Number(item.androidInstalls) || 0,
+    }));
+  } catch (error) {
+    console.error("Error fetching app downloads:", error);
+    return [];
   }
 };
 
