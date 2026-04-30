@@ -124,8 +124,9 @@ export interface DailyMetric {
 
 export interface AppDownloadsDataPoint {
   date: string;
-  iosInstalls: number;
-  androidInstalls: number;
+  platform: "ios" | "android";
+  version: string;
+  installs: number;
 }
 
 export interface UserReport {
@@ -1598,8 +1599,9 @@ export const fetchAppDownloads = async (
 
     return result.data.map((item: AppDownloadsDataPoint) => ({
       date: item.date,
-      iosInstalls: Number(item.iosInstalls) || 0,
-      androidInstalls: Number(item.androidInstalls) || 0,
+      platform: item.platform,
+      version: item.version,
+      installs: Number(item.installs) || 0,
     }));
   } catch (error) {
     console.error("Error fetching app downloads:", error);

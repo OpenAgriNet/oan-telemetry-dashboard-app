@@ -79,19 +79,19 @@ const AppDownloads = () => {
                 <TableHeader>
                   <TableRow>
                     <TableHead>Date</TableHead>
-                    <TableHead className="text-right">iOS Installs</TableHead>
-                    <TableHead className="text-right">Android Installs</TableHead>
+                    <TableHead>Platform</TableHead>
+                    <TableHead>Version</TableHead>
+                    <TableHead className="text-right">Installs</TableHead>
                   </TableRow>
                 </TableHeader>
                 <TableBody>
                   {data.map((row) => (
-                    <TableRow key={row.date}>
+                    <TableRow key={`${row.date}-${row.platform}-${row.version}`}>
                       <TableCell className="font-medium">{row.date}</TableCell>
+                      <TableCell className="capitalize">{row.platform}</TableCell>
+                      <TableCell>{row.version}</TableCell>
                       <TableCell className="text-right">
-                        {row.iosInstalls.toLocaleString()}
-                      </TableCell>
-                      <TableCell className="text-right">
-                        {row.androidInstalls.toLocaleString()}
+                        {row.installs.toLocaleString()}
                       </TableCell>
                     </TableRow>
                   ))}
