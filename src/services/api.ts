@@ -127,6 +127,7 @@ export interface AppDownloadsDataPoint {
   platform: "ios" | "android";
   version: string;
   installs: number;
+  updatedAt: string;
 }
 
 export interface UserReport {
@@ -1602,6 +1603,7 @@ export const fetchAppDownloads = async (
       platform: item.platform,
       version: item.version,
       installs: Number(item.installs) || 0,
+      updatedAt: item.updatedAt,
     }));
   } catch (error) {
     console.error("Error fetching app downloads:", error);
