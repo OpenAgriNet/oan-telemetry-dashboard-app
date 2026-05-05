@@ -176,7 +176,7 @@ const AppDownloads = () => {
       ) : (
         <>
           <div className="grid gap-4 md:grid-cols-3">
-            <Card>
+            {/* <Card>
               <CardHeader className="pb-2">
                 <CardTitle className="text-base uppercase tracking-wide text-muted-foreground">
                   Total Installs
@@ -188,7 +188,7 @@ const AppDownloads = () => {
                 </div>
                 <p className="mt-2 text-sm text-muted-foreground">{rangeLabel}</p>
               </CardContent>
-            </Card>
+            </Card> */}
 
             <Card>
               <CardHeader className="pb-2">
