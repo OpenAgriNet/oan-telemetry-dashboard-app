@@ -1,6 +1,6 @@
 import { useMemo } from "react";
 import { useQuery } from "@tanstack/react-query";
-import { AppWindowMac, Smartphone } from "lucide-react";
+import { AppWindowMac, RefreshCw, Smartphone } from "lucide-react";
 import { useSearchParams } from "react-router-dom";
 import { useDateFilter } from "@/contexts/DateFilterContext";
 import { useTelemetryState } from "@/contexts/TelemetryStateContext";
@@ -154,14 +154,18 @@ const AppDownloads = () => {
           </p>
         </div>
       </div>
-
+      
       {isLoading ? (
-        <Card>
-          <CardContent className="py-10 text-center text-sm text-muted-foreground">
-            Loading app downloads...
-          </CardContent>
-        </Card>
-      ) : error ? (
+      <div className="flex justify-center items-center p-12 bg-muted/30 rounded-lg">
+        <div className="text-center">
+          <RefreshCw className="h-8 w-8 animate-spin mx-auto mb-3 text-muted-foreground" />
+          <p className="text-muted-foreground">
+            Loading App Downloads data...
+          </p>
+        </div>
+      </div>
+      )
+      : error ? (
         <Card>
           <CardContent className="py-10 text-center text-sm text-destructive">
             Unable to load app downloads right now.
