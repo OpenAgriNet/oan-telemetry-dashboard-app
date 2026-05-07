@@ -259,40 +259,40 @@ const DeviceReport = () => {
                 )}
               </div>
             ) : (
-              <Table>
-                <TableHeader>
-                  <TableRow>
-                    <TableHead>Fingerprint ID</TableHead>
-                    <TableHead>Browser</TableHead>
-                    <TableHead>Client</TableHead>
-                    <TableHead>OS</TableHead>
-                    {/* <TableHead>First Seen</TableHead>
+                  <Table>
+                    <TableHeader>
+                      <TableRow>
+                        <TableHead>Fingerprint ID</TableHead>
+                        <TableHead>Device</TableHead>
+                        <TableHead>OS</TableHead>
+                        <TableHead>Browser</TableHead>
+                        {/* <TableHead>First Seen</TableHead>
                     <TableHead>Last Seen</TableHead> */}
-                  </TableRow>
-                </TableHeader>
-                <TableBody>
-                  {paginatedDevices.map((device, idx) => (
-                    <TableRow key={device.fingerprint_id || idx}>
-                      <TableCell>
-                        <code className="relative rounded bg-muted px-[0.3rem] py-[0.2rem] font-mono text-xs">
-                          {device.fingerprint_id?.substring(0, 6)}...
-                        </code>
-                      </TableCell>
-                      <TableCell>
-                        {device.browser_name} {device.browser_version}
-                      </TableCell>
-                      <TableCell>
-                        {device.device_name} {device.device_model}
-                      </TableCell>
-                      <TableCell>
-                        {device.os_name} {device.os_version}
-                      </TableCell>
-                      {/* <TableCell>{device.first_seen_at}</TableCell>
+                      </TableRow>
+                    </TableHeader>
+                    <TableBody>
+                      {paginatedDevices.map((device, idx) => (
+                        <TableRow key={device.fingerprint_id || idx}>
+                          <TableCell>
+                            <code className="relative rounded bg-muted px-[0.3rem] py-[0.2rem] font-mono text-xs">
+                              {device.fingerprint_id?.substring(0, 6)}...
+                            </code>
+                          </TableCell>
+                          <TableCell>
+                            {device.device_name.charAt(0).toUpperCase() + device.device_name.slice(1)}
+                          </TableCell>
+                          <TableCell>
+                            {device.os_name} {device.os_version}
+                          </TableCell>
+                          <TableCell>
+                            {device.browser_name}
+                          </TableCell>
+                          {/* <TableCell>{device.first_seen_at}</TableCell>
                       <TableCell>{device.last_seen_at}</TableCell> */}
-                    </TableRow>
-                  ))}
-                </TableBody>
-              </Table>
+                        </TableRow>
+                      ))}
+                    </TableBody>
+                  </Table>
             )}
             {paginatedDevices.length > 0 && devicesResponse.totalPages > 1 && (
               <TablePagination
