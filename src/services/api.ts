@@ -155,6 +155,33 @@ export interface Feedback {
   [key: string]: unknown;
 }
 
+export type UiEventCategory = "all" | "location" | "notification" | "notification_feedback";
+
+export interface UiInteractionEvent {
+  id: string;
+  source_log_id?: string;
+  source_event_index?: number;
+  eid?: string;
+  uid?: string;
+  fingerprint_id?: string;
+  sid?: string;
+  channel?: string;
+  ets?: string | number;
+  event_name: string;
+  category: Exclude<UiEventCategory, "all">;
+  event_time?: string;
+  metadata?: Record<string, unknown>;
+  notification_id?: string;
+  action?: string;
+  reason?: string;
+  feedback?: string;
+  status_code?: number;
+  success?: boolean;
+  response?: unknown;
+  response_count?: number;
+  created_at?: string;
+}
+
 export interface FeedbackResponse {
   qid: string;
   date: string;
@@ -204,6 +231,7 @@ export interface PaginationParams {
   feedbackSource?: string;
   feedbackType?: string;
   channel?: string;
+  category?: string;
 }
 
 export interface UserPaginationParams extends PaginationParams {
@@ -1609,6 +1637,64 @@ export const fetchAppDownloads = async (
     console.error("Error fetching app downloads:", error);
     return [];
   }
+};
+
+export const fetchUiEvents = async (
+  params: PaginationParams = {},
+): Promise<PaginatedResponse<UiInteractionEvent>> => {
+  const {
+    page = DEFAULT_PAGE,
+    limit = DEFAULT_LIMIT,
+    startDate,
+    endDate,
+    category,
+    sortBy,
+    sortOrder,
+  } = params;
+
+  const queryParams = buildQueryParams({
+    page,
+    limit,
+    startDate: startDate || "",
+    endDate: endDate || "",
+    category: category || "all",
+    sortBy: sortBy || "event_time",
+    sortOrder: sortOrder || "desc",
+  });
+
+  const response = await fetch(`${SERVER_URL}/ui-events?${queryParams}`);
+  if (!response.ok) {
+    throw new Error(`HTTP error! status: ${response.status}`);
+  }
+
+  const result = await response.json();
+  if (!result.success) {
+    throw new Error("Failed to fetch UI events");
+  }
+
+  return {
+    data: result.data || [],
+    total: result.pagination?.total || 0,
+    page: result.pagination?.currentPage || page,
+    pageSize: result.pagination?.itemsPerPage || limit,
+    totalPages: result.pagination?.totalPages || 1,
+  };
+};
+
+export const fetchUiEventById = async (
+  id: string,
+): Promise<UiInteractionEvent> => {
+  const response = await fetch(`${SERVER_URL}/ui-events/${id}`);
+  if (!response.ok) {
+    throw new Error(`HTTP error! status: ${response.status}`);
+  }
+
+  const result = await response.json();
+  if (!result.success) {
+    throw new Error("Failed to fetch UI event");
+  }
+
+  return result.data;
 };
 
 // Legacy support functions (these will be deprecated)
