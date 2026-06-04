@@ -31,11 +31,11 @@ import {
   AlertTriangle,
   Mic,
   Volume2,
-  MousePointerClick,
   Menu,
   ChevronRight,
   PhoneCall,
   Network,
+  Bell,
 } from "lucide-react";
 import {
   DropdownMenu,
@@ -111,10 +111,10 @@ const Layout: React.FC<LayoutProps> = ({ children }) => {
       icon: <Download size={16} />,
     },
     {
-      tab: "ui-events",
-      name: "UI Events",
-      path: "/ui-events",
-      icon: <MousePointerClick size={16} />,
+      tab: "notifications",
+      name: "Notification",
+      path: "/notifications",
+      icon: <Bell size={16} />,
     },
     {
       tab: "langfuse-questions",
