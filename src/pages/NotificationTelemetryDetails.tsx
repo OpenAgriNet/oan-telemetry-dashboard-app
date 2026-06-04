@@ -69,6 +69,16 @@ const NotificationTelemetryDetails = () => {
     );
   }
 
+  const isLocationEvent = event.category === "location";
+  const isNotificationApiEvent = event.event_name === "notification_api_response";
+  const isNotificationFeedbackEvent = event.category === "notification_feedback";
+  const showNotificationId = event.category !== "location";
+  const showStatus = isNotificationApiEvent;
+  const showReason = isLocationEvent || isNotificationFeedbackEvent;
+  const showFeedback = isNotificationFeedbackEvent;
+  const showResponseCount = isNotificationApiEvent;
+  const showFullResponse = isNotificationApiEvent;
+
   const status = event.status_code != null ? String(event.status_code) : "-";
 
   return (
@@ -97,13 +107,17 @@ const NotificationTelemetryDetails = () => {
           <div className="grid gap-5 md:grid-cols-3">
             <SummaryItem label="Event Name" value={event.event_name} />
             <SummaryItem label="Time" value={event.event_time ? formatUTCToIST(event.event_time, "MMM dd, yyyy hh:mm a") : "-"} />
-            <SummaryItem label="Status" value={status} />
             <SummaryItem label="Fingerprint ID" value={formatCompactId(event.fingerprint_id)} />
             <SummaryItem label="SID" value={formatCompactId(event.sid)} />
-            <SummaryItem label="Notification ID" value={event.notification_id} />
-            <SummaryItem label="Reason" value={event.reason} />
-            <SummaryItem label="Feedback" value={event.feedback} />
-            <SummaryItem label="Response Count" value={event.response_count} />
+            {showStatus && <SummaryItem label="Status" value={status} />}
+            {showNotificationId && (
+              <SummaryItem label="Notification ID" value={event.notification_id} />
+            )}
+            {showReason && <SummaryItem label="Reason" value={event.reason} />}
+            {showFeedback && <SummaryItem label="Feedback" value={event.feedback} />}
+            {showResponseCount && (
+              <SummaryItem label="Response Count" value={event.response_count} />
+            )}
           </div>
         </CardContent>
       </Card>
@@ -117,14 +131,16 @@ const NotificationTelemetryDetails = () => {
         </CardContent>
       </Card>
 
-      <Card>
-        <CardHeader>
-          <CardTitle className="text-lg">Full Response</CardTitle>
-        </CardHeader>
-        <CardContent>
-          <JsonBlock value={event.response || {}} />
-        </CardContent>
-      </Card>
+      {showFullResponse && (
+        <Card>
+          <CardHeader>
+            <CardTitle className="text-lg">Full Response</CardTitle>
+          </CardHeader>
+          <CardContent>
+            <JsonBlock value={event.response || {}} />
+          </CardContent>
+        </Card>
+      )}
 
       <Card>
         <CardHeader>
@@ -132,9 +148,6 @@ const NotificationTelemetryDetails = () => {
         </CardHeader>
         <CardContent>
           <div className="grid gap-5 md:grid-cols-3">
-            <SummaryItem label="Source Log ID" value={event.source_log_id} />
-            <SummaryItem label="Source Event Index" value={event.source_event_index} />
-            <SummaryItem label="Raw ETS" value={event.ets} />
             <SummaryItem label="Channel" value={event.channel} />
             <SummaryItem label="EID" value={event.eid} />
             <SummaryItem label="Created At" value={event.created_at ? formatUTCToIST(event.created_at, "MMM dd, yyyy hh:mm a") : "-"} />
