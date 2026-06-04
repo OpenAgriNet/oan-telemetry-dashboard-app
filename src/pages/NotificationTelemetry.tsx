@@ -70,22 +70,6 @@ function SortIcon({ active, order }: { active: boolean; order: SortOrder }) {
   return order === "asc" ? <ArrowUp className="ml-1 h-3 w-3" /> : <ArrowDown className="ml-1 h-3 w-3" />;
 }
 
-function getMetadataObject(row: NotificationTelemetryEvent, key: string) {
-  const value = row.metadata?.[key];
-  return value && typeof value === "object" && !Array.isArray(value)
-    ? value as Record<string, unknown>
-    : null;
-}
-
-function getNotificationPreview(row: NotificationTelemetryEvent) {
-  const detail = getMetadataObject(row, "notification_detail");
-  if (!detail) return "-";
-
-  const title = detail.title || detail.heading || detail.notification_title || detail.name;
-  const body = detail.body || detail.message || detail.description || detail.text || detail.content;
-  return [title, body].filter(Boolean).map(String).join(" - ") || row.notification_id || "-";
-}
-
 function numberValue(value: string | number | undefined) {
   return Number(value || 0);
 }
@@ -299,10 +283,7 @@ const NotificationTelemetry = () => {
                         </>
                       )}
                       {showActionColumns && (
-                        <>
-                          <TableHead>Notification ID</TableHead>
-                          <TableHead>Notification Detail</TableHead>
-                        </>
+                        <TableHead>Notification ID</TableHead>
                       )}
                       {showFeedbackColumns && (
                         <>
@@ -353,14 +334,9 @@ const NotificationTelemetry = () => {
                           </>
                         )}
                         {showActionColumns && (
-                          <>
-                            <TableCell className="max-w-[160px] truncate font-mono text-xs">
-                              {row.notification_id || "-"}
-                            </TableCell>
-                            <TableCell className="max-w-[320px] truncate">
-                              {getNotificationPreview(row)}
-                            </TableCell>
-                          </>
+                          <TableCell className="max-w-[160px] truncate font-mono text-xs">
+                            {row.notification_id || "-"}
+                          </TableCell>
                         )}
                         {showFeedbackColumns && (
                           <>
