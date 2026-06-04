@@ -155,9 +155,13 @@ export interface Feedback {
   [key: string]: unknown;
 }
 
-export type UiEventCategory = "all" | "location" | "notification" | "notification_feedback";
+export type NotificationEventGroup =
+  | "location"
+  | "notification_api"
+  | "notification_actions"
+  | "notification_feedback";
 
-export interface UiInteractionEvent {
+export interface NotificationTelemetryEvent {
   id: string;
   source_log_id?: string;
   source_event_index?: number;
@@ -168,7 +172,7 @@ export interface UiInteractionEvent {
   channel?: string;
   ets?: string | number;
   event_name: string;
-  category: Exclude<UiEventCategory, "all">;
+  category: "location" | "notification" | "notification_feedback";
   event_time?: string;
   metadata?: Record<string, unknown>;
   notification_id?: string;
@@ -180,6 +184,15 @@ export interface UiInteractionEvent {
   response?: unknown;
   response_count?: number;
   created_at?: string;
+}
+
+export interface NotificationTelemetrySummary {
+  location_allowed?: string | number;
+  location_denied?: string | number;
+  notification_api_success?: string | number;
+  notification_panel?: string | number;
+  feedback_yes?: string | number;
+  feedback_no?: string | number;
 }
 
 export interface FeedbackResponse {
@@ -232,6 +245,7 @@ export interface PaginationParams {
   feedbackType?: string;
   channel?: string;
   category?: string;
+  eventGroup?: string;
 }
 
 export interface UserPaginationParams extends PaginationParams {
@@ -1639,15 +1653,15 @@ export const fetchAppDownloads = async (
   }
 };
 
-export const fetchUiEvents = async (
+export const fetchNotifications = async (
   params: PaginationParams = {},
-): Promise<PaginatedResponse<UiInteractionEvent>> => {
+): Promise<PaginatedResponse<NotificationTelemetryEvent>> => {
   const {
     page = DEFAULT_PAGE,
     limit = DEFAULT_LIMIT,
     startDate,
     endDate,
-    category,
+    eventGroup,
     sortBy,
     sortOrder,
   } = params;
@@ -1657,19 +1671,19 @@ export const fetchUiEvents = async (
     limit,
     startDate: startDate || "",
     endDate: endDate || "",
-    category: category || "all",
+    eventGroup: eventGroup || "notification_api",
     sortBy: sortBy || "event_time",
     sortOrder: sortOrder || "desc",
   });
 
-  const response = await fetch(`${SERVER_URL}/ui-events?${queryParams}`);
+  const response = await fetch(`${SERVER_URL}/notifications?${queryParams}`);
   if (!response.ok) {
     throw new Error(`HTTP error! status: ${response.status}`);
   }
 
   const result = await response.json();
   if (!result.success) {
-    throw new Error("Failed to fetch UI events");
+    throw new Error("Failed to fetch notification telemetry");
   }
 
   return {
@@ -1681,20 +1695,41 @@ export const fetchUiEvents = async (
   };
 };
 
-export const fetchUiEventById = async (
+export const fetchNotificationById = async (
   id: string,
-): Promise<UiInteractionEvent> => {
-  const response = await fetch(`${SERVER_URL}/ui-events/${id}`);
+): Promise<NotificationTelemetryEvent> => {
+  const response = await fetch(`${SERVER_URL}/notifications/${id}`);
   if (!response.ok) {
     throw new Error(`HTTP error! status: ${response.status}`);
   }
 
   const result = await response.json();
   if (!result.success) {
-    throw new Error("Failed to fetch UI event");
+    throw new Error("Failed to fetch notification telemetry event");
   }
 
   return result.data;
+};
+
+export const fetchNotificationSummary = async (
+  params: Pick<PaginationParams, "startDate" | "endDate"> = {},
+): Promise<NotificationTelemetrySummary> => {
+  const queryParams = buildQueryParams({
+    startDate: params.startDate || "",
+    endDate: params.endDate || "",
+  });
+
+  const response = await fetch(`${SERVER_URL}/notifications/summary?${queryParams}`);
+  if (!response.ok) {
+    throw new Error(`HTTP error! status: ${response.status}`);
+  }
+
+  const result = await response.json();
+  if (!result.success) {
+    throw new Error("Failed to fetch notification telemetry summary");
+  }
+
+  return result.data || {};
 };
 
 // Legacy support functions (these will be deprecated)
