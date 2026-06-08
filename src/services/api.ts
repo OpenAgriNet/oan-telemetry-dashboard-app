@@ -190,7 +190,7 @@ export interface NotificationTelemetrySummary {
   location_allowed?: string | number;
   location_denied?: string | number;
   notification_api_success?: string | number;
-  notification_panel?: string | number;
+  notification_bell?: string | number;
   feedback_yes?: string | number;
   feedback_no?: string | number;
 }
