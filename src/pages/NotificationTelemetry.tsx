@@ -163,8 +163,8 @@ const NotificationTelemetry = () => {
     { label: "Location Denied", value: numberValue(summary?.location_denied), icon: XCircle },
     { label: "Notification API Success", value: numberValue(summary?.notification_api_success), icon: CheckCircle2 },
     { label: "Notification Bell", value: numberValue(summary?.notification_bell), icon: Bell },
-    { label: "Feedback Yes", value: numberValue(summary?.feedback_yes), icon: ThumbsUp },
-    { label: "Feedback No", value: numberValue(summary?.feedback_no), icon: ThumbsDown },
+    { label: "Positive Feedback", value: numberValue(summary?.feedback_yes), icon: ThumbsUp },
+    { label: "Negative Feedback", value: numberValue(summary?.feedback_no), icon: ThumbsDown },
   ];
 
   const showStatusColumns = eventGroup === "notification_api";
