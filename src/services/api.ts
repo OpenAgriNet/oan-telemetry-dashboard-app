@@ -187,8 +187,10 @@ export interface NotificationTelemetryEvent {
 }
 
 export interface NotificationTelemetrySummary {
-  location_allowed?: string | number;
-  location_denied?: string | number;
+  location_prompt_allowed?: string | number;
+  location_prompt_denied?: string | number;
+  location_browser_allowed?: string | number;
+  location_browser_denied?: string | number;
   notification_api_success?: string | number;
   notification_bell?: string | number;
   feedback_yes?: string | number;
