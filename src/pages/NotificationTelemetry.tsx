@@ -74,6 +74,18 @@ function numberValue(value: string | number | undefined) {
   return Number(value || 0);
 }
 
+function getLocationSource(eventName: string) {
+  if (eventName === "location_allowed" || eventName === "location_denied") {
+    return "Custom Prompt";
+  }
+
+  if (eventName === "location_browser_allowed" || eventName === "location_browser_never_allow") {
+    return "Browser Permission";
+  }
+
+  return "-";
+}
+
 const NotificationTelemetry = () => {
   const navigate = useNavigate();
   const [searchParams, setSearchParams] = useSearchParams();
@@ -159,8 +171,10 @@ const NotificationTelemetry = () => {
   };
 
   const cards = [
-    { label: "Location Allowed", value: numberValue(summary?.location_allowed), icon: MapPin },
-    { label: "Location Denied", value: numberValue(summary?.location_denied), icon: XCircle },
+    { label: "Location Prompt Allowed", value: numberValue(summary?.location_prompt_allowed), icon: MapPin },
+    { label: "Location Prompt Denied", value: numberValue(summary?.location_prompt_denied), icon: XCircle },
+    { label: "Browser Location Allowed", value: numberValue(summary?.location_browser_allowed), icon: MapPin },
+    { label: "Browser Location Denied", value: numberValue(summary?.location_browser_denied), icon: XCircle },
     { label: "Notification API Success", value: numberValue(summary?.notification_api_success), icon: CheckCircle2 },
     { label: "Notification Bell", value: numberValue(summary?.notification_bell), icon: Bell },
     { label: "Positive Feedback", value: numberValue(summary?.feedback_yes), icon: ThumbsUp },
@@ -278,6 +292,7 @@ const NotificationTelemetry = () => {
                       )}
                       {showLocationColumns && (
                         <>
+                          <TableHead>Source</TableHead>
                           <TableHead>Action</TableHead>
                           <TableHead>Reason</TableHead>
                         </>
@@ -329,6 +344,7 @@ const NotificationTelemetry = () => {
                         )}
                         {showLocationColumns && (
                           <>
+                            <TableCell>{getLocationSource(row.event_name)}</TableCell>
                             <TableCell>{row.action || "-"}</TableCell>
                             <TableCell>{row.reason || "-"}</TableCell>
                           </>
