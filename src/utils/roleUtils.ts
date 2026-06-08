@@ -13,6 +13,7 @@ export interface TelemetryStateConfig {
     | "questions"
     | "feedback"
     | "downloads"
+    | "notifications"
     | "langfuse-questions"
     | "errors"
     | "asr"
@@ -33,6 +34,7 @@ export const TELEMETRY_STATES: Record<TelemetryStateId, TelemetryStateConfig> = 
       "questions",
       "feedback",
       "downloads",
+      "notifications",
       "langfuse-questions",
       "errors",
       "asr",
@@ -116,6 +118,7 @@ export const canAccessTabForState = (
     | "questions"
     | "feedback"
     | "downloads"
+    | "notifications"
     | "langfuse-questions"
     | "errors"
     | "asr"

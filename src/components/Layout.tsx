@@ -35,6 +35,7 @@ import {
   ChevronRight,
   PhoneCall,
   Network,
+  Bell,
 } from "lucide-react";
 import {
   DropdownMenu,
@@ -110,6 +111,12 @@ const Layout: React.FC<LayoutProps> = ({ children }) => {
       icon: <Download size={16} />,
     },
     {
+      tab: "notifications",
+      name: "Notification",
+      path: "/notifications",
+      icon: <Bell size={16} />,
+    },
+    {
       tab: "langfuse-questions",
       name: "Langfuse Toolcall",
       path: "/langfuse-questions",
@@ -141,8 +148,11 @@ const Layout: React.FC<LayoutProps> = ({ children }) => {
       )
     : [];
 
+  const isPathActive = (path: string) =>
+    location.pathname === path || location.pathname.startsWith(`${path}/`);
+
   const isChatTelemetryActive = chatTelemetryChildren.some(
-    (item) => location.pathname === item.path,
+    (item) => isPathActive(item.path),
   );
 
   const renderNavLink = (
@@ -158,7 +168,7 @@ const Layout: React.FC<LayoutProps> = ({ children }) => {
         }
       }}
       className={`flex items-center px-3 py-2 rounded-md transition-colors ${
-        location.pathname === item.path
+        isPathActive(item.path)
           ? "bg-sidebar-accent text-sidebar-accent-foreground font-medium"
           : "text-sidebar-foreground hover:bg-sidebar-accent/50"
       }`}
@@ -242,7 +252,7 @@ const Layout: React.FC<LayoutProps> = ({ children }) => {
                             }
                           }}
                           className={`flex items-center px-2 py-1.5 rounded-md transition-colors text-sm ${
-                            location.pathname === item.path
+                            isPathActive(item.path)
                               ? "bg-sidebar-accent text-sidebar-accent-foreground font-medium"
                               : "text-sidebar-foreground hover:bg-sidebar-accent/50"
                           }`}
@@ -262,7 +272,7 @@ const Layout: React.FC<LayoutProps> = ({ children }) => {
                     key={item.path}
                     to={item.path}
                     className={`flex items-center px-3 py-2 rounded-md transition-colors mt-1 ${
-                      location.pathname === item.path
+                      isPathActive(item.path)
                         ? "bg-sidebar-accent text-sidebar-accent-foreground font-medium"
                         : "text-sidebar-foreground hover:bg-sidebar-accent/50"
                     }`}

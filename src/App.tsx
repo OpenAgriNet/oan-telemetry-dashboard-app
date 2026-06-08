@@ -37,6 +37,8 @@ import CallDetails from "./pages/CallDetails";
 import CombinedDashboard from "./pages/CombinedDashboard";
 import LangfuseQuestions from "./pages/LangfuseQuestions";
 import AppDownloads from "./pages/AppDownloads";
+import NotificationTelemetry from "./pages/NotificationTelemetry";
+import NotificationTelemetryDetails from "./pages/NotificationTelemetryDetails";
 
 const queryClient = new QueryClient({
   defaultOptions: {
@@ -54,6 +56,7 @@ type ChatTelemetryTab =
   | "questions"
   | "feedback"
   | "downloads"
+  | "notifications"
   | "langfuse-questions"
   | "errors"
   | "asr"
@@ -184,6 +187,22 @@ const AppRoutes = () => {
         element={
           <TelemetryRoute requiredTab="downloads">
             <AppDownloads />
+          </TelemetryRoute>
+        }
+      />
+      <Route
+        path="/notifications"
+        element={
+          <TelemetryRoute requiredTab="notifications">
+            <NotificationTelemetry />
+          </TelemetryRoute>
+        }
+      />
+      <Route
+        path="/notifications/:eventId"
+        element={
+          <TelemetryRoute requiredTab="notifications">
+            <NotificationTelemetryDetails />
           </TelemetryRoute>
         }
       />

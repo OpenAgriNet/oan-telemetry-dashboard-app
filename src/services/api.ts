@@ -155,6 +155,48 @@ export interface Feedback {
   [key: string]: unknown;
 }
 
+export type NotificationEventGroup =
+  | "location"
+  | "notification_api"
+  | "notification_actions"
+  | "notification_feedback";
+
+export interface NotificationTelemetryEvent {
+  id: string;
+  source_log_id?: string;
+  source_event_index?: number;
+  eid?: string;
+  uid?: string;
+  fingerprint_id?: string;
+  sid?: string;
+  channel?: string;
+  ets?: string | number;
+  event_name: string;
+  category: "location" | "notification" | "notification_feedback";
+  event_time?: string;
+  metadata?: Record<string, unknown>;
+  notification_id?: string;
+  action?: string;
+  reason?: string;
+  feedback?: string;
+  status_code?: number;
+  success?: boolean;
+  response?: unknown;
+  response_count?: number;
+  created_at?: string;
+}
+
+export interface NotificationTelemetrySummary {
+  location_prompt_allowed?: string | number;
+  location_prompt_denied?: string | number;
+  location_browser_allowed?: string | number;
+  location_browser_denied?: string | number;
+  notification_api_success?: string | number;
+  notification_bell?: string | number;
+  feedback_yes?: string | number;
+  feedback_no?: string | number;
+}
+
 export interface FeedbackResponse {
   qid: string;
   date: string;
@@ -204,6 +246,8 @@ export interface PaginationParams {
   feedbackSource?: string;
   feedbackType?: string;
   channel?: string;
+  category?: string;
+  eventGroup?: string;
 }
 
 export interface UserPaginationParams extends PaginationParams {
@@ -1609,6 +1653,85 @@ export const fetchAppDownloads = async (
     console.error("Error fetching app downloads:", error);
     return [];
   }
+};
+
+export const fetchNotifications = async (
+  params: PaginationParams = {},
+): Promise<PaginatedResponse<NotificationTelemetryEvent>> => {
+  const {
+    page = DEFAULT_PAGE,
+    limit = DEFAULT_LIMIT,
+    startDate,
+    endDate,
+    eventGroup,
+    sortBy,
+    sortOrder,
+  } = params;
+
+  const queryParams = buildQueryParams({
+    page,
+    limit,
+    startDate: startDate || "",
+    endDate: endDate || "",
+    eventGroup: eventGroup || "notification_api",
+    sortBy: sortBy || "event_time",
+    sortOrder: sortOrder || "desc",
+  });
+
+  const response = await fetch(`${SERVER_URL}/notifications?${queryParams}`);
+  if (!response.ok) {
+    throw new Error(`HTTP error! status: ${response.status}`);
+  }
+
+  const result = await response.json();
+  if (!result.success) {
+    throw new Error("Failed to fetch notification telemetry");
+  }
+
+  return {
+    data: result.data || [],
+    total: result.pagination?.total || 0,
+    page: result.pagination?.currentPage || page,
+    pageSize: result.pagination?.itemsPerPage || limit,
+    totalPages: result.pagination?.totalPages || 1,
+  };
+};
+
+export const fetchNotificationById = async (
+  id: string,
+): Promise<NotificationTelemetryEvent> => {
+  const response = await fetch(`${SERVER_URL}/notifications/${id}`);
+  if (!response.ok) {
+    throw new Error(`HTTP error! status: ${response.status}`);
+  }
+
+  const result = await response.json();
+  if (!result.success) {
+    throw new Error("Failed to fetch notification telemetry event");
+  }
+
+  return result.data;
+};
+
+export const fetchNotificationSummary = async (
+  params: Pick<PaginationParams, "startDate" | "endDate"> = {},
+): Promise<NotificationTelemetrySummary> => {
+  const queryParams = buildQueryParams({
+    startDate: params.startDate || "",
+    endDate: params.endDate || "",
+  });
+
+  const response = await fetch(`${SERVER_URL}/notifications/summary?${queryParams}`);
+  if (!response.ok) {
+    throw new Error(`HTTP error! status: ${response.status}`);
+  }
+
+  const result = await response.json();
+  if (!result.success) {
+    throw new Error("Failed to fetch notification telemetry summary");
+  }
+
+  return result.data || {};
 };
 
 // Legacy support functions (these will be deprecated)
