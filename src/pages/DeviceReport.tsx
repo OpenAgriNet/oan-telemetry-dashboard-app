@@ -279,13 +279,13 @@ const DeviceReport = () => {
                             </code>
                           </TableCell>
                           <TableCell>
-                            {device.device_name.charAt(0).toUpperCase() + device.device_name.slice(1)}
+                            {device.device_name?.charAt(0).toUpperCase() + device.device_name?.slice(1)}
                           </TableCell>
                           <TableCell>
-                            {device.os_name} {device.os_version}
+                            {device?.os_name} {device?.os_version}
                           </TableCell>
                           <TableCell>
-                            {device.browser_name}
+                            {device?.browser_name}
                           </TableCell>
                           {/* <TableCell>{device.first_seen_at}</TableCell>
                       <TableCell>{device.last_seen_at}</TableCell> */}
