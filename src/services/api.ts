@@ -159,7 +159,8 @@ export type NotificationEventGroup =
   | "location"
   | "notification_api"
   | "notification_actions"
-  | "notification_feedback";
+  | "notification_feedback"
+  | "sessions";
 
 export interface NotificationTelemetryEvent {
   id: string;
@@ -191,10 +192,28 @@ export interface NotificationTelemetrySummary {
   location_prompt_denied?: string | number;
   location_browser_allowed?: string | number;
   location_browser_denied?: string | number;
+  notification_api_calls?: string | number;
   notification_api_success?: string | number;
+  total_notifications_returned?: string | number;
   notification_bell?: string | number;
+  notification_opens?: string | number;
+  mark_all_read?: string | number;
   feedback_yes?: string | number;
   feedback_no?: string | number;
+  negative_feedback_submitted?: string | number;
+  total_sessions?: string | number;
+}
+
+export interface NotificationTelemetrySession {
+  sid: string;
+  fingerprint_id?: string;
+  session_time?: string;
+  total_notifications_returned?: string | number;
+  bell_clicks?: string | number;
+  notification_opens?: string | number;
+  like_count?: string | number;
+  dislike_count?: string | number;
+  negative_feedback_submitted?: string | number;
 }
 
 export interface FeedbackResponse {

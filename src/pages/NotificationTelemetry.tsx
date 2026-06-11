@@ -10,6 +10,7 @@ import {
   fetchNotifications,
   type NotificationEventGroup,
   type NotificationTelemetryEvent,
+  type NotificationTelemetrySession,
 } from "@/services/api";
 import TablePagination from "@/components/TablePagination";
 import { Badge } from "@/components/ui/badge";
@@ -39,6 +40,7 @@ const EVENT_GROUP_LABELS: Record<NotificationEventGroup, string> = {
   notification_api: "Notification API",
   notification_actions: "Notification Actions",
   notification_feedback: "Notification Feedback",
+  sessions: "Sessions",
 };
 
 const PAGE_SIZE = 10;
@@ -73,6 +75,16 @@ function SortIcon({ active, order }: { active: boolean; order: SortOrder }) {
 function numberValue(value: string | number | undefined) {
   return Number(value || 0);
 }
+
+function numberCell(value: string | number | undefined) {
+  return Number(value || 0).toLocaleString();
+}
+
+type SummaryCard = {
+  label: string;
+  value: number;
+  icon: typeof Bell;
+};
 
 function getLocationSource(eventName: string) {
   if (eventName === "location_allowed" || eventName === "location_denied") {
@@ -141,6 +153,7 @@ const NotificationTelemetry = () => {
   const rows = data?.data || [];
   const totalPages = data?.totalPages || 1;
   const totalRecords = data?.total || 0;
+  const isSessionView = eventGroup === "sessions";
 
   const updateParams = (updates: Record<string, string>) => {
     const next = new URLSearchParams(searchParams);
@@ -170,16 +183,46 @@ const NotificationTelemetry = () => {
     updateParams({ page: String(nextPage) });
   };
 
-  const cards = [
-    { label: "Location Prompt Allowed", value: numberValue(summary?.location_prompt_allowed), icon: MapPin },
-    { label: "Location Prompt Denied", value: numberValue(summary?.location_prompt_denied), icon: XCircle },
-    { label: "Browser Location Allowed", value: numberValue(summary?.location_browser_allowed), icon: MapPin },
-    { label: "Browser Location Denied", value: numberValue(summary?.location_browser_denied), icon: XCircle },
-    { label: "Notification API Success", value: numberValue(summary?.notification_api_success), icon: CheckCircle2 },
-    { label: "Notification Bell", value: numberValue(summary?.notification_bell), icon: Bell },
-    { label: "Positive Feedback", value: numberValue(summary?.feedback_yes), icon: ThumbsUp },
-    { label: "Negative Feedback", value: numberValue(summary?.feedback_no), icon: ThumbsDown },
-  ];
+  const cards: SummaryCard[] = useMemo(() => {
+    switch (eventGroup) {
+      case "location":
+        return [
+          { label: "Location Prompt Allowed", value: numberValue(summary?.location_prompt_allowed), icon: MapPin },
+          { label: "Location Prompt Denied", value: numberValue(summary?.location_prompt_denied), icon: XCircle },
+          { label: "Browser Location Allowed", value: numberValue(summary?.location_browser_allowed), icon: MapPin },
+          { label: "Browser Location Denied", value: numberValue(summary?.location_browser_denied), icon: XCircle },
+        ];
+      case "notification_api":
+        return [
+          { label: "Notification API Success", value: numberValue(summary?.notification_api_success), icon: CheckCircle2 },
+          { label: "API Calls", value: numberValue(summary?.notification_api_calls), icon: Bell },
+          { label: "Total Notifications Returned", value: numberValue(summary?.total_notifications_returned), icon: Bell },
+        ];
+      case "notification_actions":
+        return [
+          { label: "Notification Bell", value: numberValue(summary?.notification_bell), icon: Bell },
+          { label: "Notification Opens", value: numberValue(summary?.notification_opens), icon: Bell },
+          { label: "Mark All Read", value: numberValue(summary?.mark_all_read), icon: CheckCircle2 },
+        ];
+      case "notification_feedback":
+        return [
+          { label: "Positive Feedback", value: numberValue(summary?.feedback_yes), icon: ThumbsUp },
+          { label: "Negative Feedback", value: numberValue(summary?.feedback_no), icon: ThumbsDown },
+          { label: "Negative Feedback Submitted", value: numberValue(summary?.negative_feedback_submitted), icon: ThumbsDown },
+        ];
+      case "sessions":
+        return [
+          { label: "Total Sessions", value: numberValue(summary?.total_sessions), icon: Bell },
+          { label: "Total Notifications Returned", value: numberValue(summary?.total_notifications_returned), icon: Bell },
+          { label: "Total Bell Clicks", value: numberValue(summary?.notification_bell), icon: Bell },
+          { label: "Total Notification Opens", value: numberValue(summary?.notification_opens), icon: Bell },
+          { label: "Total Likes", value: numberValue(summary?.feedback_yes), icon: ThumbsUp },
+          { label: "Total Dislikes", value: numberValue(summary?.feedback_no), icon: ThumbsDown },
+        ];
+      default:
+        return [];
+    }
+  }, [eventGroup, summary]);
 
   const showStatusColumns = eventGroup === "notification_api";
   const showLocationColumns = eventGroup === "location";
@@ -217,7 +260,7 @@ const NotificationTelemetry = () => {
         </div>
       </div>
 
-      <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-3">
+      <div className={eventGroup === "location" ? "grid gap-4 sm:grid-cols-2" : "grid gap-4 sm:grid-cols-2 lg:grid-cols-3"}>
         {cards.map((card) => {
           const Icon = card.icon;
           return (
@@ -252,33 +295,52 @@ const NotificationTelemetry = () => {
             <div className="flex justify-center items-center p-12 bg-muted/30 rounded-lg">
               <div className="text-center">
                 <RefreshCw className="h-8 w-8 animate-spin mx-auto mb-3 text-muted-foreground" />
-                <p className="text-muted-foreground">Loading notification telemetry...</p>
+                <p className="text-muted-foreground">
+                  {isSessionView ? "Loading notification sessions..." : "Loading notification telemetry..."}
+                </p>
               </div>
             </div>
           ) : error ? (
             <div className="py-10 text-center text-sm text-destructive">
-              Unable to load notification telemetry right now.
+              {isSessionView
+                ? "Unable to load notification sessions right now."
+                : "Unable to load notification telemetry right now."}
             </div>
           ) : rows.length === 0 ? (
             <div className="py-10 text-center text-sm text-muted-foreground">
-              No notification telemetry available for the selected global date range.
+              {isSessionView
+                ? "No notification sessions available for the selected global date range."
+                : "No notification telemetry available for the selected global date range."}
             </div>
           ) : (
             <div className="space-y-4">
               <div className="overflow-x-auto rounded-md border">
-                <Table>
+                <Table className={isSessionView ? "min-w-[1180px]" : undefined}>
                   <TableHeader>
                     <TableRow>
-                      <TableHead>
+                      <TableHead className="whitespace-nowrap">
                         <Button variant="ghost" className="h-auto p-0 font-semibold" onClick={() => handleSort("event_time")}>
-                          Time
+                          {isSessionView ? "Session Time" : "Time"}
                           <SortIcon active={sortBy === "event_time"} order={sortOrder} />
                         </Button>
                       </TableHead>
-                      <TableHead>Category</TableHead>
-                      <TableHead>Event</TableHead>
-                      <TableHead>Fingerprint ID</TableHead>
-                      <TableHead>SID</TableHead>
+                      <TableHead className="whitespace-nowrap">Fingerprint ID</TableHead>
+                      <TableHead className="whitespace-nowrap">SID</TableHead>
+                      {isSessionView ? (
+                        <>
+                          <TableHead className="whitespace-nowrap text-right">Total Notifications Returned</TableHead>
+                          <TableHead className="whitespace-nowrap text-right">Bell Clicks</TableHead>
+                          <TableHead className="whitespace-nowrap text-right">Notification Opens</TableHead>
+                          <TableHead className="whitespace-nowrap text-right">Like</TableHead>
+                          <TableHead className="whitespace-nowrap text-right">Dislike</TableHead>
+                          <TableHead className="whitespace-nowrap text-right">Negative Feedback Submitted</TableHead>
+                        </>
+                      ) : (
+                        <>
+                          <TableHead>Category</TableHead>
+                          <TableHead>Event</TableHead>
+                        </>
+                      )}
                       {showStatusColumns && (
                         <>
                           <TableHead>
@@ -311,63 +373,86 @@ const NotificationTelemetry = () => {
                     </TableRow>
                   </TableHeader>
                   <TableBody>
-                    {rows.map((row) => (
-                      <TableRow
-                        key={row.id}
-                        className="cursor-pointer"
-                        onClick={() => navigate(`/notifications/${row.id}`)}
-                      >
-                        <TableCell className="whitespace-nowrap">
-                          {row.event_time ? formatUTCToIST(row.event_time, "MMM dd, yyyy hh:mm a") : "-"}
-                        </TableCell>
-                        <TableCell>
-                          <Badge variant="outline">{formatEventName(row.category)}</Badge>
-                        </TableCell>
-                        <TableCell className="font-medium whitespace-nowrap">
-                          {formatEventName(row.event_name)}
-                        </TableCell>
-                        <TableCell className="max-w-[120px] font-mono text-xs" title={row.fingerprint_id || ""}>
-                          {formatCompactId(row.fingerprint_id)}
-                        </TableCell>
-                        <TableCell className="max-w-[120px] font-mono text-xs" title={row.sid || ""}>
-                          {formatCompactId(row.sid)}
-                        </TableCell>
-                        {showStatusColumns && (
-                          <>
+                    {isSessionView
+                      ? rows.map((row) => {
+                          const sessionRow = row as unknown as NotificationTelemetrySession;
+                          return (
+                            <TableRow key={sessionRow.sid}>
+                              <TableCell className="whitespace-nowrap">
+                                {sessionRow.session_time ? formatUTCToIST(sessionRow.session_time, "MMM dd, yyyy hh:mm a") : "-"}
+                              </TableCell>
+                              <TableCell className="max-w-[120px] font-mono text-xs" title={sessionRow.fingerprint_id || ""}>
+                                {formatCompactId(sessionRow.fingerprint_id)}
+                              </TableCell>
+                              <TableCell className="max-w-[120px] font-mono text-xs" title={sessionRow.sid || ""}>
+                                {formatCompactId(sessionRow.sid)}
+                              </TableCell>
+                              <TableCell className="text-right">{numberCell(sessionRow.total_notifications_returned)}</TableCell>
+                              <TableCell className="text-right">{numberCell(sessionRow.bell_clicks)}</TableCell>
+                              <TableCell className="text-right">{numberCell(sessionRow.notification_opens)}</TableCell>
+                              <TableCell className="text-right">{numberCell(sessionRow.like_count)}</TableCell>
+                              <TableCell className="text-right">{numberCell(sessionRow.dislike_count)}</TableCell>
+                              <TableCell className="text-right">{numberCell(sessionRow.negative_feedback_submitted)}</TableCell>
+                            </TableRow>
+                          );
+                        })
+                      : rows.map((row) => (
+                          <TableRow
+                            key={row.id}
+                            className="cursor-pointer"
+                            onClick={() => navigate(`/notifications/${row.id}`)}
+                          >
+                            <TableCell className="whitespace-nowrap">
+                              {row.event_time ? formatUTCToIST(row.event_time, "MMM dd, yyyy hh:mm a") : "-"}
+                            </TableCell>
                             <TableCell>
-                              <Badge variant={getStatusVariant(row)}>{statusLabel(row)}</Badge>
+                              <Badge variant="outline">{formatEventName(row.category)}</Badge>
                             </TableCell>
-                            <TableCell className="text-right">
-                              {row.response_count ?? "-"}
+                            <TableCell className="font-medium whitespace-nowrap">
+                              {formatEventName(row.event_name)}
                             </TableCell>
-                          </>
-                        )}
-                        {showLocationColumns && (
-                          <>
-                            <TableCell>{getLocationSource(row.event_name)}</TableCell>
-                            <TableCell>{row.action || "-"}</TableCell>
-                            <TableCell>{row.reason || "-"}</TableCell>
-                          </>
-                        )}
-                        {showActionColumns && (
-                          <TableCell className="max-w-[160px] truncate font-mono text-xs">
-                            {row.notification_id || "-"}
-                          </TableCell>
-                        )}
-                        {showFeedbackColumns && (
-                          <>
-                            <TableCell className="max-w-[160px] truncate font-mono text-xs">
-                              {row.notification_id || "-"}
+                            <TableCell className="max-w-[120px] font-mono text-xs" title={row.fingerprint_id || ""}>
+                              {formatCompactId(row.fingerprint_id)}
                             </TableCell>
-                            <TableCell>{formatEventName(row.event_name)}</TableCell>
-                            <TableCell>{row.reason || "-"}</TableCell>
-                            <TableCell className="max-w-[260px] truncate">
-                              {row.feedback || "-"}
+                            <TableCell className="max-w-[120px] font-mono text-xs" title={row.sid || ""}>
+                              {formatCompactId(row.sid)}
                             </TableCell>
-                          </>
-                        )}
-                      </TableRow>
-                    ))}
+                            {showStatusColumns && (
+                              <>
+                                <TableCell>
+                                  <Badge variant={getStatusVariant(row)}>{statusLabel(row)}</Badge>
+                                </TableCell>
+                                <TableCell className="text-right">
+                                  {row.response_count ?? "-"}
+                                </TableCell>
+                              </>
+                            )}
+                            {showLocationColumns && (
+                              <>
+                                <TableCell>{getLocationSource(row.event_name)}</TableCell>
+                                <TableCell>{row.action || "-"}</TableCell>
+                                <TableCell>{row.reason || "-"}</TableCell>
+                              </>
+                            )}
+                            {showActionColumns && (
+                              <TableCell className="max-w-[160px] truncate font-mono text-xs">
+                                {row.notification_id || "-"}
+                              </TableCell>
+                            )}
+                            {showFeedbackColumns && (
+                              <>
+                                <TableCell className="max-w-[160px] truncate font-mono text-xs">
+                                  {row.notification_id || "-"}
+                                </TableCell>
+                                <TableCell>{formatEventName(row.event_name)}</TableCell>
+                                <TableCell>{row.reason || "-"}</TableCell>
+                                <TableCell className="max-w-[260px] truncate">
+                                  {row.feedback || "-"}
+                                </TableCell>
+                              </>
+                            )}
+                          </TableRow>
+                        ))}
                   </TableBody>
                 </Table>
               </div>
@@ -386,7 +471,7 @@ const NotificationTelemetry = () => {
                   <span className="font-medium text-foreground">
                     {totalRecords.toLocaleString()}
                   </span>{" "}
-                  notification records
+                  {isSessionView ? "notification sessions" : "notification records"}
                 </p>
                 <TablePagination
                   currentPage={page}
