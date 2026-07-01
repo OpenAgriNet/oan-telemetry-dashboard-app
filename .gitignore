@@ -30,3 +30,6 @@ package-lock.json
 # Environment and authentication config
 src/lib/keycloak.ts
 src/config/environment.ts
+
+
+package-lock.json

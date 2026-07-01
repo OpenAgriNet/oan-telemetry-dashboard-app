@@ -140,6 +140,12 @@ const Layout: React.FC<LayoutProps> = ({ children }) => {
       path: "/tts",
       icon: <Volume2 size={16} />,
     },
+    {
+      tab: "external-api",
+      name: "External API",
+      path: "/external-api",
+      icon: <Activity size={16} />,
+    },
   ] as const;
 
   const chatTelemetryChildren = activeState
