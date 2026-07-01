@@ -39,6 +39,7 @@ import LangfuseQuestions from "./pages/LangfuseQuestions";
 import AppDownloads from "./pages/AppDownloads";
 import NotificationTelemetry from "./pages/NotificationTelemetry";
 import NotificationTelemetryDetails from "./pages/NotificationTelemetryDetails";
+import ExternalApiObservability from "./pages/ExternalApiObservability";
 
 const queryClient = new QueryClient({
   defaultOptions: {
@@ -60,14 +61,15 @@ type ChatTelemetryTab =
   | "langfuse-questions"
   | "errors"
   | "asr"
-  | "tts";
+  | "tts"
+  | "external-api";
 
 const AccessDenied = () => (
   <div className="min-h-screen bg-background text-foreground flex items-center justify-center px-6">
     <div className="max-w-md text-center space-y-3">
       <h1 className="text-2xl font-semibold">Access Restricted</h1>
       <p className="text-muted-foreground">
-        Your current role does not have access to any telemetry state in this
+        Your current    role does not have access to any telemetry state in this
         environment.
       </p>
     </div>
@@ -292,6 +294,14 @@ const AppRoutes = () => {
           <SuperAdminRoute>
             <ServiceStatus />
           </SuperAdminRoute>
+        }
+      />
+      <Route
+        path="/external-api"
+        element={
+          <TelemetryRoute requiredTab="external-api">
+            <ExternalApiObservability />
+          </TelemetryRoute>
         }
       />
       <Route path="*" element={<NotFound />} />
