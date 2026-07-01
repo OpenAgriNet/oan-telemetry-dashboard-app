@@ -7,7 +7,6 @@ import {
   ChevronUp,
   Clock,
   Globe,
-  PhoneCall,
 } from "lucide-react";
 import { Badge } from "@/components/ui/badge";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
@@ -92,32 +91,7 @@ function deriveStats(logs: LogEntry[]) {
   const totalSuccess = logs.filter((l) => l.status === "success").length;
   const totalErrors = logs.filter((l) => l.status === "error").length;
   const maxLatencyMs = logs.reduce((max, l) => Math.max(max, l.latencyMs), 0);
-
-  // Per-service breakdown
-  const serviceMap: Record<
-    string,
-    { useCaseLabel: string; totalCalls: number; success: number; errors: number }
-  > = {};
-  for (const log of logs) {
-    if (!serviceMap[log.serviceName]) {
-      serviceMap[log.serviceName] = {
-        useCaseLabel: log.requestType,
-        totalCalls: 0,
-        success: 0,
-        errors: 0,
-      };
-    }
-    serviceMap[log.serviceName].totalCalls += 1;
-    if (log.status === "success") serviceMap[log.serviceName].success += 1;
-    else serviceMap[log.serviceName].errors += 1;
-  }
-
-  const callsPerService = Object.entries(serviceMap).map(([name, data]) => ({
-    serviceName: name,
-    ...data,
-  }));
-
-  return { totalCalls, totalSuccess, totalErrors, maxLatencyMs, callsPerService };
+  return { totalCalls, totalSuccess, totalErrors, maxLatencyMs };
 }
 
 const ExternalApiObservability = () => {
@@ -138,16 +112,19 @@ const ExternalApiObservability = () => {
 
     return (mockData.logs as LogEntry[]).filter((log) => {
       const ts = new Date(log.timestamp);
-      // Set 'to' to end of the selected day for inclusive matching
-      const toEndOfDay = to ? new Date(new Date(to).setHours(23, 59, 59, 999)) : undefined;
+      const toEndOfDay = to
+        ? new Date(new Date(to).setHours(23, 59, 59, 999))
+        : undefined;
       if (from && ts < from) return false;
       if (toEndOfDay && ts > toEndOfDay) return false;
       return true;
     });
   }, [dateRange]);
 
-  const { totalCalls, totalSuccess, totalErrors, maxLatencyMs, callsPerService } =
-    useMemo(() => deriveStats(filteredLogs), [filteredLogs]);
+  const { totalCalls, totalSuccess, totalErrors, maxLatencyMs } = useMemo(
+    () => deriveStats(filteredLogs),
+    [filteredLogs],
+  );
 
   const handleSort = (key: SortKey) => {
     if (sortKey === key) {
@@ -179,7 +156,7 @@ const ExternalApiObservability = () => {
       if (av > bv) return sortOrder === "asc" ? 1 : -1;
       return 0;
     });
-  }, [sortKey, sortOrder]);
+  }, [filteredLogs, sortKey, sortOrder]);
 
   const totalPages = Math.ceil(sorted.length / PAGE_SIZE);
   const pageRows = sorted.slice((page - 1) * PAGE_SIZE, page * PAGE_SIZE);
@@ -232,78 +209,14 @@ const ExternalApiObservability = () => {
         })}
       </div>
 
-      {/* Calls per Service */}
-      <Card>
-        <CardHeader>
-          <div className="flex items-center gap-2">
-            <PhoneCall size={16} className="text-muted-foreground" />
-            <CardTitle className="text-lg">Calls per Use Case / Service</CardTitle>
-          </div>
-        </CardHeader>
-        <CardContent>
-          <div className="overflow-x-auto rounded-md border">
-            <Table>
-              <TableHeader>
-                <TableRow>
-                  <TableHead>Service Name</TableHead>
-                  <TableHead>Use Case</TableHead>
-                  <TableHead className="text-right">Total Calls</TableHead>
-                  <TableHead className="text-right">Success</TableHead>
-                  <TableHead className="text-right">Errors</TableHead>
-                  <TableHead className="text-right">Error Rate</TableHead>
-                </TableRow>
-              </TableHeader>
-              <TableBody>
-                {callsPerService.map((row) => {
-                  const errorRate =
-                    row.totalCalls > 0
-                      ? ((row.errors / row.totalCalls) * 100).toFixed(1)
-                      : "0.0";
-                  return (
-                    <TableRow key={row.serviceName}>
-                      <TableCell className="font-medium">
-                        {row.serviceName}
-                      </TableCell>
-                      <TableCell>{row.useCaseLabel}</TableCell>
-                      <TableCell className="text-right">
-                        {row.totalCalls.toLocaleString()}
-                      </TableCell>
-                      <TableCell className="text-right text-green-600">
-                        {row.success.toLocaleString()}
-                      </TableCell>
-                      <TableCell className="text-right text-red-500">
-                        {row.errors.toLocaleString()}
-                      </TableCell>
-                      <TableCell className="text-right">
-                        <Badge
-                          variant={
-                            Number(errorRate) > 20
-                              ? "destructive"
-                              : Number(errorRate) > 5
-                              ? "outline"
-                              : "secondary"
-                          }
-                        >
-                          {errorRate}%
-                        </Badge>
-                      </TableCell>
-                    </TableRow>
-                  );
-                })}
-              </TableBody>
-            </Table>
-          </div>
-        </CardContent>
-      </Card>
-
-      {/* Logs Table */}
+      {/* Unified Logs Table */}
       <Card>
         <CardHeader className="flex flex-row items-center justify-between">
           <CardTitle className="text-lg">API Call Logs</CardTitle>
           <p className="text-sm text-muted-foreground">
             {filteredLogs.length.toLocaleString()} records
             {(dateRange.from || dateRange.to) && (
-              <span className="ml-1 text-xs text-muted-foreground">(filtered)</span>
+              <span className="ml-1 text-xs">(filtered)</span>
             )}
           </p>
         </CardHeader>
@@ -313,123 +226,175 @@ const ExternalApiObservability = () => {
               No API call logs found for the selected date range.
             </div>
           ) : (
-          <div className="space-y-4">
-            <div className="overflow-x-auto rounded-md border">
-              <Table className="min-w-[800px]">
-                <TableHeader>
-                  <TableRow>
-                    <TableHead className="w-14">
-                      <Button
-                        variant="ghost"
-                        className="h-auto p-0 font-semibold"
-                        onClick={() => handleSort("id")}
-                      >
-                        SL
-                        <SortIcon active={sortKey === "id"} order={sortOrder} />
-                      </Button>
-                    </TableHead>
-                    <TableHead>Event Name</TableHead>
-                    <TableHead>Request Type</TableHead>
-                    <TableHead>
-                      <Button
-                        variant="ghost"
-                        className="h-auto p-0 font-semibold"
-                        onClick={() => handleSort("latencyMs")}
-                      >
-                        Latency (ms)
-                        <SortIcon
-                          active={sortKey === "latencyMs"}
-                          order={sortOrder}
-                        />
-                      </Button>
-                    </TableHead>
-                    <TableHead>
-                      <Button
-                        variant="ghost"
-                        className="h-auto p-0 font-semibold"
-                        onClick={() => handleSort("timestamp")}
-                      >
-                        Timestamp
-                        <SortIcon
-                          active={sortKey === "timestamp"}
-                          order={sortOrder}
-                        />
-                      </Button>
-                    </TableHead>
-                  </TableRow>
-                </TableHeader>
-                <TableBody>
-                  {pageRows.map((row, index) => (
-                    <TableRow key={row.id}>
-                      <TableCell className="text-muted-foreground">
-                        {(page - 1) * PAGE_SIZE + index + 1}
-                      </TableCell>
-                      <TableCell>
-                        <EventBadge name={row.eventName} />
-                      </TableCell>
-                      <TableCell>{row.requestType}</TableCell>
-                      <TableCell>
-                        <span
-                          className={
-                            row.latencyMs > 2000
-                              ? "font-medium text-red-500"
-                              : row.latencyMs > 800
-                              ? "font-medium text-amber-500"
-                              : "text-foreground"
-                          }
+            <div className="space-y-4">
+              <div className="overflow-x-auto rounded-md border">
+                <Table className="min-w-[1100px]">
+                  <TableHeader>
+                    <TableRow>
+                      <TableHead className="w-12">
+                        <Button
+                          variant="ghost"
+                          className="h-auto p-0 font-semibold"
+                          onClick={() => handleSort("id")}
                         >
-                          {row.latencyMs.toLocaleString()}
-                        </span>
-                      </TableCell>
-                      <TableCell className="whitespace-nowrap text-sm text-muted-foreground">
-                        {formatTimestamp(row.timestamp)}
-                      </TableCell>
+                          SL
+                          <SortIcon active={sortKey === "id"} order={sortOrder} />
+                        </Button>
+                      </TableHead>
+                      <TableHead>Event Name</TableHead>
+                      <TableHead>Service Name</TableHead>
+                      <TableHead>Request Type</TableHead>
+                      <TableHead>Endpoint</TableHead>
+                      <TableHead className="text-center">Success</TableHead>
+                      <TableHead className="text-center">Error</TableHead>
+                      <TableHead>
+                        <Button
+                          variant="ghost"
+                          className="h-auto p-0 font-semibold"
+                          onClick={() => handleSort("latencyMs")}
+                        >
+                          Latency (ms)
+                          <SortIcon
+                            active={sortKey === "latencyMs"}
+                            order={sortOrder}
+                          />
+                        </Button>
+                      </TableHead>
+                      <TableHead>
+                        <Button
+                          variant="ghost"
+                          className="h-auto p-0 font-semibold"
+                          onClick={() => handleSort("timestamp")}
+                        >
+                          Timestamp
+                          <SortIcon
+                            active={sortKey === "timestamp"}
+                            order={sortOrder}
+                          />
+                        </Button>
+                      </TableHead>
                     </TableRow>
-                  ))}
-                </TableBody>
-              </Table>
-            </div>
+                  </TableHeader>
+                  <TableBody>
+                    {pageRows.map((row, index) => (
+                      <TableRow key={row.id}>
+                        {/* SL */}
+                        <TableCell className="text-muted-foreground">
+                          {(page - 1) * PAGE_SIZE + index + 1}
+                        </TableCell>
 
-            {/* Pagination */}
-            <div className="flex flex-col sm:flex-row items-center justify-between gap-4 pt-4 border-t">
-              <p className="text-sm text-muted-foreground whitespace-nowrap">
-                Showing{" "}
-                <span className="font-medium text-foreground">
-                  {((page - 1) * PAGE_SIZE + 1).toLocaleString()}
-                </span>{" "}
-                to{" "}
-                <span className="font-medium text-foreground">
-                  {Math.min(page * PAGE_SIZE, sorted.length).toLocaleString()}
-                </span>{" "}
-                of{" "}
-                <span className="font-medium text-foreground">
-                  {sorted.length.toLocaleString()}
-                </span>{" "}
-                records
-              </p>
-              <div className="flex items-center gap-2">
-                <Button
-                  variant="outline"
-                  size="sm"
-                  disabled={page === 1}
-                  onClick={() => setPage((p) => p - 1)}
-                >
-                  Previous
-                </Button>
-                <span className="text-sm text-muted-foreground">
-                  Page {page} of {totalPages}
-                </span>
-                <Button
-                  variant="outline"
-                  size="sm"
-                  disabled={page === totalPages}
-                  onClick={() => setPage((p) => p + 1)}
-                >
-                  Next
-                </Button>
+                        {/* Event Name */}
+                        <TableCell>
+                          <EventBadge name={row.eventName} />
+                        </TableCell>
+
+                        {/* Service Name */}
+                        <TableCell className="font-medium whitespace-nowrap">
+                          {row.serviceName}
+                        </TableCell>
+
+                        {/* Request Type */}
+                        <TableCell className="whitespace-nowrap">
+                          {row.requestType}
+                        </TableCell>
+
+                        {/* Endpoint */}
+                        <TableCell
+                          className="max-w-[240px] truncate font-mono text-xs text-muted-foreground"
+                          title={row.url}
+                        >
+                          {row.url}
+                        </TableCell>
+
+                        {/* Success */}
+                        <TableCell className="text-center">
+                          {row.status === "success" ? (
+                            <CheckCircle2
+                              size={16}
+                              className="mx-auto text-green-500"
+                            />
+                          ) : (
+                            <span className="text-muted-foreground">—</span>
+                          )}
+                        </TableCell>
+
+                        {/* Error */}
+                        <TableCell className="text-center">
+                          {row.status === "error" ? (
+                            <AlertTriangle
+                              size={16}
+                              className="mx-auto text-red-500"
+                            />
+                          ) : (
+                            <span className="text-muted-foreground">—</span>
+                          )}
+                        </TableCell>
+
+                        {/* Latency */}
+                        <TableCell>
+                          <span
+                            className={
+                              row.latencyMs > 2000
+                                ? "font-medium text-red-500"
+                                : row.latencyMs > 800
+                                ? "font-medium text-amber-500"
+                                : "text-foreground"
+                            }
+                          >
+                            {row.latencyMs.toLocaleString()}
+                          </span>
+                        </TableCell>
+
+                        {/* Timestamp */}
+                        <TableCell className="whitespace-nowrap text-sm text-muted-foreground">
+                          {formatTimestamp(row.timestamp)}
+                        </TableCell>
+                      </TableRow>
+                    ))}
+                  </TableBody>
+                </Table>
+              </div>
+
+              {/* Pagination */}
+              <div className="flex flex-col sm:flex-row items-center justify-between gap-4 pt-4 border-t">
+                <p className="text-sm text-muted-foreground whitespace-nowrap">
+                  Showing{" "}
+                  <span className="font-medium text-foreground">
+                    {((page - 1) * PAGE_SIZE + 1).toLocaleString()}
+                  </span>{" "}
+                  to{" "}
+                  <span className="font-medium text-foreground">
+                    {Math.min(page * PAGE_SIZE, sorted.length).toLocaleString()}
+                  </span>{" "}
+                  of{" "}
+                  <span className="font-medium text-foreground">
+                    {sorted.length.toLocaleString()}
+                  </span>{" "}
+                  records
+                </p>
+                <div className="flex items-center gap-2">
+                  <Button
+                    variant="outline"
+                    size="sm"
+                    disabled={page === 1}
+                    onClick={() => setPage((p) => p - 1)}
+                  >
+                    Previous
+                  </Button>
+                  <span className="text-sm text-muted-foreground">
+                    Page {page} of {totalPages}
+                  </span>
+                  <Button
+                    variant="outline"
+                    size="sm"
+                    disabled={page === totalPages}
+                    onClick={() => setPage((p) => p + 1)}
+                  >
+                    Next
+                  </Button>
+                </div>
               </div>
             </div>
-          </div>
           )}
         </CardContent>
       </Card>
