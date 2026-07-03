@@ -275,28 +275,26 @@ const ExternalApiObservability = () => {
             </div>
           ) : (
             <div className="space-y-4">
-              <div className="overflow-x-auto rounded-md border">
-                <Table className="min-w-[1100px]">
+              {/* ── Desktop / Tablet table (md+) ── */}
+              <div className="hidden md:block rounded-md border">
+                <Table>
                   <TableHeader>
                     <TableRow>
-                      <TableHead className="w-12">SL</TableHead>
+                      <TableHead className="w-10">SL</TableHead>
                       <TableHead>Event Name</TableHead>
                       <TableHead>Service Name</TableHead>
-                      <TableHead>Request Type</TableHead>
-                      <TableHead>Endpoint</TableHead>
+                      <TableHead className="hidden lg:table-cell">Request Type</TableHead>
+                      <TableHead className="hidden lg:table-cell">Endpoint</TableHead>
                       <TableHead className="text-center">Success</TableHead>
                       <TableHead className="text-center">Error</TableHead>
-                      <TableHead>
+                      <TableHead className="text-center">
                         <Button
                           variant="ghost"
                           className="h-auto p-0 font-semibold"
                           onClick={() => handleSort("latencyMs")}
                         >
                           Latency (ms)
-                          <SortIcon
-                            active={sortKey === "latencyMs"}
-                            order={sortOrder}
-                          />
+                          <SortIcon active={sortKey === "latencyMs"} order={sortOrder} />
                         </Button>
                       </TableHead>
                       <TableHead>
@@ -306,10 +304,7 @@ const ExternalApiObservability = () => {
                           onClick={() => handleSort("timestamp")}
                         >
                           Timestamp
-                          <SortIcon
-                            active={sortKey === "timestamp"}
-                            order={sortOrder}
-                          />
+                          <SortIcon active={sortKey === "timestamp"} order={sortOrder} />
                         </Button>
                       </TableHead>
                     </TableRow>
@@ -319,68 +314,43 @@ const ExternalApiObservability = () => {
                       <TableRow
                         key={row.id}
                         className="cursor-pointer hover:bg-muted/50"
-                        title="View end-to-end flow for this query"
                         onClick={() =>
                           navigate(`/external-api/flow/${encodeURIComponent(row.questionId)}`)
                         }
                       >
-                        {/* SL */}
                         <TableCell className="text-muted-foreground">
                           {(page - 1) * PAGE_SIZE + index + 1}
                         </TableCell>
-
-                        {/* Event Name */}
                         <TableCell>
                           <EventBadge name={row.eventName} />
                         </TableCell>
-
-                        {/* Service Name */}
-                        <TableCell className="font-medium whitespace-nowrap">
+                        <TableCell className="font-medium">
                           {row.serviceName}
                         </TableCell>
-
-                        {/* Request Type */}
-                        <TableCell className="whitespace-nowrap">
+                        <TableCell className="hidden lg:table-cell">
                           {row.requestType || "—"}
                         </TableCell>
-
-                        {/* Endpoint */}
                         <TableCell
-                          className="max-w-[240px] truncate font-mono text-xs text-muted-foreground"
+                          className="hidden lg:table-cell max-w-[200px] truncate font-mono text-xs text-muted-foreground"
                           title={row.endpointUrl || undefined}
                         >
                           {row.endpointUrl || "—"}
                         </TableCell>
-
-                        {/* Success */}
                         <TableCell className="text-center">
                           {row.success === true ? (
-                            <CheckCircle2
-                              size={16}
-                              className="mx-auto text-green-500"
-                            />
+                            <CheckCircle2 size={16} className="mx-auto text-green-500" />
                           ) : (
                             <span className="text-muted-foreground">—</span>
                           )}
                         </TableCell>
-
-                        {/* Error */}
-                        <TableCell
-                          className="text-center"
-                          title={row.errorMessage || undefined}
-                        >
+                        <TableCell className="text-center" title={row.errorMessage || undefined}>
                           {row.success === false || row.errorMessage ? (
-                            <AlertTriangle
-                              size={16}
-                              className="mx-auto text-red-500"
-                            />
+                            <AlertTriangle size={16} className="mx-auto text-red-500" />
                           ) : (
                             <span className="text-muted-foreground">—</span>
                           )}
                         </TableCell>
-
-                        {/* Latency */}
-                        <TableCell>
+                        <TableCell className="text-center">
                           {row.latencyMs !== null ? (
                             <span
                               className={
@@ -397,8 +367,6 @@ const ExternalApiObservability = () => {
                             <span className="text-muted-foreground">—</span>
                           )}
                         </TableCell>
-
-                        {/* Timestamp */}
                         <TableCell className="whitespace-nowrap text-sm text-muted-foreground">
                           {formatTimestamp(row.eventTimestamp)}
                         </TableCell>
@@ -406,6 +374,76 @@ const ExternalApiObservability = () => {
                     ))}
                   </TableBody>
                 </Table>
+              </div>
+
+              {/* ── Mobile card layout (< md) ── */}
+              <div className="md:hidden space-y-3">
+                {sortedLogs.map((row: ProviderTelemetryLog, index) => (
+                  <div
+                    key={row.id}
+                    className="rounded-md border p-4 space-y-3 cursor-pointer hover:bg-muted/50"
+                    onClick={() =>
+                      navigate(`/external-api/flow/${encodeURIComponent(row.questionId)}`)
+                    }
+                  >
+                    {/* Row header */}
+                    <div className="flex items-center justify-between">
+                      <span className="text-xs text-muted-foreground font-medium">
+                        #{(page - 1) * PAGE_SIZE + index + 1}
+                      </span>
+                      <EventBadge name={row.eventName} />
+                    </div>
+
+                    {/* Service + Request Type */}
+                    <div className="flex flex-col gap-0.5">
+                      <span className="font-semibold text-sm">{row.serviceName}</span>
+                      <span className="text-xs text-muted-foreground">
+                        {row.requestType || "—"}
+                      </span>
+                    </div>
+
+                    {/* Endpoint */}
+                    {row.endpointUrl && (
+                      <p
+                        className="font-mono text-xs text-muted-foreground truncate"
+                        title={row.endpointUrl}
+                      >
+                        {row.endpointUrl}
+                      </p>
+                    )}
+
+                    {/* Status + Latency + Timestamp */}
+                    <div className="flex items-center justify-between text-xs gap-2 flex-wrap">
+                      <div className="flex items-center gap-3">
+                        {row.success === true ? (
+                          <span className="flex items-center gap-1 text-green-500">
+                            <CheckCircle2 size={13} /> Success
+                          </span>
+                        ) : (
+                          <span className="flex items-center gap-1 text-red-500">
+                            <AlertTriangle size={13} /> Error
+                          </span>
+                        )}
+                        {row.latencyMs !== null && (
+                          <span
+                            className={
+                              row.latencyMs > 2000
+                                ? "font-medium text-red-500"
+                                : row.latencyMs > 800
+                                ? "font-medium text-amber-500"
+                                : "text-foreground"
+                            }
+                          >
+                            {row.latencyMs.toLocaleString()} ms
+                          </span>
+                        )}
+                      </div>
+                      <span className="text-muted-foreground">
+                        {formatTimestamp(row.eventTimestamp)}
+                      </span>
+                    </div>
+                  </div>
+                ))}
               </div>
 
               {/* Pagination */}
