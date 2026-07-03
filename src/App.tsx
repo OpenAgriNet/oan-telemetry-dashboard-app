@@ -40,6 +40,7 @@ import AppDownloads from "./pages/AppDownloads";
 import NotificationTelemetry from "./pages/NotificationTelemetry";
 import NotificationTelemetryDetails from "./pages/NotificationTelemetryDetails";
 import ExternalApiObservability from "./pages/ExternalApiObservability";
+import ProviderTelemetryFlowDetails from "./pages/ProviderTelemetryFlowDetails";
 
 const queryClient = new QueryClient({
   defaultOptions: {
@@ -301,6 +302,14 @@ const AppRoutes = () => {
         element={
           <TelemetryRoute requiredTab="external-api">
             <ExternalApiObservability />
+          </TelemetryRoute>
+        }
+      />
+      <Route
+        path="/external-api/flow/:questionId"
+        element={
+          <TelemetryRoute requiredTab="external-api">
+            <ProviderTelemetryFlowDetails />
           </TelemetryRoute>
         }
       />

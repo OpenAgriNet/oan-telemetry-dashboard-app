@@ -3060,3 +3060,170 @@ export const fetchCallsStats = async (
     };
   }
 };
+
+// Provider telemetry (external API observability)
+// Single endpoint powers both the summary cards and the paginated log table
+// on the External API Observability page — one request returns the
+// aggregate summary plus a page of flat, per-event rows.
+export interface ProviderTelemetryServiceBreakdown {
+  serviceName: string;
+  eventCount: number;
+  flowCount: number;
+}
+
+export interface ProviderTelemetrySummary {
+  totalEvents: number;
+  totalFlows: number;
+  uniqueSessions: number;
+  // successCount/errorEventCount are computed across ALL rows (every row is
+  // one API/flow-step call), so successCount + errorEventCount === totalEvents
+  // — this keeps the summary cards in sync with the log table's row count.
+  successCount: number;
+  extApiCallCount: number;
+  errorEventCount: number;
+  avgLatencyMs: number | null;
+  maxLatencyMs: number | null;
+  byService: ProviderTelemetryServiceBreakdown[];
+}
+
+export interface ProviderTelemetryLog {
+  id: string;
+  sessionId: string;
+  questionId: string;
+  eventName: string;
+  serviceName: string;
+  requestType: string | null;
+  endpointUrl: string | null;
+  httpStatus: number | null;
+  latencyMs: number | null;
+  success: boolean | null;
+  errorMessage: string | null;
+  eventTimestamp: string;
+}
+
+export interface ProviderTelemetryData {
+  summary: ProviderTelemetrySummary;
+  logs: PaginatedResponse<ProviderTelemetryLog>;
+}
+
+export interface ProviderTelemetryPaginationParams extends PaginationParams {
+  serviceName?: string;
+}
+
+const EMPTY_PROVIDER_TELEMETRY_SUMMARY: ProviderTelemetrySummary = {
+  totalEvents: 0,
+  totalFlows: 0,
+  uniqueSessions: 0,
+  successCount: 0,
+  extApiCallCount: 0,
+  errorEventCount: 0,
+  avgLatencyMs: null,
+  maxLatencyMs: null,
+  byService: [],
+};
+
+export const fetchProviderTelemetry = async (
+  params: ProviderTelemetryPaginationParams = {},
+): Promise<ProviderTelemetryData> => {
+  const {
+    page = DEFAULT_PAGE,
+    limit = DEFAULT_LIMIT,
+    startDate,
+    endDate,
+    serviceName,
+  } = params;
+
+  try {
+    const queryParams = buildQueryParams({
+      page,
+      limit,
+      startDate: startDate || "",
+      endDate: endDate || "",
+      serviceName: serviceName || "",
+    });
+
+    const response = await fetch(`${SERVER_URL}/provider-telemetry?${queryParams}`);
+
+    if (!response.ok) {
+      throw new Error(`HTTP error! status: ${response.status}`);
+    }
+
+    const result = await response.json();
+    if (!result.success) {
+      throw new Error("Failed to fetch provider telemetry data");
+    }
+
+    return {
+      summary: result.data.summary,
+      logs: {
+        data: result.data.logs,
+        total: result.pagination?.totalItems || 0,
+        page: result.pagination?.currentPage || page,
+        pageSize: result.pagination?.itemsPerPage || limit,
+        totalPages: result.pagination?.totalPages || 1,
+      },
+    };
+  } catch (error) {
+    console.error("Error fetching provider telemetry data:", error);
+    return {
+      summary: EMPTY_PROVIDER_TELEMETRY_SUMMARY,
+      logs: { data: [], total: 0, page, pageSize: limit, totalPages: 1 },
+    };
+  }
+};
+
+// End-to-end flow for a single question_id: every provider_telemetry_events
+// row that shares that question_id (one step in the flow), in order, with
+// full request/response payloads — powers the flow detail page reached by
+// clicking a row in the External API Observability log table.
+export interface ProviderTelemetryFlowStep {
+  id: string;
+  stepSequence: number | null;
+  eventName: string;
+  serviceName: string;
+  becknTransactionId: string | null;
+  endpointUrl: string | null;
+  httpStatus: number | null;
+  latencyMs: number | null;
+  success: boolean | null;
+  errorMessage: string | null;
+  requestPayload: unknown;
+  responsePayload: unknown;
+  eventTimestamp: string;
+}
+
+export interface ProviderTelemetryFlowSummary {
+  totalSteps: number;
+  overallSuccess: boolean;
+  hasError: boolean;
+  startedAt: string;
+  completedAt: string;
+  totalDurationMs: number;
+  servicesInvolved: string[];
+}
+
+export interface ProviderTelemetryFlow {
+  questionId: string;
+  sessionId: string | null;
+  summary: ProviderTelemetryFlowSummary | null;
+  steps: ProviderTelemetryFlowStep[];
+}
+
+export const fetchProviderTelemetryFlow = async (
+  questionId: string,
+): Promise<ProviderTelemetryFlow> => {
+  const response = await fetch(
+    `${SERVER_URL}/provider-telemetry/flow/${encodeURIComponent(questionId)}`,
+  );
+
+  if (!response.ok) {
+    throw new Error(`HTTP error! status: ${response.status}`);
+  }
+
+  const result = await response.json();
+  if (!result.success) {
+    throw new Error(result.error || "Failed to fetch provider telemetry flow");
+  }
+
+  return result.data;
+};
