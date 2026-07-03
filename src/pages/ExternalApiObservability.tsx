@@ -1,4 +1,6 @@
 import { useMemo, useState } from "react";
+import { useNavigate } from "react-router-dom";
+import { useQuery } from "@tanstack/react-query";
 import {
   Activity,
   AlertTriangle,
@@ -7,6 +9,7 @@ import {
   ChevronUp,
   Clock,
   Globe,
+  RefreshCw,
 } from "lucide-react";
 import { Badge } from "@/components/ui/badge";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
@@ -20,12 +23,15 @@ import {
 } from "@/components/ui/table";
 import { Button } from "@/components/ui/button";
 import { useDateFilter } from "@/contexts/DateFilterContext";
-import mockData from "@/data/externalApiLogs.json";
+import { useTelemetryState } from "@/contexts/TelemetryStateContext";
+import { buildDateRangeParams } from "@/lib/utils";
+import {
+  fetchProviderTelemetry,
+  type ProviderTelemetryLog,
+} from "@/services/api";
 
-type SortKey = "id" | "latencyMs" | "timestamp";
+type SortKey = "latencyMs" | "timestamp";
 type SortOrder = "asc" | "desc";
-
-type LogEntry = (typeof mockData.logs)[number];
 
 const PAGE_SIZE = 10;
 
@@ -42,9 +48,13 @@ function EventBadge({ name }: { name: string }) {
     .join(" ");
 
   const variantMap: Record<string, "default" | "secondary" | "destructive" | "outline"> = {
-    api_error: "destructive",
-    api_call: "outline",
-    api_response: "secondary",
+    error: "destructive",
+    ext_api_call: "outline",
+    flow_start: "secondary",
+    flow_end: "secondary",
+    beckn_inbound: "default",
+    beckn_outbound: "default",
+    internal_step: "outline",
   };
 
   return <Badge variant={variantMap[name] ?? "outline"}>{label}</Badge>;
@@ -86,18 +96,12 @@ const CARD_META = [
   },
 ];
 
-function deriveStats(logs: LogEntry[]) {
-  const totalCalls = logs.length;
-  const totalSuccess = logs.filter((l) => l.status === "success").length;
-  const totalErrors = logs.filter((l) => l.status === "error").length;
-  const maxLatencyMs = logs.reduce((max, l) => Math.max(max, l.latencyMs), 0);
-  return { totalCalls, totalSuccess, totalErrors, maxLatencyMs };
-}
-
 const ExternalApiObservability = () => {
+  const navigate = useNavigate();
   const { dateRange } = useDateFilter();
-  const [sortKey, setSortKey] = useState<SortKey>("id");
-  const [sortOrder, setSortOrder] = useState<SortOrder>("asc");
+  const { selectedStateId } = useTelemetryState();
+  const [sortKey, setSortKey] = useState<SortKey>("timestamp");
+  const [sortOrder, setSortOrder] = useState<SortOrder>("desc");
   const [page, setPage] = useState(1);
 
   // Reset to page 1 whenever the date filter changes
@@ -105,26 +109,47 @@ const ExternalApiObservability = () => {
     setPage(1);
   }, [dateRange]);
 
-  // Filter mock logs based on global date range
-  const filteredLogs = useMemo<LogEntry[]>(() => {
-    const { from, to } = dateRange;
-    if (!from && !to) return mockData.logs as LogEntry[];
+  const {
+    data: providerTelemetry,
+    isLoading,
+    isFetching,
+    error: telemetryError,
+    refetch: refetchTelemetry,
+  } = useQuery({
+    queryKey: [
+      "provider-telemetry",
+      selectedStateId,
+      dateRange.from?.toISOString(),
+      dateRange.to?.toISOString(),
+      page,
+    ],
+    queryFn: () => {
+      const dateParams = buildDateRangeParams(dateRange);
+      return fetchProviderTelemetry({
+        page,
+        limit: PAGE_SIZE,
+        startDate: dateParams.startDate,
+        endDate: dateParams.endDate,
+      });
+    },
+    refetchOnWindowFocus: false,
+    staleTime: 30 * 1000,
+    gcTime: 5 * 60 * 1000,
+  });
 
-    return (mockData.logs as LogEntry[]).filter((log) => {
-      const ts = new Date(log.timestamp);
-      const toEndOfDay = to
-        ? new Date(new Date(to).setHours(23, 59, 59, 999))
-        : undefined;
-      if (from && ts < from) return false;
-      if (toEndOfDay && ts > toEndOfDay) return false;
-      return true;
-    });
-  }, [dateRange]);
+  const summary = providerTelemetry?.summary;
+  // Every row in the log table below is one API/flow-step call, so the cards
+  // are driven off the same per-row counts (totalEvents = table's total
+  // record count; successCount + errorEventCount === totalEvents).
+  const totalCalls = summary?.totalEvents ?? 0;
+  const totalSuccess = summary?.successCount ?? 0;
+  const totalErrors = summary?.errorEventCount ?? 0;
+  const maxLatencyMs = summary?.maxLatencyMs ?? 0;
 
-  const { totalCalls, totalSuccess, totalErrors, maxLatencyMs } = useMemo(
-    () => deriveStats(filteredLogs),
-    [filteredLogs],
-  );
+  const logsResponse = providerTelemetry?.logs ?? { data: [], total: 0, totalPages: 0 };
+  const logs = logsResponse.data;
+  const totalLogs = logsResponse.total;
+  const totalPages = logsResponse.totalPages;
 
   const handleSort = (key: SortKey) => {
     if (sortKey === key) {
@@ -133,33 +158,28 @@ const ExternalApiObservability = () => {
       setSortKey(key);
       setSortOrder("asc");
     }
-    setPage(1);
   };
 
-  const sorted = useMemo(() => {
-    return [...filteredLogs].sort((a, b) => {
+  // Sort within the current page (matches the pattern used elsewhere in the
+  // app for server-paginated tables).
+  const sortedLogs = useMemo(() => {
+    return [...logs].sort((a, b) => {
       let av: number | string;
       let bv: number | string;
 
-      if (sortKey === "id") {
-        av = a.id;
-        bv = b.id;
-      } else if (sortKey === "latencyMs") {
-        av = a.latencyMs;
-        bv = b.latencyMs;
+      if (sortKey === "latencyMs") {
+        av = a.latencyMs ?? 0;
+        bv = b.latencyMs ?? 0;
       } else {
-        av = a.timestamp;
-        bv = b.timestamp;
+        av = a.eventTimestamp;
+        bv = b.eventTimestamp;
       }
 
       if (av < bv) return sortOrder === "asc" ? -1 : 1;
       if (av > bv) return sortOrder === "asc" ? 1 : -1;
       return 0;
     });
-  }, [filteredLogs, sortKey, sortOrder]);
-
-  const totalPages = Math.ceil(sorted.length / PAGE_SIZE);
-  const pageRows = sorted.slice((page - 1) * PAGE_SIZE, page * PAGE_SIZE);
+  }, [logs, sortKey, sortOrder]);
 
   return (
     <div className="space-y-6">
@@ -193,9 +213,13 @@ const ExternalApiObservability = () => {
                     <p className="text-xs font-medium text-muted-foreground">
                       {card.label}
                     </p>
-                    <p className="mt-1 text-2xl font-bold">
-                      {value.toLocaleString()}
-                    </p>
+                    {isLoading ? (
+                      <div className="mt-1 h-8 w-16 bg-muted animate-pulse rounded" />
+                    ) : (
+                      <p className="mt-1 text-2xl font-bold">
+                        {value.toLocaleString()}
+                      </p>
+                    )}
                   </div>
                   <div
                     className={`flex h-9 w-9 items-center justify-center rounded-full ${card.colorClass}`}
@@ -213,15 +237,39 @@ const ExternalApiObservability = () => {
       <Card>
         <CardHeader className="flex flex-row items-center justify-between">
           <CardTitle className="text-lg">API Call Logs</CardTitle>
-          <p className="text-sm text-muted-foreground">
-            {filteredLogs.length.toLocaleString()} records
-            {(dateRange.from || dateRange.to) && (
-              <span className="ml-1 text-xs">(filtered)</span>
-            )}
-          </p>
+          <div className="flex items-center gap-3">
+            <p className="text-sm text-muted-foreground">
+              {totalLogs.toLocaleString()} records
+              {(dateRange.from || dateRange.to) && (
+                <span className="ml-1 text-xs">(filtered)</span>
+              )}
+            </p>
+            <Button
+              onClick={() => refetchTelemetry()}
+              disabled={isFetching}
+              variant="outline"
+              size="sm"
+            >
+              <RefreshCw
+                className={`h-4 w-4 mr-2 ${isFetching ? "animate-spin" : ""}`}
+              />
+              Refresh
+            </Button>
+          </div>
         </CardHeader>
         <CardContent>
-          {filteredLogs.length === 0 ? (
+          {telemetryError ? (
+            <div className="py-10 text-center text-sm text-destructive">
+              Error loading API call logs. Please try again.
+            </div>
+          ) : isLoading ? (
+            <div className="flex justify-center items-center p-12 bg-muted/30">
+              <div className="text-center">
+                <RefreshCw className="h-8 w-8 animate-spin mx-auto mb-3 text-muted-foreground" />
+                <p className="text-muted-foreground">Loading API call logs...</p>
+              </div>
+            </div>
+          ) : sortedLogs.length === 0 ? (
             <div className="py-10 text-center text-sm text-muted-foreground">
               No API call logs found for the selected date range.
             </div>
@@ -231,16 +279,7 @@ const ExternalApiObservability = () => {
                 <Table className="min-w-[1100px]">
                   <TableHeader>
                     <TableRow>
-                      <TableHead className="w-12">
-                        <Button
-                          variant="ghost"
-                          className="h-auto p-0 font-semibold"
-                          onClick={() => handleSort("id")}
-                        >
-                          SL
-                          <SortIcon active={sortKey === "id"} order={sortOrder} />
-                        </Button>
-                      </TableHead>
+                      <TableHead className="w-12">SL</TableHead>
                       <TableHead>Event Name</TableHead>
                       <TableHead>Service Name</TableHead>
                       <TableHead>Request Type</TableHead>
@@ -276,8 +315,15 @@ const ExternalApiObservability = () => {
                     </TableRow>
                   </TableHeader>
                   <TableBody>
-                    {pageRows.map((row, index) => (
-                      <TableRow key={row.id}>
+                    {sortedLogs.map((row: ProviderTelemetryLog, index) => (
+                      <TableRow
+                        key={row.id}
+                        className="cursor-pointer hover:bg-muted/50"
+                        title="View end-to-end flow for this query"
+                        onClick={() =>
+                          navigate(`/external-api/flow/${encodeURIComponent(row.questionId)}`)
+                        }
+                      >
                         {/* SL */}
                         <TableCell className="text-muted-foreground">
                           {(page - 1) * PAGE_SIZE + index + 1}
@@ -295,20 +341,20 @@ const ExternalApiObservability = () => {
 
                         {/* Request Type */}
                         <TableCell className="whitespace-nowrap">
-                          {row.requestType}
+                          {row.requestType || "—"}
                         </TableCell>
 
                         {/* Endpoint */}
                         <TableCell
                           className="max-w-[240px] truncate font-mono text-xs text-muted-foreground"
-                          title={row.url}
+                          title={row.endpointUrl || undefined}
                         >
-                          {row.url}
+                          {row.endpointUrl || "—"}
                         </TableCell>
 
                         {/* Success */}
                         <TableCell className="text-center">
-                          {row.status === "success" ? (
+                          {row.success === true ? (
                             <CheckCircle2
                               size={16}
                               className="mx-auto text-green-500"
@@ -319,8 +365,11 @@ const ExternalApiObservability = () => {
                         </TableCell>
 
                         {/* Error */}
-                        <TableCell className="text-center">
-                          {row.status === "error" ? (
+                        <TableCell
+                          className="text-center"
+                          title={row.errorMessage || undefined}
+                        >
+                          {row.success === false || row.errorMessage ? (
                             <AlertTriangle
                               size={16}
                               className="mx-auto text-red-500"
@@ -332,22 +381,26 @@ const ExternalApiObservability = () => {
 
                         {/* Latency */}
                         <TableCell>
-                          <span
-                            className={
-                              row.latencyMs > 2000
-                                ? "font-medium text-red-500"
-                                : row.latencyMs > 800
-                                ? "font-medium text-amber-500"
-                                : "text-foreground"
-                            }
-                          >
-                            {row.latencyMs.toLocaleString()}
-                          </span>
+                          {row.latencyMs !== null ? (
+                            <span
+                              className={
+                                row.latencyMs > 2000
+                                  ? "font-medium text-red-500"
+                                  : row.latencyMs > 800
+                                  ? "font-medium text-amber-500"
+                                  : "text-foreground"
+                              }
+                            >
+                              {row.latencyMs.toLocaleString()}
+                            </span>
+                          ) : (
+                            <span className="text-muted-foreground">—</span>
+                          )}
                         </TableCell>
 
                         {/* Timestamp */}
                         <TableCell className="whitespace-nowrap text-sm text-muted-foreground">
-                          {formatTimestamp(row.timestamp)}
+                          {formatTimestamp(row.eventTimestamp)}
                         </TableCell>
                       </TableRow>
                     ))}
@@ -364,11 +417,11 @@ const ExternalApiObservability = () => {
                   </span>{" "}
                   to{" "}
                   <span className="font-medium text-foreground">
-                    {Math.min(page * PAGE_SIZE, sorted.length).toLocaleString()}
+                    {Math.min(page * PAGE_SIZE, totalLogs).toLocaleString()}
                   </span>{" "}
                   of{" "}
                   <span className="font-medium text-foreground">
-                    {sorted.length.toLocaleString()}
+                    {totalLogs.toLocaleString()}
                   </span>{" "}
                   records
                 </p>
@@ -382,12 +435,12 @@ const ExternalApiObservability = () => {
                     Previous
                   </Button>
                   <span className="text-sm text-muted-foreground">
-                    Page {page} of {totalPages}
+                    Page {page} of {totalPages || 1}
                   </span>
                   <Button
                     variant="outline"
                     size="sm"
-                    disabled={page === totalPages}
+                    disabled={page === totalPages || totalPages === 0}
                     onClick={() => setPage((p) => p + 1)}
                   >
                     Next
