@@ -36,6 +36,7 @@ import {
   PhoneCall,
   Network,
   Bell,
+  FileSpreadsheet,
 } from "lucide-react";
 import {
   DropdownMenu,
@@ -139,6 +140,12 @@ const Layout: React.FC<LayoutProps> = ({ children }) => {
       name: "TTS",
       path: "/tts",
       icon: <Volume2 size={16} />,
+    },
+    {
+      tab: "exports",
+      name: "Exports",
+      path: "/exports",
+      icon: <FileSpreadsheet size={16} />,
     },
   ] as const;
 

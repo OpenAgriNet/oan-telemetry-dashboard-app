@@ -18,6 +18,7 @@ export interface TelemetryStateConfig {
     | "errors"
     | "asr"
     | "tts"
+    | "exports"
   >;
   showUnifiedMetrics: boolean;
 }
@@ -39,6 +40,7 @@ export const TELEMETRY_STATES: Record<TelemetryStateId, TelemetryStateConfig> = 
       "errors",
       "asr",
       "tts",
+      "exports",
     ],
     showUnifiedMetrics: true,
   },
@@ -53,6 +55,7 @@ export const TELEMETRY_STATES: Record<TelemetryStateId, TelemetryStateConfig> = 
       "questions",
       "feedback",
       "errors",
+      "exports",
     ],
     showUnifiedMetrics: false,
   },
@@ -122,7 +125,8 @@ export const canAccessTabForState = (
     | "langfuse-questions"
     | "errors"
     | "asr"
-    | "tts",
+    | "tts"
+    | "exports",
 ): boolean => {
   return TELEMETRY_STATES[stateId].chatTelemetryTabs.includes(tab);
 };

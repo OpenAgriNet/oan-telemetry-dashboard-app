@@ -105,7 +105,11 @@ const ErrorDetails = () => {
             <div>
               <label className="text-sm font-medium text-muted-foreground">Error Message</label>
               <div className="mt-1 p-3 bg-muted rounded-md">
-                <p className="text-sm font-mono">{errorDetail.errorMessage}</p>
+                <p className="text-sm font-mono">
+                  {errorDetail.errorMessage?.trim()
+                    ? errorDetail.errorMessage
+                    : "N/A"}
+                </p>
               </div>
             </div>
 

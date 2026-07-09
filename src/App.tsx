@@ -39,6 +39,7 @@ import LangfuseQuestions from "./pages/LangfuseQuestions";
 import AppDownloads from "./pages/AppDownloads";
 import NotificationTelemetry from "./pages/NotificationTelemetry";
 import NotificationTelemetryDetails from "./pages/NotificationTelemetryDetails";
+import Exports from "./pages/Exports";
 
 const queryClient = new QueryClient({
   defaultOptions: {
@@ -60,7 +61,8 @@ type ChatTelemetryTab =
   | "langfuse-questions"
   | "errors"
   | "asr"
-  | "tts";
+  | "tts"
+  | "exports";
 
 const AccessDenied = () => (
   <div className="min-h-screen bg-background text-foreground flex items-center justify-center px-6">
@@ -251,6 +253,14 @@ const AppRoutes = () => {
         element={
           <TelemetryRoute requiredTab="tts">
             <TtsReport />
+          </TelemetryRoute>
+        }
+      />
+      <Route
+        path="/exports"
+        element={
+          <TelemetryRoute requiredTab="exports">
+            <Exports />
           </TelemetryRoute>
         }
       />

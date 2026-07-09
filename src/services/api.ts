@@ -3060,3 +3060,110 @@ export const fetchCallsStats = async (
     };
   }
 };
+
+export type ExportModuleName =
+  | "questions"
+  | "feedback"
+  | "notifications"
+  | "asr"
+  | "tts"
+  | "call-logs";
+
+export type ExportStatus = "PROCESSING" | "COMPLETED" | "FAILED";
+
+export interface ExportRecord {
+  id: string;
+  userId: string;
+  moduleName: ExportModuleName;
+  fromDate: string | null;
+  toDate: string | null;
+  exportStatus: ExportStatus;
+  fileName: string | null;
+  requestedAt: string;
+  completedAt: string | null;
+  errorMessage: string | null;
+  telemetryState: string | null;
+  telemetryStateLabel?: string;
+  username?: string | null;
+  exportedBy?: string | null;
+  filters: Record<string, string>;
+  publicDownloadUrl?: string;
+}
+
+export interface CreateExportParams {
+  moduleName: ExportModuleName;
+  fromDate?: string;
+  toDate?: string;
+  filters?: Record<string, string>;
+}
+
+export const createExport = async (
+  params: CreateExportParams,
+): Promise<ExportRecord> => {
+  const response = await fetch(`${SERVER_URL}/exports`, {
+    method: "POST",
+    headers: {
+      "Content-Type": "application/json",
+    },
+    body: JSON.stringify(params),
+  });
+
+  const result = await response.json();
+
+  if (!response.ok || !result.success) {
+    throw new Error(result.message || "Failed to initiate export");
+  }
+
+  return result.data;
+};
+
+export const fetchExports = async (): Promise<ExportRecord[]> => {
+  const response = await fetch(`${SERVER_URL}/exports`);
+
+  if (!response.ok) {
+    throw new Error(`HTTP error! status: ${response.status}`);
+  }
+
+  const result = await response.json();
+
+  if (!result.success) {
+    throw new Error("Failed to fetch exports");
+  }
+
+  return result.data;
+};
+
+export const downloadExport = async (
+  exportId: string,
+  fileName: string,
+): Promise<void> => {
+  const response = await fetch(`${SERVER_URL}/exports/${exportId}/download`);
+
+  if (!response.ok) {
+    let message = "Failed to download export";
+    try {
+      const result = await response.json();
+      message = result.message || message;
+    } catch {
+      // Response may not be JSON for some errors.
+    }
+    throw new Error(message);
+  }
+
+  const blob = await response.blob();
+  const isXlsx = fileName.toLowerCase().endsWith(".xlsx");
+  const url = window.URL.createObjectURL(
+    new Blob([blob], {
+      type: isXlsx
+        ? "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet"
+        : "text/csv;charset=utf-8",
+    }),
+  );
+  const link = document.createElement("a");
+  link.href = url;
+  link.download = fileName;
+  document.body.appendChild(link);
+  link.click();
+  link.remove();
+  window.URL.revokeObjectURL(url);
+};
