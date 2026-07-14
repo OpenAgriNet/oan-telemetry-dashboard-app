@@ -128,7 +128,7 @@ export const canAccessTabForState = (
     | "errors"
     | "asr"
     | "tts"
-    | "exports",
+    | "exports"
     | "external-api",
 ): boolean => {
   return TELEMETRY_STATES[stateId].chatTelemetryTabs.includes(tab);
