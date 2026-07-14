@@ -13,6 +13,7 @@ import {
   type NotificationTelemetrySession,
 } from "@/services/api";
 import TablePagination from "@/components/TablePagination";
+import DownloadCsvButton from "@/components/DownloadCsvButton";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
@@ -244,7 +245,17 @@ const NotificationTelemetry = () => {
           </div>
         </div>
 
-        <div className="w-full md:w-72">
+        <div className="flex w-full flex-col gap-2 md:w-auto md:flex-row md:items-center">
+          <DownloadCsvButton
+            moduleName="notifications"
+            filters={{
+              eventGroup,
+              sortBy,
+              sortOrder,
+            }}
+            disabled={isLoading}
+          />
+          <div className="w-full md:w-72">
           <Select value={eventGroup} onValueChange={handleEventGroupChange}>
             <SelectTrigger>
               <SelectValue placeholder="Event type" />
@@ -257,6 +268,7 @@ const NotificationTelemetry = () => {
               ))}
             </SelectContent>
           </Select>
+          </div>
         </div>
       </div>
 
