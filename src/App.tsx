@@ -65,7 +65,7 @@ type ChatTelemetryTab =
   | "errors"
   | "asr"
   | "tts"
-  | "exports";
+  | "exports"
   | "external-api";
 
 const AccessDenied = () => (

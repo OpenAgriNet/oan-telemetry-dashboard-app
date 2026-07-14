@@ -3166,6 +3166,8 @@ export const downloadExport = async (
   link.click();
   link.remove();
   window.URL.revokeObjectURL(url);
+};
+
 // ── Beckn / External API observability (beckn_ext_events) ──────────────────
 // Cards → GET /v1/beckn-ext/stats  (useCase = service_name)
 // Table → GET /v1/beckn-ext        (useCase = service_name)
