@@ -146,6 +146,10 @@ const Layout: React.FC<LayoutProps> = ({ children }) => {
       name: "Exports",
       path: "/exports",
       icon: <FileSpreadsheet size={16} />,
+      tab: "external-api",
+      name: "External API",
+      path: "/external-api",
+      icon: <Activity size={16} />,
     },
   ] as const;
 
