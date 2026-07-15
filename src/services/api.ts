@@ -3060,3 +3060,466 @@ export const fetchCallsStats = async (
     };
   }
 };
+
+// ── Beckn / External API observability (beckn_ext_events) ──────────────────
+// Cards → GET /v1/beckn-ext/stats  (useCase = service_name)
+// Table → GET /v1/beckn-ext        (useCase = service_name)
+
+/** User-facing message for External API / beckn-ext HTTP failures */
+export function getBecknExtFriendlyError(
+  status?: number,
+  serverMessage?: string,
+): string {
+  if (status === 401 || status === 403) {
+    return "You don’t have permission to view external API data. Please sign in again or contact your admin.";
+  }
+  if (status === 404) {
+    return "External API data is not available for this environment yet.";
+  }
+  if (status === 400) {
+    return (
+      serverMessage ||
+      "The request could not be processed. Check your date range or filters and try again."
+    );
+  }
+  if (status === 408 || status === 504) {
+    return "The request took too long. Please try a shorter date range or try again.";
+  }
+  if (status === 502 || status === 503) {
+    return "The analytics service is temporarily unavailable. Please try again in a few minutes.";
+  }
+  if (status === 500 || (status != null && status >= 500)) {
+    return "We couldn’t load external API data right now due to a server issue. Please try again shortly.";
+  }
+  if (status != null && status > 0) {
+    return (
+      serverMessage ||
+      "Something went wrong while loading external API data. Please try again."
+    );
+  }
+  // Network / CORS / offline
+  return "Unable to reach the server. Check your connection and try again.";
+}
+
+async function throwBecknExtHttpError(response: Response): Promise<never> {
+  let serverMessage = "";
+  try {
+    const body = await response.json();
+    serverMessage =
+      (body && (body.message || body.error || body.details)) || "";
+    if (typeof serverMessage !== "string") {
+      serverMessage = "";
+    }
+  } catch {
+    /* ignore body parse */
+  }
+  const err = new Error(
+    getBecknExtFriendlyError(response.status, serverMessage || undefined),
+  ) as Error & { status?: number };
+  err.status = response.status;
+  throw err;
+}
+
+export interface BecknExtUseCaseOption {
+  useCase: string; // service_name
+  count: number;
+}
+
+export interface BecknExtStats {
+  totalExternalApiCalls: number;
+  totalSuccess: number;
+  totalErrors: number;
+  maxLatencyMs: number;
+  totalInvocations: number;
+  successRate: number;
+  useCases: BecknExtUseCaseOption[];
+}
+
+export interface BecknExtLog {
+  id: string;
+  sessionId: string;
+  questionId: string;
+  /** service_name — the use case */
+  serviceName: string;
+  useCase: string;
+  routeName: string | null;
+  channel: string | null;
+  becknAction: string | null;
+  becknDomain: string | null;
+  requestPath: string | null;
+  startEts: string | null;
+  endEts: string | null;
+  durationMs: number | null;
+  flowStatus: string | null;
+  flowSuccess: boolean | null;
+  extApiService: string | null;
+  extApiMethod: string | null;
+  extApiUrl: string | null;
+  extApiStatusCode: number | null;
+  extApiLatencyMs: number | null;
+  extApiSuccess: boolean | null;
+  becknApiService: string | null;
+  becknMethod: string | null;
+  becknUrl: string | null;
+  becknStatusCode: number | null;
+  becknLatencyMs: number | null;
+  becknSuccess: boolean | null;
+  createdAt: string | null;
+}
+
+export interface BecknExtStatsParams {
+  startDate?: string;
+  endDate?: string;
+  /** Filters on beckn_ext_events.service_name */
+  useCase?: string;
+}
+
+export interface BecknExtListParams extends PaginationParams {
+  /** Filters on beckn_ext_events.service_name */
+  useCase?: string;
+  sortBy?: string;
+  sortOrder?: "asc" | "desc";
+  includePayloads?: boolean;
+}
+
+const EMPTY_BECKN_EXT_STATS: BecknExtStats = {
+  totalExternalApiCalls: 0,
+  totalSuccess: 0,
+  totalErrors: 0,
+  maxLatencyMs: 0,
+  totalInvocations: 0,
+  successRate: 0,
+  useCases: [],
+};
+
+export const fetchBecknExtStats = async (
+  params: BecknExtStatsParams = {},
+): Promise<BecknExtStats> => {
+  try {
+    const queryParams = buildQueryParams({
+      startDate: params.startDate || "",
+      endDate: params.endDate || "",
+      useCase: params.useCase || "",
+    });
+
+    const response = await fetch(
+      `${SERVER_URL}/beckn-ext/stats${queryParams ? `?${queryParams}` : ""}`,
+    );
+
+    if (!response.ok) {
+      await throwBecknExtHttpError(response);
+    }
+
+    const result = await response.json();
+    return {
+      totalExternalApiCalls: Number(result.totalExternalApiCalls) || 0,
+      totalSuccess: Number(result.totalSuccess) || 0,
+      totalErrors: Number(result.totalErrors) || 0,
+      maxLatencyMs: Number(result.maxLatencyMs) || 0,
+      totalInvocations: Number(result.totalInvocations) || 0,
+      successRate: Number(result.successRate) || 0,
+      useCases: Array.isArray(result.useCases)
+        ? result.useCases.map(
+            (u: { useCase?: string; serviceName?: string; count?: number }) => ({
+              useCase: String(u.useCase || u.serviceName || ""),
+              count: Number(u.count) || 0,
+            }),
+          ).filter((u: BecknExtUseCaseOption) => u.useCase)
+        : [],
+    };
+  } catch (error) {
+    console.error("Error fetching beckn-ext stats:", error);
+    if (error instanceof Error && error.message && !("status" in error)) {
+      // Network / parse failures without HTTP status
+      if (
+        error.message.startsWith("HTTP") ||
+        error.message.includes("Failed to fetch") ||
+        error.name === "TypeError"
+      ) {
+        throw new Error(getBecknExtFriendlyError());
+      }
+    }
+    throw error;
+  }
+};
+
+export interface BecknExtLifecycleStep {
+  step: number;
+  type: "flow_start" | "ext_api" | "beckn_network" | "flow_end" | string;
+  label: string;
+  description: string;
+  success: boolean | null;
+  timestamp: string | null;
+  meta: Record<string, unknown>;
+  requestPayload: unknown;
+  responsePayload: unknown;
+  errorMessage: string | null;
+  httpStatus: number | null;
+  latencyMs: number | null;
+  method: string | null;
+  endpointUrl: string | null;
+}
+
+export interface BecknExtLifecycle {
+  id: string | null;
+  sessionId: string;
+  questionId: string;
+  serviceName: string | null;
+  routeName: string | null;
+  channel: string | null;
+  becknAction: string | null;
+  becknDomain: string | null;
+  becknTransactionId: string | null;
+  becknMessageId: string | null;
+  requestPath: string | null;
+  summary: {
+    overallSuccess: boolean;
+    flowStatus: string | null;
+    flowSuccess: boolean | null;
+    durationMs: number | null;
+    startEts: string | null;
+    endEts: string | null;
+    startEtsIst: string | null;
+    endEtsIst: string | null;
+    totalSteps: number;
+    extApiSuccess: boolean | null;
+    becknSuccess: boolean | null;
+  };
+  detail: BecknExtLog & {
+    extApiRequest?: unknown;
+    extApiResponse?: unknown;
+    extApiError?: string | null;
+    becknRequest?: unknown;
+    becknResponse?: unknown;
+    becknError?: string | null;
+    flowError?: string | null;
+  };
+  steps: BecknExtLifecycleStep[];
+}
+
+export const fetchBecknExtLifecycle = async (params: {
+  questionId: string;
+  sessionId?: string;
+  id?: string;
+}): Promise<BecknExtLifecycle> => {
+  const { questionId, sessionId, id } = params;
+  if (!questionId && !id) {
+    throw new Error("questionId is required");
+  }
+
+  const queryParams = buildQueryParams({
+    sessionId: sessionId || "",
+    id: id || "",
+  });
+
+  const pathId = encodeURIComponent(questionId || "unknown");
+  const response = await fetch(
+    `${SERVER_URL}/beckn-ext/lifecycle/${pathId}${queryParams ? `?${queryParams}` : ""}`,
+  );
+
+  if (!response.ok) {
+    await throwBecknExtHttpError(response);
+  }
+
+  const result = await response.json();
+  if (!result.data) {
+    throw new Error(
+      "We couldn’t load the API lifecycle details. Please try again.",
+    );
+  }
+  return result.data as BecknExtLifecycle;
+};
+
+export const fetchBecknExtList = async (
+  params: BecknExtListParams = {},
+): Promise<PaginatedResponse<BecknExtLog>> => {
+  const {
+    page = DEFAULT_PAGE,
+    limit = DEFAULT_LIMIT,
+    startDate,
+    endDate,
+    search,
+    useCase,
+    sortBy = "start_ets",
+    sortOrder = "desc",
+    includePayloads = false,
+  } = params;
+
+  try {
+    const queryParams = buildQueryParams({
+      page,
+      limit,
+      startDate: startDate || "",
+      endDate: endDate || "",
+      search: search || "",
+      useCase: useCase || "",
+      sortBy,
+      sortOrder,
+      includePayloads: includePayloads ? "true" : "",
+    });
+
+    const response = await fetch(`${SERVER_URL}/beckn-ext?${queryParams}`);
+
+    if (!response.ok) {
+      await throwBecknExtHttpError(response);
+    }
+
+    const result = await response.json();
+    const rows: BecknExtLog[] = Array.isArray(result.data)
+      ? result.data.map(
+          (row: Record<string, unknown>): BecknExtLog => ({
+            id: String(row.id ?? ""),
+            sessionId: String(row.sessionId ?? ""),
+            questionId: String(row.questionId ?? ""),
+            serviceName: String(row.serviceName || row.useCase || ""),
+            useCase: String(row.useCase || row.serviceName || ""),
+            routeName: (row.routeName as string) ?? null,
+            channel: (row.channel as string) ?? null,
+            becknAction: (row.becknAction as string) ?? null,
+            becknDomain: (row.becknDomain as string) ?? null,
+            requestPath: (row.requestPath as string) ?? null,
+            startEts: (row.startEts as string) ?? null,
+            endEts: (row.endEts as string) ?? null,
+            durationMs:
+              row.durationMs != null ? Number(row.durationMs) : null,
+            flowStatus: (row.flowStatus as string) ?? null,
+            flowSuccess:
+              typeof row.flowSuccess === "boolean" ? row.flowSuccess : null,
+            extApiService: (row.extApiService as string) ?? null,
+            extApiMethod: (row.extApiMethod as string) ?? null,
+            extApiUrl: (row.extApiUrl as string) ?? null,
+            extApiStatusCode:
+              row.extApiStatusCode != null
+                ? Number(row.extApiStatusCode)
+                : null,
+            extApiLatencyMs:
+              row.extApiLatencyMs != null
+                ? Number(row.extApiLatencyMs)
+                : null,
+            extApiSuccess:
+              typeof row.extApiSuccess === "boolean"
+                ? row.extApiSuccess
+                : null,
+            becknApiService: (row.becknApiService as string) ?? null,
+            becknMethod: (row.becknMethod as string) ?? null,
+            becknUrl: (row.becknUrl as string) ?? null,
+            becknStatusCode:
+              row.becknStatusCode != null
+                ? Number(row.becknStatusCode)
+                : null,
+            becknLatencyMs:
+              row.becknLatencyMs != null ? Number(row.becknLatencyMs) : null,
+            becknSuccess:
+              typeof row.becknSuccess === "boolean" ? row.becknSuccess : null,
+            createdAt: (row.createdAt as string) ?? null,
+          }),
+        )
+      : [];
+
+    return {
+      data: rows,
+      total: result.pagination?.totalItems || 0,
+      page: result.pagination?.currentPage || page,
+      pageSize: result.pagination?.itemsPerPage || limit,
+      totalPages: result.pagination?.totalPages || 1,
+    };
+  } catch (error) {
+    console.error("Error fetching beckn-ext list:", error);
+    if (error instanceof Error && error.message && !("status" in error)) {
+      if (
+        error.message.startsWith("HTTP") ||
+        error.message.includes("Failed to fetch") ||
+        error.name === "TypeError"
+      ) {
+        throw new Error(getBecknExtFriendlyError());
+      }
+    }
+    throw error;
+  }
+};
+
+// Legacy aliases kept for any remaining imports / flow detail page
+export type ProviderTelemetryLog = BecknExtLog;
+export type ProviderTelemetrySummary = BecknExtStats;
+export type ProviderTelemetryData = {
+  summary: BecknExtStats;
+  logs: PaginatedResponse<BecknExtLog>;
+};
+export type ProviderTelemetryPaginationParams = BecknExtListParams;
+
+/** @deprecated Prefer fetchBecknExtStats + fetchBecknExtList */
+export const fetchProviderTelemetry = async (
+  params: BecknExtListParams = {},
+): Promise<ProviderTelemetryData> => {
+  const [summary, logs] = await Promise.all([
+    fetchBecknExtStats({
+      startDate: params.startDate,
+      endDate: params.endDate,
+      useCase: params.useCase,
+    }).catch(() => EMPTY_BECKN_EXT_STATS),
+    fetchBecknExtList(params).catch(() => ({
+      data: [] as BecknExtLog[],
+      total: 0,
+      page: params.page || DEFAULT_PAGE,
+      pageSize: params.limit || DEFAULT_LIMIT,
+      totalPages: 1,
+    })),
+  ]);
+  return { summary, logs };
+};
+
+// End-to-end flow for a single question_id: every provider_telemetry_events
+// row that shares that question_id (one step in the flow), in order, with
+// full request/response payloads — powers the flow detail page reached by
+// clicking a row in the External API Observability log table.
+export interface ProviderTelemetryFlowStep {
+  id: string;
+  stepSequence: number | null;
+  eventName: string;
+  serviceName: string;
+  becknTransactionId: string | null;
+  endpointUrl: string | null;
+  httpStatus: number | null;
+  latencyMs: number | null;
+  success: boolean | null;
+  errorMessage: string | null;
+  requestPayload: unknown;
+  responsePayload: unknown;
+  eventTimestamp: string;
+}
+
+export interface ProviderTelemetryFlowSummary {
+  totalSteps: number;
+  overallSuccess: boolean;
+  hasError: boolean;
+  startedAt: string;
+  completedAt: string;
+  totalDurationMs: number;
+  servicesInvolved: string[];
+}
+
+export interface ProviderTelemetryFlow {
+  questionId: string;
+  sessionId: string | null;
+  summary: ProviderTelemetryFlowSummary | null;
+  steps: ProviderTelemetryFlowStep[];
+}
+
+export const fetchProviderTelemetryFlow = async (
+  questionId: string,
+): Promise<ProviderTelemetryFlow> => {
+  const response = await fetch(
+    `${SERVER_URL}/provider-telemetry/flow/${encodeURIComponent(questionId)}`,
+  );
+
+  if (!response.ok) {
+    throw new Error(`HTTP error! status: ${response.status}`);
+  }
+
+  const result = await response.json();
+  if (!result.success) {
+    throw new Error(result.error || "Failed to fetch provider telemetry flow");
+  }
+
+  return result.data;
+};
