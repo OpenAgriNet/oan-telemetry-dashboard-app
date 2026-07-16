@@ -1,7 +1,7 @@
 import { useMemo } from "react";
 import { useNavigate, useSearchParams } from "react-router-dom";
 import { useQuery } from "@tanstack/react-query";
-import { ArrowDown, ArrowUp, Bell, CheckCircle2, MapPin, RefreshCw, ThumbsDown, ThumbsUp, XCircle } from "lucide-react";
+import { ArrowDown, ArrowUp, Bell, CheckCircle2, MapPin, RefreshCw, Tag, ThumbsDown, ThumbsUp, XCircle } from "lucide-react";
 import { useDateFilter } from "@/contexts/DateFilterContext";
 import { useTelemetryState } from "@/contexts/TelemetryStateContext";
 import { buildDateRangeParams, formatUTCToIST } from "@/lib/utils";
@@ -209,6 +209,11 @@ const NotificationTelemetry = () => {
           { label: "Positive Feedback", value: numberValue(summary?.feedback_yes), icon: ThumbsUp },
           { label: "Negative Feedback", value: numberValue(summary?.feedback_no), icon: ThumbsDown },
           { label: "Negative Feedback Submitted", value: numberValue(summary?.negative_feedback_submitted), icon: ThumbsDown },
+          ...(summary?.category_counts || []).map((category) => ({
+            label: category.category_type,
+            value: numberValue(category.count),
+            icon: Tag,
+          })),
         ];
       case "sessions":
         return [
@@ -315,7 +320,7 @@ const NotificationTelemetry = () => {
           ) : (
             <div className="space-y-4">
               <div className="overflow-x-auto rounded-md border">
-                <Table className={isSessionView ? "min-w-[1180px]" : undefined}>
+                <Table className={isSessionView ? "min-w-[1180px]" : showFeedbackColumns ? "min-w-[1500px]" : undefined}>
                   <TableHeader>
                     <TableRow>
                       <TableHead className="whitespace-nowrap">
@@ -365,6 +370,9 @@ const NotificationTelemetry = () => {
                       {showFeedbackColumns && (
                         <>
                           <TableHead>Notification ID</TableHead>
+                          <TableHead>Message Type</TableHead>
+                          <TableHead>Category Type</TableHead>
+                          <TableHead>Notification Description</TableHead>
                           <TableHead>Feedback Type</TableHead>
                           <TableHead>Reason</TableHead>
                           <TableHead>Feedback</TableHead>
@@ -405,17 +413,17 @@ const NotificationTelemetry = () => {
                             <TableCell className="whitespace-nowrap">
                               {row.event_time ? formatUTCToIST(row.event_time, "MMM dd, yyyy hh:mm a") : "-"}
                             </TableCell>
-                            <TableCell>
-                              <Badge variant="outline">{formatEventName(row.category)}</Badge>
-                            </TableCell>
-                            <TableCell className="font-medium whitespace-nowrap">
-                              {formatEventName(row.event_name)}
-                            </TableCell>
                             <TableCell className="max-w-[120px] font-mono text-xs" title={row.fingerprint_id || ""}>
                               {formatCompactId(row.fingerprint_id)}
                             </TableCell>
                             <TableCell className="max-w-[120px] font-mono text-xs" title={row.sid || ""}>
                               {formatCompactId(row.sid)}
+                            </TableCell>
+                            <TableCell>
+                              <Badge variant="outline">{formatEventName(row.category)}</Badge>
+                            </TableCell>
+                            <TableCell className="font-medium whitespace-nowrap">
+                              {formatEventName(row.event_name)}
                             </TableCell>
                             {showStatusColumns && (
                               <>
@@ -443,6 +451,15 @@ const NotificationTelemetry = () => {
                               <>
                                 <TableCell className="max-w-[160px] truncate font-mono text-xs">
                                   {row.notification_id || "-"}
+                                </TableCell>
+                                <TableCell className="whitespace-nowrap">
+                                  {row.message_type || "-"}
+                                </TableCell>
+                                <TableCell className="whitespace-nowrap">
+                                  {row.category_type || "-"}
+                                </TableCell>
+                                <TableCell className="max-w-[280px] truncate" title={row.notification_description || ""}>
+                                  {row.notification_description || "-"}
                                 </TableCell>
                                 <TableCell>{formatEventName(row.event_name)}</TableCell>
                                 <TableCell>{row.reason || "-"}</TableCell>
