@@ -177,6 +177,11 @@ export interface NotificationTelemetryEvent {
   event_time?: string;
   metadata?: Record<string, unknown>;
   notification_id?: string;
+  notification_description?: string;
+  message_type?: string;
+  category_type?: string;
+  latitude?: number;
+  longitude?: number;
   action?: string;
   reason?: string;
   feedback?: string;
@@ -202,6 +207,10 @@ export interface NotificationTelemetrySummary {
   feedback_no?: string | number;
   negative_feedback_submitted?: string | number;
   total_sessions?: string | number;
+  category_counts?: Array<{
+    category_type: string;
+    count: string | number;
+  }>;
 }
 
 export interface NotificationTelemetrySession {
