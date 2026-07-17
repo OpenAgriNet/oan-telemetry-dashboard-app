@@ -3438,6 +3438,282 @@ export const fetchBecknExtList = async (
   }
 };
 
+// ── Use-case health: working vs not working from latest call / error ─────────
+// Built from /beckn-ext/stats (use-case list + counts) and per-use-case
+// /beckn-ext list (latest success/error timestamps).
+
+export type BecknExtUseCaseHealthStatus =
+  | "working"
+  | "not_working"
+  | "unknown";
+
+export interface BecknExtUseCaseHealth {
+  useCase: string;
+  status: BecknExtUseCaseHealthStatus;
+  totalCalls: number;
+  totalSuccess: number;
+  totalErrors: number;
+  successRate: number;
+  maxLatencyMs: number;
+  /** Most recent call timestamp (startEts || createdAt) */
+  latestCallAt: string | null;
+  latestCallSuccess: boolean | null;
+  latestStatusCode: number | null;
+  latestMethod: string | null;
+  latestUrl: string | null;
+  latestLatencyMs: number | null;
+  /** Most recent failed call timestamp in sampled window */
+  latestErrorAt: string | null;
+  latestErrorStatusCode: number | null;
+  latestErrorUrl: string | null;
+  /** Most recent successful call timestamp in sampled window */
+  latestSuccessAt: string | null;
+  /**
+   * When the current outage started (only for not_working).
+   * Prefer time of last success (outage since then); else oldest consecutive
+   * failure in the recent sample.
+   */
+  downSinceAt: string | null;
+  /** Milliseconds from downSinceAt until now (0 when working / unknown). */
+  downForMs: number;
+  /** Whole hours down (floor). Useful for “down for X hours”. */
+  downForHours: number;
+  /** Consecutive failed calls at the head of the sample (not_working only). */
+  consecutiveFailures: number;
+}
+
+export interface BecknExtUseCaseHealthResponse {
+  overall: BecknExtStats;
+  useCases: BecknExtUseCaseHealth[];
+  workingCount: number;
+  notWorkingCount: number;
+  unknownCount: number;
+  /** Longest outage among not_working use cases (ms). */
+  maxDownForMs: number;
+}
+
+function logTimestamp(log: BecknExtLog | undefined | null): string | null {
+  if (!log) return null;
+  return log.startEts || log.createdAt || log.endEts || null;
+}
+
+function isLogSuccess(log: BecknExtLog): boolean {
+  if (log.extApiSuccess === true) return true;
+  if (
+    log.extApiSuccess == null &&
+    log.extApiStatusCode != null &&
+    log.extApiStatusCode >= 200 &&
+    log.extApiStatusCode < 400
+  ) {
+    return true;
+  }
+  return false;
+}
+
+function isLogFailure(log: BecknExtLog): boolean {
+  if (log.extApiSuccess === false) return true;
+  if (
+    log.extApiSuccess == null &&
+    log.extApiStatusCode != null &&
+    log.extApiStatusCode >= 400
+  ) {
+    return true;
+  }
+  return false;
+}
+
+/**
+ * Resolve working / not working from the latest outbound API call for a use case.
+ * - working: latest call extApiSuccess === true
+ * - not_working: latest call extApiSuccess === false
+ * - unknown: no samples or success flag missing
+ */
+function resolveUseCaseHealthStatus(
+  latest: BecknExtLog | undefined,
+): BecknExtUseCaseHealthStatus {
+  if (!latest) return "unknown";
+  if (isLogSuccess(latest)) return "working";
+  if (isLogFailure(latest)) return "not_working";
+  return "unknown";
+}
+
+/**
+ * Outage start for a failing use case (logs newest → oldest):
+ * 1. Prefer last success time → "down since last success"
+ * 2. Else oldest failure in the current consecutive failure streak
+ * 3. Else latest call time
+ */
+function resolveOutage(
+  status: BecknExtUseCaseHealthStatus,
+  logs: BecknExtLog[],
+  latestSuccessAt: string | null,
+  latestCallAt: string | null,
+): {
+  downSinceAt: string | null;
+  downForMs: number;
+  downForHours: number;
+  consecutiveFailures: number;
+} {
+  if (status !== "not_working") {
+    return {
+      downSinceAt: null,
+      downForMs: 0,
+      downForHours: 0,
+      consecutiveFailures: 0,
+    };
+  }
+
+  let consecutiveFailures = 0;
+  let oldestFailInStreak: string | null = null;
+  for (const log of logs) {
+    if (isLogFailure(log)) {
+      consecutiveFailures += 1;
+      oldestFailInStreak = logTimestamp(log) || oldestFailInStreak;
+      continue;
+    }
+    // Hit a success or unknown → end of current failure streak
+    break;
+  }
+
+  // Primary: hours since last known success (most useful for ops)
+  // Fallback: start of consecutive failure streak in recent sample
+  const downSinceAt =
+    latestSuccessAt || oldestFailInStreak || latestCallAt || null;
+
+  let downForMs = 0;
+  if (downSinceAt) {
+    const t = new Date(downSinceAt).getTime();
+    if (Number.isFinite(t)) {
+      downForMs = Math.max(0, Date.now() - t);
+    }
+  }
+
+  return {
+    downSinceAt,
+    downForMs,
+    downForHours: Math.floor(downForMs / (1000 * 60 * 60)),
+    consecutiveFailures,
+  };
+}
+
+/**
+ * Per use-case health snapshot for the External API status page.
+ * Uses overall stats for the use-case catalog, then loads recent logs
+ * (and filtered stats) per use case to determine latest success/error times
+ * and how long a use case has been down.
+ */
+export const fetchBecknExtUseCaseHealth = async (
+  params: BecknExtStatsParams = {},
+): Promise<BecknExtUseCaseHealthResponse> => {
+  const overall = await fetchBecknExtStats({
+    startDate: params.startDate,
+    endDate: params.endDate,
+  });
+
+  const catalog = (overall.useCases || []).filter((u) => u.useCase);
+  if (catalog.length === 0) {
+    return {
+      overall,
+      useCases: [],
+      workingCount: 0,
+      notWorkingCount: 0,
+      unknownCount: 0,
+      maxDownForMs: 0,
+    };
+  }
+
+  const useCases: BecknExtUseCaseHealth[] = await Promise.all(
+    catalog.map(async (entry): Promise<BecknExtUseCaseHealth> => {
+      const [ucStats, list] = await Promise.all([
+        fetchBecknExtStats({
+          startDate: params.startDate,
+          endDate: params.endDate,
+          useCase: entry.useCase,
+        }).catch(() => EMPTY_BECKN_EXT_STATS),
+        // Larger window so consecutive-failure / last-success scan is meaningful
+        fetchBecknExtList({
+          page: 1,
+          limit: 100,
+          startDate: params.startDate,
+          endDate: params.endDate,
+          useCase: entry.useCase,
+          sortBy: "start_ets",
+          sortOrder: "desc",
+        }).catch(() => ({
+          data: [] as BecknExtLog[],
+          total: 0,
+          page: 1,
+          pageSize: 100,
+          totalPages: 1,
+        })),
+      ]);
+
+      const logs = list.data ?? [];
+      const latest = logs[0];
+      const latestError = logs.find((l) => isLogFailure(l));
+      const latestSuccess = logs.find((l) => isLogSuccess(l));
+      const latestCallAt = logTimestamp(latest);
+      const latestSuccessAt = logTimestamp(latestSuccess);
+      const status = resolveUseCaseHealthStatus(latest);
+      const outage = resolveOutage(
+        status,
+        logs,
+        latestSuccessAt,
+        latestCallAt,
+      );
+
+      return {
+        useCase: entry.useCase,
+        status,
+        totalCalls: ucStats.totalExternalApiCalls || entry.count || 0,
+        totalSuccess: ucStats.totalSuccess || 0,
+        totalErrors: ucStats.totalErrors || 0,
+        successRate: ucStats.successRate || 0,
+        maxLatencyMs: ucStats.maxLatencyMs || 0,
+        latestCallAt,
+        latestCallSuccess: latest?.extApiSuccess ?? null,
+        latestStatusCode: latest?.extApiStatusCode ?? null,
+        latestMethod: latest?.extApiMethod ?? null,
+        latestUrl: latest?.extApiUrl ?? null,
+        latestLatencyMs: latest?.extApiLatencyMs ?? null,
+        latestErrorAt: logTimestamp(latestError),
+        latestErrorStatusCode: latestError?.extApiStatusCode ?? null,
+        latestErrorUrl: latestError?.extApiUrl ?? null,
+        latestSuccessAt,
+        ...outage,
+      };
+    }),
+  );
+
+  // Sort: not working first (longest down first), then unknown, then working
+  const statusRank: Record<BecknExtUseCaseHealthStatus, number> = {
+    not_working: 0,
+    unknown: 1,
+    working: 2,
+  };
+  useCases.sort((a, b) => {
+    const rank = statusRank[a.status] - statusRank[b.status];
+    if (rank !== 0) return rank;
+    if (a.status === "not_working") {
+      return b.downForMs - a.downForMs;
+    }
+    const aErr = a.latestErrorAt ? new Date(a.latestErrorAt).getTime() : 0;
+    const bErr = b.latestErrorAt ? new Date(b.latestErrorAt).getTime() : 0;
+    return bErr - aErr;
+  });
+
+  const notWorking = useCases.filter((u) => u.status === "not_working");
+
+  return {
+    overall,
+    useCases,
+    workingCount: useCases.filter((u) => u.status === "working").length,
+    notWorkingCount: notWorking.length,
+    unknownCount: useCases.filter((u) => u.status === "unknown").length,
+    maxDownForMs: notWorking.reduce((max, u) => Math.max(max, u.downForMs), 0),
+  };
+};
+
 // Legacy aliases kept for any remaining imports / flow detail page
 export type ProviderTelemetryLog = BecknExtLog;
 export type ProviderTelemetrySummary = BecknExtStats;
