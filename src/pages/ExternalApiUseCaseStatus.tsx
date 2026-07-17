@@ -347,7 +347,7 @@ function DownNowPanel({
             variant="outline"
             className="border-rose-500/40 bg-rose-500/10 text-rose-700 dark:text-rose-300"
           >
-            Sorted: longest down first
+            Sorted: Descending
           </Badge>
         </div>
       </CardHeader>
@@ -599,8 +599,7 @@ const ExternalApiUseCaseStatus = () => {
           <div>
             <CardTitle className="text-lg">All use cases</CardTitle>
             <p className="mt-0.5 text-xs text-muted-foreground">
-              Sorted by 24-hour success percentage, lowest first. Click a row
-              for filtered logs.
+              Sorted by 24-hour success percentage, lowest first.
             </p>
           </div>
           <div className="relative w-full sm:w-72">
