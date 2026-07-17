@@ -3439,8 +3439,8 @@ export const fetchBecknExtList = async (
 };
 
 // ── Use-case health: working vs not working from latest call / error ─────────
-// Built from /beckn-ext/stats (use-case list + counts) and per-use-case
-// /beckn-ext list (latest success/error timestamps).
+// The reporting window applies only to counts/rates. Current status always
+// comes from the latest recorded call, even when that call predates the window.
 
 export type BecknExtUseCaseHealthStatus =
   | "working"
@@ -3598,19 +3598,22 @@ function resolveOutage(
 
 /**
  * Per use-case health snapshot for the External API status page.
- * Uses overall stats for the use-case catalog, then loads recent logs
- * (and filtered stats) per use case to determine latest success/error times
- * and how long a use case has been down.
+ * The use-case catalog and latest-call lookup are intentionally unbounded so
+ * an API last accessed before the reporting window still has a current status.
+ * Counts and success rates remain scoped to the requested reporting window.
  */
 export const fetchBecknExtUseCaseHealth = async (
   params: BecknExtStatsParams = {},
 ): Promise<BecknExtUseCaseHealthResponse> => {
-  const overall = await fetchBecknExtStats({
-    startDate: params.startDate,
-    endDate: params.endDate,
-  });
+  const [overall, catalogStats] = await Promise.all([
+    fetchBecknExtStats({
+      startDate: params.startDate,
+      endDate: params.endDate,
+    }),
+    fetchBecknExtStats(),
+  ]);
 
-  const catalog = (overall.useCases || []).filter((u) => u.useCase);
+  const catalog = (catalogStats.useCases || []).filter((u) => u.useCase);
   if (catalog.length === 0) {
     return {
       overall,
@@ -3630,12 +3633,11 @@ export const fetchBecknExtUseCaseHealth = async (
           endDate: params.endDate,
           useCase: entry.useCase,
         }).catch(() => EMPTY_BECKN_EXT_STATS),
-        // Larger window so consecutive-failure / last-success scan is meaningful
+        // Do not apply the reporting window here. "Current" is the result of
+        // the last time this API was actually accessed, however old that is.
         fetchBecknExtList({
           page: 1,
           limit: 100,
-          startDate: params.startDate,
-          endDate: params.endDate,
           useCase: entry.useCase,
           sortBy: "start_ets",
           sortOrder: "desc",
@@ -3665,7 +3667,7 @@ export const fetchBecknExtUseCaseHealth = async (
       return {
         useCase: entry.useCase,
         status,
-        totalCalls: ucStats.totalExternalApiCalls || entry.count || 0,
+        totalCalls: ucStats.totalExternalApiCalls || 0,
         totalSuccess: ucStats.totalSuccess || 0,
         totalErrors: ucStats.totalErrors || 0,
         successRate: ucStats.successRate || 0,

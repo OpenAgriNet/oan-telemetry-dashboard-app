@@ -28,8 +28,7 @@ import {
   TableHeader,
   TableRow,
 } from "@/components/ui/table";
-import { cn, buildDateRangeParams } from "@/lib/utils";
-import { useDateFilter } from "@/contexts/DateFilterContext";
+import { buildDateRangeParams, cn } from "@/lib/utils";
 import { useTelemetryState } from "@/contexts/TelemetryStateContext";
 import {
   fetchBecknExtUseCaseHealth,
@@ -66,31 +65,6 @@ function formatUseCaseLabel(value: string): string {
       .map((part) => part.charAt(0).toUpperCase() + part.slice(1))
       .join(" ")
   );
-}
-
-function formatTimestamp(iso: string | null | undefined): string {
-  if (!iso) return "—";
-  const d = new Date(iso);
-  if (Number.isNaN(d.getTime())) return "—";
-  const pad = (n: number) => String(n).padStart(2, "0");
-  return `${pad(d.getDate())}-${pad(d.getMonth() + 1)}-${d.getFullYear()} ${pad(d.getHours())}:${pad(d.getMinutes())}:${pad(d.getSeconds())}`;
-}
-
-/** Human duration from ms — prioritizes hours for ops (“down for 5h”). */
-function formatDuration(ms: number | null | undefined): string {
-  if (ms == null || !Number.isFinite(ms) || ms <= 0) return "—";
-  const totalMin = Math.floor(ms / 60000);
-  if (totalMin < 1) return "< 1m";
-  const days = Math.floor(totalMin / (60 * 24));
-  const hours = Math.floor((totalMin % (60 * 24)) / 60);
-  const mins = totalMin % 60;
-  if (days > 0) {
-    return hours > 0 ? `${days}d ${hours}h` : `${days}d`;
-  }
-  if (hours > 0) {
-    return mins > 0 ? `${hours}h ${mins}m` : `${hours}h`;
-  }
-  return `${mins}m`;
 }
 
 /** Compact hours label e.g. "5.2 hrs" or "12 hrs" */
@@ -160,6 +134,37 @@ function StatusBadge({ status }: { status: BecknExtUseCaseHealthStatus }) {
       <span className={cn("h-1.5 w-1.5 rounded-full", meta.dot)} />
       <Icon size={13} className="shrink-0" />
       {meta.label}
+    </span>
+  );
+}
+
+function SuccessRateBadge({ row }: { row: BecknExtUseCaseHealth }) {
+  if (row.totalCalls === 0) {
+    return (
+      <span className="inline-flex rounded-md bg-muted px-2 py-1 text-xs font-medium text-muted-foreground ring-1 ring-inset ring-border">
+        No calls
+      </span>
+    );
+  }
+
+  const rate = row.successRate;
+  const tone =
+    rate >= 100
+      ? "bg-emerald-500/15 text-emerald-700 ring-emerald-500/30 dark:text-emerald-300"
+      : rate >= 90
+        ? "bg-amber-500/15 text-amber-700 ring-amber-500/30 dark:text-amber-300"
+        : "bg-rose-500/15 text-rose-700 ring-rose-500/30 dark:text-rose-300";
+  const label = Number.isInteger(rate) ? rate.toFixed(0) : rate.toFixed(1);
+
+  return (
+    <span
+      className={cn(
+        "inline-flex rounded-md px-2 py-1 text-xs font-semibold tabular-nums ring-1 ring-inset",
+        tone,
+      )}
+      title={`${row.totalSuccess.toLocaleString()} successful calls out of ${row.totalCalls.toLocaleString()} in the past 24 hours`}
+    >
+      {label}%
     </span>
   );
 }
@@ -237,7 +242,7 @@ function SummaryStrip({
       value: unknown,
       icon: HelpCircle,
       accent: "border-border from-muted/40 to-transparent text-muted-foreground",
-      hint: "No recent samples",
+      hint: "No recorded status",
     },
     {
       key: "all",
@@ -245,7 +250,7 @@ function SummaryStrip({
       value: working + notWorking + unknown,
       icon: Activity,
       accent: "border-border from-primary/5 to-transparent text-foreground",
-      hint: "From telemetry in date range",
+      hint: "Known from all telemetry",
     },
   ];
 
@@ -314,7 +319,7 @@ function DownNowPanel({
             All use cases working
           </p>
           <p className="mt-0.5 text-sm text-muted-foreground">
-            Latest external API call for every use case in range succeeded. No
+            Latest external API call for every known use case succeeded. No
             outages right now.
           </p>
         </div>
@@ -369,43 +374,13 @@ function DownNowPanel({
                       </span>
                     )}
                   </div>
-                  <div className="mt-1 flex flex-wrap gap-x-4 gap-y-0.5 text-xs text-muted-foreground">
-                    <span>
-                      Down since{" "}
-                      <span className="font-medium text-foreground">
-                        {formatTimestamp(row.downSinceAt)}
-                      </span>
-                    </span>
-                    {row.latestSuccessAt && (
-                      <span>
-                        Last success{" "}
-                        <span className="font-medium text-foreground">
-                          {formatTimestamp(row.latestSuccessAt)}
-                        </span>
-                      </span>
-                    )}
-                    {!row.latestSuccessAt && (
-                      <span className="text-amber-600 dark:text-amber-400">
-                        No success in recent samples
-                      </span>
-                    )}
-                    {row.consecutiveFailures > 0 && (
-                      <span>
-                        {row.consecutiveFailures} consecutive failure
-                        {row.consecutiveFailures === 1 ? "" : "s"}
-                      </span>
-                    )}
-                  </div>
                 </div>
                 <div className="flex shrink-0 items-center gap-3">
                   <div className="text-right">
                     <p className="text-[10px] font-semibold uppercase tracking-wide text-rose-600/80 dark:text-rose-400/80">
-                      Down for
+                      Total time down
                     </p>
                     <DownForBadge ms={row.downForMs} large />
-                    <p className="mt-0.5 text-[10px] text-muted-foreground">
-                      {formatDuration(row.downForMs)} total
-                    </p>
                   </div>
                   <ChevronRight
                     size={16}
@@ -444,9 +419,6 @@ function UseCaseMobileCard({
           <p className="font-semibold leading-snug">
             {formatUseCaseLabel(row.useCase)}
           </p>
-          <p className="mt-0.5 font-mono text-[10px] text-muted-foreground truncate">
-            {row.useCase}
-          </p>
         </div>
         <StatusBadge status={row.status} />
       </div>
@@ -460,31 +432,12 @@ function UseCaseMobileCard({
         </div>
       )}
 
-      <div className="mt-3 grid grid-cols-2 gap-2 text-xs">
-        <div className="rounded-lg bg-muted/40 px-2.5 py-2">
-          <p className="text-[10px] uppercase tracking-wide text-muted-foreground">
-            Last success
-          </p>
-          <p className="mt-0.5 font-medium tabular-nums">
-            {formatTimestamp(row.latestSuccessAt)}
-          </p>
-        </div>
-        <div className="rounded-lg bg-muted/40 px-2.5 py-2">
-          <p className="text-[10px] uppercase tracking-wide text-muted-foreground">
-            Latest error
-          </p>
-          <p className="mt-0.5 font-medium tabular-nums">
-            {formatTimestamp(row.latestErrorAt)}
-          </p>
-        </div>
-      </div>
-
-      <div className="mt-3 flex items-center justify-between text-[11px] text-muted-foreground">
+      <div className="mt-3 flex flex-wrap items-center justify-between gap-2 text-[11px] text-muted-foreground">
         <span className="inline-flex items-center gap-1">
           <Clock size={12} />
-          {row.totalErrors.toLocaleString()} errors ·{" "}
-          {row.totalCalls > 0 ? `${Math.round(row.successRate)}%` : "—"} ok
+          {row.totalErrors.toLocaleString()} errors in 24h
         </span>
+        <SuccessRateBadge row={row} />
         <span className="inline-flex items-center gap-0.5 font-medium text-primary">
           View logs <ChevronRight size={14} />
         </span>
@@ -495,33 +448,21 @@ function UseCaseMobileCard({
 
 const ExternalApiUseCaseStatus = () => {
   const navigate = useNavigate();
-  const { dateRange } = useDateFilter();
   const { selectedStateId } = useTelemetryState();
-  // Default to failures — this page is for “what’s down and for how long”
-  const [statusFilter, setStatusFilter] = useState<StatusFilter>("not_working");
+  const [statusFilter, setStatusFilter] = useState<StatusFilter>("all");
   const [search, setSearch] = useState("");
 
-  const dateParams = useMemo(
-    () => buildDateRangeParams(dateRange),
-    [dateRange.from?.toISOString(), dateRange.to?.toISOString()],
-  );
-
-  const isDateRangeReady =
-    dateRange.from !== undefined && dateRange.to !== undefined;
-
   const { data, isLoading, isFetching, error, refetch } = useQuery({
-    queryKey: [
-      "beckn-ext-use-case-health",
-      selectedStateId,
-      dateParams.startDate,
-      dateParams.endDate,
-    ],
-    queryFn: () =>
-      fetchBecknExtUseCaseHealth({
-        startDate: dateParams.startDate,
-        endDate: dateParams.endDate,
-      }),
-    enabled: isDateRangeReady,
+    queryKey: ["beckn-ext-use-case-health", selectedStateId, "last-24-hours"],
+    queryFn: () => {
+      const end = new Date();
+      const start = new Date(end.getTime() - 24 * 60 * 60 * 1000);
+      const window = buildDateRangeParams({ from: start, to: end });
+      return fetchBecknExtUseCaseHealth({
+        startDate: window.startDate,
+        endDate: window.endDate,
+      });
+    },
     refetchOnWindowFocus: false,
     staleTime: 30 * 1000,
     gcTime: 5 * 60 * 1000,
@@ -530,24 +471,37 @@ const ExternalApiUseCaseStatus = () => {
   });
 
   const rows = data?.useCases ?? [];
-  const loading = !isDateRangeReady || isLoading;
+  const loading = isLoading;
   const downRows = useMemo(
-    () => rows.filter((r) => r.status === "not_working"),
+    () =>
+      rows
+        .filter((r) => r.status === "not_working")
+        .sort((a, b) => b.downForMs - a.downForMs),
     [rows],
   );
 
   const filtered = useMemo(() => {
     const q = search.trim().toLowerCase();
-    return rows.filter((row) => {
-      if (statusFilter !== "all" && row.status !== statusFilter) return false;
-      if (!q) return true;
-      const label = formatUseCaseLabel(row.useCase).toLowerCase();
-      return (
-        row.useCase.toLowerCase().includes(q) ||
-        label.includes(q) ||
-        (row.latestUrl || "").toLowerCase().includes(q)
-      );
-    });
+    return rows
+      .filter((row) => {
+        if (statusFilter !== "all" && row.status !== statusFilter) return false;
+        if (!q) return true;
+        const label = formatUseCaseLabel(row.useCase).toLowerCase();
+        return (
+          row.useCase.toLowerCase().includes(q) ||
+          label.includes(q) ||
+          (row.latestUrl || "").toLowerCase().includes(q)
+        );
+      })
+      .sort((a, b) => {
+        if (a.totalCalls === 0 && b.totalCalls > 0) return 1;
+        if (b.totalCalls === 0 && a.totalCalls > 0) return -1;
+        const rateDifference = a.successRate - b.successRate;
+        if (rateDifference !== 0) return rateDifference;
+        return formatUseCaseLabel(a.useCase).localeCompare(
+          formatUseCaseLabel(b.useCase),
+        );
+      });
   }, [rows, statusFilter, search]);
 
   const openLogs = (useCase: string) => {
@@ -565,22 +519,15 @@ const ExternalApiUseCaseStatus = () => {
           <div>
             <div className="flex flex-wrap items-center gap-2">
               <h1 className="text-2xl font-bold tracking-tight">
-                External API · What&apos;s Down
+                External API Status
               </h1>
               <Badge variant="secondary" className="font-normal">
-                Hours since last success
+                Last 24 hours
               </Badge>
             </div>
             <p className="mt-1 max-w-2xl text-sm text-muted-foreground">
-              From telemetry: which use cases are{" "}
-              <span className="font-medium text-rose-600 dark:text-rose-400">
-                not working
-              </span>{" "}
-              right now, and for{" "}
-              <span className="font-medium text-foreground">
-                how many hours
-              </span>{" "}
-              (time from last successful call until now).
+              Compare API success rates over the past 24 hours and see the
+              status recorded when each service was last accessed.
             </p>
           </div>
         </div>
@@ -606,7 +553,7 @@ const ExternalApiUseCaseStatus = () => {
         </div>
       </div>
 
-      <div className="flex flex-col gap-2 rounded-xl border border-border/60 bg-muted/20 px-4 py-3 text-xs text-muted-foreground sm:flex-row sm:flex-wrap sm:items-center sm:gap-x-6 sm:gap-y-1">
+      {/* <div className="flex flex-col gap-2 rounded-xl border border-border/60 bg-muted/20 px-4 py-3 text-xs text-muted-foreground sm:flex-row sm:flex-wrap sm:items-center sm:gap-x-6 sm:gap-y-1">
         <span className="inline-flex items-center gap-1.5 font-medium text-foreground">
           <AlertTriangle size={13} className="text-amber-500" />
           How we calculate
@@ -620,10 +567,14 @@ const ExternalApiUseCaseStatus = () => {
           success time (fallback: start of current failure streak)
         </span>
         <span>
-          Uses selected date range + recent call history from{" "}
-          <code className="rounded bg-muted px-1">/beckn-ext</code>
+          <strong className="text-foreground">Success %</strong> = successful
+          calls ÷ total calls over the past 24 hours
         </span>
-      </div>
+        <span>
+          <strong className="text-foreground">Current status</strong> = result
+          of the latest recorded call, even when it is older than 24 hours
+        </span>
+      </div> */}
 
       <SummaryStrip
         working={data?.workingCount ?? 0}
@@ -648,7 +599,8 @@ const ExternalApiUseCaseStatus = () => {
           <div>
             <CardTitle className="text-lg">All use cases</CardTitle>
             <p className="mt-0.5 text-xs text-muted-foreground">
-              Full list with downtime hours. Click a row for filtered logs.
+              Sorted by 24-hour success percentage, lowest first. Click a row
+              for filtered logs.
             </p>
           </div>
           <div className="relative w-full sm:w-72">
@@ -701,7 +653,7 @@ const ExternalApiUseCaseStatus = () => {
           ) : filtered.length === 0 ? (
             <div className="py-12 text-center text-sm text-muted-foreground">
               {rows.length === 0
-                ? "No external API use cases found for the selected date range."
+                ? "No external API use cases found."
                 : statusFilter === "not_working"
                   ? "No use cases are down right now. Switch filter to All to see everything."
                   : "No use cases match the current filter."}
@@ -729,19 +681,7 @@ const ExternalApiUseCaseStatus = () => {
                         Use Case
                       </TableHead>
                       <TableHead className="text-center text-xs font-semibold uppercase tracking-wide text-muted-foreground">
-                        Status
-                      </TableHead>
-                      <TableHead className="min-w-[7rem] text-xs font-semibold uppercase tracking-wide text-muted-foreground">
-                        Down For
-                      </TableHead>
-                      <TableHead className="min-w-[9rem] text-xs font-semibold uppercase tracking-wide text-muted-foreground">
-                        Down Since
-                      </TableHead>
-                      <TableHead className="min-w-[9rem] text-xs font-semibold uppercase tracking-wide text-muted-foreground">
-                        Last Success
-                      </TableHead>
-                      <TableHead className="min-w-[9rem] text-xs font-semibold uppercase tracking-wide text-muted-foreground">
-                        Latest Error
+                        Current Status
                       </TableHead>
                       <TableHead className="text-center text-xs font-semibold uppercase tracking-wide text-muted-foreground">
                         Err Code
@@ -750,7 +690,7 @@ const ExternalApiUseCaseStatus = () => {
                         Errors
                       </TableHead>
                       <TableHead className="text-right text-xs font-semibold uppercase tracking-wide text-muted-foreground">
-                        Success %
+                        Success % (24h)
                       </TableHead>
                       <TableHead className="w-12" />
                     </TableRow>
@@ -771,73 +711,12 @@ const ExternalApiUseCaseStatus = () => {
                             {idx + 1}
                           </TableCell>
                           <TableCell>
-                            <div className="min-w-0">
-                              <p className="font-semibold leading-snug">
-                                {formatUseCaseLabel(row.useCase)}
-                              </p>
-                              <p className="font-mono text-[10px] text-muted-foreground">
-                                {row.useCase}
-                              </p>
-                            </div>
+                            <p className="font-semibold leading-snug">
+                              {formatUseCaseLabel(row.useCase)}
+                            </p>
                           </TableCell>
                           <TableCell className="text-center">
                             <StatusBadge status={row.status} />
-                          </TableCell>
-                          <TableCell>
-                            {row.status === "not_working" ? (
-                              <div>
-                                <DownForBadge ms={row.downForMs} />
-                                <p className="mt-0.5 text-[10px] text-muted-foreground">
-                                  {formatDuration(row.downForMs)}
-                                  {row.consecutiveFailures > 0
-                                    ? ` · ${row.consecutiveFailures} fails in a row`
-                                    : ""}
-                                </p>
-                              </div>
-                            ) : (
-                              <span className="text-sm text-muted-foreground">
-                                —
-                              </span>
-                            )}
-                          </TableCell>
-                          <TableCell>
-                            {row.downSinceAt ? (
-                              <p className="text-sm tabular-nums">
-                                {formatTimestamp(row.downSinceAt)}
-                              </p>
-                            ) : (
-                              <span className="text-sm text-muted-foreground">
-                                —
-                              </span>
-                            )}
-                          </TableCell>
-                          <TableCell>
-                            {row.latestSuccessAt ? (
-                              <p className="text-sm tabular-nums">
-                                {formatTimestamp(row.latestSuccessAt)}
-                              </p>
-                            ) : (
-                              <span className="text-sm text-muted-foreground">
-                                —
-                              </span>
-                            )}
-                          </TableCell>
-                          <TableCell>
-                            {row.latestErrorAt ? (
-                              <p
-                                className={cn(
-                                  "text-sm tabular-nums",
-                                  row.status === "not_working" &&
-                                    "font-medium text-rose-600 dark:text-rose-400",
-                                )}
-                              >
-                                {formatTimestamp(row.latestErrorAt)}
-                              </p>
-                            ) : (
-                              <span className="text-sm text-muted-foreground">
-                                No errors
-                              </span>
-                            )}
                           </TableCell>
                           <TableCell className="text-center">
                             {row.latestErrorStatusCode != null ? (
@@ -859,9 +738,7 @@ const ExternalApiUseCaseStatus = () => {
                             </span>
                           </TableCell>
                           <TableCell className="text-right text-sm tabular-nums">
-                            {row.totalCalls > 0
-                              ? `${Math.round(row.successRate)}%`
-                              : "—"}
+                            <SuccessRateBadge row={row} />
                           </TableCell>
                           <TableCell className="text-muted-foreground">
                             <ChevronRight size={16} />

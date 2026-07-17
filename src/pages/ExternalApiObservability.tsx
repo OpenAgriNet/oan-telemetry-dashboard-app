@@ -885,7 +885,7 @@ const ExternalApiObservability = () => {
             onClick={() => navigate("/external-api/status")}
           >
             <Activity size={14} className="mr-1.5" />
-            What&apos;s Down
+            API Status (24h)
           </Button>
           <div className="w-full sm:w-72">
             <Select value={selectedUseCase} onValueChange={handleUseCaseChange}>
