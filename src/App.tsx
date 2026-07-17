@@ -39,6 +39,7 @@ import LangfuseQuestions from "./pages/LangfuseQuestions";
 import AppDownloads from "./pages/AppDownloads";
 import NotificationTelemetry from "./pages/NotificationTelemetry";
 import NotificationTelemetryDetails from "./pages/NotificationTelemetryDetails";
+import Exports from "./pages/Exports";
 import ExternalApiObservability from "./pages/ExternalApiObservability";
 import ExternalApiUseCaseStatus from "./pages/ExternalApiUseCaseStatus";
 import BecknExtLifecycleDetails from "./pages/BecknExtLifecycleDetails";
@@ -65,6 +66,7 @@ type ChatTelemetryTab =
   | "errors"
   | "asr"
   | "tts"
+  | "exports"
   | "external-api";
 
 const AccessDenied = () => (
@@ -256,6 +258,14 @@ const AppRoutes = () => {
         element={
           <TelemetryRoute requiredTab="tts">
             <TtsReport />
+          </TelemetryRoute>
+        }
+      />
+      <Route
+        path="/exports"
+        element={
+          <TelemetryRoute requiredTab="exports">
+            <Exports />
           </TelemetryRoute>
         }
       />

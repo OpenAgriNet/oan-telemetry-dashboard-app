@@ -113,6 +113,15 @@ const NotificationTelemetryDetails = () => {
             {showNotificationId && (
               <SummaryItem label="Notification ID" value={event.notification_id} />
             )}
+            {isNotificationFeedbackEvent && (
+              <>
+                <SummaryItem label="Message Type" value={event.message_type} />
+                <SummaryItem label="Category Type" value={event.category_type} />
+                <SummaryItem label="Notification Description" value={event.notification_description} />
+                <SummaryItem label="Latitude" value={event.latitude} />
+                <SummaryItem label="Longitude" value={event.longitude} />
+              </>
+            )}
             {showReason && <SummaryItem label="Reason" value={event.reason} />}
             {showFeedback && <SummaryItem label="Feedback" value={event.feedback} />}
             {showResponseCount && (
