@@ -876,19 +876,31 @@ const ExternalApiObservability = () => {
           </div>
         </div>
 
-        <div className="w-full md:w-72">
-          <Select value={selectedUseCase} onValueChange={handleUseCaseChange}>
-            <SelectTrigger aria-label="Filter by use case (service_name)">
-              <SelectValue placeholder="Filter by use case" />
-            </SelectTrigger>
-            <SelectContent position="popper" sideOffset={4}>
-              {useCaseOptions.map(({ value, label }) => (
-                <SelectItem key={value} value={value}>
-                  {label}
-                </SelectItem>
-              ))}
-            </SelectContent>
-          </Select>
+        <div className="flex w-full flex-col gap-2 sm:flex-row sm:items-center md:w-auto">
+          <Button
+            type="button"
+            variant="outline"
+            size="sm"
+            className="shrink-0"
+            onClick={() => navigate("/external-api/status")}
+          >
+            <Activity size={14} className="mr-1.5" />
+            API Status (24h)
+          </Button>
+          <div className="w-full sm:w-72">
+            <Select value={selectedUseCase} onValueChange={handleUseCaseChange}>
+              <SelectTrigger aria-label="Filter by use case (service_name)">
+                <SelectValue placeholder="Filter by use case" />
+              </SelectTrigger>
+              <SelectContent position="popper" sideOffset={4}>
+                {useCaseOptions.map(({ value, label }) => (
+                  <SelectItem key={value} value={value}>
+                    {label}
+                  </SelectItem>
+                ))}
+              </SelectContent>
+            </Select>
+          </div>
         </div>
       </div>
 

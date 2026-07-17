@@ -41,6 +41,7 @@ import NotificationTelemetry from "./pages/NotificationTelemetry";
 import NotificationTelemetryDetails from "./pages/NotificationTelemetryDetails";
 import Exports from "./pages/Exports";
 import ExternalApiObservability from "./pages/ExternalApiObservability";
+import ExternalApiUseCaseStatus from "./pages/ExternalApiUseCaseStatus";
 import BecknExtLifecycleDetails from "./pages/BecknExtLifecycleDetails";
 
 
@@ -313,6 +314,14 @@ const AppRoutes = () => {
         element={
           <TelemetryRoute requiredTab="external-api">
             <ExternalApiObservability />
+          </TelemetryRoute>
+        }
+      />
+      <Route
+        path="/external-api/status"
+        element={
+          <TelemetryRoute requiredTab="external-api">
+            <ExternalApiUseCaseStatus />
           </TelemetryRoute>
         }
       />
