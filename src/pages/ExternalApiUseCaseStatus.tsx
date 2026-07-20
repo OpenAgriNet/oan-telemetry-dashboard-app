@@ -1,12 +1,11 @@
 import { useMemo, useState } from "react";
-import { Link, useNavigate } from "react-router-dom";
+import { Link } from "react-router-dom";
 import { useQuery } from "@tanstack/react-query";
 import {
   Activity,
   AlertCircle,
   AlertTriangle,
   CheckCircle2,
-  ChevronRight,
   Clock,
   ExternalLink,
   HelpCircle,
@@ -300,11 +299,9 @@ function SummaryStrip({
 function DownNowPanel({
   rows,
   loading,
-  onOpenLogs,
 }: {
   rows: BecknExtUseCaseHealth[];
   loading: boolean;
-  onOpenLogs: (useCase: string) => void;
 }) {
   if (loading) return null;
 
@@ -355,10 +352,8 @@ function DownNowPanel({
         <ul className="divide-y divide-border/60">
           {rows.map((row) => (
             <li key={row.useCase}>
-              <button
-                type="button"
-                onClick={() => onOpenLogs(row.useCase)}
-                className="flex w-full flex-col gap-3 px-4 py-3.5 text-left transition-colors hover:bg-rose-500/[0.04] sm:flex-row sm:items-center sm:justify-between"
+              <div
+                className="flex w-full flex-col gap-3 px-4 py-3.5 text-left sm:flex-row sm:items-center sm:justify-between"
               >
                 <div className="min-w-0 flex-1">
                   <div className="flex flex-wrap items-center gap-2">
@@ -382,12 +377,8 @@ function DownNowPanel({
                     </p>
                     <DownForBadge ms={row.downForMs} large />
                   </div>
-                  <ChevronRight
-                    size={16}
-                    className="text-muted-foreground hidden sm:block"
-                  />
                 </div>
-              </button>
+              </div>
             </li>
           ))}
         </ul>
@@ -398,19 +389,14 @@ function DownNowPanel({
 
 function UseCaseMobileCard({
   row,
-  onOpenLogs,
 }: {
   row: BecknExtUseCaseHealth;
-  onOpenLogs: () => void;
 }) {
   const meta = STATUS_META[row.status];
   return (
-    <button
-      type="button"
-      onClick={onOpenLogs}
+    <div
       className={cn(
-        "w-full rounded-xl border border-border/60 bg-card p-4 text-left shadow-sm transition-all",
-        "hover:border-border hover:shadow-md",
+        "w-full rounded-xl border border-border/60 bg-card p-4 text-left shadow-sm",
         meta.row,
       )}
     >
@@ -437,17 +423,16 @@ function UseCaseMobileCard({
           <Clock size={12} />
           {row.totalErrors.toLocaleString()} errors in 24h
         </span>
-        <SuccessRateBadge row={row} />
-        <span className="inline-flex items-center gap-0.5 font-medium text-primary">
-          View logs <ChevronRight size={14} />
+        <span className="font-medium tabular-nums text-foreground">
+          {row.totalCalls.toLocaleString()} total calls
         </span>
+        <SuccessRateBadge row={row} />
       </div>
-    </button>
+    </div>
   );
 }
 
 const ExternalApiUseCaseStatus = () => {
-  const navigate = useNavigate();
   const { selectedStateId } = useTelemetryState();
   const [statusFilter, setStatusFilter] = useState<StatusFilter>("all");
   const [search, setSearch] = useState("");
@@ -471,6 +456,10 @@ const ExternalApiUseCaseStatus = () => {
   });
 
   const rows = data?.useCases ?? [];
+  const rowsWithCalls = useMemo(
+    () => rows.filter((row) => row.totalCalls > 0),
+    [rows],
+  );
   const loading = isLoading;
   const downRows = useMemo(
     () =>
@@ -482,7 +471,7 @@ const ExternalApiUseCaseStatus = () => {
 
   const filtered = useMemo(() => {
     const q = search.trim().toLowerCase();
-    return rows
+    return rowsWithCalls
       .filter((row) => {
         if (statusFilter !== "all" && row.status !== statusFilter) return false;
         if (!q) return true;
@@ -494,19 +483,13 @@ const ExternalApiUseCaseStatus = () => {
         );
       })
       .sort((a, b) => {
-        if (a.totalCalls === 0 && b.totalCalls > 0) return 1;
-        if (b.totalCalls === 0 && a.totalCalls > 0) return -1;
         const rateDifference = a.successRate - b.successRate;
         if (rateDifference !== 0) return rateDifference;
         return formatUseCaseLabel(a.useCase).localeCompare(
           formatUseCaseLabel(b.useCase),
         );
       });
-  }, [rows, statusFilter, search]);
-
-  const openLogs = (useCase: string) => {
-    navigate(`/external-api?useCase=${encodeURIComponent(useCase)}&page=1`);
-  };
+  }, [rowsWithCalls, statusFilter, search]);
 
   return (
     <div className="space-y-6">
@@ -587,11 +570,7 @@ const ExternalApiUseCaseStatus = () => {
       />
 
       {!error && (
-        <DownNowPanel
-          rows={downRows}
-          loading={loading}
-          onOpenLogs={openLogs}
-        />
+        <DownNowPanel rows={downRows} loading={loading} />
       )}
 
       <Card className="overflow-hidden border-border/60 shadow-sm">
@@ -653,6 +632,8 @@ const ExternalApiUseCaseStatus = () => {
             <div className="py-12 text-center text-sm text-muted-foreground">
               {rows.length === 0
                 ? "No external API use cases found."
+                : rowsWithCalls.length === 0
+                  ? "No external API calls were recorded in the last 24 hours."
                 : statusFilter === "not_working"
                   ? "No use cases are down right now. Switch filter to All to see everything."
                   : "No use cases match the current filter."}
@@ -661,11 +642,7 @@ const ExternalApiUseCaseStatus = () => {
             <>
               <div className="space-y-3 p-3 md:hidden">
                 {filtered.map((row) => (
-                  <UseCaseMobileCard
-                    key={row.useCase}
-                    row={row}
-                    onOpenLogs={() => openLogs(row.useCase)}
-                  />
+                  <UseCaseMobileCard key={row.useCase} row={row} />
                 ))}
               </div>
 
@@ -686,12 +663,14 @@ const ExternalApiUseCaseStatus = () => {
                         Err Code
                       </TableHead>
                       <TableHead className="text-right text-xs font-semibold uppercase tracking-wide text-muted-foreground">
+                        Total Calls (24h)
+                      </TableHead>
+                      <TableHead className="text-right text-xs font-semibold uppercase tracking-wide text-muted-foreground">
                         Errors
                       </TableHead>
                       <TableHead className="text-right text-xs font-semibold uppercase tracking-wide text-muted-foreground">
                         Success % (24h)
                       </TableHead>
-                      <TableHead className="w-12" />
                     </TableRow>
                   </TableHeader>
                   <TableBody>
@@ -701,10 +680,9 @@ const ExternalApiUseCaseStatus = () => {
                         <TableRow
                           key={row.useCase}
                           className={cn(
-                            "cursor-pointer border-border/50 transition-colors",
+                            "border-border/50",
                             meta.row,
                           )}
-                          onClick={() => openLogs(row.useCase)}
                         >
                           <TableCell className="text-center text-xs tabular-nums text-muted-foreground">
                             {idx + 1}
@@ -726,6 +704,9 @@ const ExternalApiUseCaseStatus = () => {
                               <span className="text-muted-foreground">—</span>
                             )}
                           </TableCell>
+                          <TableCell className="text-right text-sm font-medium tabular-nums">
+                            {row.totalCalls.toLocaleString()}
+                          </TableCell>
                           <TableCell className="text-right text-sm tabular-nums">
                             <span
                               className={cn(
@@ -739,9 +720,6 @@ const ExternalApiUseCaseStatus = () => {
                           <TableCell className="text-right text-sm tabular-nums">
                             <SuccessRateBadge row={row} />
                           </TableCell>
-                          <TableCell className="text-muted-foreground">
-                            <ChevronRight size={16} />
-                          </TableCell>
                         </TableRow>
                       );
                     })}
@@ -750,8 +728,8 @@ const ExternalApiUseCaseStatus = () => {
               </div>
 
               <div className="border-t border-border/50 px-4 py-2.5 text-xs text-muted-foreground">
-                Showing {filtered.length} of {rows.length} use case
-                {rows.length === 1 ? "" : "s"}
+                Showing {filtered.length} of {rowsWithCalls.length} use case
+                {rowsWithCalls.length === 1 ? "" : "s"}
                 {statusFilter !== "all"
                   ? ` · filter: ${STATUS_META[statusFilter].label}`
                   : ""}
