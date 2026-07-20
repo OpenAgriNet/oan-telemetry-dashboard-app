@@ -178,7 +178,7 @@ function DownForBadge({
   return (
     <span
       className={cn(
-        "inline-flex items-center gap-1.5 rounded-lg bg-rose-500/15 font-semibold text-rose-700 ring-1 ring-inset ring-rose-500/30 dark:text-rose-300",
+        "inline-flex items-center gap-1.5 font-semibold text-foreground",
         large ? "px-3 py-1.5 text-base" : "px-2.5 py-1 text-sm",
       )}
       title="Time since last success (or start of current failure streak)"
@@ -360,15 +360,6 @@ function DownNowPanel({
                     <p className="font-semibold">
                       {formatUseCaseLabel(row.useCase)}
                     </p>
-                    <span className="font-mono text-[10px] text-muted-foreground">
-                      {row.useCase}
-                    </span>
-                    {row.latestStatusCode != null &&
-                      row.latestStatusCode > 0 && (
-                      <span className="inline-flex items-center rounded-md bg-rose-500/10 px-1.5 py-0.5 font-mono text-[10px] font-semibold text-rose-600 ring-1 ring-inset ring-rose-500/25 dark:text-rose-400">
-                        HTTP {row.latestStatusCode}
-                      </span>
-                    )}
                   </div>
                 </div>
                 <div className="flex shrink-0 items-center gap-3">
