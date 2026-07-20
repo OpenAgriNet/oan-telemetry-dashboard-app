@@ -14,6 +14,7 @@ import {
 import { Calendar } from "@/components/ui/calendar";
 import { ChevronDown } from "lucide-react";
 import { format, subDays } from "date-fns";
+import { useSearchParams } from "react-router-dom";
 import { cn } from "@/lib/utils";
 
 interface DateRangePickerProps {
@@ -42,18 +43,28 @@ const DateRangePicker: React.FC<DateRangePickerProps> = ({
   dateRange,
   setDateRange,
 }) => {
+  const [searchParams, setSearchParams] = useSearchParams();
   const [isCalendarOpen, setIsCalendarOpen] = React.useState(false);
   const [selectedOption, setSelectedOption] = React.useState("last7");
   const hasInitialized = React.useRef(false);
 
+  const resetPagination = React.useCallback(() => {
+    if (!searchParams.has("page")) return;
+
+    const nextParams = new URLSearchParams(searchParams);
+    nextParams.delete("page");
+    setSearchParams(nextParams, { replace: true });
+  }, [searchParams, setSearchParams]);
+
   // Set default to last 7 days on component mount
   React.useEffect(() => {
     if (!hasInitialized.current && !dateRange.from && !dateRange.to) {
+      resetPagination();
       setDateRange(getLast7DaysRange());
       setSelectedOption("last7");
       hasInitialized.current = true;
     }
-  }, [dateRange.from, dateRange.to, setDateRange]);
+  }, [dateRange.from, dateRange.to, resetPagination, setDateRange]);
 
   const formatDateRange = () => {
     if (!dateRange.from || !dateRange.to) return "Select date range";
@@ -92,11 +103,16 @@ const DateRangePicker: React.FC<DateRangePickerProps> = ({
         setIsCalendarOpen(true);
         break;
     }
+
+    if (option !== "custom") {
+      resetPagination();
+    }
     setSelectedOption(option);
   };
 
   const handleReset = () => {
     // Reset to last 7 days (default)
+    resetPagination();
     setDateRange(getLast7DaysRange());
     setSelectedOption("last7");
   };
@@ -132,6 +148,7 @@ const DateRangePicker: React.FC<DateRangePickerProps> = ({
               disabled={(date) => date > new Date()}
               onSelect={(range) => {
                 // Only set the range, don't close the popover
+                resetPagination();
                 setDateRange({
                   from: range?.from,
                   to: range?.to,
@@ -151,6 +168,7 @@ const DateRangePicker: React.FC<DateRangePickerProps> = ({
               variant="outline"
               size="sm"
               onClick={() => {
+                resetPagination();
                 setDateRange({ from: undefined, to: undefined });
                 setSelectedOption("alltime");
                 setIsCalendarOpen(false);
