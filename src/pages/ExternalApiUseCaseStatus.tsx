@@ -363,9 +363,10 @@ function DownNowPanel({
                     <span className="font-mono text-[10px] text-muted-foreground">
                       {row.useCase}
                     </span>
-                    {row.latestErrorStatusCode != null && (
+                    {row.latestStatusCode != null &&
+                      row.latestStatusCode > 0 && (
                       <span className="inline-flex items-center rounded-md bg-rose-500/10 px-1.5 py-0.5 font-mono text-[10px] font-semibold text-rose-600 ring-1 ring-inset ring-rose-500/25 dark:text-rose-400">
-                        HTTP {row.latestErrorStatusCode}
+                        HTTP {row.latestStatusCode}
                       </span>
                     )}
                   </div>
@@ -696,9 +697,11 @@ const ExternalApiUseCaseStatus = () => {
                             <StatusBadge status={row.status} />
                           </TableCell>
                           <TableCell className="text-center">
-                            {row.latestErrorStatusCode != null ? (
+                            {row.status === "not_working" &&
+                            row.latestStatusCode != null &&
+                            row.latestStatusCode > 0 ? (
                               <span className="inline-flex items-center rounded-md bg-rose-500/10 px-2 py-0.5 font-mono text-xs font-semibold text-rose-600 ring-1 ring-inset ring-rose-500/25 dark:text-rose-400">
-                                {row.latestErrorStatusCode}
+                                {row.latestStatusCode}
                               </span>
                             ) : (
                               <span className="text-muted-foreground">—</span>
