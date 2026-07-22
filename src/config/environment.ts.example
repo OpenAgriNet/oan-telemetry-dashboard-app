@@ -1,16 +1,13 @@
 /**
- * Environment configuration for the application
+ * Runtime configuration can be supplied before the application bundle loads.
+ * These values are optional because Maharashtra development defaults are
+ * committed in environment.ts.
  */
-
-// API Configuration
-export const API_CONFIG = {
-  SERVER_URL: "YOUR_SERVER_URL",
-};
-
-// Watchtower Status API Configuration
-export const WATCHTOWER_CONFIG = {
-  BASE_URL:
-    import.meta.env.VITE_WATCHTOWER_BASE_URL || "YOUR_WATCHTOWER_URL",
-  JWT_TOKEN:
-    import.meta.env.VITE_WATCHTOWER_JWT || "YOUR_JWT_TOKEN",
+window.__APP_CONFIG__ = {
+  KEYCLOAK_URL: "https://auth-vistaar-dev.mahapocra.gov.in",
+  KEYCLOAK_REALM: "Vistaar-dashboard",
+  KEYCLOAK_CLIENT_ID: "vistaar-ui",
+  API_SERVER_URL: "https://vistaar-dashboard-dev.mahapocra.gov.in/v1",
+  WATCHTOWER_BASE_URL: "https://vistaar-dashboard-dev.mahapocra.gov.in/api",
+  WATCHTOWER_JWT: "",
 };
