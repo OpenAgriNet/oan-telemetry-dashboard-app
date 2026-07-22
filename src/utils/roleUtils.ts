@@ -43,6 +43,5 @@ export const hasClientRole = (
  * @returns boolean indicating if user is a super admin
  */
 export const isSuperAdmin = (keycloak: KeycloakInstance): boolean => {
-  console.log("keycloak", keycloak);
   return hasRealmRole(keycloak, "super-admin");
-}; 
+};

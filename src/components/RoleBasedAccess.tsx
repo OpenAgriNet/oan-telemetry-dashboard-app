@@ -1,5 +1,5 @@
 import React from "react";
-import { useKeycloak } from "@react-keycloak/web";
+import { useAppAuth } from "@/lib/useAppAuth";
 import { hasRealmRole } from "@/utils/roleUtils";
 import { AlertTriangle } from "lucide-react";
 
@@ -23,7 +23,7 @@ const RoleBasedAccess: React.FC<RoleBasedAccessProps> = ({
   fallback,
   showAccessDenied = true,
 }) => {
-  const { keycloak } = useKeycloak();
+  const { keycloak } = useAppAuth();
 
   // Check if user has any of the allowed roles
   const hasAccess = allowedRoles.some((role) => hasRealmRole(keycloak, role));
@@ -56,4 +56,4 @@ const RoleBasedAccess: React.FC<RoleBasedAccessProps> = ({
   );
 };
 
-export default RoleBasedAccess; 
+export default RoleBasedAccess;

@@ -21,9 +21,11 @@ import ErrorDetails from "./pages/ErrorDetails";
 import Content from "./pages/Content";
 import ServiceStatus from "./pages/ServiceStatus";
 import HealthMonitor from "./pages/HealthMonitor";
-import { useKeycloak } from "@react-keycloak/web";
+import { useAppAuth } from "@/lib/useAppAuth";
 import QuestionsDetails from "./pages/QuestionsDetails";
 import { isSuperAdmin } from "@/utils/roleUtils";
+import Evaluation from "./pages/Evaluation";
+import EvaluationDetails from "./pages/EvaluationDetails";
 
 const queryClient = new QueryClient({
   defaultOptions: {
@@ -35,7 +37,7 @@ const queryClient = new QueryClient({
 });
 
 const App = () => {
-  const { keycloak, initialized } = useKeycloak();
+  const { keycloak, initialized } = useAppAuth();
   
   // Show loading state while Keycloak is initializing
   if (!initialized) {
@@ -110,6 +112,8 @@ const App = () => {
                   <FeedbackDetails />
                 </Layout>
               } />
+              <Route path="/evaluation" element={<Layout><Evaluation /></Layout>} />
+              <Route path="/evaluation/:runId/:itemId" element={<Layout><EvaluationDetails /></Layout>} />
               <Route path="/content" element={
                 <Layout>
                   <Content />

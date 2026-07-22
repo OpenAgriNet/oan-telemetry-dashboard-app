@@ -22,7 +22,7 @@ import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { useDateFilter } from "@/contexts/DateFilterContext";
-import { useKeycloak } from "@react-keycloak/web";
+import { useAppAuth } from "@/lib/useAppAuth";
 import { isSuperAdmin } from "@/utils/roleUtils";
 import { buildDateRangeParams } from "@/lib/utils";
 import {
@@ -34,7 +34,7 @@ import {
 import TablePagination from "@/components/TablePagination";
 
 const ErrorsPage = () => {
-  const { keycloak } = useKeycloak();
+  const { keycloak } = useAppAuth();
   const [searchParams, setSearchParams] = useSearchParams();
   const { dateRange } = useDateFilter();
 

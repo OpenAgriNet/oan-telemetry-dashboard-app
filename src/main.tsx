@@ -5,10 +5,10 @@ import App from './App.tsx'
 import './index.css'
 import keycloak from './lib/keycloak'
 import { setupAuthFetch } from './lib/setupAuthFetch'
+import { localAuthBypass } from './lib/useAppAuth'
 
 setupAuthFetch();
-createRoot(document.getElementById("root")!).render(
- 
+const application = localAuthBypass ? <App /> : (
     <ReactKeycloakProvider 
       authClient={keycloak} 
       initOptions={{
@@ -18,5 +18,6 @@ createRoot(document.getElementById("root")!).render(
       }}>
       <App />
     </ReactKeycloakProvider>
- 
-)
+);
+
+createRoot(document.getElementById("root")!).render(application)
