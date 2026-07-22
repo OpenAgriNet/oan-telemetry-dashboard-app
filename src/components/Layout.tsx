@@ -3,7 +3,7 @@ import { Link, useLocation } from "react-router-dom";
 import { useTheme } from "@/contexts/ThemeContext";
 import { useDateFilter } from "@/contexts/DateFilterContext";
 import { Button } from "@/components/ui/button";
-import { useKeycloak } from "@react-keycloak/web";
+import { useAppAuth } from "@/lib/useAppAuth";
 import DateRangePicker from "@/components/dashboard/DateRangePicker";
 import { isSuperAdmin } from "@/utils/roleUtils";
 import {
@@ -22,6 +22,7 @@ import {
   RotateCcw,
   ClipboardCheck,
   AlertTriangle,
+  FlaskConical,
 } from "lucide-react";
 import {
   DropdownMenu,
@@ -40,7 +41,7 @@ const Layout: React.FC<LayoutProps> = ({ children }) => {
   const { dateRange, immediateDateRange, setDateRange, resetDateRange } = useDateFilter();
   const location = useLocation();
   const [collapsed, setCollapsed] = useState(false);
-  const { keycloak } = useKeycloak();
+  const { keycloak } = useAppAuth();
 
   const handleLogout = () => {
     keycloak.logout();
@@ -84,6 +85,11 @@ const Layout: React.FC<LayoutProps> = ({ children }) => {
       name: "Feedback",
       path: "/feedback",
       icon: <ClipboardCheck size={20} />,
+    },
+    {
+      name: "Evaluation",
+      path: "/evaluation",
+      icon: <FlaskConical size={20} />,
     },
     // Conditionally add Errors menu item for super-admin users only
     ...(isSuper
@@ -216,7 +222,7 @@ const Layout: React.FC<LayoutProps> = ({ children }) => {
       <main className="flex-1 overflow-x-hidden overflow-y-auto">
         <div className="container mx-auto">
           {/* Header with Global Date Filter and User Profile */}
-          <div className="flex justify-between items-center p-6 border-b mb-2 mt-2">
+          <div className={`flex justify-between items-center p-6 border-b mb-2 mt-2 ${location.pathname.startsWith("/evaluation") ? "hidden" : ""}`}>
             <div className="flex items-center gap-4">
               <div className="flex items-center gap-2">
                 <CalendarIcon className="h-4 w-4 text-muted-foreground" />

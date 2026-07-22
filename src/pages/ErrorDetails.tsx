@@ -13,13 +13,13 @@ import {
   RefreshCw,
   MessageSquare
 } from "lucide-react";
-import { useKeycloak } from "@react-keycloak/web";
+import { useAppAuth } from "@/lib/useAppAuth";
 import { isSuperAdmin } from "@/utils/roleUtils";
 import { fetchErrorById } from "@/services/api";
 
 const ErrorDetails = () => {
   const { errorId } = useParams<{ errorId: string }>();
-  const { keycloak } = useKeycloak();
+  const { keycloak } = useAppAuth();
 
   const { 
     data: errorDetail, 
@@ -262,4 +262,4 @@ const ErrorDetails = () => {
   );
 };
 
-export default ErrorDetails; 
+export default ErrorDetails;
