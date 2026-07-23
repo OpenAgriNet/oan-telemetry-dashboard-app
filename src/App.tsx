@@ -26,6 +26,7 @@ import QuestionsDetails from "./pages/QuestionsDetails";
 import { isSuperAdmin } from "@/utils/roleUtils";
 import Evaluation from "./pages/Evaluation";
 import EvaluationDetails from "./pages/EvaluationDetails";
+import EvaluationRunAdmin from "./pages/EvaluationRunAdmin";
 
 const queryClient = new QueryClient({
   defaultOptions: {
@@ -113,6 +114,8 @@ const App = () => {
                 </Layout>
               } />
               <Route path="/evaluation" element={<Layout><Evaluation /></Layout>} />
+              <Route path="/evaluation/runs" element={<Layout><EvaluationRunAdmin /></Layout>} />
+              <Route path="/evaluation/runs/new" element={<Layout><EvaluationRunAdmin /></Layout>} />
               <Route path="/evaluation/:runId/:itemId" element={<Layout><EvaluationDetails /></Layout>} />
               <Route path="/content" element={
                 <Layout>

@@ -1,5 +1,5 @@
 import { API_CONFIG } from "@/config/environment";
-import type { EvaluationDetail, EvaluationListItem, EvaluationRun, EvaluationSummary } from "./types";
+import type { EvaluationDetail, EvaluationListItem, EvaluationRun, EvaluationSchedule, EvaluationSummary, JudgeEndpoint, JudgeModel, StartedEvaluationRun } from "./types";
 
 const headers = { "x-telemetry-state": "bharat-vistaar" };
 
@@ -8,14 +8,57 @@ async function request<T>(path: string, init?: RequestInit): Promise<T> {
     ...init,
     headers: { ...headers, ...(init?.body ? { "Content-Type": "application/json" } : {}), ...init?.headers },
   });
-  if (!response.ok) throw new Error(`Evaluation API failed (${response.status})`);
-  const payload = await response.json();
+  const payload = await response.json().catch(() => ({}));
+  if (!response.ok) throw new Error(payload.message || payload.detail || `Evaluation API failed (${response.status})`);
   if (!payload.success) throw new Error(payload.message || "Evaluation API failed");
   return payload;
 }
 
 export async function fetchEvaluationRuns(): Promise<EvaluationRun[]> {
   return (await request<{ data: EvaluationRun[] }>("/evaluations/runs")).data;
+}
+
+export async function fetchJudgeModels(): Promise<JudgeModel[]> {
+  return (await request<{ data: JudgeModel[] }>("/evaluations/judge-models")).data;
+}
+
+export async function fetchJudgeEndpoints(): Promise<JudgeEndpoint[]> {
+  return (await request<{ data: JudgeEndpoint[] }>("/evaluations/judge-endpoints")).data;
+}
+
+export async function saveJudgeEndpoint(input: { name: string; provider_type: string; base_url: string; default_model: string; api_key?: string }): Promise<JudgeEndpoint> {
+  return (await request<{ data: JudgeEndpoint }>("/evaluations/judge-endpoints", { method: "POST", body: JSON.stringify(input) })).data;
+}
+
+export async function updateJudgeEndpoint(id: string, input: Partial<{ name: string; provider_type: string; base_url: string; default_model: string; api_key: string; enabled: boolean }>): Promise<JudgeEndpoint> {
+  return (await request<{ data: JudgeEndpoint }>(`/evaluations/judge-endpoints/${encodeURIComponent(id)}`, { method: "PATCH", body: JSON.stringify(input) })).data;
+}
+
+export async function testJudgeEndpoint(id: string): Promise<{ reachable: boolean; models: string[]; configured_model_present: boolean }> {
+  return (await request<{ data: { reachable: boolean; models: string[]; configured_model_present: boolean } }>(`/evaluations/judge-endpoints/${encodeURIComponent(id)}/test`, { method: "POST" })).data;
+}
+
+export async function fetchEvaluationSchedules(): Promise<EvaluationSchedule[]> {
+  return (await request<{ data: EvaluationSchedule[] }>("/evaluations/schedules")).data;
+}
+
+export async function saveEvaluationSchedule(input: { name: string; judge_endpoint_id: string; population_limit: number; sampling_mode: string; sampling_value: number; target_languages: string[]; daily_hour_ist: number; enabled: boolean }): Promise<EvaluationSchedule> {
+  return (await request<{ data: EvaluationSchedule }>("/evaluations/schedules", { method: "POST", body: JSON.stringify(input) })).data;
+}
+
+export async function updateEvaluationSchedule(id: string, input: Partial<EvaluationSchedule>): Promise<EvaluationSchedule> {
+  return (await request<{ data: EvaluationSchedule }>(`/evaluations/schedules/${encodeURIComponent(id)}`, { method: "PATCH", body: JSON.stringify(input) })).data;
+}
+
+export async function deleteEvaluationSchedule(id: string): Promise<void> {
+  await request(`/evaluations/schedules/${encodeURIComponent(id)}`, { method: "DELETE" });
+}
+
+export async function startEvaluationRun(input: { judgeEndpointId: string; populationLimit: number; samplingMode: "percent" | "count"; samplingValue: number; targetLanguages: string[] }): Promise<StartedEvaluationRun> {
+  return (await request<{ data: StartedEvaluationRun }>("/evaluations/runs", {
+    method: "POST",
+    body: JSON.stringify({ judge_endpoint_id: input.judgeEndpointId, population_limit: input.populationLimit, sampling_mode: input.samplingMode, sampling_value: input.samplingValue, target_languages: input.targetLanguages }),
+  })).data;
 }
 
 export async function fetchEvaluationSummary(runId: string): Promise<EvaluationSummary> {

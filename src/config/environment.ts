@@ -13,6 +13,8 @@ declare global {
       API_SERVER_URL?: string;
       WATCHTOWER_BASE_URL?: string;
       WATCHTOWER_JWT?: string;
+      LANGFUSE_BASE_URL?: string;
+      LANGFUSE_PROJECT_ID?: string;
     };
   }
 }
@@ -50,4 +52,15 @@ export const WATCHTOWER_CONFIG = {
     runtimeConfig().WATCHTOWER_JWT ||
     import.meta.env.VITE_WATCHTOWER_JWT ||
     "",
+};
+
+export const LANGFUSE_CONFIG = {
+  BASE_URL:
+    runtimeConfig().LANGFUSE_BASE_URL ||
+    import.meta.env.VITE_LANGFUSE_BASE_URL ||
+    "https://vistaar-langfuse.mahapocra.gov.in",
+  PROJECT_ID:
+    runtimeConfig().LANGFUSE_PROJECT_ID ||
+    import.meta.env.VITE_LANGFUSE_PROJECT_ID ||
+    "vistaar-telemetry",
 };

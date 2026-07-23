@@ -8,6 +8,7 @@ import { Button } from "@/components/ui/button";
 import { Textarea } from "@/components/ui/textarea";
 import { addEvaluationComment, fetchEvaluationItem } from "@/features/evaluations/api";
 import { DIMENSION_LABELS, metricLabel } from "@/features/evaluations/metrics";
+import { LANGFUSE_CONFIG } from "@/config/environment";
 
 const scorePresentation = (value: number | null) => {
   if (value == null) return { label: "Not scored", badge: "border-border bg-muted text-muted-foreground", fill: "bg-muted-foreground/30", glow: "border-border" };
@@ -33,6 +34,7 @@ export default function EvaluationDetails() {
   if (item.isLoading) return <div className="py-20 text-center text-muted-foreground">Loading evaluation…</div>;
   if (!item.data) return <div className="py-20 text-center text-destructive">Evaluation could not be loaded.</div>;
   const data = item.data;
+  const langfuseTraceUrl = `${LANGFUSE_CONFIG.BASE_URL.replace(/\/$/, "")}/project/${encodeURIComponent(LANGFUSE_CONFIG.PROJECT_ID)}/traces/${encodeURIComponent(data.trace_id)}`;
   return <div className="space-y-6">
     <Link to="/evaluation" className="inline-flex items-center gap-2 text-sm text-muted-foreground hover:text-foreground"><ArrowLeft className="h-4 w-4" />Back to Evaluation</Link>
     <section className="relative overflow-hidden rounded-2xl border border-primary/20 bg-gradient-to-br from-primary/10 via-card to-fuchsia-500/5 p-6 shadow-sm"><div className="pointer-events-none absolute -right-16 -top-20 h-56 w-56 rounded-full bg-primary/10 blur-3xl" /><div className="relative flex flex-wrap items-start justify-between gap-5"><div><Badge variant="outline" className="mb-3 border-primary/30 bg-background/60 text-primary"><Sparkles className="mr-1 h-3 w-3" />Quality review</Badge><h1 className="text-3xl font-bold">Conversation evaluation</h1><p className="mt-1 text-muted-foreground">{data.run_id} · {new Date(data.evaluated_at).toLocaleString()}</p></div><div className="flex flex-wrap items-center gap-2"><Badge variant="outline" className="bg-background/70">{data.selection_source}</Badge><Badge variant={data.overall_pass ? "secondary" : "destructive"} className={data.overall_pass ? "bg-emerald-500/10 text-emerald-600 dark:text-emerald-400" : ""}>{data.overall_pass ? "Pass" : "Critical failure"}</Badge><div className="rounded-xl border border-primary/20 bg-background/70 px-4 py-2 text-right shadow-sm"><p className="text-[10px] font-semibold uppercase tracking-wider text-muted-foreground">Overall score</p><p className="text-xl font-bold text-primary">{data.evaluation.metrics.overall_average == null ? "N/A" : `${Number(data.evaluation.metrics.overall_average).toFixed(2)} / 5`}</p></div></div></div></section>
@@ -59,6 +61,6 @@ export default function EvaluationDetails() {
         return <div key={key} className={`group relative overflow-hidden rounded-xl border bg-background/60 p-4 transition duration-200 hover:-translate-y-0.5 hover:shadow-md ${tone.glow}`}><div className={`absolute inset-x-0 top-0 h-1 ${tone.fill}`} /><div className="flex items-start justify-between gap-3 pt-1"><div><strong>{metricLabel(`${dimensionKey}.${key}`)}</strong><p className="mt-1 text-xs font-medium text-muted-foreground">{tone.label}</p></div><Badge variant="outline" className={tone.badge}>{metricScore ?? "N/A"}<span className="ml-0.5 opacity-60">/5</span></Badge></div><div className="mt-4 grid grid-cols-5 gap-1.5">{[1, 2, 3, 4, 5].map((level) => <div key={level} className={`h-2 rounded-full ${metricScore != null && level <= metricScore ? tone.fill : "bg-muted"}`} />)}</div><p className="mt-4 text-sm leading-relaxed text-muted-foreground">{metric.evidence}</p></div>;
       })}</CardContent></Card>;
     })}
-    <Card><CardContent className="flex flex-wrap items-center justify-between gap-3 pt-6 text-sm"><div><div>Trace ID: <code>{data.trace_id}</code></div><div>Session: {data.masked_session_ref || "Unavailable"}</div></div><span className="inline-flex items-center gap-1 text-muted-foreground">Trace reference <ExternalLink className="h-3 w-3" /></span></CardContent></Card>
+    <Card><CardContent className="flex flex-wrap items-center justify-between gap-3 pt-6 text-sm"><div><div>Trace ID: <code>{data.trace_id}</code></div><div>Session: {data.masked_session_ref || "Unavailable"}</div></div><a href={langfuseTraceUrl} target="_blank" rel="noreferrer" className="inline-flex items-center gap-1 rounded-lg border px-3 py-2 font-medium text-primary transition hover:border-primary hover:bg-primary/5">Open trace in Langfuse <ExternalLink className="h-3 w-3" /></a></CardContent></Card>
   </div>;
 }

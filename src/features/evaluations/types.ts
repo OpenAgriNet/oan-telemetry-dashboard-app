@@ -1,5 +1,19 @@
 export type RunStatus = "running" | "complete" | "partial" | "failed";
 
+export interface JudgeModel { id: string; label: string }
+export type JudgeProvider = "openai" | "vllm" | "cerebras" | "openai_compatible";
+export interface JudgeEndpoint {
+  id: string; name: string; provider_type: JudgeProvider; base_url: string; default_model: string;
+  enabled: boolean; has_api_key: boolean; created_by: string | null; created_at: string; updated_at: string;
+}
+export interface EvaluationSchedule {
+  id: string; name: string; judge_endpoint_id: string; endpoint_name: string; default_model: string;
+  population_limit: number; sampling_mode: "percent" | "count"; sampling_value: number | string;
+  target_languages: string[];
+  daily_hour_ist: number; enabled: boolean; last_started_on: string | null; last_run_id: string | null; last_error: string | null;
+}
+export interface StartedEvaluationRun { run_id: string; status: string; selected: number; completed: number; failed: number }
+
 export interface EvaluationRun {
   run_id: string;
   window_start: string;
@@ -15,6 +29,9 @@ export interface EvaluationRun {
   judge_model: string;
   score_source: string;
   last_synced_at: string | null;
+  requested_by: string | null;
+  error: string | null;
+  target_languages: string[];
 }
 
 export interface EvaluationSummary {

@@ -1,17 +1,20 @@
 import { useEffect, useMemo, useState } from "react";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
-import { Link } from "react-router-dom";
-import { AlertTriangle, CalendarDays, CheckCircle2, Filter, Gauge, MessageSquareText, RefreshCw, Rows3, Sparkles, TrendingDown, TrendingUp } from "lucide-react";
+import { Link, useSearchParams } from "react-router-dom";
+import { AlertTriangle, CalendarDays, CheckCircle2, Filter, Gauge, MessageSquareText, Play, RefreshCw, Rows3, Sparkles, TrendingDown, TrendingUp } from "lucide-react";
 import { PolarAngleAxis, PolarGrid, PolarRadiusAxis, Radar, RadarChart, ResponsiveContainer, Tooltip } from "recharts";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
+import { Progress } from "@/components/ui/progress";
 import { Switch } from "@/components/ui/switch";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
 import { fetchEvaluationItems, fetchEvaluationRuns, fetchEvaluationSummary, syncEvaluationRun } from "@/features/evaluations/api";
 import { toast } from "sonner";
 import { METRICS } from "@/features/evaluations/metrics";
+import { useAppAuth } from "@/lib/useAppAuth";
+import { isSuperAdmin } from "@/utils/roleUtils";
 
 const numericScore = (value: unknown): number | null => {
   if (value === null || value === undefined || value === "") return null;
@@ -26,8 +29,11 @@ const score = (value: unknown) => {
 const statusVariant = (status: string) => status === "complete" ? "default" : status === "failed" ? "destructive" : "secondary";
 
 export default function Evaluation() {
+  const { keycloak } = useAppAuth();
+  const isAdmin = isSuperAdmin(keycloak);
+  const [searchParams, setSearchParams] = useSearchParams();
   const queryClient = useQueryClient();
-  const [runId, setRunId] = useState("");
+  const [runId, setRunId] = useState(searchParams.get("run") || "");
   const [page, setPage] = useState(1);
   const [category, setCategory] = useState("");
   const [selectionSource, setSelectionSource] = useState("");
@@ -37,10 +43,11 @@ export default function Evaluation() {
   const [servingModel, setServingModel] = useState("");
   const [applicationRelease, setApplicationRelease] = useState("");
   const [criticalOnly, setCriticalOnly] = useState(false);
-  const runs = useQuery({ queryKey: ["evaluation-runs"], queryFn: fetchEvaluationRuns });
+  const runs = useQuery({ queryKey: ["evaluation-runs"], queryFn: fetchEvaluationRuns, refetchInterval: 5000 });
   useEffect(() => { if (!runId && runs.data?.length) setRunId(runs.data[0].run_id); }, [runId, runs.data]);
+  const selectedRun = runs.data?.find((run) => run.run_id === runId);
   const summary = useQuery({
-    queryKey: ["evaluation-summary", runId], queryFn: () => fetchEvaluationSummary(runId), enabled: Boolean(runId),
+    queryKey: ["evaluation-summary", runId], queryFn: () => fetchEvaluationSummary(runId), enabled: Boolean(runId) && Boolean(selectedRun), refetchInterval: selectedRun?.status === "running" ? 5000 : false,
   });
   const items = useQuery({
     queryKey: ["evaluation-items", runId, page, category, selectionSource, agristackRequired, feedbackType, targetLang, servingModel, applicationRelease, criticalOnly],
@@ -50,7 +57,7 @@ export default function Evaluation() {
       targetLang: targetLang || undefined, servingModel: servingModel || undefined,
       applicationRelease: applicationRelease || undefined, criticalOnly,
     }),
-    enabled: Boolean(runId),
+    enabled: Boolean(runId) && Boolean(selectedRun), refetchInterval: selectedRun?.status === "running" ? 5000 : false,
   });
   const syncRun = useMutation({
     mutationFn: () => syncEvaluationRun(runId),
@@ -74,13 +81,13 @@ export default function Evaluation() {
 
   if (runs.isLoading) return <div className="py-20 text-center text-muted-foreground">Loading evaluation runs…</div>;
   if (runs.isError) return <div className="py-20 text-center text-destructive">Unable to load evaluations.</div>;
-  if (!runs.data?.length) return <div className="py-20 text-center"><h1 className="text-2xl font-semibold">Evaluation</h1><p className="mt-2 text-muted-foreground">No evaluation runs are available yet.</p></div>;
+  if (!runs.data?.length) return <div className="py-20 text-center"><h1 className="text-2xl font-semibold">Evaluation</h1><p className="mt-2 text-muted-foreground">No evaluation runs are available yet.</p>{isAdmin && <Button asChild className="mt-5"><Link to="/evaluation/runs"><Play className="mr-2 h-4 w-4" />Start the first run</Link></Button>}</div>;
 
   const data = summary.data;
   const passRate = data?.evaluated_count ? (data.passed_count / data.evaluated_count) * 100 : 0;
   const statCards = data ? [
     { Icon: MessageSquareText, label: "Feedback selected", value: data.run.feedback_selected_count.toLocaleString(), accent: "from-blue-500 to-cyan-400", icon: "bg-blue-500/10 text-blue-600 dark:text-blue-400" },
-    { Icon: Rows3, label: "Evaluated conversations", value: data.evaluated_count.toLocaleString(), accent: "from-cyan-500 to-emerald-400", icon: "bg-cyan-500/10 text-cyan-600 dark:text-cyan-400" },
+    { Icon: Rows3, label: "Evaluated conversations", value: `${data.evaluated_count.toLocaleString()} / ${(data.run.feedback_selected_count + data.run.random_selected_count).toLocaleString()}`, accent: "from-cyan-500 to-emerald-400", icon: "bg-cyan-500/10 text-cyan-600 dark:text-cyan-400" },
     { Icon: CheckCircle2, label: "Pass rate", value: `${passRate.toFixed(1)}%`, accent: "from-emerald-500 to-lime-400", icon: "bg-emerald-500/10 text-emerald-600 dark:text-emerald-400" },
     { Icon: AlertTriangle, label: "Critical failures", value: data.critical_failure_count.toLocaleString(), accent: "from-amber-500 to-rose-500", icon: "bg-amber-500/10 text-amber-600 dark:text-amber-400" },
   ] : [];
@@ -88,14 +95,15 @@ export default function Evaluation() {
     <section className="relative overflow-hidden rounded-2xl border border-primary/20 bg-gradient-to-br from-primary/10 via-card to-fuchsia-500/5 p-5 shadow-sm sm:p-7">
       <div className="pointer-events-none absolute -right-20 -top-24 h-64 w-64 rounded-full bg-primary/10 blur-3xl" />
       <div className="relative flex flex-col gap-6 lg:flex-row lg:items-end lg:justify-between">
-        <div className="max-w-2xl"><Badge variant="outline" className="mb-3 border-primary/30 bg-background/60 text-primary"><Sparkles className="mr-1 h-3 w-3" />Continuous Evaluation</Badge><h1 className="text-3xl font-bold tracking-tight sm:text-4xl">Production Evaluation</h1></div>
+        <div className="max-w-2xl"><Badge variant="outline" className="mb-3 border-primary/30 bg-background/60 text-primary"><Sparkles className="mr-1 h-3 w-3" />Continuous Evaluation</Badge><h1 className="text-3xl font-bold tracking-tight sm:text-4xl">LLM Evaluation</h1>{isAdmin && <Button asChild size="sm" className="mt-4"><Link to="/evaluation/runs"><Play className="mr-2 h-4 w-4" />Manage runs</Link></Button>}</div>
         <label className="grid min-w-0 gap-2 text-sm font-medium lg:min-w-[360px]">Evaluation run
-        <select className="h-11 w-full rounded-xl border border-border/70 bg-background/80 px-3 shadow-sm outline-none transition focus:border-primary focus:ring-2 focus:ring-primary/20" value={runId} onChange={(event) => { setRunId(event.target.value); setPage(1); }}>
+        <select className="h-11 w-full rounded-xl border border-border/70 bg-background/80 px-3 shadow-sm outline-none transition focus:border-primary focus:ring-2 focus:ring-primary/20" value={runId} onChange={(event) => { setRunId(event.target.value); setSearchParams({ run: event.target.value }); setPage(1); }}>
           {runs.data.map((run) => <option key={run.run_id} value={run.run_id}>{run.run_id} · {run.status}</option>)}
         </select>
       </label>
       </div>
-      {data && <div className="relative mt-6 flex flex-wrap items-center gap-3 border-t border-border/60 pt-4"><Badge variant={statusVariant(data.run.status)} className="capitalize">{data.run.status}</Badge>{data.run.score_source === "langfuse" && <Badge variant="outline" className="border-violet-500/30 bg-violet-500/10 text-violet-600 dark:text-violet-400">Langfuse scores</Badge>}<span className="inline-flex items-center gap-2 text-sm text-muted-foreground"><CalendarDays className="h-4 w-4 text-primary" />{new Date(data.run.window_start).toLocaleString()} – {new Date(data.run.window_end).toLocaleString()}</span><div className="ml-auto flex items-center gap-3"><span className="hidden text-xs text-muted-foreground sm:block">{data.run.last_synced_at ? `Synced ${new Date(data.run.last_synced_at).toLocaleString()}` : `Judge: ${data.run.judge_model}`}</span><Button size="sm" variant="outline" disabled={syncRun.isPending} onClick={() => syncRun.mutate()}><RefreshCw className={`mr-2 h-4 w-4 ${syncRun.isPending ? "animate-spin" : ""}`} />Refresh from Langfuse</Button></div></div>}
+      {data && <div className="relative mt-6 flex flex-wrap items-center gap-3 border-t border-border/60 pt-4"><Badge variant={statusVariant(data.run.status)} className="capitalize">{data.run.status}</Badge>{data.run.score_source === "langfuse" && <Badge variant="outline" className="border-violet-500/30 bg-violet-500/10 text-violet-600 dark:text-violet-400">Langfuse scores</Badge>}<span className="inline-flex items-center gap-2 text-sm text-muted-foreground"><CalendarDays className="h-4 w-4 text-primary" />{new Date(data.run.window_start).toLocaleString()} – {new Date(data.run.window_end).toLocaleString()}</span><div className="ml-auto flex items-center gap-3"><span className="hidden text-xs text-muted-foreground sm:block">{data.run.last_synced_at ? `Synced ${new Date(data.run.last_synced_at).toLocaleString()}` : `Judge: ${data.run.judge_model}`}</span>{isAdmin && <Button size="sm" variant="outline" disabled={syncRun.isPending} onClick={() => syncRun.mutate()}><RefreshCw className={`mr-2 h-4 w-4 ${syncRun.isPending ? "animate-spin" : ""}`} />Refresh from Langfuse</Button>}</div></div>}
+      {data?.run.status === "running" && <div className="relative mt-4 rounded-xl border border-primary/20 bg-background/60 p-4"><div className="mb-2 flex items-center justify-between text-sm"><span className="font-medium">Scoring traces one by one</span><span className="text-muted-foreground">{data.run.successful_count + data.run.failed_count} / {data.run.feedback_selected_count + data.run.random_selected_count}</span></div><Progress value={((data.run.successful_count + data.run.failed_count) / Math.max(1, data.run.feedback_selected_count + data.run.random_selected_count)) * 100} /></div>}
     </section>
 
     {data && <>
