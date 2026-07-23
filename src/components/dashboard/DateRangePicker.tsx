@@ -35,7 +35,7 @@ const getLast7DaysRange = () => {
 const getAllTimeRange = () => {
   const today = new Date();
   today.setHours(23, 59, 59, 999);
-  const from = new Date(2026, 2, 17);
+  const from = new Date(2026, 1, 17);
   from.setHours(0, 0, 0, 0);
   return { from, to: today };
 };
