@@ -36,7 +36,9 @@ const getLast7DaysRange = () => {
 const getAllTimeRange = () => {
   const today = new Date();
   today.setHours(23, 59, 59, 999);
-  return { from: new Date("2026-02-17T00:00:00.000Z"), to: today };
+  const from = new Date(2026, 1, 17);
+  from.setHours(0, 0, 0, 0);
+  return { from, to: today };
 };
 
 const DateRangePicker: React.FC<DateRangePickerProps> = ({
