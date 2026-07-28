@@ -26,6 +26,20 @@ const score = (value: unknown) => {
   const parsed = numericScore(value);
   return parsed === null ? "N/A" : `${parsed.toFixed(2)} / 5`;
 };
+const scoreColor = (value: number | null) => {
+  if (value === null) return "bg-muted-foreground/30";
+  if (value >= 4.5) return "bg-emerald-500";
+  if (value >= 3.5) return "bg-blue-500";
+  if (value >= 2.5) return "bg-amber-500";
+  if (value >= 1.5) return "bg-orange-500";
+  return "bg-red-500";
+};
+const ScoreScale = ({ value }: { value: number | null }) => {
+  const filled = value === null ? 0 : Math.max(0, Math.min(5, Math.round(value)));
+  return <div className="mt-3 flex gap-1.5" aria-label={value === null ? "Not scored" : `${value.toFixed(2)} out of 5`}>
+    {[1, 2, 3, 4, 5].map((level) => <span key={level} className={`h-2.5 flex-1 rounded-sm ${level <= filled ? scoreColor(value) : "bg-muted"}`} />)}
+  </div>;
+};
 const statusVariant = (status: string) => status === "complete" ? "default" : status === "failed" ? "destructive" : "secondary";
 
 export default function Evaluation() {
@@ -86,10 +100,10 @@ export default function Evaluation() {
   const data = summary.data;
   const passRate = data?.evaluated_count ? (data.passed_count / data.evaluated_count) * 100 : 0;
   const statCards = data ? [
-    { Icon: MessageSquareText, label: "Feedback selected", value: data.run.feedback_selected_count.toLocaleString(), accent: "from-blue-500 to-cyan-400", icon: "bg-blue-500/10 text-blue-600 dark:text-blue-400" },
-    { Icon: Rows3, label: "Evaluated conversations", value: `${data.evaluated_count.toLocaleString()} / ${(data.run.feedback_selected_count + data.run.random_selected_count).toLocaleString()}`, accent: "from-cyan-500 to-emerald-400", icon: "bg-cyan-500/10 text-cyan-600 dark:text-cyan-400" },
-    { Icon: CheckCircle2, label: "Pass rate", value: `${passRate.toFixed(1)}%`, accent: "from-emerald-500 to-lime-400", icon: "bg-emerald-500/10 text-emerald-600 dark:text-emerald-400" },
-    { Icon: AlertTriangle, label: "Critical failures", value: data.critical_failure_count.toLocaleString(), accent: "from-amber-500 to-rose-500", icon: "bg-amber-500/10 text-amber-600 dark:text-amber-400" },
+    { Icon: MessageSquareText, label: "Feedback selected", value: data.run.feedback_selected_count.toLocaleString(), accent: "bg-blue-500", icon: "bg-blue-500/10 text-blue-600 dark:text-blue-400" },
+    { Icon: Rows3, label: "Evaluated conversations", value: `${data.evaluated_count.toLocaleString()} / ${(data.run.feedback_selected_count + data.run.random_selected_count).toLocaleString()}`, accent: "bg-cyan-500", icon: "bg-cyan-500/10 text-cyan-600 dark:text-cyan-400" },
+    { Icon: CheckCircle2, label: "Pass rate", value: `${passRate.toFixed(1)}%`, accent: "bg-emerald-500", icon: "bg-emerald-500/10 text-emerald-600 dark:text-emerald-400" },
+    { Icon: AlertTriangle, label: "Critical failures", value: data.critical_failure_count.toLocaleString(), accent: "bg-amber-500", icon: "bg-amber-500/10 text-amber-600 dark:text-amber-400" },
   ] : [];
   return <div className="space-y-6">
     <section className="relative overflow-hidden rounded-2xl border border-primary/20 bg-gradient-to-br from-primary/10 via-card to-fuchsia-500/5 p-5 shadow-sm sm:p-7">
@@ -108,7 +122,7 @@ export default function Evaluation() {
 
     {data && <>
       <div className="grid gap-4 sm:grid-cols-2 xl:grid-cols-4">
-        {statCards.map(({ Icon, label, value, accent, icon }) => <Card key={label} className="group relative overflow-hidden border-border/70 transition duration-200 hover:-translate-y-0.5 hover:border-primary/30 hover:shadow-lg"><div className={`absolute inset-x-0 top-0 h-1 bg-gradient-to-r ${accent}`} /><CardContent className="p-5 pt-6"><div className="flex items-start justify-between gap-3"><div><p className="text-sm text-muted-foreground">{label}</p><p className="mt-2 text-2xl font-bold tracking-tight">{value}</p></div><div className={`rounded-xl p-2.5 ${icon}`}><Icon className="h-5 w-5" /></div></div></CardContent></Card>)}
+        {statCards.map(({ Icon, label, value, accent, icon }) => <Card key={label} className="group relative overflow-hidden border-border/70 transition duration-200 hover:-translate-y-0.5 hover:border-primary/30 hover:shadow-lg"><div className={`absolute inset-x-0 top-0 h-1 ${accent}`} /><CardContent className="p-5 pt-6"><div className="flex items-start justify-between gap-3"><div><p className="text-sm text-muted-foreground">{label}</p><p className="mt-2 text-2xl font-bold tracking-tight">{value}</p></div><div className={`rounded-xl p-2.5 ${icon}`}><Icon className="h-5 w-5" /></div></div></CardContent></Card>)}
       </div>
       {data.run.unmatched_feedback_count > 0 && <div className="flex items-center gap-3 rounded-xl border border-amber-500/30 bg-amber-500/10 p-4 text-sm text-amber-700 dark:text-amber-300"><span className="rounded-full bg-amber-500/15 p-2"><AlertTriangle className="h-4 w-4" /></span>{data.run.unmatched_feedback_count} feedback record(s) could not be matched to a trace.</div>}
       <div className="grid gap-4 xl:grid-cols-[2fr_1fr]">
@@ -118,12 +132,11 @@ export default function Evaluation() {
           </CardHeader>
           <CardContent className="p-4 sm:p-6">
             <div className="h-[390px] sm:h-[430px]"><ResponsiveContainer width="100%" height="100%"><RadarChart data={radarData} outerRadius="66%" margin={{ top: 22, right: 56, bottom: 22, left: 56 }}>
-              <defs><linearGradient id="evaluationRadarFill" x1="0" y1="0" x2="1" y2="1"><stop offset="0%" stopColor="hsl(var(--primary))" stopOpacity={0.65} /><stop offset="100%" stopColor="#ec4899" stopOpacity={0.18} /></linearGradient></defs>
               <PolarGrid gridType="polygon" stroke="hsl(var(--border))" strokeOpacity={0.8} />
               <PolarAngleAxis dataKey="metric" tick={{ fontSize: 10, fill: "hsl(var(--muted-foreground))", fontWeight: 500 }} tickLine={false} />
               <PolarRadiusAxis angle={90} domain={[0, 5]} tickCount={6} axisLine={false} tick={{ fontSize: 9, fill: "hsl(var(--muted-foreground))" }} />
               <Tooltip formatter={(value) => [`${Number(value).toFixed(2)} / 5`, "Score"]} contentStyle={{ background: "hsl(var(--popover))", border: "1px solid hsl(var(--border))", borderRadius: "10px", boxShadow: "0 10px 30px rgba(0,0,0,.18)" }} labelStyle={{ color: "hsl(var(--popover-foreground))", fontWeight: 600 }} itemStyle={{ color: "hsl(var(--primary))" }} />
-              <Radar dataKey="score" stroke="hsl(var(--primary))" strokeWidth={2.5} fill="url(#evaluationRadarFill)" fillOpacity={1} dot={{ r: 3, fill: "hsl(var(--primary))", stroke: "hsl(var(--background))", strokeWidth: 1.5 }} domain={[0, 5]} />
+              <Radar dataKey="score" stroke="hsl(var(--primary))" strokeWidth={2.5} fill="hsl(var(--primary))" fillOpacity={0.2} dot={{ r: 3, fill: "hsl(var(--primary))", stroke: "hsl(var(--background))", strokeWidth: 1.5 }} domain={[0, 5]} />
             </RadarChart></ResponsiveContainer></div>
             <div className="grid gap-3 border-t border-border/60 pt-4 sm:grid-cols-2">
               <div className="rounded-xl border border-emerald-500/20 bg-emerald-500/5 p-3"><div className="mb-2 flex items-center gap-2 text-xs font-semibold uppercase tracking-wide text-emerald-600 dark:text-emerald-400"><TrendingUp className="h-4 w-4" />Strongest</div><div className="flex flex-wrap gap-2">{strongestMetrics.map((entry) => <Badge key={entry.metric} variant="outline" className="bg-background/70">{entry.metric} · {entry.score.toFixed(2)}</Badge>)}</div></div>
@@ -134,9 +147,9 @@ export default function Evaluation() {
         <Card className="overflow-hidden border-primary/20 bg-gradient-to-b from-card to-primary/[0.03]"><CardHeader className="border-b border-border/60 bg-primary/[0.03]"><CardTitle className="flex items-center gap-2"><span className="rounded-lg bg-primary/10 p-2 text-primary"><Gauge className="h-5 w-5" /></span>Dimension averages</CardTitle><p className="text-sm text-muted-foreground">Quality scores grouped by evaluation dimension</p></CardHeader><CardContent className="space-y-4 p-5">{[
           ["Process fidelity", data.process_fidelity], ["Factual grounding", data.factual_grounding], ["Response usefulness", data.response_usefulness], ["Marathi quality", data.marathi_quality], ["Overall", data.overall_average],
         ].map(([label, value], index) => {
-          const parsedValue = numericScore(value) ?? 0;
+          const parsedValue = numericScore(value);
           const isOverall = index === 4;
-          return <div key={String(label)} className={isOverall ? "rounded-xl border border-primary/20 bg-primary/5 p-4" : "rounded-xl border border-border/60 bg-background/40 p-4"}><div className="flex items-center justify-between gap-3 text-sm"><span className={isOverall ? "font-semibold" : "font-medium"}>{String(label)}</span><Badge variant="outline" className={isOverall ? "border-primary/30 bg-primary/10 text-primary" : "bg-background"}>{score(value)}</Badge></div><div className="mt-3 h-2.5 overflow-hidden rounded-full bg-muted"><div className="h-full rounded-full bg-gradient-to-r from-violet-500 via-primary to-fuchsia-500 transition-all" style={{ width: `${Math.max(0, Math.min(100, (parsedValue / 5) * 100))}%` }} /></div></div>;
+          return <div key={String(label)} className={isOverall ? "rounded-xl border border-primary/20 bg-primary/5 p-4" : "rounded-xl border border-border/60 bg-background/40 p-4"}><div className="flex items-center justify-between gap-3 text-sm"><span className={isOverall ? "font-semibold" : "font-medium"}>{String(label)}</span><Badge variant="outline" className={isOverall ? "border-primary/30 bg-primary/10 text-primary" : "bg-background"}>{score(value)}</Badge></div><ScoreScale value={parsedValue} /></div>;
         })}</CardContent></Card>
       </div>
     </>}
