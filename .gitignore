@@ -27,6 +27,7 @@ package-*.json
 pnpm-lock.yaml
 package-lock.json
 
-# Environment and authentication config
-src/lib/keycloak.ts
-src/config/environment.ts
+# Local environment overrides
+.env
+.env.local
+.env.*.local

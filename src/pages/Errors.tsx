@@ -1,5 +1,5 @@
 import React, { useState } from "react";
-import { Link } from "react-router-dom";
+import { Link, useSearchParams } from "react-router-dom";
 import { useQuery } from "@tanstack/react-query";
 import {
   Table,
@@ -22,7 +22,7 @@ import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { useDateFilter } from "@/contexts/DateFilterContext";
-import { useKeycloak } from "@react-keycloak/web";
+import { useAppAuth } from "@/lib/useAppAuth";
 import { isSuperAdmin } from "@/utils/roleUtils";
 import { buildDateRangeParams } from "@/lib/utils";
 import {
@@ -34,33 +34,58 @@ import {
 import TablePagination from "@/components/TablePagination";
 
 const ErrorsPage = () => {
-  const { keycloak } = useKeycloak();
-  const [searchTerm, setSearchTerm] = useState("");
+  const { keycloak } = useAppAuth();
+  const [searchParams, setSearchParams] = useSearchParams();
   const { dateRange } = useDateFilter();
-  const [page, setPage] = useState(1);
+
+  // Get pagination and filter state from URL params
+  const page = parseInt(searchParams.get("page") || "1", 10);
   const pageSize = 10;
+
+  // Initialize state from URL params for persistence
+  const [searchTerm, setSearchTerm] = useState(searchParams.get("search") || "");
   const [sortConfig, setSortConfig] = useState({
     key: "created_at",
     direction: "desc",
   });
 
   // Reset page when filters change
-  const resetPage = () => setPage(1);
+  const resetPage = () => {
+    const newParams = new URLSearchParams(searchParams);
+    newParams.set("page", "1");
+    setSearchParams(newParams);
+  };
 
-  const [pendingSearch, setPendingSearch] = useState("");
+  const handlePageChange = (newPage: number) => {
+    const newParams = new URLSearchParams(searchParams);
+    newParams.set("page", newPage.toString());
+    setSearchParams(newParams);
+  };
+
+  const [pendingSearch, setPendingSearch] = useState(searchParams.get("search") || "");
   const handleSearchChange = (value: string) => {
     setPendingSearch(value);
   };
 
   const handleSearch = () => {
     setSearchTerm(pendingSearch);
-    resetPage();
+    // Update URL with search params
+    const newParams = new URLSearchParams(searchParams);
+    newParams.set("page", "1");
+    if (pendingSearch.trim()) {
+      newParams.set("search", pendingSearch.trim());
+    } else {
+      newParams.delete("search");
+    }
+    setSearchParams(newParams);
   };
 
   const handleResetFilters = () => {
     setSearchTerm("");
     setPendingSearch("");
-    setPage(1);
+    const newParams = new URLSearchParams();
+    newParams.set("page", "1");
+    setSearchParams(newParams);
   };
 
   const handleSort = (key: string) => {
@@ -417,7 +442,7 @@ const ErrorsPage = () => {
                 <TablePagination
                   currentPage={page}
                   totalPages={errorsResponse.totalPages}
-                  onPageChange={setPage}
+                  onPageChange={handlePageChange}
                 />
               </div>
             </>

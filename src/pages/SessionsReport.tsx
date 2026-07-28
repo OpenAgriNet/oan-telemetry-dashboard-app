@@ -8,7 +8,7 @@ import {
   type UserPaginationParams,
   type PaginationParams,
 } from "@/services/api";
-import { useNavigate, useSearchParams } from "react-router-dom";
+import { Link, useSearchParams } from "react-router-dom";
 import { useDateFilter } from "@/contexts/DateFilterContext";
 import { buildDateRangeParams, formatLocal } from "@/lib/utils";
 import {
@@ -49,16 +49,16 @@ import TablePagination from "@/components/TablePagination";
 import { formatUtcDateWithPMCorrection, formatUTCToIST } from "@/lib/utils";
 
 const SessionsReport = () => {
-  const navigate = useNavigate();
   const [searchParams, setSearchParams] = useSearchParams();
   const { dateRange } = useDateFilter();
 
-  // Get pagination state from URL params
+  // Get pagination and filter state from URL params
   const page = parseInt(searchParams.get("page") || "1", 10);
   const pageSize = 10;
 
-  const [selectedUser, setSelectedUser] = useState<string>("all");
-  const [searchQuery, setSearchQuery] = useState<string>("");
+  // Initialize state from URL params for persistence
+  const [selectedUser, setSelectedUser] = useState<string>(searchParams.get("user") || "all");
+  const [searchQuery, setSearchQuery] = useState<string>(searchParams.get("search") || "");
   const [sortConfig, setSortConfig] = useState({
     key: "session_time",
     direction: "desc",
@@ -82,14 +82,22 @@ const SessionsReport = () => {
     resetPage();
   };
 
-  const [pendingSearch, setPendingSearch] = useState("");
+  const [pendingSearch, setPendingSearch] = useState(searchParams.get("search") || "");
   const handleSearchChange = (query: string) => {
     setPendingSearch(query);
   };
 
   const handleSearch = () => {
     setSearchQuery(pendingSearch);
-    resetPage();
+    // Update URL with search params
+    const newParams = new URLSearchParams(searchParams);
+    newParams.set("page", "1");
+    if (pendingSearch.trim()) {
+      newParams.set("search", pendingSearch.trim());
+    } else {
+      newParams.delete("search");
+    }
+    setSearchParams(newParams);
   };
 
   const handleResetFilters = () => {
@@ -192,10 +200,6 @@ const SessionsReport = () => {
   const totalSessions = sessionReport.total;
 
   // const users = usersResponse.data;
-
-  const handleSessionClick = (sessionId: string) => {
-    navigate(`/sessions/${sessionId}`);
-  };
 
   const handleApplyFilters = () => {
     refetch();
@@ -452,16 +456,14 @@ const SessionsReport = () => {
                         className="hover:bg-muted/30"
                       >
                         <TableCell className="font-medium">
-                          <button
-                            onClick={() =>
-                              handleSessionClick(session.sessionId)
-                            }
+                          <Link
+                            to={`/sessions/${session.sessionId}`}
                             className="hover:underline"
                           >
                             <code className="relative rounded bg-muted px-[0.3rem] py-[0.2rem] font-mono text-xs">
                               {session.sessionId.substring(0, 8)}...
                             </code>
-                          </button>
+                          </Link>
                         </TableCell>
                         <TableCell>
                           <code className="relative rounded bg-muted px-[0.3rem] py-[0.2rem] font-mono text-sm">

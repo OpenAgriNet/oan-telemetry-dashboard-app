@@ -43,20 +43,20 @@ import {
   formatUTCToIST,
   buildDateRangeParams,
 } from "@/lib/utils";
-import { useNavigate, useSearchParams } from "react-router-dom";
+import { Link, useSearchParams } from "react-router-dom";
 import { set } from "date-fns";
 const QuestionsReport = () => {
   const { dateRange } = useDateFilter();
-  const navigate = useNavigate();
   const [searchParams, setSearchParams] = useSearchParams();
 
-  // Get pagination state from URL params
+  // Get pagination and filter state from URL params
   const page = parseInt(searchParams.get("page") || "1", 10);
   const pageSize = 10;
 
-  const [selectedUser, setSelectedUser] = useState<string>("all");
-  const [selectedSession, setSelectedSession] = useState<string>("all");
-  const [searchQuery, setSearchQuery] = useState<string>("");
+  // Initialize state from URL params for persistence
+  const [selectedUser, setSelectedUser] = useState<string>(searchParams.get("user") || "all");
+  const [selectedSession, setSelectedSession] = useState<string>(searchParams.get("session") || "all");
+  const [searchQuery, setSearchQuery] = useState<string>(searchParams.get("search") || "");
   const [sortConfig, setSortConfig] = useState({
     key: "dateAsked",
     direction: "desc",
@@ -86,14 +86,22 @@ const QuestionsReport = () => {
     resetPage();
   };
 
-  const [pendingSearch, setPendingSearch] = useState<string>("");
+  const [pendingSearch, setPendingSearch] = useState<string>(searchParams.get("search") || "");
   const handleSearchQueryChange = (query: string) => {
     setPendingSearch(query);
   };
 
   const handleSearch = () => {
     setSearchQuery(pendingSearch);
-    resetPage();
+    // Update URL with search params
+    const newParams = new URLSearchParams(searchParams);
+    newParams.set("page", "1");
+    if (pendingSearch.trim()) {
+      newParams.set("search", pendingSearch.trim());
+    } else {
+      newParams.delete("search");
+    }
+    setSearchParams(newParams);
   };
 
   const handleResetFilters = () => {
@@ -101,15 +109,10 @@ const QuestionsReport = () => {
     setSelectedSession("all");
     setSearchQuery("");
     setPendingSearch("");
+    // Clear all filter params from URL
     const newParams = new URLSearchParams();
     newParams.set("page", "1");
     setSearchParams(newParams);
-  };
-  const handleSessionClick = (sessionId: string) => {
-    navigate(`/sessions/${sessionId}`);
-  };
-  const handleQuestionClick = (id: string) => {
-    navigate(`/questions/${id}`);
   };
 
   // Fetch users with search parameter if needed
@@ -452,14 +455,13 @@ console.log("Questions from ISO",dateRange.from?.toISOString())
                   >
                     <TableCell className="font-medium">
                       <div className="max-w-md">
-                        <button
-                          className="truncate text-left hover:underline bg-transparent border-none p-0 m-0 w-full"
+                        <Link
+                          to={`/questions/${question.id}`}
+                          className="truncate text-left hover:underline block w-full"
                           title={question.question}
-                          onClick={() => handleQuestionClick(question.id)}
-                          type="button"
                         >
                           {question.question}
-                        </button>
+                        </Link>
                         {question.answer && (
                           <p
                             className="text-sm text-muted-foreground truncate mt-1"
@@ -476,14 +478,14 @@ console.log("Questions from ISO",dateRange.from?.toISOString())
                       </code>
                     </TableCell>
                     <TableCell>
-                      <button
-                        onClick={() => handleSessionClick(question.session_id)}
+                      <Link
+                        to={`/sessions/${question.session_id}`}
                         className="hover:underline"
                       >
                         <code className="relative rounded bg-muted px-[0.3rem] py-[0.2rem] font-mono text-xs">
                           {question.session_id.substring(0, 8)}...
                         </code>
-                      </button>
+                      </Link>
                     </TableCell>
                     <TableCell>
                       {question.dateAsked || question.created_at || "N/A"}

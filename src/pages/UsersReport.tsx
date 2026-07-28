@@ -5,7 +5,7 @@ import {
   type UserPaginationParams,
   type UserStatsResponse,
 } from "@/services/api";
-import { useNavigate, useSearchParams } from "react-router-dom";
+import { Link, useSearchParams } from "react-router-dom";
 import { useDateFilter } from "@/contexts/DateFilterContext";
 import { useStats } from "@/contexts/StatsContext";
 import {
@@ -48,15 +48,15 @@ type SortConfig = {
 
 const UsersReport = () => {
   const { dateRange } = useDateFilter();
-  const navigate = useNavigate();
   const [searchParams, setSearchParams] = useSearchParams();
 
-  // Get pagination state from URL params
+  // Get pagination and filter state from URL params
   const page = parseInt(searchParams.get("page") || "1", 10);
   const pageSize = 10;
 
-  const [selectedUser, setSelectedUser] = useState<string>("all");
-  const [searchQuery, setSearchQuery] = useState<string>("");
+  // Initialize state from URL params for persistence
+  const [selectedUser, setSelectedUser] = useState<string>(searchParams.get("user") || "all");
+  const [searchQuery, setSearchQuery] = useState<string>(searchParams.get("search") || "");
 
   // Reset page when filters change
   const resetPage = () => {
@@ -76,14 +76,22 @@ const UsersReport = () => {
     resetPage();
   };
 
-  const [pendingSearch, setPendingSearch] = useState<string>("");
+  const [pendingSearch, setPendingSearch] = useState<string>(searchParams.get("search") || "");
   const handleSearchChange = (query: string) => {
     setPendingSearch(query);
   };
 
   const handleSearch = () => {
     setSearchQuery(pendingSearch);
-    resetPage();
+    // Update URL with search params
+    const newParams = new URLSearchParams(searchParams);
+    newParams.set("page", "1");
+    if (pendingSearch.trim()) {
+      newParams.set("search", pendingSearch.trim());
+    } else {
+      newParams.delete("search");
+    }
+    setSearchParams(newParams);
   };
 
   const handleResetFilters = () => {
@@ -243,13 +251,6 @@ const UsersReport = () => {
       return sortConfig.direction === "asc" ? " ↑" : " ↓";
     }
     return " ↕";
-  };
-
-  const handleSessionClick = (sessionId: string) => {
-    console.log("Session ID:", sessionId);
-    const SessionId = sessionId;
-    // Add your logic here to handlne the session click
-    navigate(`/sessions/${SessionId}`);
   };
 
   // Show error state
@@ -535,14 +536,14 @@ const UsersReport = () => {
                         {user.latestSession || "N/A"}
                       </TableCell>
                       <TableCell>
-                        <button
-                          onClick={() => handleSessionClick(user.sessionId)}
+                        <Link
+                          to={`/sessions/${user.sessionId}`}
                           className="hover:underline"
                         >
                           <code className="relative rounded bg-muted px-[0.3rem] py-[0.2rem] font-mono text-xs">
                             {user.sessionId?.substring(0, 8)}...
                           </code>
-                        </button>
+                        </Link>
                       </TableCell>
                     </TableRow>
                   ))}
