@@ -1,4 +1,5 @@
 import React, { createContext, useContext, useState, ReactNode } from 'react';
+import { useDebounce } from '@/hooks/useDebounce';
 
 interface DateRange {
   from: Date | undefined;
@@ -6,7 +7,10 @@ interface DateRange {
 }
 
 interface DateFilterContextType {
+  /** Debounced date range for API calls - use this in queries */
   dateRange: DateRange;
+  /** Immediate date range for UI display - use this in date picker */
+  immediateDateRange: DateRange;
   setDateRange: React.Dispatch<React.SetStateAction<DateRange>>;
   resetDateRange: () => void;
 }
@@ -25,11 +29,24 @@ interface DateFilterProviderProps {
   children: ReactNode;
 }
 
+// Debounce delay in milliseconds - adjust this to control API call frequency
+const DATE_DEBOUNCE_DELAY = 800;
+
 export const DateFilterProvider: React.FC<DateFilterProviderProps> = ({ children }) => {
-  const [dateRange, setDateRange] = useState<DateRange>({
+  const [immediateDateRange, setDateRange] = useState<DateRange>({
     from: undefined,
     to: undefined,
   });
+
+  // Debounce the date range to prevent excessive API calls while user is selecting dates
+  const debouncedFrom = useDebounce(immediateDateRange.from, DATE_DEBOUNCE_DELAY);
+  const debouncedTo = useDebounce(immediateDateRange.to, DATE_DEBOUNCE_DELAY);
+
+  // The main dateRange exposed to consumers is debounced
+  const dateRange: DateRange = {
+    from: debouncedFrom,
+    to: debouncedTo,
+  };
 
   const resetDateRange = () => {
     setDateRange({ from: undefined, to: undefined });
@@ -39,6 +56,7 @@ export const DateFilterProvider: React.FC<DateFilterProviderProps> = ({ children
     <DateFilterContext.Provider
       value={{
         dateRange,
+        immediateDateRange,
         setDateRange,
         resetDateRange,
       }}
@@ -46,4 +64,4 @@ export const DateFilterProvider: React.FC<DateFilterProviderProps> = ({ children
       {children}
     </DateFilterContext.Provider>
   );
-}; 
+};

@@ -49,12 +49,13 @@ const FeedbackPage = () => {
   const [searchParams, setSearchParams] = useSearchParams();
   const { dateRange } = useDateFilter();
 
-  // Get pagination state from URL params
+  // Get pagination and filter state from URL params
   const page = parseInt(searchParams.get("page") || "1", 10);
   const pageSize = 10;
 
-  const [searchTerm, setSearchTerm] = useState("");
-  const [selectedUser, setSelectedUser] = useState("all");
+  // Initialize state from URL params for persistence
+  const [searchTerm, setSearchTerm] = useState(searchParams.get("search") || "");
+  const [selectedUser, setSelectedUser] = useState(searchParams.get("user") || "all");
   const [sortConfig, setSortConfig] = useState({
     key: "created_at",
     direction: "desc",
@@ -73,14 +74,22 @@ const FeedbackPage = () => {
     setSearchParams(newParams);
   };
 
-  const [pendingSearch, setPendingSearch] = useState("");
+  const [pendingSearch, setPendingSearch] = useState(searchParams.get("search") || "");
   const handleSearchChange = (value: string) => {
     setPendingSearch(value);
   };
 
   const handleSearch = () => {
     setSearchTerm(pendingSearch);
-    resetPage();
+    // Update URL with search params
+    const newParams = new URLSearchParams(searchParams);
+    newParams.set("page", "1");
+    if (pendingSearch.trim()) {
+      newParams.set("search", pendingSearch.trim());
+    } else {
+      newParams.delete("search");
+    }
+    setSearchParams(newParams);
   };
 
   const handleUserChange = (value: string) => {

@@ -1,5 +1,5 @@
 import React, { useState } from "react";
-import { useParams, useNavigate } from "react-router-dom";
+import { useParams, useNavigate, Link } from "react-router-dom";
 import { useQuery } from "@tanstack/react-query";
 import {
   Card,
@@ -307,12 +307,11 @@ const QuestionDetails = () => {
           </CardHeader>
           <CardContent>
             <div className="text-sm">
-              <button onClick={() => navigate(`/sessions/${question?.session_id}`)}>
-
-              <code className="truncate text-left text-primary hover:underline bg-transparent border-none p-0 m-0 w-full">
-                {question?.session_id ? question.session_id.substring(0, 8) + '...' : 'N/A'}
-              </code>
-              </button>
+              <Link to={`/sessions/${question?.session_id}`}>
+                <code className="truncate text-left text-primary hover:underline bg-transparent border-none p-0 m-0 w-full">
+                  {question?.session_id ? question.session_id.substring(0, 8) + '...' : 'N/A'}
+                </code>
+              </Link>
             </div>
           </CardContent>
         </Card>

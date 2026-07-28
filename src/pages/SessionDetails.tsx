@@ -35,7 +35,7 @@ import {
   type ErrorDetail
 } from "@/services/api";
 import { formatUTCToIST } from "@/lib/utils";
-import { useKeycloak } from "@react-keycloak/web";
+import { useAppAuth } from "@/lib/useAppAuth";
 import { isSuperAdmin } from "@/utils/roleUtils";
 
 // Helper function to get a safe timestamp string from question data
@@ -156,7 +156,7 @@ function getErrorTimestampISO(error: ErrorDetail): string {
 const SessionDetails = () => {
   const { sessionId } = useParams();
   const navigate = useNavigate();
-  const { keycloak } = useKeycloak();
+  const { keycloak } = useAppAuth();
   
   // Check if current user is super admin
   const isSuper = isSuperAdmin(keycloak);
