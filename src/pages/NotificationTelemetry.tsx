@@ -332,7 +332,17 @@ const NotificationTelemetry = () => {
           ) : (
             <div className="space-y-4">
               <div className="overflow-x-auto rounded-md border">
-                <Table className={isSessionView ? "min-w-[1180px]" : showFeedbackColumns ? "min-w-[1500px]" : undefined}>
+                <Table
+                  className={
+                    isSessionView
+                      ? "min-w-[1180px]"
+                      : showFeedbackColumns
+                        ? "min-w-[1500px]"
+                        : showActionColumns
+                          ? "min-w-[1180px]"
+                          : undefined
+                  }
+                >
                   <TableHeader>
                     <TableRow>
                       <TableHead className="whitespace-nowrap">
@@ -377,7 +387,11 @@ const NotificationTelemetry = () => {
                         </>
                       )}
                       {showActionColumns && (
-                        <TableHead>Notification ID</TableHead>
+                        <>
+                          <TableHead>Notification ID</TableHead>
+                          <TableHead>Message Type</TableHead>
+                          <TableHead>Category Type</TableHead>
+                        </>
                       )}
                       {showFeedbackColumns && (
                         <>
@@ -455,9 +469,17 @@ const NotificationTelemetry = () => {
                               </>
                             )}
                             {showActionColumns && (
-                              <TableCell className="max-w-[160px] truncate font-mono text-xs">
-                                {row.notification_id || "-"}
-                              </TableCell>
+                              <>
+                                <TableCell className="max-w-[160px] truncate font-mono text-xs">
+                                  {row.notification_id || "-"}
+                                </TableCell>
+                                <TableCell className="whitespace-nowrap">
+                                  {row.message_type || "-"}
+                                </TableCell>
+                                <TableCell className="whitespace-nowrap">
+                                  {row.category_type || "-"}
+                                </TableCell>
+                              </>
                             )}
                             {showFeedbackColumns && (
                               <>
