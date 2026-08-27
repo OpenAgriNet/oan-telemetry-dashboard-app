@@ -206,9 +206,9 @@ const ErrorDetails = () => {
               <div>
                 <label className="text-sm font-medium text-muted-foreground">Session ID</label>
                 <div className="mt-1">
-                  <Link to={`/sessions/${errorDetail.sessionId}`} className="text-primary hover:underline">
+                  <span className="text-sm">
                     {errorDetail.sessionId}
-                  </Link>
+                  </span>
                 </div>
               </div>
             ) : (
@@ -222,9 +222,9 @@ const ErrorDetails = () => {
               <div>
                 <label className="text-sm font-medium text-muted-foreground">Question ID</label>
                 <div className="mt-1">
-                  <Link to={`/questions/${errorDetail.questionId}`} className="text-primary hover:underline">
+                  <span className="text-sm">
                     {errorDetail.questionId}
-                  </Link>
+                  </span>
                 </div>
               </div>
             ) : (

@@ -13,16 +13,13 @@ import SessionsReport from "./pages/SessionsReport";
 import QuestionsReport from "./pages/QuestionsReport";
 import Analytics from "./pages/Analytics";
 import NotFound from "./pages/NotFound";
-import SessionDetails from "./pages/SessionDetails";
 import Feedback from "./pages/Feedback";
-import FeedbackDetails from "./pages/FeedbackDetails";
 import Errors from "./pages/Errors";
 import ErrorDetails from "./pages/ErrorDetails";
 import Content from "./pages/Content";
 import ServiceStatus from "./pages/ServiceStatus";
 import HealthMonitor from "./pages/HealthMonitor";
 import { useAppAuth } from "@/lib/useAppAuth";
-import QuestionsDetails from "./pages/QuestionsDetails";
 import { isSuperAdmin } from "@/utils/roleUtils";
 import Evaluation from "./pages/Evaluation";
 import EvaluationDetails from "./pages/EvaluationDetails";
@@ -88,29 +85,14 @@ const App = () => {
                   <QuestionsReport />
                 </Layout>
               } />
-              <Route path="/questions/:id" element={
-                <Layout>
-                  <QuestionsDetails />
-                </Layout>
-              } />
               <Route path="/analytics" element={
                 <Layout>
                   <Analytics />
                 </Layout>
               } />
-              <Route path="/sessions/:sessionId" element={
-                <Layout>
-                  <SessionDetails />
-                </Layout>
-              } />
               <Route path="/feedback" element={
                 <Layout>
                   <Feedback />
-                </Layout>
-              } />
-              <Route path="/feedback/:feedbackId" element={
-                <Layout>
-                  <FeedbackDetails />
                 </Layout>
               } />
               <Route path="/evaluation" element={<Layout><Evaluation /></Layout>} />

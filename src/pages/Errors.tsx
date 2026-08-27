@@ -399,12 +399,9 @@ const ErrorsPage = () => {
                           </TableCell>
                           <TableCell>
                             {errorItem.sessionId ? (
-                              <Link
-                                to={`/sessions/${errorItem.sessionId}`}
-                                className="hover:underline text-sm"
-                              >
+                              <span className="text-sm">
                                 {errorItem.sessionId.slice(0, 8)}...
-                              </Link>
+                              </span>
                             ) : (
                               <span className="text-muted-foreground text-sm">
                                 N/A

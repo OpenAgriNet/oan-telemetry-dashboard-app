@@ -1,5 +1,5 @@
 import React, { useState } from "react";
-import { Link, useSearchParams } from "react-router-dom";
+import { useSearchParams } from "react-router-dom";
 import { useQuery } from "@tanstack/react-query";
 import {
   Table,
@@ -515,12 +515,7 @@ const FeedbackPage = () => {
                         </div>
                       </TableCell>
                       <TableCell>
-                        <Link
-                          to={`/feedback/${feedback.id}`}
-                          className="hover:underline"
-                        >
-                          View Details
-                        </Link>
+                        <span className="text-muted-foreground">Details unavailable</span>
                       </TableCell>
                     </TableRow>
                   ))}

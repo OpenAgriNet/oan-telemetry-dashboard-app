@@ -5,7 +5,7 @@ import {
   type UserPaginationParams,
   type UserStatsResponse,
 } from "@/services/api";
-import { Link, useSearchParams } from "react-router-dom";
+import { useSearchParams } from "react-router-dom";
 import { useDateFilter } from "@/contexts/DateFilterContext";
 import { useStats } from "@/contexts/StatsContext";
 import {
@@ -536,14 +536,9 @@ const UsersReport = () => {
                         {user.latestSession || "N/A"}
                       </TableCell>
                       <TableCell>
-                        <Link
-                          to={`/sessions/${user.sessionId}`}
-                          className="hover:underline"
-                        >
-                          <code className="relative rounded bg-muted px-[0.3rem] py-[0.2rem] font-mono text-xs">
-                            {user.sessionId?.substring(0, 8)}...
-                          </code>
-                        </Link>
+                        <code className="relative rounded bg-muted px-[0.3rem] py-[0.2rem] font-mono text-xs">
+                          {user.sessionId?.substring(0, 8)}...
+                        </code>
                       </TableCell>
                     </TableRow>
                   ))}
