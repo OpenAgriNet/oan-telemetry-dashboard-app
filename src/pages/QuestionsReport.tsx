@@ -43,7 +43,7 @@ import {
   formatUTCToIST,
   buildDateRangeParams,
 } from "@/lib/utils";
-import { Link, useSearchParams } from "react-router-dom";
+import { useSearchParams } from "react-router-dom";
 import { set } from "date-fns";
 const QuestionsReport = () => {
   const { dateRange } = useDateFilter();
@@ -455,13 +455,12 @@ console.log("Questions from ISO",dateRange.from?.toISOString())
                   >
                     <TableCell className="font-medium">
                       <div className="max-w-md">
-                        <Link
-                          to={`/questions/${question.id}`}
-                          className="truncate text-left hover:underline block w-full"
+                        <p
+                          className="truncate text-left block w-full"
                           title={question.question}
                         >
                           {question.question}
-                        </Link>
+                        </p>
                         {question.answer && (
                           <p
                             className="text-sm text-muted-foreground truncate mt-1"
@@ -478,14 +477,9 @@ console.log("Questions from ISO",dateRange.from?.toISOString())
                       </code>
                     </TableCell>
                     <TableCell>
-                      <Link
-                        to={`/sessions/${question.session_id}`}
-                        className="hover:underline"
-                      >
-                        <code className="relative rounded bg-muted px-[0.3rem] py-[0.2rem] font-mono text-xs">
-                          {question.session_id.substring(0, 8)}...
-                        </code>
-                      </Link>
+                      <code className="relative rounded bg-muted px-[0.3rem] py-[0.2rem] font-mono text-xs">
+                        {question.session_id.substring(0, 8)}...
+                      </code>
                     </TableCell>
                     <TableCell>
                       {question.dateAsked || question.created_at || "N/A"}
