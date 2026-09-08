@@ -86,11 +86,11 @@ const Layout: React.FC<LayoutProps> = ({ children }) => {
       path: "/feedback",
       icon: <ClipboardCheck size={20} />,
     },
-    {
-      name: "Evaluation",
-      path: "/evaluation",
-      icon: <FlaskConical size={20} />,
-    },
+    // {
+    //   name: "Evaluation",
+    //   path: "/evaluation",
+    //   icon: <FlaskConical size={20} />,
+    // },
     // Conditionally add Errors menu item for super-admin users only
     ...(isSuper
       ? [
@@ -112,11 +112,11 @@ const Layout: React.FC<LayoutProps> = ({ children }) => {
         ]
       : []),
 
-      {
-        name: "Service Status",
-        path: "/service-status",
-        icon: <Activity size={20} />,
-      },
+      // {
+      //   name: "Service Status",
+      //   path: "/service-status",
+      //   icon: <Activity size={20} />,
+      // },
   
   ];
 
