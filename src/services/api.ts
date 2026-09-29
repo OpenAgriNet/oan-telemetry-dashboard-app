@@ -149,8 +149,8 @@ export interface ServiceSnapshotApi {
   key: string;
   name: string;
   description: string;
-  method: string;
-  endpoint: string;
+  method: string | null;
+  endpoint: string | null;
   kind: "direct" | "fallback";
   metrics: ServiceSnapshotMetrics;
 }
