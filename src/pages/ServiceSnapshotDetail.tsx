@@ -1,5 +1,5 @@
 import { Link, useParams } from "react-router-dom";
-import { ArrowLeft, Braces, Layers3, ServerCog } from "lucide-react";
+import { ArrowLeft, ArrowUpRight, Braces, ServerCog } from "lucide-react";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
@@ -66,6 +66,7 @@ const ServiceSnapshotDetail = () => {
                       <TableHead>Failure %</TableHead>
                       <TableHead>P90 latency</TableHead>
                       <TableHead>Max latency</TableHead>
+                      <TableHead className="text-right">Action</TableHead>
                     </TableRow>
                   </TableHeader>
                   <TableBody>
@@ -86,6 +87,16 @@ const ServiceSnapshotDetail = () => {
                         <TableCell><Rate value={api.metrics.failurePercentage} kind="failure" /></TableCell>
                         <TableCell className="whitespace-nowrap font-medium">{formatLatency(api.metrics.p90LatencyMs)}</TableCell>
                         <TableCell className="whitespace-nowrap font-medium">{formatLatency(api.metrics.maxLatencyMs)}</TableCell>
+                        <TableCell className="text-right">
+                          {api.endpoint && api.sourceService ? (
+                            <Link
+                              to={`/service-snapshot/provider/${providerSlug(provider.name)}/service/${encodeURIComponent(service.key)}/api/${encodeURIComponent(api.key)}`}
+                              className="inline-flex whitespace-nowrap items-center gap-2 text-sm font-medium text-primary hover:underline focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring"
+                            >
+                              View individual API <ArrowUpRight className="h-4 w-4" />
+                            </Link>
+                          ) : <span className="text-sm text-muted-foreground">Unavailable</span>}
+                        </TableCell>
                       </TableRow>
                     ))}
                   </TableBody>

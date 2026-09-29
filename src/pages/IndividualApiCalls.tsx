@@ -12,7 +12,7 @@ import { buildDateRangeParams } from "@/lib/utils";
 import { fetchIndividualApiCalls, type IndividualApiCall } from "@/services/api";
 import { SnapshotState, formatLatency, formatNumber } from "./serviceSnapshotShared";
 
-const PAGE_SIZE = 24;
+const PAGE_SIZE = 10;
 
 function formatEventTime(value: string | null) {
   if (!value) return "Time unavailable";

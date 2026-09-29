@@ -149,6 +149,8 @@ export interface ServiceSnapshotApi {
   key: string;
   name: string;
   description: string;
+  sourceService: string | null;
+  scopeCategories: string[];
   method: string | null;
   endpoint: string | null;
   kind: "direct" | "fallback";
@@ -230,6 +232,20 @@ export interface IndividualApiCallsParams extends Pick<PaginationParams, "startD
   outcome?: "success" | "failure";
   layer?: string;
   service?: string;
+}
+
+export interface ServiceApiCallsParams extends Pick<PaginationParams, "startDate" | "endDate" | "page"> {
+  sourceService: string;
+  endpoint: string;
+  method: string | null;
+  kind: "direct" | "fallback";
+  categories: string[];
+  outcome?: "success" | "failure";
+}
+
+export interface ServiceApiCallsResponse {
+  calls: IndividualApiCall[];
+  summary: { total: number; successful: number; failed: number };
 }
 
 export interface UserPaginationParams extends PaginationParams {
@@ -1426,7 +1442,7 @@ export const fetchIndividualApiCalls = async (
     startDate: params.startDate || "",
     endDate: params.endDate || "",
     page: params.page || 1,
-    limit: params.limit || 24,
+    limit: params.limit || 10,
     search: params.search || "",
     outcome: params.outcome || "",
     layer: params.layer || "",
@@ -1436,6 +1452,27 @@ export const fetchIndividualApiCalls = async (
   if (!response.ok) throw new Error("Failed to fetch individual API calls");
   const result = await response.json();
   if (!result.success) throw new Error(result.error || "Failed to fetch individual API calls");
+  return { data: result.data, pagination: result.pagination, warning: result.warning };
+};
+
+export const fetchServiceApiCalls = async (
+  params: ServiceApiCallsParams
+): Promise<{ data: ServiceApiCallsResponse; pagination: { page: number; limit: number; total: number; totalPages: number }; warning?: string }> => {
+  const queryParams = buildQueryParams({
+    sourceService: params.sourceService,
+    endpoint: params.endpoint,
+    method: params.method || "",
+    kind: params.kind,
+    categories: JSON.stringify(params.categories),
+    startDate: params.startDate || "",
+    endDate: params.endDate || "",
+    page: params.page || 1,
+    outcome: params.outcome || "",
+  });
+  const response = await fetch(`${SERVER_URL}/service-snapshot/api-calls?${queryParams}`);
+  if (!response.ok) throw new Error("Failed to fetch service API calls");
+  const result = await response.json();
+  if (!result.success) throw new Error(result.error || "Failed to fetch service API calls");
   return { data: result.data, pagination: result.pagination, warning: result.warning };
 };
 
