@@ -23,6 +23,7 @@ import {
   ClipboardCheck,
   AlertTriangle,
   FlaskConical,
+  ServerCog,
 } from "lucide-react";
 import {
   DropdownMenu,
@@ -90,6 +91,11 @@ const Layout: React.FC<LayoutProps> = ({ children }) => {
       name: "Evaluation",
       path: "/evaluation",
       icon: <FlaskConical size={20} />,
+    },
+    {
+      name: "Service Performance",
+      path: "/service-snapshot",
+      icon: <ServerCog size={20} />,
     },
     // Conditionally add Errors menu item for super-admin users only
     ...(isSuper
