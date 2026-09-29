@@ -78,7 +78,7 @@ const ServiceSnapshotDetail = () => {
                         <TableCell>
                           <div className="flex flex-wrap items-center gap-2">
                             <Badge variant="secondary">{api.kind === "direct" ? "Direct API" : "Provider operation"}</Badge>
-                            <code className="break-all text-xs text-muted-foreground">{api.method} {api.endpoint}</code>
+                            <code className="break-all text-xs text-muted-foreground">{api.method || "Not captured"} {api.endpoint || "Not captured"}</code>
                           </div>
                         </TableCell>
                         <TableCell className="font-semibold">{formatNumber(api.metrics.requests)}</TableCell>
