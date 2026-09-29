@@ -23,6 +23,7 @@ import {
   ClipboardCheck,
   AlertTriangle,
   FlaskConical,
+  ServerCog,
 } from "lucide-react";
 import {
   DropdownMenu,
@@ -85,6 +86,11 @@ const Layout: React.FC<LayoutProps> = ({ children }) => {
       name: "Feedback",
       path: "/feedback",
       icon: <ClipboardCheck size={20} />,
+    },
+    {
+      name: "Service Performance",
+      path: "/service-snapshot",
+      icon: <ServerCog size={20} />,
     },
     // {
     //   name: "Evaluation",

@@ -24,6 +24,11 @@ import { isSuperAdmin } from "@/utils/roleUtils";
 import Evaluation from "./pages/Evaluation";
 import EvaluationDetails from "./pages/EvaluationDetails";
 import EvaluationRunAdmin from "./pages/EvaluationRunAdmin";
+import ServiceSnapshot from "./pages/ServiceSnapshot";
+import ServiceSnapshotProvider from "./pages/ServiceSnapshotProvider";
+import ServiceSnapshotDetail from "./pages/ServiceSnapshotDetail";
+import IndividualApiCalls from "./pages/IndividualApiCalls";
+import IndividualApiCallDetail from "./pages/IndividualApiCallDetail";
 
 const queryClient = new QueryClient({
   defaultOptions: {
@@ -109,6 +114,11 @@ const App = () => {
                   <ServiceStatus />
                 </Layout>
               } />
+              <Route path="/service-snapshot" element={<Layout><ServiceSnapshot /></Layout>} />
+              <Route path="/service-snapshot/provider/:providerName" element={<Layout><ServiceSnapshotProvider /></Layout>} />
+              <Route path="/service-snapshot/provider/:providerName/service/:serviceKey" element={<Layout><ServiceSnapshotDetail /></Layout>} />
+              <Route path="/individual-apis" element={<Layout><IndividualApiCalls /></Layout>} />
+              <Route path="/individual-apis/:id" element={<Layout><IndividualApiCallDetail /></Layout>} />
               {/* <Route path="/health-monitor" element={
                 <Layout>
                   <HealthMonitor />
