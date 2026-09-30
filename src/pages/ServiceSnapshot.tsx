@@ -75,7 +75,7 @@ const ServiceSnapshot = () => {
                           <TableCell className="font-semibold">{formatNumber(metrics.apiRequests)}</TableCell>
                           <TableCell className="text-right">
                             <Link to={providerPath} className="inline-flex items-center gap-2 text-sm font-medium text-primary hover:underline focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring">
-                              View services <ArrowUpRight className="h-4 w-4" />
+                              View services
                             </Link>
                           </TableCell>
                         </TableRow>

@@ -1,5 +1,5 @@
 import { Link, useParams } from "react-router-dom";
-import { ArrowLeft, ArrowUpRight, Braces, ServerCog } from "lucide-react";
+import { ArrowLeft, Braces, ServerCog } from "lucide-react";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
@@ -50,7 +50,7 @@ const ServiceSnapshotDetail = () => {
                 <div className="flex h-9 w-9 items-center justify-center rounded-md bg-primary/10 text-primary"><Braces className="h-4 w-4" /></div>
                 <div>
                   <CardTitle className="text-lg">APIs</CardTitle>
-                  <CardDescription>{service.apis.length} observed {service.apis.length === 1 ? "API" : "APIs"}. API requests can include retries.</CardDescription>
+                  <CardDescription>{service.apis.length} API {service.apis.length === 1 ? "endpoint" : "endpoints"} observed. API requests can include retries.</CardDescription>
                 </div>
               </div>
             </CardHeader>
@@ -61,7 +61,7 @@ const ServiceSnapshotDetail = () => {
                     <TableRow>
                       <TableHead className="min-w-[210px]">API</TableHead>
                       <TableHead className="min-w-[270px]">Endpoint</TableHead>
-                      <TableHead>Requests</TableHead>
+                      <TableHead>API requests</TableHead>
                       <TableHead>Success %</TableHead>
                       <TableHead>Failure %</TableHead>
                       <TableHead>P90 latency</TableHead>
@@ -93,7 +93,7 @@ const ServiceSnapshotDetail = () => {
                               to={`/service-snapshot/provider/${providerSlug(provider.name)}/service/${encodeURIComponent(service.key)}/api/${encodeURIComponent(api.key)}`}
                               className="inline-flex whitespace-nowrap items-center gap-2 text-sm font-medium text-primary hover:underline focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring"
                             >
-                              View individual API <ArrowUpRight className="h-4 w-4" />
+                              View individual API
                             </Link>
                           ) : <span className="text-sm text-muted-foreground">Unavailable</span>}
                         </TableCell>

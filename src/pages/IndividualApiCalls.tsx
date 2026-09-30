@@ -1,7 +1,7 @@
 import { useMemo, useState } from "react";
 import { Link } from "react-router-dom";
 import { useQuery } from "@tanstack/react-query";
-import { Activity, ArrowLeft, ArrowUpRight, CheckCircle2, Clock3, Filter, Search, Server, TriangleAlert, XCircle } from "lucide-react";
+import { Activity, ArrowLeft, CheckCircle2, Clock3, Filter, Search, Server, TriangleAlert, XCircle } from "lucide-react";
 import TablePagination from "@/components/TablePagination";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
@@ -57,7 +57,7 @@ function CallCard({ call }: { call: IndividualApiCall }) {
             </div>
             <div className="flex shrink-0 items-center border-t pt-4 lg:border-l lg:border-t-0 lg:pl-5 lg:pt-0">
               <Button asChild size="sm" variant="outline" className="border-primary/30 text-primary hover:bg-primary/5">
-                <Link to={`/individual-apis/${call.id}`}>View details <ArrowUpRight className="ml-2 h-4 w-4" /></Link>
+                <Link to={`/individual-apis/${call.id}`}>View details</Link>
               </Button>
             </div>
           </div>
@@ -102,7 +102,7 @@ const IndividualApiCalls = () => {
       {data && (
         <>
           <div className="grid gap-3 sm:grid-cols-3">
-            <Card className="border-border/80 bg-gradient-to-br from-primary/10 via-background to-background"><CardContent className="p-4"><div className="text-xs font-medium text-muted-foreground">Captured calls</div><div className="mt-1 text-2xl font-bold">{formatNumber(data.summary.total)}</div></CardContent></Card>
+            <Card className="border-border/80 bg-gradient-to-br from-primary/10 via-background to-background"><CardContent className="p-4"><div className="text-xs font-medium text-muted-foreground">Captured API calls</div><div className="mt-1 text-2xl font-bold">{formatNumber(data.summary.total)}</div></CardContent></Card>
             <Card className="border-emerald-500/20 bg-gradient-to-br from-emerald-500/10 via-background to-background"><CardContent className="p-4"><div className="text-xs font-medium text-muted-foreground">Successful</div><div className="mt-1 text-2xl font-bold text-emerald-700 dark:text-emerald-300">{formatNumber(data.summary.successful)}</div></CardContent></Card>
             <Card className="border-rose-500/20 bg-gradient-to-br from-rose-500/10 via-background to-background"><CardContent className="p-4"><div className="text-xs font-medium text-muted-foreground">Failed</div><div className="mt-1 text-2xl font-bold text-rose-700 dark:text-rose-300">{formatNumber(data.summary.failed)}</div></CardContent></Card>
           </div>

@@ -1,5 +1,5 @@
 import { useQuery } from "@tanstack/react-query";
-import { Link, useParams } from "react-router-dom";
+import { Link, useParams, useSearchParams } from "react-router-dom";
 import { Activity, ArrowLeft, CheckCircle2, Clock3, Code2, Copy, Server, TriangleAlert, XCircle } from "lucide-react";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
@@ -29,8 +29,18 @@ function formatTime(value: string | null) {
   return Number.isNaN(date.getTime()) ? "—" : new Intl.DateTimeFormat("en-IN", { dateStyle: "medium", timeStyle: "medium" }).format(date);
 }
 
+function safeReturnTo(value: string | null) {
+  if (!value || !value.startsWith("/") || value.startsWith("//")) return "/individual-apis";
+  return value.startsWith("/individual-apis") || value.startsWith("/service-snapshot/")
+    ? value
+    : "/individual-apis";
+}
+
 const IndividualApiCallDetail = () => {
   const { id } = useParams();
+  const [searchParams] = useSearchParams();
+  const returnTo = safeReturnTo(searchParams.get("returnTo"));
+  const returnLabel = returnTo.startsWith("/service-snapshot/") ? "Service API calls" : "Individual APIs";
   const query = useQuery({ queryKey: ["individual-api-call", id], queryFn: () => fetchIndividualApiCall(id || ""), enabled: Boolean(id) });
   const call = query.data;
   const isSuccess = call?.outcome === "success";
@@ -38,11 +48,11 @@ const IndividualApiCallDetail = () => {
   const StatusIcon = isSuccess ? CheckCircle2 : isFailure ? XCircle : TriangleAlert;
 
   if (query.isLoading) return <Card><CardContent className="py-12 text-center text-muted-foreground">Loading API call details…</CardContent></Card>;
-  if (query.isError || !call) return <Card><CardContent className="py-12 text-center"><div className="font-medium">API call details could not be loaded</div><Link to="/individual-apis" className="mt-3 inline-block text-sm text-primary hover:underline">Back to Individual APIs</Link></CardContent></Card>;
+  if (query.isError || !call) return <Card><CardContent className="py-12 text-center"><div className="font-medium">API call details could not be loaded</div><Link to={returnTo} className="mt-3 inline-block text-sm text-primary hover:underline">Back to {returnLabel}</Link></CardContent></Card>;
 
   return <div className="space-y-6">
     <div>
-      <Link to="/individual-apis" className="mb-3 inline-flex items-center gap-2 text-sm text-muted-foreground hover:text-foreground"><ArrowLeft className="h-4 w-4" />Individual APIs</Link>
+      <Link to={returnTo} className="mb-3 inline-flex items-center gap-2 text-sm text-muted-foreground hover:text-foreground"><ArrowLeft className="h-4 w-4" />{returnLabel}</Link>
       <div className="flex flex-wrap items-start justify-between gap-4">
         <div className="min-w-0"><div className="mb-3 flex flex-wrap items-center gap-2"><Badge variant="outline" className="font-mono">{call.method || "CALL"}</Badge><Badge variant="secondary">{call.layer || "Unspecified layer"}</Badge><Badge variant="outline" className={isSuccess ? "border-emerald-500/30 bg-emerald-500/10 text-emerald-700 dark:text-emerald-300" : isFailure ? "border-rose-500/30 bg-rose-500/10 text-rose-700 dark:text-rose-300" : "border-amber-500/30 bg-amber-500/10 text-amber-700 dark:text-amber-300"}><StatusIcon className="mr-1 h-3.5 w-3.5" />{isSuccess ? "Success" : isFailure ? "Failed" : call.outcome || "Unknown"}</Badge></div><h1 className="break-all font-mono text-xl font-bold tracking-tight sm:text-2xl">{call.endpoint}</h1><p className="mt-2 text-sm text-muted-foreground">{call.service || "Unspecified service"} · {call.event_name}</p></div>
       </div>

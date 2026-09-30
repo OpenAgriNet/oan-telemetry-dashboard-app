@@ -13,6 +13,10 @@ const application = localAuthBypass ? <App /> : (
       authClient={keycloak} 
       initOptions={{
         onLoad: 'login-required',
+        // The deployed Keycloak client has a dashboard URL as its default.
+        // During Vite development, explicitly return users to the local app
+        // after authentication instead of that deployed default.
+        redirectUri: import.meta.env.DEV ? window.location.href : undefined,
         checkLoginIframe: false,
         pkceMethod: 'S256'
       }}>

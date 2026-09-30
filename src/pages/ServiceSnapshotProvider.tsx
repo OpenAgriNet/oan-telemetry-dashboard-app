@@ -1,5 +1,5 @@
 import { Link, useParams } from "react-router-dom";
-import { ArrowLeft, ChartNoAxesCombined, ServerCog } from "lucide-react";
+import { ArrowLeft, ServerCog } from "lucide-react";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
@@ -52,16 +52,16 @@ const ServiceSnapshotProvider = () => {
               </CardHeader>
               <CardContent className="p-0">
                 <div className="overflow-x-auto">
-                  <Table>
+                  <Table className="min-w-[900px] table-fixed">
                     <TableHeader>
                       <TableRow>
-                        <TableHead>Service</TableHead>
-                        <TableHead className="min-w-[240px]">What is the service</TableHead>
-                        <TableHead>Requests</TableHead>
-                        <TableHead>Success %</TableHead>
-                        <TableHead>P90 latency</TableHead>
-                        <TableHead>APIs</TableHead>
-                        <TableHead className="text-right">Action</TableHead>
+                        <TableHead className="w-[16%]">Service</TableHead>
+                        <TableHead className="w-[28%]">What is the service</TableHead>
+                        <TableHead className="w-[13%]">Service requests</TableHead>
+                        <TableHead className="w-[10%]">Success %</TableHead>
+                        <TableHead className="w-[10%]">P90 latency</TableHead>
+                        <TableHead className="w-[7%]">APIs</TableHead>
+                        <TableHead className="w-[16%] whitespace-nowrap text-right">Action</TableHead>
                       </TableRow>
                     </TableHeader>
                     <TableBody>
@@ -73,11 +73,11 @@ const ServiceSnapshotProvider = () => {
                           <TableCell><Rate value={service.metrics.successPercentage} /></TableCell>
                           <TableCell className="whitespace-nowrap font-medium">{formatLatency(service.metrics.p90LatencyMs)}</TableCell>
                           <TableCell><Badge variant="secondary">{service.apis.length}</Badge></TableCell>
-                          <TableCell className="text-right">
+                          <TableCell className="whitespace-nowrap text-right">
                             <Link
                               to={`/service-snapshot/provider/${providerSlug(provider.name)}/service/${encodeURIComponent(service.key)}`}
-                              className="inline-flex items-center gap-2 text-sm font-medium text-primary hover:underline focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring"
-                            ><ChartNoAxesCombined className="h-4 w-4" />View APIs</Link>
+                              className="inline-flex text-sm font-medium text-primary hover:underline focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring"
+                            >View APIs</Link>
                           </TableCell>
                         </TableRow>
                       ))}
