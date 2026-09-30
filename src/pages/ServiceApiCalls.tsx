@@ -74,7 +74,9 @@ const ServiceApiCalls = () => {
   return (
     <div className="space-y-6">
       <div>
-        <Link to={servicePath} className="mb-3 inline-flex items-center gap-2 text-sm text-muted-foreground hover:text-foreground"><ArrowLeft className="h-4 w-4" />{service?.name || "Service APIs"}</Link>
+        <Button asChild variant="ghost" size="sm" className="-ml-3 mb-3 text-muted-foreground">
+          <Link to={servicePath}><ArrowLeft className="mr-2 h-4 w-4" />{service?.name || "Service APIs"}</Link>
+        </Button>
         <div className="flex flex-wrap items-start justify-between gap-4">
           <div className="min-w-0">
             <div className="mb-3 flex flex-wrap items-center gap-2"><Badge variant="outline" className="font-mono">{api?.method || "CALL"}</Badge><Badge variant="secondary">Individual API calls</Badge></div>
@@ -109,17 +111,14 @@ const ServiceApiCalls = () => {
             <Card className="border-border/80">
               <CardContent className="p-0">
                 <div className="overflow-x-auto">
-                  <Table className="min-w-[1120px]">
+                  <Table className="min-w-[820px]">
                     <TableHeader>
                       <TableRow>
-                        <TableHead>Method</TableHead>
-                        <TableHead>Layer</TableHead>
-                        <TableHead className="min-w-[300px]">Endpoint</TableHead>
+                        <TableHead className="min-w-[340px]">Endpoint</TableHead>
                         <TableHead>Status</TableHead>
                         <TableHead className="whitespace-nowrap">Captured at</TableHead>
                         <TableHead className="whitespace-nowrap">Duration</TableHead>
                         <TableHead className="whitespace-nowrap">HTTP status</TableHead>
-                        <TableHead>Dependency</TableHead>
                         <TableHead className="whitespace-nowrap text-right">Action</TableHead>
                       </TableRow>
                     </TableHeader>
@@ -129,14 +128,11 @@ const ServiceApiCalls = () => {
                         const StatusIcon = status.icon;
                         return (
                           <TableRow key={call.id}>
-                            <TableCell><Badge variant="outline" className="font-mono text-xs">{call.method || "CALL"}</Badge></TableCell>
-                            <TableCell><Badge variant="secondary" className="whitespace-nowrap font-normal">{call.layer || "Unspecified layer"}</Badge></TableCell>
-                            <TableCell><code className="break-all text-xs font-semibold text-foreground">{displayEndpoint(call.endpoint)}</code></TableCell>
+                            <TableCell><code className="break-all text-xs font-semibold text-foreground">{call.method || "CALL"} {displayEndpoint(call.endpoint)}</code></TableCell>
                             <TableCell><Badge variant="outline" className={`whitespace-nowrap ${status.className}`}><StatusIcon className="mr-1 h-3.5 w-3.5" />{status.label}</Badge></TableCell>
                             <TableCell className="whitespace-nowrap text-sm text-muted-foreground">{formatEventTime(call.event_time)}</TableCell>
                             <TableCell className="whitespace-nowrap font-medium">{formatLatency(call.duration_ms)}</TableCell>
                             <TableCell className="whitespace-nowrap">{call.http_status !== null ? `HTTP ${call.http_status}` : "—"}</TableCell>
-                            <TableCell className="text-sm text-muted-foreground">{call.dependency || "—"}</TableCell>
                             <TableCell className="whitespace-nowrap text-right">
                               <Button asChild size="sm" variant="outline" className="border-primary/30 text-primary hover:bg-primary/5">
                                 <Link to={`/individual-apis/${call.id}?returnTo=${encodeURIComponent(returnTo)}`}>View details</Link>

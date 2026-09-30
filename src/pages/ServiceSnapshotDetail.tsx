@@ -1,6 +1,5 @@
 import { Link, useParams } from "react-router-dom";
 import { ArrowLeft, Braces, ServerCog } from "lucide-react";
-import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
@@ -38,7 +37,7 @@ const ServiceSnapshotDetail = () => {
       {service && (
         <>
           <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-4">
-            <Card className="border-border/80"><CardHeader className="pb-2"><CardDescription>Service requests</CardDescription><CardTitle>{formatNumber(service.metrics.requests)}</CardTitle></CardHeader></Card>
+            <Card className="border-border/80"><CardHeader className="pb-2"><CardDescription>API endpoints</CardDescription><CardTitle>{formatNumber(service.apis.length)}</CardTitle></CardHeader></Card>
             <Card className="border-border/80"><CardHeader className="pb-2"><CardDescription>Success rate</CardDescription><CardTitle><Rate value={service.metrics.successPercentage} /></CardTitle></CardHeader></Card>
             <Card className="border-border/80"><CardHeader className="pb-2"><CardDescription>P90 latency</CardDescription><CardTitle>{formatLatency(service.metrics.p90LatencyMs)}</CardTitle></CardHeader></Card>
             <Card className="border-border/80"><CardHeader className="pb-2"><CardDescription>Max latency</CardDescription><CardTitle>{formatLatency(service.metrics.maxLatencyMs)}</CardTitle></CardHeader></Card>
@@ -77,10 +76,7 @@ const ServiceSnapshotDetail = () => {
                           <div className="mt-1 text-xs text-muted-foreground">{api.description}</div>
                         </TableCell>
                         <TableCell>
-                          <div className="flex flex-wrap items-center gap-2">
-                            <Badge variant="secondary">{api.kind === "direct" ? "Direct API" : "Provider operation"}</Badge>
-                            <code className="break-all text-xs text-muted-foreground">{api.method || "Not captured"} {api.endpoint || "Not captured"}</code>
-                          </div>
+                          <code className="break-all text-xs text-muted-foreground">{api.method || "Not captured"} {api.endpoint || "Not captured"}</code>
                         </TableCell>
                         <TableCell className="font-semibold">{formatNumber(api.metrics.requests)}</TableCell>
                         <TableCell><Rate value={api.metrics.successPercentage} /></TableCell>

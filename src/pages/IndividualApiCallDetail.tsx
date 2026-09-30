@@ -52,7 +52,9 @@ const IndividualApiCallDetail = () => {
 
   return <div className="space-y-6">
     <div>
-      <Link to={returnTo} className="mb-3 inline-flex items-center gap-2 text-sm text-muted-foreground hover:text-foreground"><ArrowLeft className="h-4 w-4" />{returnLabel}</Link>
+      <Button asChild variant="ghost" size="sm" className="-ml-3 mb-3 text-muted-foreground">
+        <Link to={returnTo}><ArrowLeft className="mr-2 h-4 w-4" />{returnLabel}</Link>
+      </Button>
       <div className="flex flex-wrap items-start justify-between gap-4">
         <div className="min-w-0"><div className="mb-3 flex flex-wrap items-center gap-2"><Badge variant="outline" className="font-mono">{call.method || "CALL"}</Badge><Badge variant="secondary">{call.layer || "Unspecified layer"}</Badge><Badge variant="outline" className={isSuccess ? "border-emerald-500/30 bg-emerald-500/10 text-emerald-700 dark:text-emerald-300" : isFailure ? "border-rose-500/30 bg-rose-500/10 text-rose-700 dark:text-rose-300" : "border-amber-500/30 bg-amber-500/10 text-amber-700 dark:text-amber-300"}><StatusIcon className="mr-1 h-3.5 w-3.5" />{isSuccess ? "Success" : isFailure ? "Failed" : call.outcome || "Unknown"}</Badge></div><h1 className="break-all font-mono text-xl font-bold tracking-tight sm:text-2xl">{call.endpoint}</h1><p className="mt-2 text-sm text-muted-foreground">{call.service || "Unspecified service"} · {call.event_name}</p></div>
       </div>
