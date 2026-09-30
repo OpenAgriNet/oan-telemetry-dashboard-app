@@ -38,11 +38,9 @@ export const KEYCLOAK_CONFIG = {
 
 export const API_CONFIG = {
   SERVER_URL:
-    import.meta.env.DEV
-      ? import.meta.env.VITE_API_SERVER_URL || "http://localhost:3000/v1"
-      : runtimeConfig().API_SERVER_URL ||
-        import.meta.env.VITE_API_SERVER_URL ||
-        "https://vistaar-dashboard-dev.mahapocra.gov.in/v1",
+    runtimeConfig().API_SERVER_URL ||
+    import.meta.env.VITE_API_SERVER_URL ||
+    "https://vistaar-dashboard-dev.mahapocra.gov.in/v1",
 };
 
 export const WATCHTOWER_CONFIG = {
