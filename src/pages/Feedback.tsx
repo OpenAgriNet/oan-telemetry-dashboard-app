@@ -214,7 +214,7 @@ const FeedbackPage = () => {
   if (error) {
     return (
       <div className="space-y-6">
-        <div className="flex items-center justify-between">
+        <div className="flex flex-wrap items-center justify-between gap-3">
           <h1 className="text-2xl font-bold tracking-tight">User Feedback</h1>
         </div>
         <div className="flex justify-center items-center p-8 bg-destructive/10 border border-destructive/20 rounded-lg">
@@ -236,7 +236,7 @@ const FeedbackPage = () => {
 
   return (
     <div className="space-y-6">
-      <div className="flex items-center justify-between">
+      <div className="flex flex-wrap items-center justify-between gap-3">
         <h1 className="text-2xl font-bold tracking-tight">User Feedback</h1>
         <div className="flex gap-2">
           <Button
@@ -341,8 +341,8 @@ const FeedbackPage = () => {
         </CardHeader>
         <CardContent>
           <div className="space-y-4">
-            <div className="flex flex-col md:flex-row gap-4">
-              <div className="relative flex-1">
+            <div className="flex flex-wrap gap-2 md:gap-4">
+              <div className="relative min-w-0 basis-full md:basis-0 flex-1">
                 <Search className="h-4 w-4 absolute left-2 top-2.5 text-muted-foreground" />
                 <Input
                   type="search"
@@ -417,7 +417,7 @@ const FeedbackPage = () => {
                 </Button>
               </div>
             ) : (
-              <Table>
+              <Table className="min-w-[640px]">
                 <TableHeader>
                   <TableRow>
                     <TableHead

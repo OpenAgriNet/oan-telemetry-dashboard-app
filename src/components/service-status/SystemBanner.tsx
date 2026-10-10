@@ -104,7 +104,7 @@ const SystemBanner: React.FC<SystemBannerProps> = ({
             <div className="font-medium text-lg">
               {systemStats.message || 'System status unknown'}
             </div>
-            <div className="flex items-center gap-6 text-sm opacity-90">
+            <div className="flex flex-wrap items-center gap-3 sm:gap-6 text-sm opacity-90">
               <div className="flex items-center gap-2">
                 <span className="font-medium">Overall Uptime:</span>
                 <span>{(systemStats.overallUptimePercentage || 0).toFixed(2)}%</span>

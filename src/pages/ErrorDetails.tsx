@@ -36,8 +36,8 @@ const ErrorDetails = () => {
   // Check if user has super-admin role (after all hooks)
   if (!isSuperAdmin(keycloak)) {
     return (
-      <div className="space-y-6">
-        <div className="flex items-center gap-4">
+      <div className="space-y-6 break-words [overflow-wrap:anywhere]">
+        <div className="flex flex-wrap items-center gap-4">
           <Link to="/errors">
             <Button variant="outline" size="sm">
               <ArrowLeft className="h-4 w-4 mr-2" />
@@ -58,8 +58,8 @@ const ErrorDetails = () => {
 
   if (isLoading) {
     return (
-      <div className="space-y-6">
-        <div className="flex items-center gap-4">
+      <div className="space-y-6 break-words [overflow-wrap:anywhere]">
+        <div className="flex flex-wrap items-center gap-4">
           <Link to="/errors">
             <Button variant="outline" size="sm">
               <ArrowLeft className="h-4 w-4 mr-2" />
@@ -76,8 +76,8 @@ const ErrorDetails = () => {
 
   if (error || !errorDetail) {
     return (
-      <div className="space-y-6">
-        <div className="flex items-center gap-4">
+      <div className="space-y-6 break-words [overflow-wrap:anywhere]">
+        <div className="flex flex-wrap items-center gap-4">
           <Link to="/errors">
             <Button variant="outline" size="sm">
               <ArrowLeft className="h-4 w-4 mr-2" />
@@ -97,10 +97,10 @@ const ErrorDetails = () => {
   }
 
   return (
-    <div className="space-y-6">
+    <div className="space-y-6 break-words [overflow-wrap:anywhere]">
       {/* Header */}
       <div className="flex items-center justify-between">
-        <div className="flex items-center gap-4">
+        <div className="flex flex-wrap items-center gap-4">
           <Link to="/errors">
             <Button variant="outline" size="sm">
               <ArrowLeft className="h-4 w-4 mr-2" />

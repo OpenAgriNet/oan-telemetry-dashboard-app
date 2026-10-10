@@ -278,7 +278,7 @@ console.log("Questions from ISO",dateRange.from?.toISOString())
   if (error) {
     return (
       <div className="space-y-6">
-        <div className="flex items-center justify-between">
+        <div className="flex flex-wrap items-center justify-between gap-3">
           <h1 className="text-2xl font-bold tracking-tight">
             Questions Report
           </h1>
@@ -302,7 +302,7 @@ console.log("Questions from ISO",dateRange.from?.toISOString())
 
   return (
     <div className="space-y-6">
-      <div className="flex items-center justify-between">
+      <div className="flex flex-wrap items-center justify-between gap-3">
         <h1 className="text-2xl font-bold tracking-tight">Questions Report</h1>
         <div className="flex gap-2">
           <Button
@@ -342,8 +342,8 @@ console.log("Questions from ISO",dateRange.from?.toISOString())
         </Card>
       </div>
 
-      <div className="flex flex-col md:flex-row gap-4">
-        <div className="relative flex-1">
+      <div className="flex flex-wrap gap-2 md:gap-4">
+        <div className="relative min-w-0 basis-full md:basis-0 flex-1">
           <Search className="absolute left-2 top-2.5 h-4 w-4 text-muted-foreground" />
           <Input
             type="search"
@@ -376,7 +376,7 @@ console.log("Questions from ISO",dateRange.from?.toISOString())
             </div>
           </div>
         ) : (
-          <Table>
+          <Table className="min-w-[640px]">
             <TableHeader>
               <TableRow>
                 <TableHead
