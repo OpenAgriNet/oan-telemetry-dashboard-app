@@ -310,7 +310,7 @@ const Dashboard = () => {
       </div>
 
       <Card className="card-gradient">
-        <CardHeader className="flex flex-row items-center justify-between pb-2">
+        <CardHeader className="flex flex-col items-start gap-3 pb-2 sm:flex-row sm:items-center sm:justify-between">
           <CardTitle>Chart Options</CardTitle>
           <div className="flex items-center gap-4">
             {/* <div className="flex items-center gap-2">
@@ -348,7 +348,7 @@ const Dashboard = () => {
 
       <div className="grid gap-4">
         <Tabs value={currentTab} onValueChange={(value) => setCurrentTab(value as typeof currentTab)}>
-          <TabsList>
+          <TabsList className="grid h-auto w-full grid-cols-2 sm:inline-flex sm:h-10 sm:w-auto">
             <TabsTrigger value="users">
               Users
             </TabsTrigger>

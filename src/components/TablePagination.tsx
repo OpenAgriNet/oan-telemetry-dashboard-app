@@ -63,7 +63,7 @@ const TablePagination = ({
 
   return (
     <Pagination className="mt-4">
-      <PaginationContent>
+      <PaginationContent className="flex-wrap justify-center">
         <PaginationItem>
           <PaginationPrevious
             onClick={() => currentPage > 1 && onPageChange(currentPage - 1)}

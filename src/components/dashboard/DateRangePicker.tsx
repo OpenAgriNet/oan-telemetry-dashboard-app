@@ -14,6 +14,7 @@ import {
 import { Calendar } from "@/components/ui/calendar";
 import { ChevronDown } from "lucide-react";
 import { format, subDays } from "date-fns";
+import { useIsMobile } from "@/hooks/use-mobile";
 import { cn } from "@/lib/utils";
 
 interface DateRangePickerProps {
@@ -27,6 +28,7 @@ const DateRangePicker: React.FC<DateRangePickerProps> = ({
   dateRange,
   setDateRange,
 }) => {
+  const isMobile = useIsMobile();
   const [isCalendarOpen, setIsCalendarOpen] = React.useState(false);
   const [selectedOption, setSelectedOption] = React.useState("last7");
   const hasInitialized = React.useRef(false);
@@ -84,7 +86,7 @@ const DateRangePicker: React.FC<DateRangePickerProps> = ({
   };
 
   return (
-    <div className="flex items-center gap-2">
+    <div className="flex min-w-0 flex-wrap items-center gap-2">
       <Popover open={isCalendarOpen} onOpenChange={setIsCalendarOpen}>
         <PopoverTrigger asChild>
           <Button
@@ -101,8 +103,8 @@ const DateRangePicker: React.FC<DateRangePickerProps> = ({
             {formatDateRange()}
           </Button>
         </PopoverTrigger>
-        <PopoverContent className="w-auto p-0" align="start">
-          <div className="p-4">
+        <PopoverContent className="w-auto max-w-[calc(100vw-1rem)] max-h-[calc(100dvh-2rem)] overflow-y-auto p-0" align="start">
+          <div className="p-1 sm:p-4">
             <Calendar
               initialFocus
               mode="range"
@@ -124,8 +126,7 @@ const DateRangePicker: React.FC<DateRangePickerProps> = ({
                   setSelectedOption("custom");
                 }
               }}
-              numberOfMonths={2}
-              className="flex space-x-4"
+              numberOfMonths={isMobile ? 1 : 2}
             />
           </div>
           <div className="p-3 border-t border-border flex justify-between bg-muted">
