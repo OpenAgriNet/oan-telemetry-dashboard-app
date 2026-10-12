@@ -1,3 +1,4 @@
+import TelemetryDetailLink from "@/components/TelemetryDetailLink";
 import React from "react";
 import { useParams, Link } from "react-router-dom";
 import { useQuery } from "@tanstack/react-query";
@@ -14,7 +15,7 @@ import {
   MessageSquare
 } from "lucide-react";
 import { useAppAuth } from "@/lib/useAppAuth";
-import { isSuperAdmin } from "@/utils/roleUtils";
+import { canViewTelemetryDetails } from "@/utils/roleUtils";
 import { fetchErrorById } from "@/services/api";
 
 const ErrorDetails = () => {
@@ -28,13 +29,13 @@ const ErrorDetails = () => {
   } = useQuery({
     queryKey: ['error-detail', errorId],
     queryFn: () => fetchErrorById(errorId!),
-    enabled: !!errorId,
+    enabled: !!errorId && canViewTelemetryDetails(keycloak),
     retry: 3,
     retryDelay: (attemptIndex) => Math.min(1000 * 2 ** attemptIndex, 30000),
   });
 
-  // Check if user has super-admin role (after all hooks)
-  if (!isSuperAdmin(keycloak)) {
+  // Check permission after all hooks.
+  if (!canViewTelemetryDetails(keycloak)) {
     return (
       <div className="space-y-6 break-words [overflow-wrap:anywhere]">
         <div className="flex flex-wrap items-center gap-4">
@@ -49,7 +50,7 @@ const ErrorDetails = () => {
           <div className="text-center">
             <AlertTriangle className="h-12 w-12 text-destructive mx-auto mb-4" />
             <p className="text-destructive font-medium mb-2">Access Denied</p>
-            <p className="text-destructive/80 text-sm">You don't have permission to access this page. Only super-admin users can view error details.</p>
+            <p className="text-destructive/80 text-sm">You don't have permission to access this page. The telemetry-detail-viewer role is required to view error details.</p>
           </div>
         </div>
       </div>
@@ -88,8 +89,8 @@ const ErrorDetails = () => {
         <div className="flex justify-center items-center p-8 bg-destructive/10 border border-destructive/20 rounded-lg">
           <div className="text-center">
             <AlertTriangle className="h-12 w-12 text-destructive mx-auto mb-4" />
-            <p className="text-destructive font-medium mb-2">Error not found</p>
-            <p className="text-destructive/80 text-sm">The error you're looking for doesn't exist or has been removed.</p>
+            <p className="text-destructive font-medium mb-2">{error ? "Error loading error details" : "Error not found"}</p>
+            <p className="text-destructive/80 text-sm">{error ? error.message : "The error you're looking for doesn't exist or has been removed."}</p>
           </div>
         </div>
       </div>
@@ -207,7 +208,7 @@ const ErrorDetails = () => {
                 <label className="text-sm font-medium text-muted-foreground">Session ID</label>
                 <div className="mt-1">
                   <span className="text-sm">
-                    {errorDetail.sessionId}
+                    <TelemetryDetailLink to={`/sessions/${encodeURIComponent(errorDetail.sessionId)}`}>{errorDetail.sessionId}</TelemetryDetailLink>
                   </span>
                 </div>
               </div>

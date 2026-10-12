@@ -20,7 +20,11 @@ import Content from "./pages/Content";
 import ServiceStatus from "./pages/ServiceStatus";
 import HealthMonitor from "./pages/HealthMonitor";
 import { useAppAuth } from "@/lib/useAppAuth";
-import { isSuperAdmin } from "@/utils/roleUtils";
+import { isSuperAdmin, canViewTelemetryDetails, TELEMETRY_DETAIL_ROLE } from "@/utils/roleUtils";
+import RoleBasedAccess from "@/components/RoleBasedAccess";
+import SessionDetails from "./pages/SessionDetails";
+import QuestionsDetails from "./pages/QuestionsDetails";
+import FeedbackDetails from "./pages/FeedbackDetails";
 import Evaluation from "./pages/Evaluation";
 import EvaluationDetails from "./pages/EvaluationDetails";
 import EvaluationRunAdmin from "./pages/EvaluationRunAdmin";
@@ -47,8 +51,8 @@ const App = () => {
     return null;
   }
 
-  // Check if current user is super admin
-  const isSuper = isSuperAdmin(keycloak);
+  // Keep existing error report access and allow explicit detail viewers.
+  const canViewErrors = isSuperAdmin(keycloak) || canViewTelemetryDetails(keycloak);
 
   return (
   <QueryClientProvider client={queryClient}>
@@ -85,6 +89,10 @@ const App = () => {
                   <QuestionsReport />
                 </Layout>
               } />
+              <Route path="/sessions/:sessionId" element={<Layout><RoleBasedAccess allowedRoles={[TELEMETRY_DETAIL_ROLE]}><SessionDetails /></RoleBasedAccess></Layout>} />
+              <Route path="/questions/:id" element={<Layout><RoleBasedAccess allowedRoles={[TELEMETRY_DETAIL_ROLE]}><QuestionsDetails /></RoleBasedAccess></Layout>} />
+              <Route path="/feedback/:feedbackId" element={<Layout><RoleBasedAccess allowedRoles={[TELEMETRY_DETAIL_ROLE]}><FeedbackDetails /></RoleBasedAccess></Layout>} />
+              <Route path="/errors/:errorId" element={<Layout><RoleBasedAccess allowedRoles={[TELEMETRY_DETAIL_ROLE]}><ErrorDetails /></RoleBasedAccess></Layout>} />
               <Route path="/analytics" element={
                 <Layout>
                   <Analytics />
@@ -114,17 +122,12 @@ const App = () => {
                   <HealthMonitor />
                 </Layout>
               } /> */}
-              {/* Conditionally render error routes for super-admin users only */}
-              {isSuper && (
+              {/* Keep error reports available to admins and detail viewers. */}
+              {canViewErrors && (
                 <>
                   <Route path="/errors" element={
                     <Layout>
                       <Errors />
-                    </Layout>
-                  } />
-                  <Route path="/errors/:errorId" element={
-                    <Layout>
-                      <ErrorDetails />
                     </Layout>
                   } />
                 </>

@@ -5,7 +5,7 @@ import { useDateFilter } from "@/contexts/DateFilterContext";
 import { Button } from "@/components/ui/button";
 import { useAppAuth } from "@/lib/useAppAuth";
 import DateRangePicker from "@/components/dashboard/DateRangePicker";
-import { isSuperAdmin } from "@/utils/roleUtils";
+import { isSuperAdmin, canViewTelemetryDetails } from "@/utils/roleUtils";
 import {
   BarChart3,
   Users,
@@ -56,8 +56,8 @@ const Layout: React.FC<LayoutProps> = ({ children }) => {
     keycloak.logout();
   };
 
-  // Check if current user is super admin
-  const isSuper = isSuperAdmin(keycloak);
+  // Check report access
+  const canViewErrors = isSuperAdmin(keycloak) || canViewTelemetryDetails(keycloak);
 
   const navItems = [
     {
@@ -100,8 +100,8 @@ const Layout: React.FC<LayoutProps> = ({ children }) => {
     //   path: "/evaluation",
     //   icon: <FlaskConical size={20} />,
     // },
-    // Conditionally add Errors menu item for super-admin users only
-    ...(isSuper
+    // Error reports remain available to admins and detail viewers.
+    ...(canViewErrors
       ? [
           {
             name: "Errors",

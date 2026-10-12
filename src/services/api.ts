@@ -1,3 +1,4 @@
+import { fetchOptionalDetail, fetchSessionRecords } from "./detailApi";
 import React from 'react';
 import { API_CONFIG } from '../config/environment';
 import dailyMetrics from '../data/dailyMetrics.json';
@@ -742,6 +743,40 @@ export const fetchSessions = async (params: SessionPaginationParams = {}): Promi
   }
 };
 
+export const fetchSessionById = async (sessionId: string): Promise<SessionDetail | null> => {
+  const result = await fetchOptionalDetail<{ success: boolean; data: SessionDetail }>(
+    `${SERVER_URL}/sessions/${encodeURIComponent(sessionId)}`
+  );
+  if (!result) return null;
+  if (!result.success) throw new Error("Failed to fetch session details");
+  return result.data;
+};
+
+export const fetchQuestionById = async (id: string): Promise<Question | null> => {
+  const result = await fetchOptionalDetail<{ success: boolean; data: Question }>(
+    `${SERVER_URL}/questions/${encodeURIComponent(id)}`
+  );
+  if (!result) return null;
+  if (!result.success) throw new Error("Failed to fetch question details");
+  return result.data;
+};
+
+export const fetchFeedbackById = async (id: string): Promise<Feedback | null> => {
+  const result = await fetchOptionalDetail<Array<{
+    id: string; created_at: string; ets: string; questiontext: string; answertext: string;
+    user_id: string; feedbacktype: string; feedbacktext: string; session_id: string;
+  }>>(`${SERVER_URL}/feedback/id/${encodeURIComponent(id)}`);
+  if (!result) return null;
+  if (!Array.isArray(result) || !result.length) throw new Error("Invalid feedback detail response");
+  const item = result[0];
+  return {
+    id: item.id, date: item.created_at, timestamp: item.ets,
+    question: item.questiontext || "", answer: item.answertext || "",
+    user: item.user_id, userId: item.user_id, sessionId: item.session_id,
+    rating: item.feedbacktype, feedback: item.feedbacktext || "",
+  };
+};
+
 export const fetchSessionsByUserId = async (userId: string, params: SessionPaginationParams = {}): Promise<PaginatedResponse<Session>> => {
   try {
     const {
@@ -1331,100 +1366,24 @@ export const generateQuestionsReport = async (
   });
 };
 
-// Legacy functions that aren't in the new API
-export const fetchQuestionsBySessionId = async (sessionId: string): Promise<Question[]> => {
-  try {
-    console.log('Fetching questions for session:', sessionId);
-    
-    const response = await fetch(`${SERVER_URL}/questions/session/${sessionId}`);
-    
-    if (!response.ok) {
-      throw new Error(`HTTP error! status: ${response.status}`);
-    }
-    
-    const result = await response.json();
-    
-    if (!result.success) {
-      throw new Error('Failed to fetch questions by session ID');
-    }
-
-    // Handle case where result.data might not exist
-    if (!result.data || !Array.isArray(result.data)) {
-      console.warn('Questions API returned invalid data format for session:', sessionId);
-      return [];
-    }
-
-    return result.data;
-  } catch (error) {
-    console.error('Error fetching questions by session ID:', error);
-    throw error;
-  }
-};
+// Session detail APIs return all records, including paginated feedback and errors.
+export const fetchQuestionsBySessionId = (sessionId: string): Promise<Question[]> =>
+  fetchSessionRecords<Question>(`${SERVER_URL}/questions/session/${encodeURIComponent(sessionId)}`);
 
 export const fetchFeedbackBySessionId = async (sessionId: string): Promise<Feedback[]> => {
-  try {
-    console.log('Fetching feedback for session:', sessionId);
-    
-    const response = await fetch(`${SERVER_URL}/feedback/session/${sessionId}`);
-    
-    if (!response.ok) {
-      throw new Error(`HTTP error! status: ${response.status}`);
-    }
-    
-    const result = await response.json();
-    
-    // The backend returns data in FeedbackAPIResponse format with pagination
-    if (!result.data || !Array.isArray(result.data)) {
-      console.warn('Feedback API returned invalid data format for session:', sessionId);
-      return [];
-    }
-
-    // Transform the API response to match the Feedback interface
-    // The backend formatFeedbackData function returns data in this format:
-    const transformedData: Feedback[] = result.data.map((item: FeedbackSessionAPIResponse) => ({
-      id: item.id,
-      date: item.date || item.timestamp || new Date().toISOString(),
-      timestamp: item.timestamp,
-      question: item.question || "",
-      answer: item.answer || "",
-      user: item.user || "Unknown",
-      rating: item.rating === "like" ? "like" : "dislike",
-      feedback: item.feedback || "",
-      sessionId: item.sessionId || sessionId,
-      userId: item.user || ""
-    }));
-
-    return transformedData;
-  } catch (error) {
-    console.error('Error fetching feedback by session ID:', error);
-    throw error;
-  }
+  const records = await fetchSessionRecords<FeedbackSessionAPIResponse>(
+    `${SERVER_URL}/feedback/session/${encodeURIComponent(sessionId)}`
+  );
+  return records.map((item) => ({
+    id: item.id, date: item.date || item.timestamp, timestamp: item.timestamp,
+    question: item.question || "", answer: item.answer || "", user: item.user || "Unknown",
+    rating: item.rating, feedback: item.feedback || "",
+    sessionId: item.sessionId || sessionId, userId: item.user || "",
+  }));
 };
 
-export const fetchErrorsBySessionId = async (sessionId: string): Promise<ErrorDetail[]> => {
-  try {
-    console.log('Fetching errors for session:', sessionId);
-    
-    const response = await fetch(`${SERVER_URL}/errors/session/${sessionId}`);
-    
-    if (!response.ok) {
-      throw new Error(`HTTP error! status: ${response.status}`);
-    }
-    
-    const result = await response.json();
-    
-    if (!result.data || !Array.isArray(result.data)) {
-      console.warn('Errors API returned invalid data format for session:', sessionId);
-      return [];
-    }
-
-    return result.data;
-  } catch (error) {
-    console.error('Error fetching errors by session ID:', error);
-    // Return empty array instead of throwing to prevent breaking the session details page
-    return [];
-  }
-};
+export const fetchErrorsBySessionId = (sessionId: string): Promise<ErrorDetail[]> =>
+  fetchSessionRecords<ErrorDetail>(`${SERVER_URL}/errors/session/${encodeURIComponent(sessionId)}`);
 
 /**
  * Fetch all pages of a paginated API and return the combined data array.
@@ -1880,25 +1839,10 @@ export const fetchErrors = async (params: ErrorPaginationParams = {}): Promise<P
 
 // Get error by ID
 export const fetchErrorById = async (id: string): Promise<ErrorDetail | null> => {
-  try {
-    const url = `${SERVER_URL}/errors/id/${id}`;
-    console.log('Fetching error by ID with URL:', url);
-
-    const response = await fetch(url);
-    
-    if (!response.ok) {
-      if (response.status === 404) {
-        return null;
-      }
-      throw new Error(`HTTP error! status: ${response.status}`);
-    }
-    
-    const result = await response.json();
-    return result.data;
-  } catch (error) {
-    console.error('Error fetching error by ID:', error);
-    return null;
-  }
+  const result = await fetchOptionalDetail<{ data: ErrorDetail }>(
+    `${SERVER_URL}/errors/id/${encodeURIComponent(id)}`
+  );
+  return result?.data ?? null;
 };
 
 // Get error statistics
