@@ -65,6 +65,43 @@ export function providerMetrics(provider: ServiceSnapshotProvider) {
   };
 }
 
+export function serviceApiMetrics(service: ServiceSnapshotService) {
+  const totals = service.apis.reduce(
+    (current, api) => ({
+      requests: current.requests + api.metrics.requests,
+      successfulRequests: current.successfulRequests + api.metrics.successfulRequests,
+      failedRequests: current.failedRequests + api.metrics.failedRequests,
+    }),
+    { requests: 0, successfulRequests: 0, failedRequests: 0 }
+  );
+
+  return {
+    ...totals,
+    successPercentage: totals.requests ? (totals.successfulRequests / totals.requests) * 100 : 0,
+    failurePercentage: totals.requests ? (totals.failedRequests / totals.requests) * 100 : 0,
+  };
+}
+
+export function providerApiMetrics(provider: ServiceSnapshotProvider) {
+  const totals = provider.services.reduce(
+    (current, service) => {
+      const apiMetrics = serviceApiMetrics(service);
+      return {
+        requests: current.requests + apiMetrics.requests,
+        successfulRequests: current.successfulRequests + apiMetrics.successfulRequests,
+        failedRequests: current.failedRequests + apiMetrics.failedRequests,
+      };
+    },
+    { requests: 0, successfulRequests: 0, failedRequests: 0 }
+  );
+
+  return {
+    ...totals,
+    successPercentage: totals.requests ? (totals.successfulRequests / totals.requests) * 100 : 0,
+    failurePercentage: totals.requests ? (totals.failedRequests / totals.requests) * 100 : 0,
+  };
+}
+
 export function SnapshotState({
   isLoading,
   isError,

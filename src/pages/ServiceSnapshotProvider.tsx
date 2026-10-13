@@ -4,7 +4,7 @@ import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
-import { Rate, SnapshotState, formatLatency, formatNumber, providerMetrics, providerSlug, useServiceSnapshot } from "./serviceSnapshotShared";
+import { Rate, SnapshotState, formatLatency, formatNumber, providerApiMetrics, providerMetrics, providerSlug, serviceApiMetrics, useServiceSnapshot } from "./serviceSnapshotShared";
 
 const ServiceSnapshotProvider = () => {
   const { providerName: providerSlugParam } = useParams();
@@ -36,12 +36,13 @@ const ServiceSnapshotProvider = () => {
 
       {provider && (() => {
         const metrics = providerMetrics(provider);
+        const apiMetrics = providerApiMetrics(provider);
         return (
           <>
             <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-4">
               <Card className="border-border/80"><CardHeader className="pb-2"><CardDescription>Observed services</CardDescription><CardTitle>{provider.services.length}</CardTitle></CardHeader></Card>
               <Card className="border-border/80"><CardHeader className="pb-2"><CardDescription>Service requests</CardDescription><CardTitle>{formatNumber(metrics.requests)}</CardTitle></CardHeader></Card>
-              <Card className="border-border/80"><CardHeader className="pb-2"><CardDescription>Success rate</CardDescription><CardTitle><Rate value={metrics.successPercentage} /></CardTitle></CardHeader></Card>
+              <Card className="border-border/80"><CardHeader className="pb-2"><CardDescription>API success rate</CardDescription><CardTitle><Rate value={apiMetrics.successPercentage} /></CardTitle></CardHeader></Card>
               <Card className="border-border/80"><CardHeader className="pb-2"><CardDescription>API requests</CardDescription><CardTitle>{formatNumber(metrics.apiRequests)}</CardTitle></CardHeader></Card>
             </div>
 
@@ -58,19 +59,21 @@ const ServiceSnapshotProvider = () => {
                         <TableHead className="w-[16%]">Service</TableHead>
                         <TableHead className="w-[28%]">What is the service</TableHead>
                         <TableHead className="w-[13%]">Service requests</TableHead>
-                        <TableHead className="w-[10%]">Success %</TableHead>
+                        <TableHead className="w-[10%]">API success %</TableHead>
                         <TableHead className="w-[10%]">P90 latency</TableHead>
                         <TableHead className="w-[7%]">APIs</TableHead>
                         <TableHead className="w-[16%] whitespace-nowrap text-right">Action</TableHead>
                       </TableRow>
                     </TableHeader>
                     <TableBody>
-                      {provider.services.map((service) => (
+                      {provider.services.map((service) => {
+                        const apiMetricsForService = serviceApiMetrics(service);
+                        return (
                         <TableRow key={service.key}>
                           <TableCell className="font-semibold">{service.name}</TableCell>
                           <TableCell className="text-muted-foreground">{service.description}</TableCell>
                           <TableCell className="font-semibold">{formatNumber(service.metrics.requests)}</TableCell>
-                          <TableCell><Rate value={service.metrics.successPercentage} /></TableCell>
+                          <TableCell><Rate value={apiMetricsForService.successPercentage} /></TableCell>
                           <TableCell className="whitespace-nowrap font-medium">{formatLatency(service.metrics.p90LatencyMs)}</TableCell>
                           <TableCell><Badge variant="secondary">{service.apis.length}</Badge></TableCell>
                           <TableCell className="whitespace-nowrap text-right">
@@ -80,7 +83,8 @@ const ServiceSnapshotProvider = () => {
                             >View APIs</Link>
                           </TableCell>
                         </TableRow>
-                      ))}
+                        );
+                      })}
                     </TableBody>
                   </Table>
                 </div>
