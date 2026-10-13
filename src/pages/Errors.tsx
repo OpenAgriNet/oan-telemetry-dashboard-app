@@ -1,3 +1,4 @@
+import TelemetryDetailLink from "@/components/TelemetryDetailLink";
 import React, { useState } from "react";
 import { Link, useSearchParams } from "react-router-dom";
 import { useQuery } from "@tanstack/react-query";
@@ -23,7 +24,7 @@ import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { useDateFilter } from "@/contexts/DateFilterContext";
 import { useAppAuth } from "@/lib/useAppAuth";
-import { isSuperAdmin } from "@/utils/roleUtils";
+import { isSuperAdmin, canViewTelemetryDetails } from "@/utils/roleUtils";
 import { buildDateRangeParams } from "@/lib/utils";
 import {
   fetchErrors,
@@ -196,8 +197,8 @@ const ErrorsPage = () => {
     refetchOnMount: false,
   });
 
-  // Check if user has super-admin role (after all hooks)
-  if (!isSuperAdmin(keycloak)) {
+  // Check permission after all hooks.
+  if (!isSuperAdmin(keycloak) && !canViewTelemetryDetails(keycloak)) {
     return (
       <div className="flex justify-center items-center p-8 bg-destructive/10 border border-destructive/20 rounded-lg">
         <div className="text-center">
@@ -205,7 +206,7 @@ const ErrorsPage = () => {
           <p className="text-destructive font-medium mb-2">Access Denied</p>
           <p className="text-destructive/80 text-sm">
             You don't have permission to access this page. Only super-admin
-            users can view errors.
+            or telemetry-detail-viewer users can view errors.
           </p>
         </div>
       </div>
@@ -400,7 +401,7 @@ const ErrorsPage = () => {
                           <TableCell>
                             {errorItem.sessionId ? (
                               <span className="text-sm">
-                                {errorItem.sessionId.slice(0, 8)}...
+                                <TelemetryDetailLink to={`/sessions/${encodeURIComponent(errorItem.sessionId)}`}>{errorItem.sessionId.slice(0, 8)}...</TelemetryDetailLink>
                               </span>
                             ) : (
                               <span className="text-muted-foreground text-sm">
@@ -420,12 +421,13 @@ const ErrorsPage = () => {
                             )}
                           </TableCell>
                           <TableCell>
-                            <Link
-                              to={`/errors/${errorItem.id}`}
+                            <TelemetryDetailLink
+                              fallback={null}
+                              to={`/errors/${encodeURIComponent(errorItem.id)}`}
                               className="inline-flex items-center justify-center rounded-md text-sm font-medium ring-offset-background transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 disabled:pointer-events-none disabled:opacity-50 border border-input bg-background hover:bg-accent hover:text-accent-foreground h-8 px-3"
                             >
                               View Details
-                            </Link>
+                            </TelemetryDetailLink>
                           </TableCell>
                         </TableRow>
                       ))

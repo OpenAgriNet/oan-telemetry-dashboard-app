@@ -1,3 +1,4 @@
+import TelemetryDetailLink from "@/components/TelemetryDetailLink";
 import React, { useState } from "react";
 import { useQuery } from "@tanstack/react-query";
 import {
@@ -537,7 +538,7 @@ const UsersReport = () => {
                       </TableCell>
                       <TableCell>
                         <code className="relative rounded bg-muted px-[0.3rem] py-[0.2rem] font-mono text-xs">
-                          {user.sessionId?.substring(0, 8)}...
+                          {user.sessionId ? <TelemetryDetailLink to={`/sessions/${encodeURIComponent(user.sessionId)}`}>{user.sessionId.substring(0, 8)}...</TelemetryDetailLink> : "N/A"}
                         </code>
                       </TableCell>
                     </TableRow>

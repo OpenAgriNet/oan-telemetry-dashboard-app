@@ -13,7 +13,7 @@ export const hasRealmRole = (keycloak: KeycloakInstance, role: string): boolean 
 
   // Check realm roles from the token
   const realmAccess = keycloak.tokenParsed.realm_access;
-  return realmAccess?.roles?.includes(role) || false;
+  return Array.isArray(realmAccess?.roles) && realmAccess.roles.includes(role);
 };
 
 /**
@@ -44,4 +44,11 @@ export const hasClientRole = (
  */
 export const isSuperAdmin = (keycloak: KeycloakInstance): boolean => {
   return hasRealmRole(keycloak, "super-admin");
+};
+
+// Detail access is an explicit permission; super-admin does not imply it.
+export const TELEMETRY_DETAIL_ROLE = "telemetry-detail-viewer";
+
+export const canViewTelemetryDetails = (keycloak: KeycloakInstance): boolean => {
+  return hasRealmRole(keycloak, TELEMETRY_DETAIL_ROLE);
 };

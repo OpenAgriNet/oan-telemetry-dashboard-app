@@ -1,3 +1,4 @@
+import TelemetryDetailLink from "@/components/TelemetryDetailLink";
 import React, { useState } from "react";
 import { useQuery } from "@tanstack/react-query";
 import {
@@ -459,7 +460,7 @@ console.log("Questions from ISO",dateRange.from?.toISOString())
                           className="truncate text-left block w-full"
                           title={question.question}
                         >
-                          {question.question}
+                          <TelemetryDetailLink to={`/questions/${encodeURIComponent(question.id)}`}>{question.question}</TelemetryDetailLink>
                         </p>
                         {question.answer && (
                           <p
@@ -478,7 +479,7 @@ console.log("Questions from ISO",dateRange.from?.toISOString())
                     </TableCell>
                     <TableCell>
                       <code className="relative rounded bg-muted px-[0.3rem] py-[0.2rem] font-mono text-xs">
-                        {question.session_id.substring(0, 8)}...
+                        <TelemetryDetailLink to={`/sessions/${encodeURIComponent(question.session_id)}`}>{question.session_id.substring(0, 8)}...</TelemetryDetailLink>
                       </code>
                     </TableCell>
                     <TableCell>

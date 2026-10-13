@@ -1,3 +1,4 @@
+import TelemetryDetailLink from "@/components/TelemetryDetailLink";
 import React, { useState } from "react";
 import { useSearchParams } from "react-router-dom";
 import { useQuery } from "@tanstack/react-query";
@@ -515,7 +516,7 @@ const FeedbackPage = () => {
                         </div>
                       </TableCell>
                       <TableCell>
-                        <span className="text-muted-foreground">Details unavailable</span>
+                        <TelemetryDetailLink to={`/feedback/${encodeURIComponent(feedback.id)}`} fallback={<span className="text-muted-foreground">—</span>}>View Details</TelemetryDetailLink>
                       </TableCell>
                     </TableRow>
                   ))}
