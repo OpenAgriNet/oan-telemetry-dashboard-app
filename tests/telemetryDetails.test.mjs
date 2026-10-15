@@ -157,3 +157,38 @@ test("restored clients use encoded IDs and preserve feedback identities and answ
   assert.equal(feedback.sessionId, "s/1");
   assert.equal(feedback.answer, answer);
 });
+
+test("session timelines and question counts skip initial events but preserve repeated completed questions", () => {
+  const time = "2026-10-12T10:00:00Z";
+  const base = { question: "Which crop?", user_id: "farmer-1", session_id: "s1",
+    created_at: time, ets: String(Date.parse(time)), reaction: "neutral" };
+  const records = [
+    { ...base, id: "initial-null", answer: null },
+    { ...base, id: "initial-empty", answer: "" },
+    { ...base, id: "completed-1", answer: "Grow pulses" },
+    { ...base, id: "completed-2", answer: "Rotate with millet" },
+  ];
+  const html = renderDetail(SessionDetails, "/sessions/:sessionId", "/sessions/s1", [
+    [["sessionDetails", "s1"], { sessionId: "s1", username: "farmer-1" }],
+    [["sessionQuestions", "s1"], records],
+    [["sessionFeedback", "s1"], [{ id: "rating", rating: "like", feedback: "", date: time, user: "farmer-1" }]],
+    [["sessionErrors", "s1"], [{ id: "error", errorMessage: "Gateway timeout", fullDate: time }]],
+  ]);
+  assert.equal((html.match(/Which crop\?/g) || []).length, 2);
+  assert.match(html, /Grow pulses/);
+  assert.match(html, /Rotate with millet/);
+  assert.match(html, /Gateway timeout/);
+  assert.match(html, /User like this response/);
+  assert.match(html, />2<\/div>/);
+  assert.doesNotMatch(html, /initial-null|initial-empty/);
+});
+
+test("direct question details do not display cached question-only telemetry events", () => {
+  for (const answer of [null, ""]) {
+    const html = renderDetail(QuestionsDetails, "/questions/:id", "/questions/q1", [
+      [["question", "q1"], { id: "q1", question: "Question-only placeholder", answer }],
+    ]);
+    assert.doesNotMatch(html, /Question-only placeholder/);
+    assert.match(html, /not found/i);
+  }
+});
