@@ -1,6 +1,7 @@
 import React from "react";
 import { useParams, useNavigate, Link } from "react-router-dom";
 import { useQuery } from "@tanstack/react-query";
+import { hasQuestionAnswer } from "@/utils/questionUtils";
 import {
   Card,
   CardContent,
@@ -38,6 +39,7 @@ const QuestionDetails = () => {
   } = useQuery({
     queryKey: ["question", id],
     queryFn: () => fetchQuestionById(id || ""),
+    select: (question) => question && hasQuestionAnswer(question) ? question : null,
     enabled: !!id,
     retry: 3,
     retryDelay: (attemptIndex) => Math.min(1000 * 2 ** attemptIndex, 30000),
