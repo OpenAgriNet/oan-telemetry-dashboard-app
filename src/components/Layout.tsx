@@ -5,7 +5,6 @@ import { useDateFilter } from "@/contexts/DateFilterContext";
 import { Button } from "@/components/ui/button";
 import { useAppAuth } from "@/lib/useAppAuth";
 import DateRangePicker from "@/components/dashboard/DateRangePicker";
-import { isSuperAdmin, canViewTelemetryDetails } from "@/utils/roleUtils";
 import {
   BarChart3,
   Users,
@@ -23,6 +22,7 @@ import {
   ClipboardCheck,
   AlertTriangle,
   FlaskConical,
+  ServerCog,
   Menu,
 } from "lucide-react";
 import {
@@ -55,9 +55,6 @@ const Layout: React.FC<LayoutProps> = ({ children }) => {
   const handleLogout = () => {
     keycloak.logout();
   };
-
-  // Check report access
-  const canViewErrors = isSuperAdmin(keycloak) || canViewTelemetryDetails(keycloak);
 
   const navItems = [
     {
@@ -100,32 +97,26 @@ const Layout: React.FC<LayoutProps> = ({ children }) => {
     //   path: "/evaluation",
     //   icon: <FlaskConical size={20} />,
     // },
-    // Error reports remain available to admins and detail viewers.
-    ...(canViewErrors
-      ? [
-          {
-            name: "Errors",
-            path: "/errors",
-            icon: <AlertTriangle size={20} />,
-          },
-          // {
-          //   name: "Health Monitor",
-          //   path: "/health-monitor",
-          //   icon: <Activity size={20} />,
-          // },
-          // {
-          //   name: "Service Status",
-          //   path: "/service-status",
-          //   icon: <Activity size={20} />,
-          // },
-        ]
-      : []),
-
-      // {
-      //   name: "Service Status",
-      //   path: "/service-status",
-      //   icon: <Activity size={20} />,
-      // },
+    {
+      name: "Service Performance",
+      path: "/service-snapshot",
+      icon: <ServerCog size={20} />,
+    },
+    {
+      name: "Errors",
+      path: "/errors",
+      icon: <AlertTriangle size={20} />,
+    },
+    // {
+    //   name: "Health Monitor",
+    //   path: "/health-monitor",
+    //   icon: <Activity size={20} />,
+    // },
+    // {
+    //   name: "Service Status",
+    //   path: "/service-status",
+    //   icon: <Activity size={20} />,
+    // },
 
   ];
 

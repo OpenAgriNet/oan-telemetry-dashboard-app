@@ -23,8 +23,6 @@ import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { useDateFilter } from "@/contexts/DateFilterContext";
-import { useAppAuth } from "@/lib/useAppAuth";
-import { isSuperAdmin, canViewTelemetryDetails } from "@/utils/roleUtils";
 import { buildDateRangeParams } from "@/lib/utils";
 import {
   fetchErrors,
@@ -35,7 +33,6 @@ import {
 import TablePagination from "@/components/TablePagination";
 
 const ErrorsPage = () => {
-  const { keycloak } = useAppAuth();
   const [searchParams, setSearchParams] = useSearchParams();
   const { dateRange } = useDateFilter();
 
@@ -196,22 +193,6 @@ const ErrorsPage = () => {
     gcTime: 5 * 60 * 1000,
     refetchOnMount: false,
   });
-
-  // Check permission after all hooks.
-  if (!isSuperAdmin(keycloak) && !canViewTelemetryDetails(keycloak)) {
-    return (
-      <div className="flex justify-center items-center p-8 bg-destructive/10 border border-destructive/20 rounded-lg">
-        <div className="text-center">
-          <AlertTriangle className="h-12 w-12 text-destructive mx-auto mb-4" />
-          <p className="text-destructive font-medium mb-2">Access Denied</p>
-          <p className="text-destructive/80 text-sm">
-            You don't have permission to access this page. Only super-admin
-            or telemetry-detail-viewer users can view errors.
-          </p>
-        </div>
-      </div>
-    );
-  }
 
   const handleApplyFilters = () => {
     refetch();

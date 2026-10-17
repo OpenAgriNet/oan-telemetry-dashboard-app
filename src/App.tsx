@@ -20,7 +20,7 @@ import Content from "./pages/Content";
 import ServiceStatus from "./pages/ServiceStatus";
 import HealthMonitor from "./pages/HealthMonitor";
 import { useAppAuth } from "@/lib/useAppAuth";
-import { isSuperAdmin, canViewTelemetryDetails, TELEMETRY_DETAIL_ROLE } from "@/utils/roleUtils";
+import { TELEMETRY_DETAIL_ROLE } from "@/utils/roleUtils";
 import RoleBasedAccess from "@/components/RoleBasedAccess";
 import SessionDetails from "./pages/SessionDetails";
 import QuestionsDetails from "./pages/QuestionsDetails";
@@ -28,6 +28,12 @@ import FeedbackDetails from "./pages/FeedbackDetails";
 import Evaluation from "./pages/Evaluation";
 import EvaluationDetails from "./pages/EvaluationDetails";
 import EvaluationRunAdmin from "./pages/EvaluationRunAdmin";
+import ServiceSnapshot from "./pages/ServiceSnapshot";
+import ServiceSnapshotProvider from "./pages/ServiceSnapshotProvider";
+import ServiceSnapshotDetail from "./pages/ServiceSnapshotDetail";
+import IndividualApiCalls from "./pages/IndividualApiCalls";
+import IndividualApiCallDetail from "./pages/IndividualApiCallDetail";
+import ServiceApiCalls from "./pages/ServiceApiCalls";
 
 const queryClient = new QueryClient({
   defaultOptions: {
@@ -50,9 +56,6 @@ const App = () => {
   if (!keycloak.authenticated) {
     return null;
   }
-
-  // Keep existing error report access and allow explicit detail viewers.
-  const canViewErrors = isSuperAdmin(keycloak) || canViewTelemetryDetails(keycloak);
 
   return (
   <QueryClientProvider client={queryClient}>
@@ -103,35 +106,41 @@ const App = () => {
                   <Feedback />
                 </Layout>
               } />
+              {/* OD-3109: Keep Evaluation routes available to re-enable later. */}
+              {/*
               <Route path="/evaluation" element={<Layout><Evaluation /></Layout>} />
               <Route path="/evaluation/runs" element={<Layout><EvaluationRunAdmin /></Layout>} />
               <Route path="/evaluation/runs/new" element={<Layout><EvaluationRunAdmin /></Layout>} />
               <Route path="/evaluation/:runId/:itemId" element={<Layout><EvaluationDetails /></Layout>} />
+              */}
               <Route path="/content" element={
                 <Layout>
                   <Content />
                 </Layout>
               } />
-              <Route path="/service-status" element={
+              {/* OD-3109: Keep Service Status disabled until explicitly re-enabled. */}
+              {/* <Route path="/service-status" element={
                 <Layout>
                   <ServiceStatus />
                 </Layout>
-              } />
+              } /> */}
+              <Route path="/service-snapshot" element={<Layout><ServiceSnapshot /></Layout>} />
+              <Route path="/service-snapshot/provider/:providerName" element={<Layout><ServiceSnapshotProvider /></Layout>} />
+              <Route path="/service-snapshot/provider/:providerName/service/:serviceKey" element={<Layout><ServiceSnapshotDetail /></Layout>} />
+              <Route path="/service-snapshot/provider/:providerName/service/:serviceKey/api/:apiKey" element={<Layout><ServiceApiCalls /></Layout>} />
+              <Route path="/individual-apis" element={<Layout><IndividualApiCalls /></Layout>} />
+              <Route path="/individual-apis/:id" element={<Layout><IndividualApiCallDetail /></Layout>} />
               {/* <Route path="/health-monitor" element={
                 <Layout>
                   <HealthMonitor />
                 </Layout>
               } /> */}
-              {/* Keep error reports available to admins and detail viewers. */}
-              {canViewErrors && (
-                <>
-                  <Route path="/errors" element={
-                    <Layout>
-                      <Errors />
-                    </Layout>
-                  } />
-                </>
-              )}
+              {/* All authenticated users can view the report; detail routes remain role-gated. */}
+              <Route path="/errors" element={
+                <Layout>
+                  <Errors />
+                </Layout>
+              } />
               <Route path="*" element={<NotFound />} />
             </Routes>
           </BrowserRouter>
