@@ -261,7 +261,7 @@ const Dashboard = () => {
         <h1 className="text-2xl font-bold tracking-tight">Dashboard</h1>
       </div>
 
-      {statsError && <div role="alert" className="rounded border border-destructive p-4 text-destructive">
+      {statsError && <div role="alert" className="rounded border border-red-700/40 p-4 text-red-700 dark:border-red-300/40 dark:text-red-300">
         Could not load dashboard totals. <button type="button" className="underline" onClick={() => retryStats()}>Try again</button>
       </div>}
       {!statsError && <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-4">

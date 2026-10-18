@@ -124,6 +124,7 @@ test('chart and feedback text meet 4.5:1 contrast in light and dark themes',()=>
  for(const selector of [':root','.dark']){const block=css.slice(css.indexOf(selector+' {')).split('}')[0];const variable=name=>hsl(block.match(new RegExp('--'+name+': ([^;]+)'))[1]);
   for(const surface of ['background','card','secondary'])assert.ok(contrast(variable('foreground'),variable(surface))>=4.5);
   const rgb=selector===':root'?[21,128,61]:[74,222,128];assert.ok(contrast(rgb.map(x=>x/255),variable('background'))>=4.5);
+  const errorRgb=selector===':root'?[185,28,28]:[252,165,165];assert.ok(contrast(errorRgb.map(x=>x/255),variable('background'))>=4.5);
  }
  assert.ok(readFileSync('src/components/dashboard/TrendChart.tsx','utf8').includes('stroke="hsl(var(--foreground))"'));
 });

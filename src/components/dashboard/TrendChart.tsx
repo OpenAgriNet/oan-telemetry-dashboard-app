@@ -107,7 +107,7 @@ const CustomTooltip = ({ active, payload, label }: {
   const hasData = data && data.length > 0;
   
 const renderChart = () => {
-    if (error) return <div role="alert" className="flex items-center justify-center h-60 text-destructive">Could not load chart data. Please try again.</div>;
+    if (error) return <div role="alert" className="flex items-center justify-center h-60 text-red-700 dark:text-red-300">Could not load chart data. Please try again.</div>;
     if (!hasData && !isLoading) { 
       return (
         <div className="flex items-center justify-center h-60 text-muted-foreground">

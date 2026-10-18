@@ -492,8 +492,8 @@ const SessionDetails = () => {
         <div className="flex justify-center items-center p-8 bg-destructive/10 border border-destructive/20 rounded-lg">
           <div className="text-center">
             <AlertCircle className="h-12 w-12 text-destructive mx-auto mb-4" />
-            <p className="text-destructive font-medium mb-2">Error loading session data</p>
-            <p className="text-destructive/80 text-sm mb-4">
+            <p className="text-destructive dark:text-red-300 font-medium mb-2">Error loading session data</p>
+            <p className="text-destructive/80 dark:text-red-300 text-sm mb-4">
               {sessionError?.message || questionsError?.message || feedbackError?.message || (hasDetailAccess && errorsError?.message)}
             </p>
             <div className="flex gap-2 justify-center">
