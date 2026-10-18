@@ -59,6 +59,18 @@ test('custom dates are draft until Apply; Escape cancels; Clear restores last se
  }finally{await app.close();}
 });
 
+test('the Custom preset keeps the calendar open when the menu closes',async()=>{
+ function Harness(){const [range,setRange]=React.useState(initial);return h(DatePicker,{dateRange:range,setDateRange:setRange});}
+ const app=await mount(h(Harness));try{
+  const trigger=button('Last 7 days');
+  await act(async()=>trigger.dispatchEvent(new KeyboardEvent('keydown',{key:'Enter',bubbles:true})));
+  const custom=[...document.querySelectorAll('[role="menuitem"]')].find(x=>x.textContent==='Custom');
+  await click(custom);await act(async()=>{await new Promise(r=>setTimeout(r,30));});
+  assert.ok(button('Apply'));assert.equal(document.querySelector('[role="dialog"]')?.getAttribute('data-state'),'open');
+  assert.ok(button('Last 7 days'),'the applied preset label is unchanged');
+ }finally{await app.close();}
+});
+
 test('a new filter or API scope requests page one immediately',async()=>{
  let setPage;const renders=[];
  function Probe({scope}){const [page,set]=useScopedPage(scope);setPage=set;renders.push({scope,page});return h('p',null,page);}

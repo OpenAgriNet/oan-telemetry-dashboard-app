@@ -37,6 +37,7 @@ const DateRangePicker: React.FC<DateRangePickerProps> = ({
     setIsCalendarOpen(open);
   };
   const hasInitialized = React.useRef(false);
+  const openingFromMenu = React.useRef(false);
 
   // Set default to last 7 days on component mount
   React.useEffect(() => {
@@ -75,7 +76,7 @@ const DateRangePicker: React.FC<DateRangePickerProps> = ({
         setDateRange({ from: new Date("2025-05-01T00:00:00.000Z"), to: today });
         break;
       case "custom":
-        openCalendar(true);
+        openingFromMenu.current = true;
         return;
     }
     setSelectedOption(option);
@@ -162,7 +163,14 @@ const DateRangePicker: React.FC<DateRangePickerProps> = ({
             <ChevronDown className="ml-2 h-4 w-4" />
           </Button>
         </DropdownMenuTrigger>
-        <DropdownMenuContent align="end">
+        <DropdownMenuContent align="end" onCloseAutoFocus={(event) => {
+          // Keep focus in the newly opened calendar instead of returning it to the preset menu.
+          if (openingFromMenu.current) {
+            event.preventDefault();
+            openingFromMenu.current = false;
+            openCalendar(true);
+          }
+        }}>
           <DropdownMenuItem onClick={() => handleQuickSelect("today")}>
             Today
           </DropdownMenuItem>
