@@ -1,3 +1,4 @@
+import SortableTableHead from "@/components/SortableTableHead";
 import TelemetryDetailLink from "@/components/TelemetryDetailLink";
 import React, { useState } from "react";
 import { useQuery } from "@tanstack/react-query";
@@ -384,10 +385,10 @@ const UsersReport = () => {
                   maxLength={1000}
                 />
               </div>
-              <Button onClick={handleSearch} disabled={isLoading} variant="outline" size="icon" title="Search">
+              <Button onClick={handleSearch} disabled={isLoading} variant="outline" size="icon" title="Search" aria-label="Search">
                 <Search className="h-4 w-4" />
               </Button>
-              <Button onClick={handleResetFilters} variant="outline" size="icon" title="Reset Search">
+              <Button onClick={handleResetFilters} variant="outline" size="icon" title="Reset Search" aria-label="Reset search">
                 <RotateCcw className="h-4 w-4" />
               </Button>
             </div>
@@ -444,13 +445,14 @@ const UsersReport = () => {
               <Table className="min-w-[640px]">
                 <TableHeader>
                   <TableRow>
-                    <TableHead
+                    <SortableTableHead
                       className="cursor-pointer hover:bg-muted/50"
+                      direction={sortConfig.key === "user_id" ? sortConfig.direction : undefined}
                       onClick={() => handleSort("user_id")}
                     >
                       Username
                       {<SortIndicator columnKey="user_id" />}
-                    </TableHead>
+                    </SortableTableHead>
                     <TableHead
                       className="text-right cursor-pointer hover:bg-muted/50"
                       // onClick={() => handleSort("session_count")}
@@ -465,20 +467,22 @@ const UsersReport = () => {
                       Questions
                       {/* {<SortIndicator columnKey="total_questions" />} */}
                     </TableHead>
-                    <TableHead
+                    <SortableTableHead
                       className="text-right cursor-pointer hover:bg-muted/50"
+                      direction={sortConfig.key === "feedback_count" ? sortConfig.direction : undefined}
                       onClick={() => handleSort("feedback_count")}
                     >
                       Feedback
                       {<SortIndicator columnKey="feedback_count" />}
-                    </TableHead>
-                    <TableHead
+                    </SortableTableHead>
+                    <SortableTableHead
                       className="cursor-pointer hover:bg-muted/50"
+                      direction={sortConfig.key === "last_activity" ? sortConfig.direction : undefined}
                       onClick={() => handleSort("last_activity")}
                     >
                       Latest Activity
                       {<SortIndicator columnKey="last_activity" />}
-                    </TableHead>
+                    </SortableTableHead>
                     <TableHead
                       className="cursor-pointer hover:bg-muted/50"
                       // onClick={() => handleSort("latest_session")}

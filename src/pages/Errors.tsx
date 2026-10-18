@@ -1,3 +1,4 @@
+import SortableTableHead from "@/components/SortableTableHead";
 import TelemetryDetailLink from "@/components/TelemetryDetailLink";
 import React, { useState } from "react";
 import { Link, useSearchParams } from "react-router-dom";
@@ -42,7 +43,7 @@ const ErrorsPage = () => {
 
   // Initialize state from URL params for persistence
   const [searchTerm, setSearchTerm] = useState(searchParams.get("search") || "");
-  const [sortConfig, setSortConfig] = useState({
+  const [sortConfig, setSortConfig] = useState<{ key: string; direction: "asc" | "desc" }>({
     key: "created_at",
     direction: "desc",
   });
@@ -102,7 +103,7 @@ const ErrorsPage = () => {
   };
 
   // Fetch error statistics
-  const { data: errorStats = { totalErrors: 0 }, isLoading: isLoadingStats } =
+  const { data: errorStats = { totalErrors: 0 }, isLoading: isLoadingStats, error: statsError } =
     useQuery({
       queryKey: [
         "error-stats",
@@ -199,7 +200,7 @@ const ErrorsPage = () => {
   };
 
   // Show error state
-  if (error) {
+  if (error || statsError) {
     return (
       <div className="space-y-6">
         <div className="flex flex-wrap items-center justify-between gap-3">
@@ -212,7 +213,7 @@ const ErrorsPage = () => {
               Error loading error data
             </p>
             <p className="text-destructive/80 text-sm mb-4">
-              {(error as Error).message}
+              {((error || statsError) as Error).message}
             </p>
             <Button onClick={() => refetch()} variant="outline" size="sm">
               <RefreshCw className="h-4 w-4 mr-2" />
@@ -275,10 +276,10 @@ const ErrorsPage = () => {
                 />
               </div>
             </div>
-            <Button onClick={handleSearch} disabled={isLoading} variant="outline" size="icon" title="Search">
+            <Button onClick={handleSearch} disabled={isLoading} variant="outline" size="icon" title="Search" aria-label="Search">
               <Search className="h-4 w-4" />
             </Button>
-            <Button onClick={handleResetFilters} variant="outline" size="icon" title="Reset Search">
+            <Button onClick={handleResetFilters} variant="outline" size="icon" title="Reset Search" aria-label="Reset search">
               <RotateCcw className="h-4 w-4" />
             </Button>
           </div>
@@ -304,33 +305,37 @@ const ErrorsPage = () => {
                 <Table className="min-w-[640px]">
                   <TableHeader>
                     <TableRow>
-                      <TableHead
+                      <SortableTableHead
                         className="cursor-pointer hover:bg-muted/50"
-                        onClick={() => handleSort("created_at")}
+                        direction={sortConfig.key === "created_at" ? sortConfig.direction : undefined}
+                      onClick={() => handleSort("created_at")}
                       >
                         Date
                         {SortIndicator({ columnKey: "created_at" })}
-                      </TableHead>
-                      <TableHead
+                      </SortableTableHead>
+                      <SortableTableHead
                         className="cursor-pointer hover:bg-muted/50"
-                        onClick={() => handleSort("error_message")}
+                        direction={sortConfig.key === "error_message" ? sortConfig.direction : undefined}
+                      onClick={() => handleSort("error_message")}
                       >
                         Error Message
                         {SortIndicator({ columnKey: "error_message" })}
-                        </TableHead>
-                      <TableHead
+                        </SortableTableHead>
+                      <SortableTableHead
                         className="cursor-pointer hover:bg-muted/50"
-                        onClick={() => handleSort("user_id")}
+                        direction={sortConfig.key === "user_id" ? sortConfig.direction : undefined}
+                      onClick={() => handleSort("user_id")}
                       >User
                         {SortIndicator({ columnKey: "user_id" })}
-                      </TableHead>
-                      <TableHead
+                      </SortableTableHead>
+                      <SortableTableHead
                         className="cursor-pointer hover:bg-muted/50"
-                        onClick={() => handleSort("session_id")}
+                        direction={sortConfig.key === "session_id" ? sortConfig.direction : undefined}
+                      onClick={() => handleSort("session_id")}
                         >
                           Session
                         {SortIndicator({ columnKey: "session_id" })}
-                      </TableHead>
+                      </SortableTableHead>
                       <TableHead>Channel</TableHead>
                       <TableHead>Actions</TableHead>
                     </TableRow>

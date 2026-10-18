@@ -1,3 +1,4 @@
+import { useScopedPage } from "@/hooks/useScopedPage";
 import { useMemo, useState } from "react";
 import { Link, useLocation, useParams } from "react-router-dom";
 import { useQuery } from "@tanstack/react-query";
@@ -39,15 +40,15 @@ function outcomeStyle(outcome: string | null) {
 const ServiceApiCalls = () => {
   const { providerName: providerSlugParam, serviceKey: serviceKeyParam, apiKey: apiKeyParam } = useParams();
   const location = useLocation();
-  const serviceKey = serviceKeyParam ? decodeURIComponent(serviceKeyParam) : "";
-  const apiKey = apiKeyParam ? decodeURIComponent(apiKeyParam) : "";
+  const serviceKey = serviceKeyParam || "";
+  const apiKey = apiKeyParam || "";
   const snapshotQuery = useServiceSnapshot();
   const provider = snapshotQuery.data?.data.providers.find((item) => providerSlug(item.name) === providerSlugParam);
   const service = findService(provider, serviceKey);
   const api = service?.apis.find((item) => item.key === apiKey);
   const { dateRange } = useDateFilter();
   const dateParams = useMemo(() => buildDateRangeParams(dateRange, { includeDefaultStart: false }), [dateRange]);
-  const [page, setPage] = useState(1);
+  const [page, setPage] = useScopedPage(JSON.stringify([dateParams.startDate, dateParams.endDate, providerSlugParam, serviceKey, apiKey]));
   const [outcome, setOutcome] = useState<"" | "success" | "failure">("");
   const callsQuery = useQuery({
     queryKey: ["service-api-calls", dateParams.startDate, dateParams.endDate, api?.sourceService, api?.endpoint, api?.method, api?.kind, api?.scopeCategories, page, outcome],

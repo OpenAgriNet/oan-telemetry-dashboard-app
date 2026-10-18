@@ -24,6 +24,7 @@ import { fetchQuestionById, fetchTranslation } from "@/services/api";
 import ReactMarkdown from "react-markdown";
 import remarkGfm from "remark-gfm";
 import rehypeRaw from "rehype-raw";
+import rehypeSanitize from "rehype-sanitize";
 import type { Components } from "react-markdown";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 
@@ -370,7 +371,7 @@ const QuestionDetails = () => {
                     <div className="prose-code:bg-muted prose-pre:bg-muted/80 prose-pre:border prose-pre:border-border prose-headings:text-foreground prose-p:text-foreground prose-a:text-primary">
                       <ReactMarkdown
                         remarkPlugins={[remarkGfm]}
-                        rehypePlugins={[rehypeRaw]}
+                        rehypePlugins={[rehypeRaw, rehypeSanitize]}
                         components={markdownComponents}
                       >
                         {question?.answer}

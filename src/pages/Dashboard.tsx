@@ -55,7 +55,7 @@ const Dashboard = () => {
   };
 
   // Use centralized stats from StatsContext - shared across all pages!
-  const { stats: dashboardStats, isLoading: isLoadingDashboardStats } = useStats();
+  const { stats: dashboardStats, isLoading: isLoadingDashboardStats, error: statsError, refetch: retryStats } = useStats();
 
   // Extract individual stats from unified response
   const questionStats = dashboardStats
@@ -81,7 +81,7 @@ const Dashboard = () => {
   const isLoadingUserStats = isLoadingDashboardStats;
 
   // Fetch questions graph data for time-series visualization
-  const { data: questionsGraphData, isLoading: isLoadingQuestionsGraph } =
+  const { data: questionsGraphData, isLoading: isLoadingQuestionsGraph, error: questionsGraphError } =
     useQuery({
       queryKey: [
         "questions-graph",
@@ -104,7 +104,7 @@ const Dashboard = () => {
     });
 
   // Fetch sessions graph data for time-series visualization
-  const { data: sessionsGraphData, isLoading: isLoadingSessionsGraph } =
+  const { data: sessionsGraphData, isLoading: isLoadingSessionsGraph, error: sessionsGraphError } =
     useQuery({
       queryKey: [
         "sessions-graph",
@@ -127,7 +127,7 @@ const Dashboard = () => {
     });
 
   // Fetch users graph data for time-series visualization
-  const { data: usersGraphData, isLoading: isLoadingUsersGraph } = useQuery({
+  const { data: usersGraphData, isLoading: isLoadingUsersGraph, error: usersGraphError } = useQuery({
     queryKey: [
       "users-graph",
       dateRange.from?.toISOString(),
@@ -149,7 +149,7 @@ const Dashboard = () => {
   });
 
   // Fetch feedback graph data for time-series visualization
-  const { data: feedbackGraphData, isLoading: isLoadingFeedbackGraph } =
+  const { data: feedbackGraphData, isLoading: isLoadingFeedbackGraph, error: feedbackGraphError } =
     useQuery({
       queryKey: [
         "feedback-graph",
@@ -261,7 +261,10 @@ const Dashboard = () => {
         <h1 className="text-2xl font-bold tracking-tight">Dashboard</h1>
       </div>
 
-      <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-4">
+      {statsError && <div role="alert" className="rounded border border-destructive p-4 text-destructive">
+        Could not load dashboard totals. <button type="button" className="underline" onClick={() => retryStats()}>Try again</button>
+      </div>}
+      {!statsError && <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-4">
         {isLoadingUserStats ||
         isLoadingQuestionStats ||
         isLoadingSessionStats ||
@@ -307,7 +310,7 @@ const Dashboard = () => {
             />
           </>
         )}
-      </div>
+      </div>}
 
       <Card className="card-gradient">
         <CardHeader className="flex flex-col items-start gap-3 pb-2 sm:flex-row sm:items-center sm:justify-between">
@@ -379,6 +382,7 @@ const Dashboard = () => {
                 )
               }
               isLoading={isLoadingUsersGraph}
+              error={usersGraphError}
               dataKey={[
                 {
                   dataKey: "newUsersCount",
@@ -414,6 +418,7 @@ const Dashboard = () => {
                 } questions count`}
                 data={filterDataByDateRange(questionsGraphData?.data || [])}
                 isLoading={isLoadingQuestionsGraph}
+              error={questionsGraphError}
                 dataKey="questionsCount"
                 type={chartType}
                 color="hsl(var(--primary))"
@@ -430,6 +435,7 @@ const Dashboard = () => {
                 } sessions count`}
                 data={filterDataByDateRange(sessionsGraphData?.data || [])}
                 isLoading={isLoadingSessionsGraph}
+              error={sessionsGraphError}
                 dataKey="sessionsCount"
                 type={chartType}
                 color="#10b981"
@@ -446,6 +452,7 @@ const Dashboard = () => {
                 } likes and dislikes`}
                 data={filterDataByDateRange(feedbackGraphData?.data || [])}
                 isLoading={isLoadingFeedbackGraph}
+              error={feedbackGraphError}
                 dataKey={[
                   {
                     dataKey: "likesCount",

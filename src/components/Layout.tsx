@@ -175,6 +175,7 @@ const Layout: React.FC<LayoutProps> = ({ children }) => {
               variant="ghost"
               size="sm"
               className={`w-full ${isCollapsed ? "justify-center" : "justify-start"} hover:bg-sidebar-accent`}
+              aria-label="Choose theme"
             >
               {theme === "dark" ? (
                 <Moon size={20} className="mr-2" />
@@ -204,6 +205,7 @@ const Layout: React.FC<LayoutProps> = ({ children }) => {
               size="sm"
               className={`w-full ${isCollapsed ? "justify-center" : "justify-start"} hover:bg-sidebar-accent`}
               onClick={handleLogout}
+              aria-label="Logout"
             >
               <LogOut size={20} className="mr-2" />
               {!isCollapsed && <span>Logout</span>}

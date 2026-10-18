@@ -712,7 +712,7 @@ export const fetchUserByUsername = async (username: string, params: PaginationPa
     const result = await response.json();
     
     if (!result.success) {
-      return null;
+      throw new Error('Failed to fetch user details');
     }
 
     // Transform backend response to match our User interface
@@ -731,8 +731,7 @@ export const fetchUserByUsername = async (username: string, params: PaginationPa
       dislikes: userData.dislikes
     };
   } catch (error) {
-    console.error('Error fetching user by username:', error);
-    return null;
+    throw error;
   }
 };
 
@@ -774,19 +773,7 @@ export const fetchUserStats = async (params: PaginationParams = {}): Promise<Use
       activeCumulative: result.data.activeCumulative || 0
     };
   } catch (error) {
-    console.error('Error fetching user stats:', error);
-    // Return default values on error
-    return {
-      totalUsers: 0,
-      totalSessions: 0,
-      totalQuestions: 0,
-      totalFeedback: 0,
-      totalLikes: 0,
-      totalDislikes: 0,
-      newUsers: 0,
-      returningUsers: 0,
-      activeCumulative: 0
-    };
+    throw error;
   }
 };
 
@@ -979,12 +966,7 @@ export const fetchBasicSessionStats = async (params: PaginationParams = {}): Pro
       totalUsers: uniqueUsers
     };
   } catch (error) {
-    console.error('Error fetching session stats:', error);
-    return {
-      totalSessions: 0,
-      totalQuestions: 0,
-      totalUsers: 0
-    };
+    throw error;
   }
 };
 
@@ -1191,12 +1173,7 @@ export const fetchFeedbackStats = async (params: PaginationParams = {}): Promise
       totalDislikes
     };
   } catch (error) {
-    console.error('Error fetching feedback stats:', error);
-    return {
-      totalFeedback: 0,
-      totalLikes: 0,
-      totalDislikes: 0
-    };
+    throw error;
   }
 };
 
@@ -1230,10 +1207,7 @@ export const fetchSessionStats = async (params: PaginationParams = {}): Promise<
 
     return result.data;
   } catch (error) {
-    console.error('Error fetching session stats:', error);
-    return {
-      totalSessions: 0
-    };
+    throw error;
   }
 };
 
@@ -1267,10 +1241,7 @@ export const fetchQuestionStats = async (params: PaginationParams = {}): Promise
 
     return result.data;
   } catch (error) {
-    console.error('Error fetching question stats:', error);
-    return {
-      totalQuestions: 0
-    };
+    throw error;
   }
 };
 
@@ -1306,12 +1277,7 @@ export const fetchComprehensiveFeedbackStats = async (params: PaginationParams =
 
     return result.data;
   } catch (error) {
-    console.error('Error fetching comprehensive feedback stats:', error);
-    return {
-      totalFeedback: 0,
-      totalLikes: 0,
-      totalDislikes: 0
-    };
+    throw error;
   }
 };
 
@@ -1351,16 +1317,7 @@ export const fetchDashboardStats = async (params: PaginationParams = {}): Promis
 
     return result.data;
   } catch (error) {
-    console.error('Error fetching dashboard stats:', error);
-    return {
-      totalUsers: 0,
-      totalNewUsers: 0,
-      totalSessions: 0,
-      totalQuestions: 0,
-      totalFeedback: 0,
-      totalLikes: 0,
-      totalDislikes: 0
-    };
+    throw error;
   }
 };
 
@@ -1666,35 +1623,7 @@ export const fetchQuestionsGraph = async (params: PaginationParams = {}): Promis
 
     return result;
   } catch (error) {
-    console.error('Error fetching questions graph data:', error);
-    return {
-      data: [],
-      metadata: {
-        granularity: 'daily',
-        totalDataPoints: 0,
-        dateRange: {
-          start: null,
-          end: null
-        },
-        summary: {
-          totalQuestions: 0,
-          totalUniqueUsers: 0,
-          avgQuestionsPerPeriod: 0,
-          peakActivity: {
-            date: null,
-            questionsCount: 0
-          }
-        }
-      },
-      filters: {
-        search: '',
-        startDate: null,
-        endDate: null,
-        granularity: 'daily',
-        appliedStartTimestamp: null,
-        appliedEndTimestamp: null
-      }
-    };
+    throw error;
   }
 };
 
@@ -1769,36 +1698,7 @@ export const fetchSessionsGraph = async (params: PaginationParams = {}): Promise
 
     return result;
   } catch (error) {
-    console.error('Error fetching sessions graph data:', error);
-    return {
-      data: [],
-      metadata: {
-        granularity: 'daily',
-        totalDataPoints: 0,
-        dateRange: {
-          start: null,
-          end: null
-        },
-        summary: {
-          totalSessions: 0,
-          totalQuestions: 0,
-          totalUsers: 0,
-          avgSessionsPerPeriod: 0,
-          peakActivity: {
-            date: null,
-            sessionsCount: 0
-          }
-        }
-      },
-      filters: {
-        search: '',
-        startDate: null,
-        endDate: null,
-        granularity: 'daily',
-        appliedStartTimestamp: null,
-        appliedEndTimestamp: null
-      }
-    };
+    throw error;
   }
 };
 
@@ -1877,38 +1777,7 @@ export const fetchFeedbackGraph = async (params: PaginationParams = {}): Promise
 
     return result;
   } catch (error) {
-    console.error('Error fetching feedback graph data:', error);
-    return {
-      data: [],
-      metadata: {
-        granularity: 'daily',
-        totalDataPoints: 0,
-        dateRange: {
-          start: null,
-          end: null
-        },
-        summary: {
-          totalFeedback: 0,
-          totalLikes: 0,
-          totalDislikes: 0,
-          totalUniqueUsers: 0,
-          avgFeedbackPerPeriod: 0,
-          overallSatisfactionRate: 0,
-          peakActivity: {
-            date: null,
-            feedbackCount: 0
-          }
-        }
-      },
-      filters: {
-        search: '',
-        startDate: null,
-        endDate: null,
-        granularity: 'daily',
-        appliedStartTimestamp: null,
-        appliedEndTimestamp: null
-      }
-    };
+    throw error;
   }
 };
 
@@ -2011,14 +1880,7 @@ export const fetchErrors = async (params: ErrorPaginationParams = {}): Promise<P
       totalPages: result.pagination.totalPages
     };
   } catch (error) {
-    console.error('Error fetching errors:', error);
-    return {
-      data: [],
-      total: 0,
-      page: 1,
-      pageSize: 10,
-      totalPages: 0
-    };
+    throw error;
   }
 };
 
@@ -2056,14 +1918,7 @@ export const fetchErrorStats = async (params: PaginationParams = {}): Promise<Er
     
     return result;
   } catch (error) {
-    console.error('Error fetching error statistics:', error);
-    return {
-      totalErrors: 0,
-      unresolvedErrors: 0,
-      resolvedErrors: 0,
-      criticalErrors: 0,
-      avgErrorCount: 0
-    };
+    throw error;
   }
 };
 
@@ -2093,10 +1948,7 @@ export const fetchErrorGraph = async (params: PaginationParams = {}): Promise<Er
     
     return result;
   } catch (error) {
-    console.error('Error fetching error graph data:', error);
-    return {
-      data: []
-    };
+    throw error;
   }
 };
 
@@ -2129,32 +1981,6 @@ export const fetchUsersGraph = async (params: PaginationParams = {}): Promise<Us
 
     return result;
   } catch (error) {
-    console.error('Error fetching users graph data:', error);
-    return {
-      data: [],
-      metadata: {
-        granularity: 'daily',
-        totalDataPoints: 0,
-        dateRange: {
-          start: null,
-          end: null
-        },
-        summary: {
-          totalUniqueUsers: 0,
-          peakActivity: {
-            date: null,
-            uniqueUsersCount: 0
-          }
-        }
-      },
-      filters: {
-        search: '',
-        startDate: null,
-        endDate: null,
-        granularity: 'daily',
-        appliedStartTimestamp: null,
-        appliedEndTimestamp: null
-      }
-    };
+    throw error;
   }
 };

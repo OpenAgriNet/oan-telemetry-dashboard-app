@@ -1,3 +1,4 @@
+import SortableTableHead from "@/components/SortableTableHead";
 import TelemetryDetailLink from "@/components/TelemetryDetailLink";
 import React, { useState } from "react";
 import { useQuery } from "@tanstack/react-query";
@@ -58,7 +59,7 @@ const QuestionsReport = () => {
   const [selectedUser, setSelectedUser] = useState<string>(searchParams.get("user") || "all");
   const [selectedSession, setSelectedSession] = useState<string>(searchParams.get("session") || "all");
   const [searchQuery, setSearchQuery] = useState<string>(searchParams.get("search") || "");
-  const [sortConfig, setSortConfig] = useState({
+  const [sortConfig, setSortConfig] = useState<{ key: string; direction: "asc" | "desc" }>({
     key: "dateAsked",
     direction: "desc",
   });
@@ -360,10 +361,10 @@ console.log("Questions from ISO",dateRange.from?.toISOString())
             maxLength={1000}
           />
         </div>
-        <Button onClick={handleSearch} disabled={isLoading} variant="outline" size="icon" title="Search">
+        <Button onClick={handleSearch} disabled={isLoading} variant="outline" size="icon" title="Search" aria-label="Search">
           <Search className="h-4 w-4" />
         </Button>
-        <Button onClick={handleResetFilters} variant="outline" size="icon" title="Reset Search">
+        <Button onClick={handleResetFilters} variant="outline" size="icon" title="Reset Search" aria-label="Reset search">
           <RotateCcw className="h-4 w-4" />
         </Button>
       </div>
@@ -387,13 +388,14 @@ console.log("Questions from ISO",dateRange.from?.toISOString())
                   Question
                   {/* <SortIndicator columnKey="question" /> */}
                 </TableHead>
-                <TableHead
+                <SortableTableHead
                   className="cursor-pointer hover:bg-muted/50"
-                  onClick={() => handleSort("user_id")}
+                  direction={sortConfig.key === "user_id" ? sortConfig.direction : undefined}
+                      onClick={() => handleSort("user_id")}
                 >
                   User
                   <SortIndicator columnKey="user_id" />
-                </TableHead>
+                </SortableTableHead>
                 <TableHead
                   className="cursor-pointer hover:bg-muted/50"
                   // onClick={() => handleSort("session_id")}
@@ -401,13 +403,14 @@ console.log("Questions from ISO",dateRange.from?.toISOString())
                   Session ID
                   {/* <SortIndicator columnKey="session_id" /> */}
                 </TableHead>
-                <TableHead
+                <SortableTableHead
                   className="cursor-pointer hover:bg-muted/50"
-                  onClick={() => handleSort("dateAsked")}
+                  direction={sortConfig.key === "dateAsked" ? sortConfig.direction : undefined}
+                      onClick={() => handleSort("dateAsked")}
                 >
                   Date Asked
                   <SortIndicator columnKey="dateAsked" />
-                </TableHead>
+                </SortableTableHead>
                 {/* <TableHead>Channel</TableHead> */}
                 {/* <TableHead>Reaction</TableHead> */}
               </TableRow>
@@ -494,12 +497,12 @@ console.log("Questions from ISO",dateRange.from?.toISOString())
                       {question.reaction === "thumbs-up" || question.reaction === "like" ? (
                         <div className="flex items-center gap-1">
                           <ThumbsUp className="h-4 w-4 text-green-500" />
-                          <span className="text-xs text-green-700">Like</span>
+                          <span className="text-xs text-green-700 dark:text-green-400">Like</span>
                         </div>
                       ) : question.reaction === "thumbs-down" || question.reaction === "dislike" ? (
                         <div className="flex items-center gap-1">
                           <ThumbsDown className="h-4 w-4 text-red-500" />
-                          <span className="text-xs text-red-700">Dislike</span>
+                          <span className="text-xs text-red-700 dark:text-red-400">Dislike</span>
                         </div>
                       ) : question.reaction ? (
                         <span className="inline-flex items-center rounded-full bg-secondary px-2 py-1 text-xs font-medium text-secondary-foreground">
