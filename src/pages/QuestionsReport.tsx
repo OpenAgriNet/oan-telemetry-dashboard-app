@@ -45,14 +45,16 @@ import {
   formatUTCToIST,
   buildDateRangeParams,
 } from "@/lib/utils";
-import { useSearchParams } from "react-router-dom";
+import { useDateScopedPage } from "@/hooks/useDateScopedPage";
 import { set } from "date-fns";
 const QuestionsReport = () => {
   const { dateRange } = useDateFilter();
-  const [searchParams, setSearchParams] = useSearchParams();
+  const dateScope = dateRange.from && dateRange.to
+    ? JSON.stringify([dateRange.from.toISOString(), dateRange.to.toISOString()])
+    : null;
+  const { page, searchParams, setSearchParams } = useDateScopedPage(dateScope);
 
   // Get pagination and filter state from URL params
-  const page = parseInt(searchParams.get("page") || "1", 10);
   const pageSize = 10;
 
   // Initialize state from URL params for persistence

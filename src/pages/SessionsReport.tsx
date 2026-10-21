@@ -10,7 +10,7 @@ import {
   type UserPaginationParams,
   type PaginationParams,
 } from "@/services/api";
-import { useSearchParams } from "react-router-dom";
+import { useDateScopedPage } from "@/hooks/useDateScopedPage";
 import { useDateFilter } from "@/contexts/DateFilterContext";
 import { buildDateRangeParams, formatLocal } from "@/lib/utils";
 import {
@@ -51,11 +51,13 @@ import TablePagination from "@/components/TablePagination";
 import { formatUtcDateWithPMCorrection, formatUTCToIST } from "@/lib/utils";
 
 const SessionsReport = () => {
-  const [searchParams, setSearchParams] = useSearchParams();
   const { dateRange } = useDateFilter();
+  const dateScope = dateRange.from && dateRange.to
+    ? JSON.stringify([dateRange.from.toISOString(), dateRange.to.toISOString()])
+    : null;
+  const { page, searchParams, setSearchParams } = useDateScopedPage(dateScope);
 
   // Get pagination and filter state from URL params
-  const page = parseInt(searchParams.get("page") || "1", 10);
   const pageSize = 10;
 
   // Initialize state from URL params for persistence
