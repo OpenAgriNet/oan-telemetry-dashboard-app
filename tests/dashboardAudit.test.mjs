@@ -7,6 +7,7 @@ import { JSDOM } from 'jsdom';
 import { build } from 'esbuild';
 import React, { act } from 'react';
 import { renderToStaticMarkup } from 'react-dom/server';
+import { MemoryRouter, useLocation, useNavigate } from 'react-router-dom';
 
 const dom = new JSDOM('<!doctype html><html><body></body></html>', { url: 'http://localhost/', pretendToBeVisual: true });
 for (const key of ['window','document','navigator','HTMLElement','HTMLInputElement','HTMLButtonElement','Element','Node','NodeFilter','MutationObserver','CustomEvent','Event','MouseEvent','KeyboardEvent','getComputedStyle']) {
@@ -25,17 +26,20 @@ const { outputFiles } = await build({
 export {default as Pagination} from './src/components/TablePagination';
 export {default as SortHead} from './src/components/SortableTableHead';
 export {useScopedPage} from './src/hooks/useScopedPage';
+export {useDateScopedPage} from './src/hooks/useDateScopedPage';
+export {default as QuestionsReport} from './src/pages/QuestionsReport';
+export {default as SessionsReport} from './src/pages/SessionsReport';
 export {default as Dashboard} from './src/pages/Dashboard';
 export {StatsProvider} from './src/contexts/StatsContext';
 export {DateFilterProvider, useDateFilter} from './src/contexts/DateFilterContext';
 export {default as TrendChart} from './src/components/dashboard/TrendChart';
 export * as api from './src/services/api';`,resolveDir:process.cwd(),loader:'tsx'},
-  bundle:true,write:false,format:'cjs',platform:'node',jsx:'automatic',alias:{'@':'./src'},
+  bundle:true,write:false,format:'cjs',platform:'node',jsx:'automatic',alias:{'@/lib/useAppAuth':'./tests/authFixture.ts','@':'./src'},
   plugins:[{name:'config',setup(b){b.onResolve({filter:/config\/environment$/},()=>({path:fileURLToPath(new URL('./configFixture.ts',import.meta.url))}));}}],
   external:['react','react/*','react-dom','react-dom/*','react-router-dom','@tanstack/react-query'],
 });
 const mod={exports:{}};new Function('module','exports','require',outputFiles[0].text)(mod,mod.exports,require);
-const { DatePicker, Pagination, SortHead, useScopedPage, Dashboard, StatsProvider, DateFilterProvider, useDateFilter, TrendChart, api }=mod.exports;
+const { DatePicker, Pagination, SortHead, useScopedPage, useDateScopedPage, QuestionsReport, SessionsReport, Dashboard, StatsProvider, DateFilterProvider, useDateFilter, TrendChart, api }=mod.exports;
 const h=React.createElement;
 async function mount(element){const div=document.createElement('div');document.body.append(div);const root=createRoot(div);await act(async()=>root.render(element));return {div,root,async close(){await act(async()=>root.unmount());div.remove();}};}
 async function click(el){assert.ok(el,'control exists');await act(async()=>el.click());}
@@ -81,6 +85,84 @@ test('a new filter or API scope requests page one immediately',async()=>{
   assert.equal(app.div.textContent,'1');assert.ok(renders.filter(x=>x.scope==='dates-B/api-B').every(x=>x.page===1));
  }finally{await app.close();}
 });
+
+test('URL pagination preserves initial deep links, equivalent dates, and back navigation',async()=>{
+ let navigate; const renders=[];
+ function Probe({scope}){
+  const {page,searchParams}=useDateScopedPage(scope); navigate=useNavigate();
+  const location=useLocation(); renders.push({scope,page});
+  return h('output',{'data-testid':'page'},`${page}|${location.search}|${searchParams.get('search')}`);
+ }
+ const view=scope=>h(MemoryRouter,{initialEntries:['/questions?page=38&search=weather&user=farmer-1']},h(Probe,{scope}));
+ const app=await mount(view(null));
+ try{
+  await act(async()=>app.root.render(view('range-A')));
+  assert.match(app.div.textContent,/^38\|/,'initial date loading preserves the bookmarked page');
+  await act(async()=>app.root.render(view('range-A')));
+  assert.match(app.div.textContent,/^38\|/,'equivalent dates do not reset the page');
+  await act(async()=>app.root.render(view('range-B')));
+  assert.match(app.div.textContent,/^1\|/);
+  assert.match(app.div.textContent,/page=1&search=weather&user=farmer-1/);
+  assert.ok(renders.filter(r=>r.scope==='range-B').every(r=>r.page===1),'new dates never render the old page');
+  await act(async()=>navigate('?page=2&search=weather&user=farmer-1'));
+  assert.match(app.div.textContent,/^2\|/,'pagination still works after resetting');
+  await act(async()=>navigate(-1));
+  assert.match(app.div.textContent,/^1\|/,'Back restores the reset entry rather than the obsolete page');
+ }finally{await app.close();}
+});
+
+for (const [name,Page,path] of [['Questions',QuestionsReport,'questions'],['Sessions',SessionsReport,'sessions']]) {
+ test(`${name} returns to page one and displays records when the applied date range shrinks`,async(t)=>{
+  const requests=[]; let setDates;
+  const previousAuth=globalThis.__telemetryTestAuth;
+  globalThis.__telemetryTestAuth={authenticated:true,tokenParsed:{realm_access:{roles:['telemetry-detail-viewer']}}};
+  t.mock.method(console,'log',()=>{});
+  t.mock.method(globalThis,'fetch',async(input)=>{
+   const url=new URL(input); assert.equal(url.pathname,`/v1/${path}`);
+   requests.push(url);
+   const page=Number(url.searchParams.get('page'));
+   const narrow=url.searchParams.get('endDate').includes('2026-10-20');
+   const totalPages=narrow?2:38;
+   const record=path==='questions'
+    ? {id:'question-1',question:'Weather question',answer:'Weather answer',user_id:'farmer-1',session_id:'session-1',dateAsked:'2026-10-20 12:00:00 IST'}
+    : {sessionId:'session-1',username:'farmer-1',questionCount:2,sessionTime:'2026-10-20 12:00:00 IST'};
+   return {ok:true,json:async()=>({success:true,data:page<=totalPages?[record]:[],pagination:{totalItems:narrow?12:380,currentPage:page,itemsPerPage:10,totalPages}})};
+  });
+  const client=new QueryClient({defaultOptions:{queries:{retry:false,gcTime:0}}});
+  function Harness(){
+   const {setDateRange}=useDateFilter(); setDates=setDateRange;
+   const location=useLocation();
+   React.useEffect(()=>setDateRange(initial),[setDateRange]);
+   return h(React.Fragment,null,h('output',{'data-testid':'url'},location.search),h(Page));
+  }
+  const app=await mount(h(MemoryRouter,{initialEntries:[`/${path}?page=38&search=weather&user=farmer-1`]},
+   h(QueryClientProvider,{client},h(DateFilterProvider,null,h(Harness)))));
+  const settle=async()=>{
+   await act(async()=>{await new Promise(r=>setTimeout(r,850));});
+   await act(async()=>{await new Promise(r=>setTimeout(r,30));});
+  };
+  try{
+   await settle(); assert.ok(requests.length>0);
+   assert.ok(requests.every(u=>u.searchParams.get('page')==='38'),'initial bookmarked page is retained');
+   const originalEnd=requests[0].searchParams.get('endDate');
+   await act(async()=>setDates({from:new Date(2026,9,20),to:new Date(2026,9,20)}));
+   await settle();
+   const changed=requests.filter(u=>u.searchParams.get('endDate')!==originalEnd);
+   assert.ok(changed.length>0);
+   assert.ok(changed.every(u=>u.searchParams.get('page')==='1'),'new dates request page one immediately');
+   assert.ok(changed.every(u=>u.searchParams.get('search').includes('weather')),'search survives the reset');
+   const url=new URLSearchParams(app.div.querySelector('[data-testid="url"]').textContent);
+   assert.equal(url.get('page'),'1'); assert.equal(url.get('search'),'weather'); assert.equal(url.get('user'),'farmer-1');
+   assert.match(app.div.textContent,path==='questions'?/Weather question/:/session-/);
+   assert.doesNotMatch(app.div.textContent,/No questions found|No sessions match/);
+   assert.equal(app.div.querySelector('[aria-label="Go to previous page"]').disabled,true);
+   await click(app.div.querySelector('[aria-label="Go to next page"]'));
+   await act(async()=>{await new Promise(r=>setTimeout(r,30));});
+   assert.equal(requests.at(-1).searchParams.get('page'),'2','normal pagination still works');
+   assert.equal(new URLSearchParams(app.div.querySelector('[data-testid="url"]').textContent).get('page'),'2');
+  }finally{await app.close();client.clear();globalThis.__telemetryTestAuth=previousAuth;}
+ });
+}
 
 test('sorting and pagination expose native keyboard controls and disabled states',async()=>{
  let sorted=0;const pages=[];const app=await mount(h('div',null,h('table',null,h('thead',null,h('tr',null,h(SortHead,{direction:'asc',onClick:()=>sorted++},'Date')))),h(Pagination,{currentPage:1,totalPages:8,onPageChange:p=>pages.push(p)})));
