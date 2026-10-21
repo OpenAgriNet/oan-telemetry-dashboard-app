@@ -1,4 +1,4 @@
-import React, { useState } from "react";
+import React from "react";
 import { useParams, useNavigate } from "react-router-dom";
 import { useQuery } from "@tanstack/react-query";
 import {
@@ -21,11 +21,10 @@ import {
 import { format } from "date-fns";
 import { Button } from "@/components/ui/button";
 import { fetchFeedbackById, fetchTranslation } from "@/services/api";
-import users from "@/data/users.json";
-import sessions from "@/data/sessions.json";
 import ReactMarkdown from "react-markdown";
 import remarkGfm from "remark-gfm";
 import rehypeRaw from "rehype-raw";
+import rehypeSanitize from "rehype-sanitize";
 import type { Components } from "react-markdown";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 
@@ -33,11 +32,11 @@ const FeedbackDetails = () => {
   const { feedbackId } = useParams();
   const navigate = useNavigate();
 
-  const { 
-    data: feedback, 
+  const {
+    data: feedback,
     isLoading: isFeedbackLoading,
     error,
-    refetch 
+    refetch
   } = useQuery({
     queryKey: ["feedback", feedbackId],
     queryFn: () => fetchFeedbackById(feedbackId || ""),
@@ -157,30 +156,17 @@ const FeedbackDetails = () => {
     ),
   };
 
-  // Try to find user in local data, but use API userId as fallback
-  const user = feedback
-    ? users.find((u) => u.id === feedback.userId) || {
-        id: feedback.userId,
-        name: feedback.userId,
-      }
-    : null;
-
-  const session = feedback
-    ? sessions.find((s) => s.sessionId === feedback.sessionId)
-    : null;
-
-  const handleSessionClick = (sessionId: string) => {
-    console.log('Session ID:', sessionId);
-    const SessionId = sessionId;
-    // Add your logic here to handlne the session click
-    navigate(`/sessions/${SessionId}`);
+  const user = feedback ? { id: feedback.userId, name: feedback.userId } : null;
+  const session = feedback?.sessionId;
+  const handleSessionClick = () => {
+    if (session) navigate(`/sessions/${encodeURIComponent(session)}`);
   };
 
   // Show loading state
   if (isFeedbackLoading) {
     return (
-      <div className="space-y-6">
-        <div className="flex items-center justify-between">
+      <div className="space-y-6 break-words [overflow-wrap:anywhere]">
+        <div className="flex flex-wrap items-center justify-between gap-3">
           <h1 className="text-2xl font-bold tracking-tight">Feedback Details</h1>
         </div>
         <div className="flex justify-center items-center p-12 bg-muted/30 rounded-lg">
@@ -196,8 +182,8 @@ const FeedbackDetails = () => {
   // Show error state
   if (error) {
     return (
-      <div className="space-y-6">
-        <div className="flex items-center justify-between">
+      <div className="space-y-6 break-words [overflow-wrap:anywhere]">
+        <div className="flex flex-wrap items-center justify-between gap-3">
           <h1 className="text-2xl font-bold tracking-tight">Feedback Details</h1>
         </div>
         <div className="flex justify-center items-center p-8 bg-destructive/10 border border-destructive/20 rounded-lg">
@@ -218,8 +204,8 @@ const FeedbackDetails = () => {
   // Show not found state
   if (!feedback) {
     return (
-      <div className="space-y-6">
-        <div className="flex items-center justify-between">
+      <div className="space-y-6 break-words [overflow-wrap:anywhere]">
+        <div className="flex flex-wrap items-center justify-between gap-3">
           <h1 className="text-2xl font-bold tracking-tight">Feedback Details</h1>
         </div>
         <div className="text-center py-12">
@@ -237,8 +223,8 @@ const FeedbackDetails = () => {
   }
 
   return (
-    <div className="space-y-6">
-      <div className="flex items-center justify-between">
+    <div className="space-y-6 break-words [overflow-wrap:anywhere]">
+      <div className="flex flex-wrap items-center justify-between gap-3">
         <h1 className="text-2xl font-bold tracking-tight">Feedback Details</h1>
         <Button onClick={() => navigate('/feedback')} variant="outline">
           Back to Feedback
@@ -307,7 +293,7 @@ const FeedbackDetails = () => {
             <div className="text-sm">
               {feedback.sessionId ? (
                 <button
-                  onClick={() => handleSessionClick(feedback.sessionId)}
+                  onClick={() => handleSessionClick()}
                   className="text-primary hover:underline"
                 >
                   <code className="relative rounded bg-muted px-[0.3rem] py-[0.2rem] font-mono text-xs">
@@ -327,7 +313,7 @@ const FeedbackDetails = () => {
           <CardTitle>Question & Feedback</CardTitle>
           <CardDescription>Detailed feedback information</CardDescription>
         </CardHeader>
-        <CardContent className="space-y-6">
+        <CardContent className="space-y-6 break-words [overflow-wrap:anywhere]">
           <div>
             <h3 className="font-medium mb-2">User Feedback</h3>
             <div className="p-4 rounded-lg border border-border bg-card">
@@ -351,7 +337,7 @@ const FeedbackDetails = () => {
             className={`p-4 rounded-lg border border-border bg-card ${
               session ? "cursor-pointer hover:bg-muted/50 transition-colors" : ""
             }`}
-            onClick={session ? () => handleSessionClick(session.sessionId) : undefined}
+            onClick={session ? handleSessionClick : undefined}
           >
             <div className="flex items-center gap-2 mb-2">
               <MessageCircle className="h-4 w-4" />
@@ -390,7 +376,7 @@ const FeedbackDetails = () => {
                     <div className="prose-code:bg-muted prose-pre:bg-muted/80 prose-pre:border prose-pre:border-border prose-headings:text-foreground prose-p:text-foreground prose-a:text-primary">
                       <ReactMarkdown
                         remarkPlugins={[remarkGfm]}
-                        rehypePlugins={[rehypeRaw]}
+                        rehypePlugins={[rehypeRaw, rehypeSanitize]}
                         components={markdownComponents}
                       >
                         {feedback.answer}
@@ -399,9 +385,9 @@ const FeedbackDetails = () => {
                   </TabsContent>
                   <TabsContent value="raw" className="mt-4">
                     <div className="bg-muted/50 p-3 rounded-md overflow-x-auto">
-                      <pre 
-                        style={{ 
-                          whiteSpace: 'pre', 
+                      <pre
+                        style={{
+                          whiteSpace: 'pre',
                           wordWrap: 'normal',
                           overflowX: 'auto',
                           fontFamily: 'monospace'

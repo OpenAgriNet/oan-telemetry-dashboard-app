@@ -13,7 +13,6 @@ interface ServiceSectionProps {
   latestUpdates?: { [endpointId: string]: LatestStatusUpdate };
   type?: 'ui' | 'api' | 'network';
   className?: string;
-  responseMetricStrategy?: 'auto' | 'latest' | 'average';
 }
 
 const ServiceSection: React.FC<ServiceSectionProps> = ({
@@ -24,8 +23,7 @@ const ServiceSection: React.FC<ServiceSectionProps> = ({
   trendsErrors = {},
   latestUpdates = {},
   type,
-  className,
-  responseMetricStrategy = 'auto'
+  className
 }) => {
   if (endpoints.length === 0) {
     return null;
@@ -60,7 +58,7 @@ const ServiceSection: React.FC<ServiceSectionProps> = ({
   return (
     <div className={cn("space-y-4", className)}>
       {/* Section Header */}
-      <div className="flex items-center justify-between">
+      <div className="flex flex-wrap items-center justify-between gap-3">
         <div className="flex items-center gap-3">
           <div className="text-primary">
             {getSectionIcon(type)}
@@ -74,7 +72,7 @@ const ServiceSection: React.FC<ServiceSectionProps> = ({
         </div>
         
         {/* Section Stats */}
-        <div className="flex items-center gap-6 text-sm">
+        <div className="flex flex-wrap items-center gap-3 sm:gap-6 text-sm">
           <div className="flex items-center gap-2">
             <div className="w-2 h-2 bg-green-500 rounded-full"></div>
             <span>{stats.operational} operational</span>
@@ -96,31 +94,32 @@ const ServiceSection: React.FC<ServiceSectionProps> = ({
       </div>
 
       {/* Section Content */}
-      <div className="border rounded-lg bg-background">
-        {/* Column Headers */}
-        <div className="flex items-center gap-4 py-2 px-4 border-b bg-muted/50 text-xs font-medium text-muted-foreground">
-          <div className="flex-shrink-0 w-4">Status</div>
-          <div className="flex-shrink-0 w-48 ml-6">Service</div>
-          <div className="flex-1 text-center">30-day history</div>
-          <div className="flex-shrink-0 text-right w-20">Uptime</div>
-          <div className="flex-shrink-0 text-right w-20">Response</div>
-          <div className="flex-shrink-0 text-right w-24">Last Check</div>
-        </div>
+      <div className="overflow-x-auto border rounded-lg bg-background">
+        <div className="min-w-[800px]">
+          {/* Column Headers */}
+          <div className="flex items-center gap-4 py-2 px-4 border-b bg-muted/50 text-xs font-medium text-muted-foreground">
+            <div className="flex-shrink-0 w-4">Status</div>
+            <div className="flex-shrink-0 w-48 ml-6">Service</div>
+            <div className="flex-1 text-center">30-day history</div>
+            <div className="flex-shrink-0 text-right w-20">Uptime</div>
+            <div className="flex-shrink-0 text-right w-20">Response</div>
+            <div className="flex-shrink-0 text-right w-24">Last Check</div>
+          </div>
 
-        {/* Endpoint Rows */}
-        <div>
-          {endpoints.map((endpoint, index) => (
-            <EndpointRow
-              key={endpoint.id}
-              endpoint={endpoint}
-              trends={trendsData[endpoint.id]}
-              trendsLoading={trendsLoading[endpoint.id]}
-              trendsError={trendsErrors[endpoint.id]}
-              latestUpdate={latestUpdates[endpoint.id]}
-              responseMetricStrategy={responseMetricStrategy}
-              className={index === endpoints.length - 1 ? "border-b-0" : ""}
-            />
-          ))}
+          {/* Endpoint Rows */}
+          <div>
+            {endpoints.map((endpoint, index) => (
+              <EndpointRow
+                key={endpoint.id}
+                endpoint={endpoint}
+                trends={trendsData[endpoint.id]}
+                trendsLoading={trendsLoading[endpoint.id]}
+                trendsError={trendsErrors[endpoint.id]}
+                latestUpdate={latestUpdates[endpoint.id]}
+                className={index === endpoints.length - 1 ? "border-b-0" : ""}
+              />
+            ))}
+          </div>
         </div>
       </div>
     </div>

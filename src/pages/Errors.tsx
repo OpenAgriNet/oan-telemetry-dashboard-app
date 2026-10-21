@@ -1,3 +1,5 @@
+import SortableTableHead from "@/components/SortableTableHead";
+import TelemetryDetailLink from "@/components/TelemetryDetailLink";
 import React, { useState } from "react";
 import { Link, useSearchParams } from "react-router-dom";
 import { useQuery } from "@tanstack/react-query";
@@ -22,8 +24,6 @@ import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { useDateFilter } from "@/contexts/DateFilterContext";
-import { useAppAuth } from "@/lib/useAppAuth";
-import { isSuperAdmin } from "@/utils/roleUtils";
 import { buildDateRangeParams } from "@/lib/utils";
 import {
   fetchErrors,
@@ -34,7 +34,6 @@ import {
 import TablePagination from "@/components/TablePagination";
 
 const ErrorsPage = () => {
-  const { keycloak } = useAppAuth();
   const [searchParams, setSearchParams] = useSearchParams();
   const { dateRange } = useDateFilter();
 
@@ -44,7 +43,7 @@ const ErrorsPage = () => {
 
   // Initialize state from URL params for persistence
   const [searchTerm, setSearchTerm] = useState(searchParams.get("search") || "");
-  const [sortConfig, setSortConfig] = useState({
+  const [sortConfig, setSortConfig] = useState<{ key: string; direction: "asc" | "desc" }>({
     key: "created_at",
     direction: "desc",
   });
@@ -104,7 +103,7 @@ const ErrorsPage = () => {
   };
 
   // Fetch error statistics
-  const { data: errorStats = { totalErrors: 0 }, isLoading: isLoadingStats } =
+  const { data: errorStats = { totalErrors: 0 }, isLoading: isLoadingStats, error: statsError } =
     useQuery({
       queryKey: [
         "error-stats",
@@ -196,31 +195,15 @@ const ErrorsPage = () => {
     refetchOnMount: false,
   });
 
-  // Check if user has super-admin role (after all hooks)
-  if (!isSuperAdmin(keycloak)) {
-    return (
-      <div className="flex justify-center items-center p-8 bg-destructive/10 border border-destructive/20 rounded-lg">
-        <div className="text-center">
-          <AlertTriangle className="h-12 w-12 text-destructive mx-auto mb-4" />
-          <p className="text-destructive font-medium mb-2">Access Denied</p>
-          <p className="text-destructive/80 text-sm">
-            You don't have permission to access this page. Only super-admin
-            users can view errors.
-          </p>
-        </div>
-      </div>
-    );
-  }
-
   const handleApplyFilters = () => {
     refetch();
   };
 
   // Show error state
-  if (error) {
+  if (error || statsError) {
     return (
       <div className="space-y-6">
-        <div className="flex items-center justify-between">
+        <div className="flex flex-wrap items-center justify-between gap-3">
           <h1 className="text-2xl font-bold tracking-tight">Error Details</h1>
         </div>
         <div className="flex justify-center items-center p-8 bg-destructive/10 border border-destructive/20 rounded-lg">
@@ -230,7 +213,7 @@ const ErrorsPage = () => {
               Error loading error data
             </p>
             <p className="text-destructive/80 text-sm mb-4">
-              {(error as Error).message}
+              {((error || statsError) as Error).message}
             </p>
             <Button onClick={() => refetch()} variant="outline" size="sm">
               <RefreshCw className="h-4 w-4 mr-2" />
@@ -244,7 +227,7 @@ const ErrorsPage = () => {
 
   return (
     <div className="space-y-6">
-      <div className="flex items-center justify-between">
+      <div className="flex flex-wrap items-center justify-between gap-3">
         <h1 className="text-2xl font-bold tracking-tight">Error Details</h1>
       </div>
 
@@ -275,8 +258,8 @@ const ErrorsPage = () => {
           </CardDescription>
         </CardHeader>
         <CardContent className="space-y-4">
-          <div className="flex flex-col md:flex-row gap-4">
-            <div className="flex-1">
+          <div className="flex flex-wrap gap-2 md:gap-4">
+            <div className="min-w-0 basis-full md:basis-0 flex-1">
               <div className="relative">
                 <Search className="absolute left-2 top-2.5 h-4 w-4 text-muted-foreground" />
                 <Input
@@ -293,10 +276,10 @@ const ErrorsPage = () => {
                 />
               </div>
             </div>
-            <Button onClick={handleSearch} disabled={isLoading} variant="outline" size="icon" title="Search">
+            <Button onClick={handleSearch} disabled={isLoading} variant="outline" size="icon" title="Search" aria-label="Search">
               <Search className="h-4 w-4" />
             </Button>
-            <Button onClick={handleResetFilters} variant="outline" size="icon" title="Reset Search">
+            <Button onClick={handleResetFilters} variant="outline" size="icon" title="Reset Search" aria-label="Reset search">
               <RotateCcw className="h-4 w-4" />
             </Button>
           </div>
@@ -319,36 +302,40 @@ const ErrorsPage = () => {
           ) : (
             <>
               <div className="rounded-md border">
-                <Table>
+                <Table className="min-w-[640px]">
                   <TableHeader>
                     <TableRow>
-                      <TableHead
+                      <SortableTableHead
                         className="cursor-pointer hover:bg-muted/50"
-                        onClick={() => handleSort("created_at")}
+                        direction={sortConfig.key === "created_at" ? sortConfig.direction : undefined}
+                      onClick={() => handleSort("created_at")}
                       >
                         Date
                         {SortIndicator({ columnKey: "created_at" })}
-                      </TableHead>
-                      <TableHead
+                      </SortableTableHead>
+                      <SortableTableHead
                         className="cursor-pointer hover:bg-muted/50"
-                        onClick={() => handleSort("error_message")}
+                        direction={sortConfig.key === "error_message" ? sortConfig.direction : undefined}
+                      onClick={() => handleSort("error_message")}
                       >
                         Error Message
                         {SortIndicator({ columnKey: "error_message" })}
-                        </TableHead>
-                      <TableHead
+                        </SortableTableHead>
+                      <SortableTableHead
                         className="cursor-pointer hover:bg-muted/50"
-                        onClick={() => handleSort("user_id")}
+                        direction={sortConfig.key === "user_id" ? sortConfig.direction : undefined}
+                      onClick={() => handleSort("user_id")}
                       >User
                         {SortIndicator({ columnKey: "user_id" })}
-                      </TableHead>
-                      <TableHead
+                      </SortableTableHead>
+                      <SortableTableHead
                         className="cursor-pointer hover:bg-muted/50"
-                        onClick={() => handleSort("session_id")}
+                        direction={sortConfig.key === "session_id" ? sortConfig.direction : undefined}
+                      onClick={() => handleSort("session_id")}
                         >
                           Session
                         {SortIndicator({ columnKey: "session_id" })}
-                      </TableHead>
+                      </SortableTableHead>
                       <TableHead>Channel</TableHead>
                       <TableHead>Actions</TableHead>
                     </TableRow>
@@ -399,12 +386,9 @@ const ErrorsPage = () => {
                           </TableCell>
                           <TableCell>
                             {errorItem.sessionId ? (
-                              <Link
-                                to={`/sessions/${errorItem.sessionId}`}
-                                className="hover:underline text-sm"
-                              >
-                                {errorItem.sessionId.slice(0, 8)}...
-                              </Link>
+                              <span className="text-sm">
+                                <TelemetryDetailLink to={`/sessions/${encodeURIComponent(errorItem.sessionId)}`}>{errorItem.sessionId.slice(0, 8)}...</TelemetryDetailLink>
+                              </span>
                             ) : (
                               <span className="text-muted-foreground text-sm">
                                 N/A
@@ -423,12 +407,13 @@ const ErrorsPage = () => {
                             )}
                           </TableCell>
                           <TableCell>
-                            <Link
-                              to={`/errors/${errorItem.id}`}
+                            <TelemetryDetailLink
+                              fallback={null}
+                              to={`/errors/${encodeURIComponent(errorItem.id)}`}
                               className="inline-flex items-center justify-center rounded-md text-sm font-medium ring-offset-background transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 disabled:pointer-events-none disabled:opacity-50 border border-input bg-background hover:bg-accent hover:text-accent-foreground h-8 px-3"
                             >
                               View Details
-                            </Link>
+                            </TelemetryDetailLink>
                           </TableCell>
                         </TableRow>
                       ))

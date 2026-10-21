@@ -41,7 +41,7 @@ export const DateFilterProvider: React.FC<DateFilterProviderProps> = ({ children
   // Debounce the date range to prevent excessive API calls while user is selecting dates
   const debouncedFrom = useDebounce(immediateDateRange.from, DATE_DEBOUNCE_DELAY);
   const debouncedTo = useDebounce(immediateDateRange.to, DATE_DEBOUNCE_DELAY);
-  
+
   // The main dateRange exposed to consumers is debounced
   const dateRange: DateRange = {
     from: debouncedFrom,
@@ -64,4 +64,4 @@ export const DateFilterProvider: React.FC<DateFilterProviderProps> = ({ children
       {children}
     </DateFilterContext.Provider>
   );
-}; 
+};

@@ -1,3 +1,4 @@
+import { fetchOptionalDetail, fetchSessionRecords } from "./detailApi";
 import React from 'react';
 import { API_CONFIG } from '../config/environment';
 import dailyMetrics from '../data/dailyMetrics.json';
@@ -711,7 +712,7 @@ export const fetchUserByUsername = async (username: string, params: PaginationPa
     const result = await response.json();
     
     if (!result.success) {
-      return null;
+      throw new Error('Failed to fetch user details');
     }
 
     // Transform backend response to match our User interface
@@ -730,8 +731,7 @@ export const fetchUserByUsername = async (username: string, params: PaginationPa
       dislikes: userData.dislikes
     };
   } catch (error) {
-    console.error('Error fetching user by username:', error);
-    return null;
+    throw error;
   }
 };
 
@@ -773,19 +773,7 @@ export const fetchUserStats = async (params: PaginationParams = {}): Promise<Use
       activeCumulative: result.data.activeCumulative || 0
     };
   } catch (error) {
-    console.error('Error fetching user stats:', error);
-    // Return default values on error
-    return {
-      totalUsers: 0,
-      totalSessions: 0,
-      totalQuestions: 0,
-      totalFeedback: 0,
-      totalLikes: 0,
-      totalDislikes: 0,
-      newUsers: 0,
-      returningUsers: 0,
-      activeCumulative: 0
-    };
+    throw error;
   }
 };
 
@@ -855,37 +843,38 @@ export const fetchSessions = async (params: SessionPaginationParams = {}): Promi
   }
 };
 
-export const fetchSessionById = async (sessionId: string, params: PaginationParams = {}): Promise<SessionDetail | null> => {
-  try {
-    const { startDate, endDate } = params;
-    
-    const queryParams = buildQueryParams({
-      startDate: startDate || '',
-      endDate: endDate || ''
-    });
+export const fetchSessionById = async (sessionId: string): Promise<SessionDetail | null> => {
+  const result = await fetchOptionalDetail<{ success: boolean; data: SessionDetail }>(
+    `${SERVER_URL}/sessions/${encodeURIComponent(sessionId)}`
+  );
+  if (!result) return null;
+  if (!result.success) throw new Error("Failed to fetch session details");
+  return result.data;
+};
 
-    console.log('Fetching session details for:', sessionId);
-    
-    const response = await fetch(`${SERVER_URL}/sessions/${sessionId}?${queryParams}`);
-    
-    if (!response.ok) {
-      if (response.status === 404) {
-        return null;
-      }
-      throw new Error(`HTTP error! status: ${response.status}`);
-    }
-    
-    const result = await response.json();
-    
-    if (!result.success) {
-      return null;
-    }
+export const fetchQuestionById = async (id: string): Promise<Question | null> => {
+  const result = await fetchOptionalDetail<{ success: boolean; data: Question }>(
+    `${SERVER_URL}/questions/${encodeURIComponent(id)}`
+  );
+  if (!result) return null;
+  if (!result.success) throw new Error("Failed to fetch question details");
+  return result.data;
+};
 
-    return result.data;
-  } catch (error) {
-    console.error('Error fetching session by ID:', error);
-    return null;
-  }
+export const fetchFeedbackById = async (id: string): Promise<Feedback | null> => {
+  const result = await fetchOptionalDetail<Array<{
+    id: string; created_at: string; ets: string; questiontext: string; answertext: string;
+    user_id: string; feedbacktype: string; feedbacktext: string; session_id: string;
+  }>>(`${SERVER_URL}/feedback/id/${encodeURIComponent(id)}`);
+  if (!result) return null;
+  if (!Array.isArray(result) || !result.length) throw new Error("Invalid feedback detail response");
+  const item = result[0];
+  return {
+    id: item.id, date: item.created_at, timestamp: item.ets,
+    question: item.questiontext || "", answer: item.answertext || "",
+    user: item.user_id, userId: item.user_id, sessionId: item.session_id,
+    rating: item.feedbacktype, feedback: item.feedbacktext || "",
+  };
 };
 
 export const fetchSessionsByUserId = async (userId: string, params: SessionPaginationParams = {}): Promise<PaginatedResponse<Session>> => {
@@ -977,12 +966,7 @@ export const fetchBasicSessionStats = async (params: PaginationParams = {}): Pro
       totalUsers: uniqueUsers
     };
   } catch (error) {
-    console.error('Error fetching session stats:', error);
-    return {
-      totalSessions: 0,
-      totalQuestions: 0,
-      totalUsers: 0
-    };
+    throw error;
   }
 };
 
@@ -1040,22 +1024,6 @@ export const fetchQuestions = async (params: QuestionPaginationParams = {}): Pro
   } catch (error) {
     console.error('Error fetching questions:', error);
     throw error;
-  }
-};
-
-export const fetchQuestionById = async (id: string): Promise<Question | null> => {
-  try {
-    const response = await fetch(`${SERVER_URL}/questions/${id}`);
-    const result = await response.json();
-    
-    if (!result.success) {
-      return null;
-    }
- console.log("result.data",result.data)
-    return result.data;
-  } catch (error) {
-    console.error('Error fetching question by ID:', error);
-    return null;
   }
 };
 
@@ -1163,40 +1131,6 @@ export const fetchFeedback = async (params: PaginationParams = {}): Promise<Pagi
   }
 };
 
-export const fetchFeedbackById = async (id: string): Promise<Feedback | null> => {
-  try {
-    const response = await fetch(`${SERVER_URL}/feedback/id/${id}`);
-    
-    if (!response.ok) {
-      return null;
-    }
-    
-    const result = await response.json();
-    
-    // The getFeedbackByid controller returns an array
-    if (!result || !Array.isArray(result) || result.length === 0) {
-      return null;
-    }
-
-    const feedbackData = result[0];
-    
-    return {
-      id: feedbackData.id || id,
-      date: feedbackData.created_at || new Date().toISOString(),
-      question: feedbackData.questiontext || "",
-      answer: feedbackData.answertext || "",
-      user: feedbackData.user_id || "Unknown",
-      rating: feedbackData.feedbacktype === "like" ? "like" : "dislike",
-      feedback: feedbackData.feedbacktext || "",
-      sessionId: feedbackData.session_id || "",
-      userId: feedbackData.user_id || ""
-    };
-  } catch (error) {
-    console.error('Error fetching feedback by ID:', error);
-    return null;
-  }
-};
-
 // Get feedback statistics (total likes/dislikes)
 export const fetchFeedbackStats = async (params: PaginationParams = {}): Promise<{
   totalFeedback: number;
@@ -1239,12 +1173,7 @@ export const fetchFeedbackStats = async (params: PaginationParams = {}): Promise
       totalDislikes
     };
   } catch (error) {
-    console.error('Error fetching feedback stats:', error);
-    return {
-      totalFeedback: 0,
-      totalLikes: 0,
-      totalDislikes: 0
-    };
+    throw error;
   }
 };
 
@@ -1278,10 +1207,7 @@ export const fetchSessionStats = async (params: PaginationParams = {}): Promise<
 
     return result.data;
   } catch (error) {
-    console.error('Error fetching session stats:', error);
-    return {
-      totalSessions: 0
-    };
+    throw error;
   }
 };
 
@@ -1315,10 +1241,7 @@ export const fetchQuestionStats = async (params: PaginationParams = {}): Promise
 
     return result.data;
   } catch (error) {
-    console.error('Error fetching question stats:', error);
-    return {
-      totalQuestions: 0
-    };
+    throw error;
   }
 };
 
@@ -1354,12 +1277,7 @@ export const fetchComprehensiveFeedbackStats = async (params: PaginationParams =
 
     return result.data;
   } catch (error) {
-    console.error('Error fetching comprehensive feedback stats:', error);
-    return {
-      totalFeedback: 0,
-      totalLikes: 0,
-      totalDislikes: 0
-    };
+    throw error;
   }
 };
 
@@ -1399,16 +1317,7 @@ export const fetchDashboardStats = async (params: PaginationParams = {}): Promis
 
     return result.data;
   } catch (error) {
-    console.error('Error fetching dashboard stats:', error);
-    return {
-      totalUsers: 0,
-      totalNewUsers: 0,
-      totalSessions: 0,
-      totalQuestions: 0,
-      totalFeedback: 0,
-      totalLikes: 0,
-      totalDislikes: 0
-    };
+    throw error;
   }
 };
 
@@ -1599,100 +1508,24 @@ export const generateQuestionsReport = async (
   });
 };
 
-// Legacy functions that aren't in the new API
-export const fetchQuestionsBySessionId = async (sessionId: string): Promise<Question[]> => {
-  try {
-    console.log('Fetching questions for session:', sessionId);
-    
-    const response = await fetch(`${SERVER_URL}/questions/session/${sessionId}`);
-    
-    if (!response.ok) {
-      throw new Error(`HTTP error! status: ${response.status}`);
-    }
-    
-    const result = await response.json();
-    
-    if (!result.success) {
-      throw new Error('Failed to fetch questions by session ID');
-    }
-
-    // Handle case where result.data might not exist
-    if (!result.data || !Array.isArray(result.data)) {
-      console.warn('Questions API returned invalid data format for session:', sessionId);
-      return [];
-    }
-
-    return result.data;
-  } catch (error) {
-    console.error('Error fetching questions by session ID:', error);
-    throw error;
-  }
-};
+// Session detail APIs return all records, including paginated feedback and errors.
+export const fetchQuestionsBySessionId = (sessionId: string): Promise<Question[]> =>
+  fetchSessionRecords<Question>(`${SERVER_URL}/questions/session/${encodeURIComponent(sessionId)}`);
 
 export const fetchFeedbackBySessionId = async (sessionId: string): Promise<Feedback[]> => {
-  try {
-    console.log('Fetching feedback for session:', sessionId);
-    
-    const response = await fetch(`${SERVER_URL}/feedback/session/${sessionId}`);
-    
-    if (!response.ok) {
-      throw new Error(`HTTP error! status: ${response.status}`);
-    }
-    
-    const result = await response.json();
-    
-    // The backend returns data in FeedbackAPIResponse format with pagination
-    if (!result.data || !Array.isArray(result.data)) {
-      console.warn('Feedback API returned invalid data format for session:', sessionId);
-      return [];
-    }
-
-    // Transform the API response to match the Feedback interface
-    // The backend formatFeedbackData function returns data in this format:
-    const transformedData: Feedback[] = result.data.map((item: FeedbackSessionAPIResponse) => ({
-      id: item.id,
-      date: item.date || item.timestamp || new Date().toISOString(),
-      timestamp: item.timestamp,
-      question: item.question || "",
-      answer: item.answer || "",
-      user: item.user || "Unknown",
-      rating: item.rating === "like" ? "like" : "dislike",
-      feedback: item.feedback || "",
-      sessionId: item.sessionId || sessionId,
-      userId: item.user || ""
-    }));
-
-    return transformedData;
-  } catch (error) {
-    console.error('Error fetching feedback by session ID:', error);
-    throw error;
-  }
+  const records = await fetchSessionRecords<FeedbackSessionAPIResponse>(
+    `${SERVER_URL}/feedback/session/${encodeURIComponent(sessionId)}`
+  );
+  return records.map((item) => ({
+    id: item.id, date: item.date || item.timestamp, timestamp: item.timestamp,
+    question: item.question || "", answer: item.answer || "", user: item.user || "Unknown",
+    rating: item.rating, feedback: item.feedback || "",
+    sessionId: item.sessionId || sessionId, userId: item.user || "",
+  }));
 };
 
-export const fetchErrorsBySessionId = async (sessionId: string): Promise<ErrorDetail[]> => {
-  try {
-    console.log('Fetching errors for session:', sessionId);
-    
-    const response = await fetch(`${SERVER_URL}/errors/session/${sessionId}`);
-    
-    if (!response.ok) {
-      throw new Error(`HTTP error! status: ${response.status}`);
-    }
-    
-    const result = await response.json();
-    
-    if (!result.data || !Array.isArray(result.data)) {
-      console.warn('Errors API returned invalid data format for session:', sessionId);
-      return [];
-    }
-
-    return result.data;
-  } catch (error) {
-    console.error('Error fetching errors by session ID:', error);
-    // Return empty array instead of throwing to prevent breaking the session details page
-    return [];
-  }
-};
+export const fetchErrorsBySessionId = (sessionId: string): Promise<ErrorDetail[]> =>
+  fetchSessionRecords<ErrorDetail>(`${SERVER_URL}/errors/session/${encodeURIComponent(sessionId)}`);
 
 /**
  * Fetch all pages of a paginated API and return the combined data array.
@@ -1790,35 +1623,7 @@ export const fetchQuestionsGraph = async (params: PaginationParams = {}): Promis
 
     return result;
   } catch (error) {
-    console.error('Error fetching questions graph data:', error);
-    return {
-      data: [],
-      metadata: {
-        granularity: 'daily',
-        totalDataPoints: 0,
-        dateRange: {
-          start: null,
-          end: null
-        },
-        summary: {
-          totalQuestions: 0,
-          totalUniqueUsers: 0,
-          avgQuestionsPerPeriod: 0,
-          peakActivity: {
-            date: null,
-            questionsCount: 0
-          }
-        }
-      },
-      filters: {
-        search: '',
-        startDate: null,
-        endDate: null,
-        granularity: 'daily',
-        appliedStartTimestamp: null,
-        appliedEndTimestamp: null
-      }
-    };
+    throw error;
   }
 };
 
@@ -1893,36 +1698,7 @@ export const fetchSessionsGraph = async (params: PaginationParams = {}): Promise
 
     return result;
   } catch (error) {
-    console.error('Error fetching sessions graph data:', error);
-    return {
-      data: [],
-      metadata: {
-        granularity: 'daily',
-        totalDataPoints: 0,
-        dateRange: {
-          start: null,
-          end: null
-        },
-        summary: {
-          totalSessions: 0,
-          totalQuestions: 0,
-          totalUsers: 0,
-          avgSessionsPerPeriod: 0,
-          peakActivity: {
-            date: null,
-            sessionsCount: 0
-          }
-        }
-      },
-      filters: {
-        search: '',
-        startDate: null,
-        endDate: null,
-        granularity: 'daily',
-        appliedStartTimestamp: null,
-        appliedEndTimestamp: null
-      }
-    };
+    throw error;
   }
 };
 
@@ -2001,38 +1777,7 @@ export const fetchFeedbackGraph = async (params: PaginationParams = {}): Promise
 
     return result;
   } catch (error) {
-    console.error('Error fetching feedback graph data:', error);
-    return {
-      data: [],
-      metadata: {
-        granularity: 'daily',
-        totalDataPoints: 0,
-        dateRange: {
-          start: null,
-          end: null
-        },
-        summary: {
-          totalFeedback: 0,
-          totalLikes: 0,
-          totalDislikes: 0,
-          totalUniqueUsers: 0,
-          avgFeedbackPerPeriod: 0,
-          overallSatisfactionRate: 0,
-          peakActivity: {
-            date: null,
-            feedbackCount: 0
-          }
-        }
-      },
-      filters: {
-        search: '',
-        startDate: null,
-        endDate: null,
-        granularity: 'daily',
-        appliedStartTimestamp: null,
-        appliedEndTimestamp: null
-      }
-    };
+    throw error;
   }
 };
 
@@ -2135,38 +1880,16 @@ export const fetchErrors = async (params: ErrorPaginationParams = {}): Promise<P
       totalPages: result.pagination.totalPages
     };
   } catch (error) {
-    console.error('Error fetching errors:', error);
-    return {
-      data: [],
-      total: 0,
-      page: 1,
-      pageSize: 10,
-      totalPages: 0
-    };
+    throw error;
   }
 };
 
 // Get error by ID
 export const fetchErrorById = async (id: string): Promise<ErrorDetail | null> => {
-  try {
-    const url = `${SERVER_URL}/errors/id/${id}`;
-    console.log('Fetching error by ID with URL:', url);
-
-    const response = await fetch(url);
-    
-    if (!response.ok) {
-      if (response.status === 404) {
-        return null;
-      }
-      throw new Error(`HTTP error! status: ${response.status}`);
-    }
-    
-    const result = await response.json();
-    return result.data;
-  } catch (error) {
-    console.error('Error fetching error by ID:', error);
-    return null;
-  }
+  const result = await fetchOptionalDetail<{ data: ErrorDetail }>(
+    `${SERVER_URL}/errors/id/${encodeURIComponent(id)}`
+  );
+  return result?.data ?? null;
 };
 
 // Get error statistics
@@ -2195,14 +1918,7 @@ export const fetchErrorStats = async (params: PaginationParams = {}): Promise<Er
     
     return result;
   } catch (error) {
-    console.error('Error fetching error statistics:', error);
-    return {
-      totalErrors: 0,
-      unresolvedErrors: 0,
-      resolvedErrors: 0,
-      criticalErrors: 0,
-      avgErrorCount: 0
-    };
+    throw error;
   }
 };
 
@@ -2232,10 +1948,7 @@ export const fetchErrorGraph = async (params: PaginationParams = {}): Promise<Er
     
     return result;
   } catch (error) {
-    console.error('Error fetching error graph data:', error);
-    return {
-      data: []
-    };
+    throw error;
   }
 };
 
@@ -2268,32 +1981,6 @@ export const fetchUsersGraph = async (params: PaginationParams = {}): Promise<Us
 
     return result;
   } catch (error) {
-    console.error('Error fetching users graph data:', error);
-    return {
-      data: [],
-      metadata: {
-        granularity: 'daily',
-        totalDataPoints: 0,
-        dateRange: {
-          start: null,
-          end: null
-        },
-        summary: {
-          totalUniqueUsers: 0,
-          peakActivity: {
-            date: null,
-            uniqueUsersCount: 0
-          }
-        }
-      },
-      filters: {
-        search: '',
-        startDate: null,
-        endDate: null,
-        granularity: 'daily',
-        appliedStartTimestamp: null,
-        appliedEndTimestamp: null
-      }
-    };
+    throw error;
   }
 };

@@ -35,7 +35,7 @@ const Analytics = () => {
 
   return (
     <div className="space-y-6">
-      <div className="flex items-center justify-between">
+      <div className="flex flex-wrap items-center justify-between gap-3">
         <h1 className="text-2xl font-bold tracking-tight">Analytics</h1>
         <DateRangePicker dateRange={dateRange} setDateRange={setDateRange} />
       </div>
@@ -46,7 +46,7 @@ const Analytics = () => {
         </div>
       ) : (
         <Tabs defaultValue="users">
-          <TabsList className="grid w-full grid-cols-4">
+          <TabsList className="grid h-auto w-full grid-cols-2 sm:grid-cols-4">
             <TabsTrigger value="users">User Metrics</TabsTrigger>
             <TabsTrigger value="questions">Questions</TabsTrigger>
             <TabsTrigger value="devices">Device Usage</TabsTrigger>

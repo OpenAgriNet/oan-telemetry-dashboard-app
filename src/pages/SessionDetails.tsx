@@ -1,7 +1,7 @@
 import React from "react";
 import { useParams, useNavigate } from "react-router-dom";
 import { useQuery } from "@tanstack/react-query";
-import { format } from "date-fns";
+import { hasQuestionAnswer } from "@/utils/questionUtils";
 import {
   Card,
   CardContent,
@@ -13,7 +13,6 @@ import { Button } from "@/components/ui/button";
 import {
   User,
   MessageSquare,
-  Calendar,
   Activity,
   ThumbsUp,
   ThumbsDown,
@@ -24,28 +23,22 @@ import {
   Bot,
   Heart
 } from "lucide-react";
-import { 
-  fetchSessionById, 
+import {
+  fetchSessionById,
   fetchQuestionsBySessionId,
   fetchFeedbackBySessionId,
   fetchErrorsBySessionId,
-  type SessionDetail,
   type Question,
   type Feedback,
   type ErrorDetail
 } from "@/services/api";
 import { formatUTCToIST } from "@/lib/utils";
 import { useAppAuth } from "@/lib/useAppAuth";
-import { isSuperAdmin } from "@/utils/roleUtils";
+import { canViewTelemetryDetails } from "@/utils/roleUtils";
 
 // Helper function to get a safe timestamp string from question data
 // Now handles IST-formatted dates from backend directly
 function getQuestionTimestampISO(question: Question): string {
-  // If dateAsked contains "IST", it's already formatted by the backend - use as-is
-  if (question.dateAsked && typeof question.dateAsked === 'string' && question.dateAsked.includes('IST')) {
-    return question.dateAsked; // Return IST formatted string directly
-  }
-  
   // 1. question.ets (often epoch milliseconds)
   if (question.ets) {
     const etsValue = question.ets;
@@ -109,13 +102,13 @@ function getErrorTimestampISO(error: ErrorDetail): string {
     const d = new Date(error.fullDate);
     if (!isNaN(d.getTime())) return d.toISOString();
   }
-  
+
   // 2. Try error.lastOccurrence (UTC ISO string from backend)
   if (error.lastOccurrence) {
     const d = new Date(error.lastOccurrence);
     if (!isNaN(d.getTime())) return d.toISOString();
   }
-  
+
   // 3. Try any timestamp-like properties that might be UTC
   const timestampProps = ['ets', 'created_at', 'timestamp'];
   for (const prop of timestampProps) {
@@ -132,7 +125,7 @@ function getErrorTimestampISO(error: ErrorDetail): string {
       if (!isNaN(d.getTime())) return d.toISOString();
     }
   }
-  
+
   // 4. Last resort: try error.date + error.time (IST formatted by backend)
   if (error.date && error.time) {
     try {
@@ -148,7 +141,7 @@ function getErrorTimestampISO(error: ErrorDetail): string {
       console.warn(`Error parsing date/time combination: ${error.date} ${error.time}`, err);
     }
   }
-  
+
   console.warn(`Invalid or missing timestamp for error ID ${error.id}. Defaulting to current time.`);
   return new Date().toISOString();
 }
@@ -157,68 +150,69 @@ const SessionDetails = () => {
   const { sessionId } = useParams();
   const navigate = useNavigate();
   const { keycloak } = useAppAuth();
-  
-  // Check if current user is super admin
-  const isSuper = isSuperAdmin(keycloak);
+
+  // Check if current user is telemetry detail viewer
+  const hasDetailAccess = canViewTelemetryDetails(keycloak);
 
   // Fetch session details
-  const { 
-    data: sessionDetail, 
+  const {
+    data: sessionDetail,
     isLoading: isLoadingSession,
     error: sessionError,
     refetch: refetchSession
   } = useQuery({
     queryKey: ["sessionDetails", sessionId],
     queryFn: () => fetchSessionById(sessionId || ""),
-    enabled: !!sessionId,
+    enabled: !!sessionId && hasDetailAccess,
     retry: 3,
     retryDelay: (attemptIndex) => Math.min(1000 * 2 ** attemptIndex, 30000),
   });
 
   // Fetch questions for this session
-  const { 
-    data: sessionQuestions = [], 
+  const {
+    data: sessionQuestions = [],
     isLoading: isLoadingQuestions,
     error: questionsError,
     refetch: refetchQuestions
   } = useQuery({
     queryKey: ["sessionQuestions", sessionId],
     queryFn: () => fetchQuestionsBySessionId(sessionId || ""),
-    enabled: !!sessionId,
+    select: (questions) => questions.filter(hasQuestionAnswer),
+    enabled: !!sessionId && hasDetailAccess,
     retry: 3,
     retryDelay: (attemptIndex) => Math.min(1000 * 2 ** attemptIndex, 30000),
   });
 
   // Fetch feedback for this session
-  const { 
-    data: sessionFeedback = [], 
+  const {
+    data: sessionFeedback = [],
     isLoading: isLoadingFeedback,
     error: feedbackError,
     refetch: refetchFeedback
   } = useQuery({
     queryKey: ["sessionFeedback", sessionId],
     queryFn: () => fetchFeedbackBySessionId(sessionId || ""),
-    enabled: !!sessionId,
+    enabled: !!sessionId && hasDetailAccess,
     retry: 3,
     retryDelay: (attemptIndex) => Math.min(1000 * 2 ** attemptIndex, 30000),
   });
 
-  // Fetch errors for this session (only for super admins)
-  const { 
-    data: sessionErrors = [], 
+  // Fetch errors for this session (only for telemetry detail viewers)
+  const {
+    data: sessionErrors = [],
     isLoading: isLoadingErrors,
     error: errorsError,
     refetch: refetchErrors
   } = useQuery({
     queryKey: ["sessionErrors", sessionId],
     queryFn: () => fetchErrorsBySessionId(sessionId || ""),
-    enabled: !!sessionId && isSuper,
+    enabled: !!sessionId && hasDetailAccess,
     retry: 3,
     retryDelay: (attemptIndex) => Math.min(1000 * 2 ** attemptIndex, 30000),
   });
 
-  const isLoading = isLoadingSession || isLoadingQuestions || isLoadingFeedback || (isSuper && isLoadingErrors);
-  const error = sessionError || questionsError || feedbackError || (isSuper && errorsError);
+  const isLoading = isLoadingSession || isLoadingQuestions || isLoadingFeedback || (hasDetailAccess && isLoadingErrors);
+  const error = sessionError || questionsError || feedbackError || (hasDetailAccess && errorsError);
 
   // Create chronological conversation flow
   const conversationFlow = React.useMemo(() => {
@@ -250,7 +244,7 @@ const SessionDetails = () => {
         type: 'question',
         timestamp: getQuestionTimestampISO(question),
         content: question.question,
-        metadata: { 
+        metadata: {
           channel: question.channel,
           hasVoiceInput: question.hasVoiceInput,
           user: question.user_id,
@@ -265,7 +259,7 @@ const SessionDetails = () => {
           type: 'answer',
           timestamp: getQuestionTimestampISO(question), // Answer uses the same timestamp as its question
           content: question.answer,
-          metadata: { 
+          metadata: {
             reaction: question.reaction,
             questionId: question.id,
             channel: question.channel
@@ -281,7 +275,7 @@ const SessionDetails = () => {
         type: 'feedback',
         timestamp: getFeedbackTimestampISO(feedback),
         content: feedback.feedback || `User ${feedback.rating} this response`,
-        metadata: { 
+        metadata: {
           feedbackType: feedback.rating,
           user: feedback.user,
           relatedQuestionId: feedback.question ? 'related' : undefined
@@ -289,15 +283,15 @@ const SessionDetails = () => {
       });
     });
 
-    // Add error events (only for super admins)
-    if (isSuper) {
+    // Add error events (only for telemetry detail viewers)
+    if (hasDetailAccess) {
       sessionErrors.forEach((error: ErrorDetail) => {
         events.push({
           id: `e-${error.id}`,
           type: 'error',
           timestamp: getErrorTimestampISO(error),
           content: error.errorMessage || 'System error occurred',
-          metadata: { 
+          metadata: {
             errorType: error.errorType,
             environment: error.environment,
             user: error.userId,
@@ -313,7 +307,7 @@ const SessionDetails = () => {
       const timeB = new Date(b.timestamp).getTime();
       return timeA - timeB;
     });
-  }, [sessionDetail, sessionQuestions, sessionFeedback, sessionErrors, isSuper]);
+  }, [sessionQuestions, sessionFeedback, sessionErrors, hasDetailAccess]);
 
   const formatTimestamp = (timestamp: string) => {
     try {
@@ -347,11 +341,10 @@ const SessionDetails = () => {
       errorType?: string;
       environment?: string;
     };
-  }, index: number) => {
+  }) => {
     const isUser = event.type === 'question';
     const isSystem = event.type === 'error';
     const isFeedback = event.type === 'feedback';
-    const isAnswer = event.type === 'answer';
 
     return (
       <div
@@ -369,13 +362,13 @@ const SessionDetails = () => {
             </div>
           </div>
         )}
-        
+
         <div className={`max-w-[80%] ${isUser || isFeedback ? 'order-1' : ''}`}>
           <div
             className={`rounded-lg px-4 py-2 ${
-              isUser 
-                ? 'bg-primary text-primary-foreground ml-auto' 
-                : isSystem 
+              isUser
+                ? 'bg-primary text-primary-foreground ml-auto'
+                : isSystem
                 ? 'bg-destructive/10 border border-destructive/20'
                 : isFeedback
                 ? 'bg-amber-50 border border-amber-200 dark:bg-amber-950 dark:border-amber-800'
@@ -385,7 +378,7 @@ const SessionDetails = () => {
             <div className="text-sm whitespace-pre-wrap break-words">
               {event.content}
             </div>
-            
+
             {isSystem && event.metadata && (
               <div className="mt-2 space-y-1">
                 {event.metadata.errorType && (
@@ -402,7 +395,7 @@ const SessionDetails = () => {
                 )}
               </div>
             )}
-            
+
             {isFeedback && event.metadata?.feedbackType && (
               <div className="mt-2 flex items-center gap-1 text-xs">
                 {event.metadata.feedbackType === 'like' ? (
@@ -415,7 +408,7 @@ const SessionDetails = () => {
                 <span className="opacity-70 capitalize">{event.metadata.feedbackType} feedback</span>
               </div>
             )}
-            
+
             {event.metadata?.reaction && !isFeedback && !isSystem && (
               <div className="mt-2 flex items-center gap-1 text-xs">
                 {event.metadata.reaction === 'like' ? (
@@ -426,14 +419,14 @@ const SessionDetails = () => {
                 <span className="opacity-70">{event.metadata.reaction}</span>
               </div>
             )}
-            
+
             {event.metadata?.hasVoiceInput && (
               <div className="mt-1 text-xs opacity-70">
                 🎤 Voice input
               </div>
             )}
           </div>
-          
+
           <div className={`text-xs text-muted-foreground mt-1 ${isUser || isFeedback ? 'text-right' : 'text-left'}`}>
             {formatTimestamp(event.timestamp)}
             {event.metadata?.channel && (
@@ -467,8 +460,8 @@ const SessionDetails = () => {
   // Show loading state
   if (isLoading) {
     return (
-      <div className="space-y-6">
-        <div className="flex items-center justify-between">
+      <div className="space-y-6 break-words [overflow-wrap:anywhere]">
+        <div className="flex flex-wrap items-center justify-between gap-3">
           <h1 className="text-2xl font-bold tracking-tight">Session Details</h1>
           <Button onClick={() => navigate('/sessions')} variant="outline">
             <ArrowLeft className="h-4 w-4 mr-2" />
@@ -488,8 +481,8 @@ const SessionDetails = () => {
   // Show error state
   if (error) {
     return (
-      <div className="space-y-6">
-        <div className="flex items-center justify-between">
+      <div className="space-y-6 break-words [overflow-wrap:anywhere]">
+        <div className="flex flex-wrap items-center justify-between gap-3">
           <h1 className="text-2xl font-bold tracking-tight">Session Details</h1>
           <Button onClick={() => navigate('/sessions')} variant="outline">
             <ArrowLeft className="h-4 w-4 mr-2" />
@@ -499,9 +492,9 @@ const SessionDetails = () => {
         <div className="flex justify-center items-center p-8 bg-destructive/10 border border-destructive/20 rounded-lg">
           <div className="text-center">
             <AlertCircle className="h-12 w-12 text-destructive mx-auto mb-4" />
-            <p className="text-destructive font-medium mb-2">Error loading session data</p>
-            <p className="text-destructive/80 text-sm mb-4">
-              {sessionError?.message || questionsError?.message || feedbackError?.message || (isSuper && errorsError?.message)}
+            <p className="text-destructive dark:text-red-300 font-medium mb-2">Error loading session data</p>
+            <p className="text-destructive/80 dark:text-red-300 text-sm mb-4">
+              {sessionError?.message || questionsError?.message || feedbackError?.message || (hasDetailAccess && errorsError?.message)}
             </p>
             <div className="flex gap-2 justify-center">
               <Button onClick={() => refetchSession()} variant="outline" size="sm">
@@ -516,7 +509,7 @@ const SessionDetails = () => {
                 <RefreshCw className="h-4 w-4 mr-2" />
                 Retry Feedback
               </Button>
-              {isSuper && (
+              {hasDetailAccess && (
                 <Button onClick={() => refetchErrors()} variant="outline" size="sm">
                   <RefreshCw className="h-4 w-4 mr-2" />
                   Retry Errors
@@ -530,10 +523,10 @@ const SessionDetails = () => {
   }
 
   // Show not found state
-  if (!sessionDetail && !sessionQuestions.length && !sessionFeedback.length && !isLoading) {
+  if (!sessionDetail && !sessionQuestions.length && !sessionFeedback.length && !sessionErrors.length && !isLoading) {
     return (
-      <div className="space-y-6">
-        <div className="flex items-center justify-between">
+      <div className="space-y-6 break-words [overflow-wrap:anywhere]">
+        <div className="flex flex-wrap items-center justify-between gap-3">
           <h1 className="text-2xl font-bold tracking-tight">Session Details</h1>
           <Button onClick={() => navigate('/sessions')} variant="outline">
             <ArrowLeft className="h-4 w-4 mr-2" />
@@ -554,14 +547,14 @@ const SessionDetails = () => {
     );
   }
 
-  const sessionUsername = sessionDetail?.username || sessionQuestions[0]?.user_id || "Unknown User";
+  const sessionUsername = sessionDetail?.username || sessionQuestions[0]?.user_id || sessionFeedback[0]?.user || sessionErrors[0]?.userId || "Unknown User";
   const totalQuestions = sessionQuestions.length;
   const totalFeedback = sessionFeedback.length;
   const totalErrors = sessionErrors.length;
 
   return (
-    <div className="space-y-6">
-      <div className="flex items-center justify-between">
+    <div className="space-y-6 break-words [overflow-wrap:anywhere]">
+      <div className="flex flex-wrap items-center justify-between gap-3">
         <h1 className="text-2xl font-bold tracking-tight">
           Session Details
         </h1>
@@ -571,7 +564,7 @@ const SessionDetails = () => {
         </Button>
       </div>
 
-      <div className={`grid gap-4 ${isSuper ? 'md:grid-cols-5' : 'md:grid-cols-4'}`}>
+      <div className={`grid gap-4 ${hasDetailAccess ? 'md:grid-cols-5' : 'md:grid-cols-4'}`}>
         <Card>
           <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
             <CardTitle className="text-sm font-medium">User</CardTitle>
@@ -611,7 +604,7 @@ const SessionDetails = () => {
           </p>
           </CardContent>
         </Card>
-        
+
         <Card>
           <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
           <CardTitle className="text-sm font-medium">Session ID</CardTitle>
@@ -626,7 +619,7 @@ const SessionDetails = () => {
           </CardContent>
         </Card>
 
-        {isSuper && (
+        {hasDetailAccess && (
           <Card>
             <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
             <CardTitle className="text-sm font-medium">Errors</CardTitle>
@@ -660,7 +653,7 @@ const SessionDetails = () => {
                     </div>
           ) : (
             <div className="space-y-1 max-h-[600px] overflow-y-auto pr-2">
-              {conversationFlow.map((event, index) => renderMessage(event, index))}
+              {conversationFlow.map((event) => renderMessage(event))}
             </div>
           )}
         </CardContent>
@@ -675,8 +668,8 @@ const SessionDetails = () => {
           <CardContent>
             <div className="space-y-3">
               {sessionFeedback.map((feedback) => (
-                <div 
-                  key={feedback.id} 
+                <div
+                  key={feedback.id}
                   className="p-3 rounded-lg border border-border bg-card"
                 >
                   <div className="flex items-center gap-2 mb-2">
@@ -700,7 +693,7 @@ const SessionDetails = () => {
         </Card>
       )}
 
-      {isSuper && totalErrors > 0 && sessionErrors.length > 0 && (
+      {hasDetailAccess && totalErrors > 0 && sessionErrors.length > 0 && (
         <Card>
           <CardHeader>
             <CardTitle className="text-lg">System Errors</CardTitle>
@@ -709,8 +702,8 @@ const SessionDetails = () => {
           <CardContent>
             <div className="space-y-3">
               {sessionErrors.map((error) => (
-                <div 
-                  key={error.id} 
+                <div
+                  key={error.id}
                   className="p-3 rounded-lg border border-destructive/20 bg-destructive/5"
                 >
                   <div className="flex items-center gap-2 mb-2">

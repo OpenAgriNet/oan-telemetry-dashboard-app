@@ -1,3 +1,5 @@
+import SortableTableHead from "@/components/SortableTableHead";
+import TelemetryDetailLink from "@/components/TelemetryDetailLink";
 import React, { useState } from "react";
 import { useQuery } from "@tanstack/react-query";
 import {
@@ -5,7 +7,7 @@ import {
   type UserPaginationParams,
   type UserStatsResponse,
 } from "@/services/api";
-import { Link, useSearchParams } from "react-router-dom";
+import { useSearchParams } from "react-router-dom";
 import { useDateFilter } from "@/contexts/DateFilterContext";
 import { useStats } from "@/contexts/StatsContext";
 import {
@@ -257,7 +259,7 @@ const UsersReport = () => {
   if (error || statsError) {
     return (
       <div className="space-y-6">
-        <div className="flex items-center justify-between">
+        <div className="flex flex-wrap items-center justify-between gap-3">
           <h1 className="text-2xl font-bold tracking-tight">Users Report</h1>
         </div>
         <div className="flex justify-center items-center p-8 bg-destructive/10 border border-destructive/20 rounded-lg">
@@ -281,7 +283,7 @@ const UsersReport = () => {
 
   return (
     <div className="space-y-6">
-      <div className="flex items-center justify-between">
+      <div className="flex flex-wrap items-center justify-between gap-3">
         <h1 className="text-2xl font-bold tracking-tight">Users Report</h1>
         <div className="flex gap-2">
           <Button
@@ -366,8 +368,8 @@ const UsersReport = () => {
         </CardHeader>
         <CardContent>
           <div className="space-y-4">
-            <div className="flex flex-col md:flex-row gap-4">
-              <div className="relative flex-1">
+            <div className="flex flex-wrap gap-2 md:gap-4">
+              <div className="relative min-w-0 basis-full md:basis-0 flex-1">
                 <Search className="absolute left-2 top-2.5 h-4 w-4 text-muted-foreground" />
                 <Input
                   type="search"
@@ -383,10 +385,10 @@ const UsersReport = () => {
                   maxLength={1000}
                 />
               </div>
-              <Button onClick={handleSearch} disabled={isLoading} variant="outline" size="icon" title="Search">
+              <Button onClick={handleSearch} disabled={isLoading} variant="outline" size="icon" title="Search" aria-label="Search">
                 <Search className="h-4 w-4" />
               </Button>
-              <Button onClick={handleResetFilters} variant="outline" size="icon" title="Reset Search">
+              <Button onClick={handleResetFilters} variant="outline" size="icon" title="Reset Search" aria-label="Reset search">
                 <RotateCcw className="h-4 w-4" />
               </Button>
             </div>
@@ -440,16 +442,17 @@ const UsersReport = () => {
                 </Button>
               </div>
             ) : (
-              <Table>
+              <Table className="min-w-[640px]">
                 <TableHeader>
                   <TableRow>
-                    <TableHead
+                    <SortableTableHead
                       className="cursor-pointer hover:bg-muted/50"
+                      direction={sortConfig.key === "user_id" ? sortConfig.direction : undefined}
                       onClick={() => handleSort("user_id")}
                     >
                       Username
                       {<SortIndicator columnKey="user_id" />}
-                    </TableHead>
+                    </SortableTableHead>
                     <TableHead
                       className="text-right cursor-pointer hover:bg-muted/50"
                       // onClick={() => handleSort("session_count")}
@@ -464,20 +467,22 @@ const UsersReport = () => {
                       Questions
                       {/* {<SortIndicator columnKey="total_questions" />} */}
                     </TableHead>
-                    <TableHead
+                    <SortableTableHead
                       className="text-right cursor-pointer hover:bg-muted/50"
+                      direction={sortConfig.key === "feedback_count" ? sortConfig.direction : undefined}
                       onClick={() => handleSort("feedback_count")}
                     >
                       Feedback
                       {<SortIndicator columnKey="feedback_count" />}
-                    </TableHead>
-                    <TableHead
+                    </SortableTableHead>
+                    <SortableTableHead
                       className="cursor-pointer hover:bg-muted/50"
+                      direction={sortConfig.key === "last_activity" ? sortConfig.direction : undefined}
                       onClick={() => handleSort("last_activity")}
                     >
                       Latest Activity
                       {<SortIndicator columnKey="last_activity" />}
-                    </TableHead>
+                    </SortableTableHead>
                     <TableHead
                       className="cursor-pointer hover:bg-muted/50"
                       // onClick={() => handleSort("latest_session")}
@@ -536,14 +541,9 @@ const UsersReport = () => {
                         {user.latestSession || "N/A"}
                       </TableCell>
                       <TableCell>
-                        <Link
-                          to={`/sessions/${user.sessionId}`}
-                          className="hover:underline"
-                        >
-                          <code className="relative rounded bg-muted px-[0.3rem] py-[0.2rem] font-mono text-xs">
-                            {user.sessionId?.substring(0, 8)}...
-                          </code>
-                        </Link>
+                        <code className="relative rounded bg-muted px-[0.3rem] py-[0.2rem] font-mono text-xs">
+                          {user.sessionId ? <TelemetryDetailLink to={`/sessions/${encodeURIComponent(user.sessionId)}`}>{user.sessionId.substring(0, 8)}...</TelemetryDetailLink> : "N/A"}
+                        </code>
                       </TableCell>
                     </TableRow>
                   ))}

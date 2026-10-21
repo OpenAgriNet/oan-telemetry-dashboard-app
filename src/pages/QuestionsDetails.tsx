@@ -1,6 +1,7 @@
-import React, { useState } from "react";
+import React from "react";
 import { useParams, useNavigate, Link } from "react-router-dom";
 import { useQuery } from "@tanstack/react-query";
+import { hasQuestionAnswer } from "@/utils/questionUtils";
 import {
   Card,
   CardContent,
@@ -17,31 +18,29 @@ import {
   Languages,
   RefreshCw,
   AlertCircle,
-  Circle,
 } from "lucide-react";
-import { format } from "date-fns";
 import { Button } from "@/components/ui/button";
-import { fetchFeedbackById, fetchQuestionById, fetchTranslation } from "@/services/api";
-import users from "@/data/users.json";
-import sessions from "@/data/sessions.json";
+import { fetchQuestionById, fetchTranslation } from "@/services/api";
 import ReactMarkdown from "react-markdown";
 import remarkGfm from "remark-gfm";
 import rehypeRaw from "rehype-raw";
+import rehypeSanitize from "rehype-sanitize";
 import type { Components } from "react-markdown";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 
 const QuestionDetails = () => {
-  const { id } = useParams(); 
+  const { id } = useParams();
   const navigate = useNavigate();
 
-  const { 
-    data: question, 
+  const {
+    data: question,
     isLoading: isQuestionLoading,
     error,
-    refetch 
+    refetch
   } = useQuery({
     queryKey: ["question", id],
     queryFn: () => fetchQuestionById(id || ""),
+    select: (question) => question && hasQuestionAnswer(question) ? question : null,
     enabled: !!id,
     retry: 3,
     retryDelay: (attemptIndex) => Math.min(1000 * 2 ** attemptIndex, 30000),
@@ -158,35 +157,22 @@ const QuestionDetails = () => {
     ),
   };
 
-  // Try to find user in local data, but use API userId as fallback
-  const user = question
-    ? users.find((u) => u.id === question.userId) || {
-        id: question.userId,
-        name: question.userId,
-      }     
-    : null;
-
-  const session = question
-    ? sessions.find((s) => s.sessionId === question.session_id)
-    : null;
-
+  const session = question?.session_id;
   const handleSessionClick = () => {
-    if (session) {
-      navigate(`/sessions/${question?.session_id}`);
-    }
+    if (session) navigate(`/sessions/${encodeURIComponent(session)}`);
   };
 
   // Show loading state
   if (isQuestionLoading) {
     return (
-      <div className="space-y-6">
-        <div className="flex items-center justify-between">
-          <h1 className="text-2xl font-bold tracking-tight">Feedback Details</h1>
+      <div className="space-y-6 break-words [overflow-wrap:anywhere]">
+        <div className="flex flex-wrap items-center justify-between gap-3">
+          <h1 className="text-2xl font-bold tracking-tight">Question Details</h1>
         </div>
         <div className="flex justify-center items-center p-12 bg-muted/30 rounded-lg">
           <div className="text-center">
             <RefreshCw className="h-8 w-8 animate-spin mx-auto mb-3 text-muted-foreground" />
-            <p className="text-muted-foreground">Loading feedback details...</p>
+            <p className="text-muted-foreground">Loading question details...</p>
           </div>
         </div>
       </div>
@@ -196,8 +182,8 @@ const QuestionDetails = () => {
   // Show error state
   if (error) {
     return (
-      <div className="space-y-6">
-        <div className="flex items-center justify-between">
+      <div className="space-y-6 break-words [overflow-wrap:anywhere]">
+        <div className="flex flex-wrap items-center justify-between gap-3">
           <h1 className="text-2xl font-bold tracking-tight">Question Details</h1>
         </div>
         <div className="flex justify-center items-center p-8 bg-destructive/10 border border-destructive/20 rounded-lg">
@@ -216,11 +202,11 @@ const QuestionDetails = () => {
   }
 
   // Show not found state
-  if (!question) {      
+  if (!question) {
     return (
-      <div className="space-y-6">
-        <div className="flex items-center justify-between">
-          <h1 className="text-2xl font-bold tracking-tight">Feedback Details</h1>
+      <div className="space-y-6 break-words [overflow-wrap:anywhere]">
+        <div className="flex flex-wrap items-center justify-between gap-3">
+          <h1 className="text-2xl font-bold tracking-tight">Question Details</h1>
         </div>
         <div className="text-center py-12">
           <MessageCircle className="h-12 w-12 text-muted-foreground mx-auto mb-4" />
@@ -237,8 +223,8 @@ const QuestionDetails = () => {
   }
 
   return (
-    <div className="space-y-6">
-      <div className="flex items-center justify-between">
+    <div className="space-y-6 break-words [overflow-wrap:anywhere]">
+      <div className="flex flex-wrap items-center justify-between gap-3">
         <h1 className="text-2xl font-bold tracking-tight">Question Details</h1>
         <Button onClick={() => navigate('/questions')} variant="outline">
           Back to Questions
@@ -254,7 +240,7 @@ const QuestionDetails = () => {
           <CardContent>
             <div className="text-lg font-bold">
               <code className="relative rounded bg-muted px-[0.3rem] py-[0.2rem] font-mono text-sm">
-                {question?.user_id || "Unknown User"}    
+                {question?.user_id || "Unknown User"}
               </code>
             </div>
           </CardContent>
@@ -267,11 +253,11 @@ const QuestionDetails = () => {
           </CardHeader>
           <CardContent>
             <div className="text-lg font-bold">
-              {question?.dateAsked || question?.created_at || "N/A"}   
+              {question?.dateAsked || question?.created_at || "N/A"}
             </div>
           </CardContent>
         </Card>
-        
+
         {question?.reaction !== "neutral" && (
           <Card>
             <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
@@ -307,7 +293,7 @@ const QuestionDetails = () => {
           </CardHeader>
           <CardContent>
             <div className="text-sm">
-              <Link to={`/sessions/${question?.session_id}`}>
+              <Link to={question.session_id ? `/sessions/${encodeURIComponent(question.session_id)}` : "/sessions"}>
                 <code className="truncate text-left text-primary hover:underline bg-transparent border-none p-0 m-0 w-full">
                   {question?.session_id ? question.session_id.substring(0, 8) + '...' : 'N/A'}
                 </code>
@@ -322,7 +308,7 @@ const QuestionDetails = () => {
           <CardTitle>Question & Response</CardTitle>
           <CardDescription>Detailed question and response information</CardDescription>
         </CardHeader>
-        <CardContent className="space-y-6">
+        <CardContent className="space-y-6 break-words [overflow-wrap:anywhere]">
           {/* <div>
             <h3 className="font-medium mb-2">User Feedback</h3>
             <div className="p-4 rounded-lg border border-border bg-card">
@@ -385,7 +371,7 @@ const QuestionDetails = () => {
                     <div className="prose-code:bg-muted prose-pre:bg-muted/80 prose-pre:border prose-pre:border-border prose-headings:text-foreground prose-p:text-foreground prose-a:text-primary">
                       <ReactMarkdown
                         remarkPlugins={[remarkGfm]}
-                        rehypePlugins={[rehypeRaw]}
+                        rehypePlugins={[rehypeRaw, rehypeSanitize]}
                         components={markdownComponents}
                       >
                         {question?.answer}
@@ -394,9 +380,9 @@ const QuestionDetails = () => {
                   </TabsContent>
                   <TabsContent value="raw" className="mt-4">
                     <div className="bg-muted/50 p-3 rounded-md overflow-x-auto">
-                      <pre 
-                        style={{ 
-                          whiteSpace: 'pre', 
+                      <pre
+                        style={{
+                          whiteSpace: 'pre',
                           wordWrap: 'normal',
                           overflowX: 'auto',
                           fontFamily: 'monospace'

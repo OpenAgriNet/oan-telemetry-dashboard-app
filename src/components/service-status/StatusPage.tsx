@@ -99,7 +99,7 @@ const StatusPage: React.FC<StatusPageProps> = ({
   return (
     <div className={cn("space-y-6", className)}>
       {/* Header */}
-      <div className="flex items-center justify-between">
+      <div className="flex flex-wrap items-center justify-between gap-3">
         <div>
           <h1 className="text-3xl font-bold">Service Status</h1>
           <p className="text-muted-foreground mt-1">
@@ -107,7 +107,7 @@ const StatusPage: React.FC<StatusPageProps> = ({
           </p>
         </div>
         
-        <div className="flex items-center gap-3">
+        <div className="flex flex-wrap items-center gap-3">
           <div className="text-sm text-muted-foreground">
             Last updated: {formatLastUpdated(dashboardStats.data?.lastUpdated)}
           </div>
@@ -172,7 +172,6 @@ const StatusPage: React.FC<StatusPageProps> = ({
               trendsLoading={trendsLoading}
               trendsErrors={trendsErrors}
               latestUpdates={latestUpdates}
-              responseMetricStrategy="auto"
             />
           )}
 
@@ -186,7 +185,6 @@ const StatusPage: React.FC<StatusPageProps> = ({
               trendsLoading={trendsLoading}
               trendsErrors={trendsErrors}
               latestUpdates={latestUpdates}
-              responseMetricStrategy="auto"
             />
           )}
 
@@ -200,7 +198,6 @@ const StatusPage: React.FC<StatusPageProps> = ({
               trendsLoading={trendsLoading}
               trendsErrors={trendsErrors}
               latestUpdates={latestUpdates}
-              responseMetricStrategy="latest"
             />
           )}
 

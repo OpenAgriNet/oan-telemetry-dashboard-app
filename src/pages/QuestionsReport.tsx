@@ -1,3 +1,5 @@
+import SortableTableHead from "@/components/SortableTableHead";
+import TelemetryDetailLink from "@/components/TelemetryDetailLink";
 import React, { useState } from "react";
 import { useQuery } from "@tanstack/react-query";
 import {
@@ -43,7 +45,7 @@ import {
   formatUTCToIST,
   buildDateRangeParams,
 } from "@/lib/utils";
-import { Link, useSearchParams } from "react-router-dom";
+import { useSearchParams } from "react-router-dom";
 import { set } from "date-fns";
 const QuestionsReport = () => {
   const { dateRange } = useDateFilter();
@@ -57,7 +59,7 @@ const QuestionsReport = () => {
   const [selectedUser, setSelectedUser] = useState<string>(searchParams.get("user") || "all");
   const [selectedSession, setSelectedSession] = useState<string>(searchParams.get("session") || "all");
   const [searchQuery, setSearchQuery] = useState<string>(searchParams.get("search") || "");
-  const [sortConfig, setSortConfig] = useState({
+  const [sortConfig, setSortConfig] = useState<{ key: string; direction: "asc" | "desc" }>({
     key: "dateAsked",
     direction: "desc",
   });
@@ -278,7 +280,7 @@ console.log("Questions from ISO",dateRange.from?.toISOString())
   if (error) {
     return (
       <div className="space-y-6">
-        <div className="flex items-center justify-between">
+        <div className="flex flex-wrap items-center justify-between gap-3">
           <h1 className="text-2xl font-bold tracking-tight">
             Questions Report
           </h1>
@@ -302,7 +304,7 @@ console.log("Questions from ISO",dateRange.from?.toISOString())
 
   return (
     <div className="space-y-6">
-      <div className="flex items-center justify-between">
+      <div className="flex flex-wrap items-center justify-between gap-3">
         <h1 className="text-2xl font-bold tracking-tight">Questions Report</h1>
         <div className="flex gap-2">
           <Button
@@ -342,8 +344,8 @@ console.log("Questions from ISO",dateRange.from?.toISOString())
         </Card>
       </div>
 
-      <div className="flex flex-col md:flex-row gap-4">
-        <div className="relative flex-1">
+      <div className="flex flex-wrap gap-2 md:gap-4">
+        <div className="relative min-w-0 basis-full md:basis-0 flex-1">
           <Search className="absolute left-2 top-2.5 h-4 w-4 text-muted-foreground" />
           <Input
             type="search"
@@ -359,10 +361,10 @@ console.log("Questions from ISO",dateRange.from?.toISOString())
             maxLength={1000}
           />
         </div>
-        <Button onClick={handleSearch} disabled={isLoading} variant="outline" size="icon" title="Search">
+        <Button onClick={handleSearch} disabled={isLoading} variant="outline" size="icon" title="Search" aria-label="Search">
           <Search className="h-4 w-4" />
         </Button>
-        <Button onClick={handleResetFilters} variant="outline" size="icon" title="Reset Search">
+        <Button onClick={handleResetFilters} variant="outline" size="icon" title="Reset Search" aria-label="Reset search">
           <RotateCcw className="h-4 w-4" />
         </Button>
       </div>
@@ -376,7 +378,7 @@ console.log("Questions from ISO",dateRange.from?.toISOString())
             </div>
           </div>
         ) : (
-          <Table>
+          <Table className="min-w-[640px]">
             <TableHeader>
               <TableRow>
                 <TableHead
@@ -386,13 +388,14 @@ console.log("Questions from ISO",dateRange.from?.toISOString())
                   Question
                   {/* <SortIndicator columnKey="question" /> */}
                 </TableHead>
-                <TableHead
+                <SortableTableHead
                   className="cursor-pointer hover:bg-muted/50"
-                  onClick={() => handleSort("user_id")}
+                  direction={sortConfig.key === "user_id" ? sortConfig.direction : undefined}
+                      onClick={() => handleSort("user_id")}
                 >
                   User
                   <SortIndicator columnKey="user_id" />
-                </TableHead>
+                </SortableTableHead>
                 <TableHead
                   className="cursor-pointer hover:bg-muted/50"
                   // onClick={() => handleSort("session_id")}
@@ -400,13 +403,14 @@ console.log("Questions from ISO",dateRange.from?.toISOString())
                   Session ID
                   {/* <SortIndicator columnKey="session_id" /> */}
                 </TableHead>
-                <TableHead
+                <SortableTableHead
                   className="cursor-pointer hover:bg-muted/50"
-                  onClick={() => handleSort("dateAsked")}
+                  direction={sortConfig.key === "dateAsked" ? sortConfig.direction : undefined}
+                      onClick={() => handleSort("dateAsked")}
                 >
                   Date Asked
                   <SortIndicator columnKey="dateAsked" />
-                </TableHead>
+                </SortableTableHead>
                 {/* <TableHead>Channel</TableHead> */}
                 {/* <TableHead>Reaction</TableHead> */}
               </TableRow>
@@ -455,13 +459,12 @@ console.log("Questions from ISO",dateRange.from?.toISOString())
                   >
                     <TableCell className="font-medium">
                       <div className="max-w-md">
-                        <Link
-                          to={`/questions/${question.id}`}
-                          className="truncate text-left hover:underline block w-full"
+                        <p
+                          className="truncate text-left block w-full"
                           title={question.question}
                         >
-                          {question.question}
-                        </Link>
+                          <TelemetryDetailLink to={`/questions/${encodeURIComponent(question.id)}`}>{question.question}</TelemetryDetailLink>
+                        </p>
                         {question.answer && (
                           <p
                             className="text-sm text-muted-foreground truncate mt-1"
@@ -478,14 +481,9 @@ console.log("Questions from ISO",dateRange.from?.toISOString())
                       </code>
                     </TableCell>
                     <TableCell>
-                      <Link
-                        to={`/sessions/${question.session_id}`}
-                        className="hover:underline"
-                      >
-                        <code className="relative rounded bg-muted px-[0.3rem] py-[0.2rem] font-mono text-xs">
-                          {question.session_id.substring(0, 8)}...
-                        </code>
-                      </Link>
+                      <code className="relative rounded bg-muted px-[0.3rem] py-[0.2rem] font-mono text-xs">
+                        <TelemetryDetailLink to={`/sessions/${encodeURIComponent(question.session_id)}`}>{question.session_id.substring(0, 8)}...</TelemetryDetailLink>
+                      </code>
                     </TableCell>
                     <TableCell>
                       {question.dateAsked || question.created_at || "N/A"}
@@ -499,12 +497,12 @@ console.log("Questions from ISO",dateRange.from?.toISOString())
                       {question.reaction === "thumbs-up" || question.reaction === "like" ? (
                         <div className="flex items-center gap-1">
                           <ThumbsUp className="h-4 w-4 text-green-500" />
-                          <span className="text-xs text-green-700">Like</span>
+                          <span className="text-xs text-green-700 dark:text-green-400">Like</span>
                         </div>
                       ) : question.reaction === "thumbs-down" || question.reaction === "dislike" ? (
                         <div className="flex items-center gap-1">
                           <ThumbsDown className="h-4 w-4 text-red-500" />
-                          <span className="text-xs text-red-700">Dislike</span>
+                          <span className="text-xs text-red-700 dark:text-red-400">Dislike</span>
                         </div>
                       ) : question.reaction ? (
                         <span className="inline-flex items-center rounded-full bg-secondary px-2 py-1 text-xs font-medium text-secondary-foreground">

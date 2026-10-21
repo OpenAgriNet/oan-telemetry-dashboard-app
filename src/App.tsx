@@ -13,17 +13,18 @@ import SessionsReport from "./pages/SessionsReport";
 import QuestionsReport from "./pages/QuestionsReport";
 import Analytics from "./pages/Analytics";
 import NotFound from "./pages/NotFound";
-import SessionDetails from "./pages/SessionDetails";
 import Feedback from "./pages/Feedback";
-import FeedbackDetails from "./pages/FeedbackDetails";
 import Errors from "./pages/Errors";
 import ErrorDetails from "./pages/ErrorDetails";
 import Content from "./pages/Content";
 import ServiceStatus from "./pages/ServiceStatus";
 import HealthMonitor from "./pages/HealthMonitor";
 import { useAppAuth } from "@/lib/useAppAuth";
+import { TELEMETRY_DETAIL_ROLE } from "@/utils/roleUtils";
+import RoleBasedAccess from "@/components/RoleBasedAccess";
+import SessionDetails from "./pages/SessionDetails";
 import QuestionsDetails from "./pages/QuestionsDetails";
-import { isSuperAdmin } from "@/utils/roleUtils";
+import FeedbackDetails from "./pages/FeedbackDetails";
 import Evaluation from "./pages/Evaluation";
 import EvaluationDetails from "./pages/EvaluationDetails";
 import EvaluationRunAdmin from "./pages/EvaluationRunAdmin";
@@ -55,9 +56,6 @@ const App = () => {
   if (!keycloak.authenticated) {
     return null;
   }
-
-  // Check if current user is super admin
-  const isSuper = isSuperAdmin(keycloak);
 
   return (
   <QueryClientProvider client={queryClient}>
@@ -94,19 +92,13 @@ const App = () => {
                   <QuestionsReport />
                 </Layout>
               } />
-              <Route path="/questions/:id" element={
-                <Layout>
-                  <QuestionsDetails />
-                </Layout>
-              } />
+              <Route path="/sessions/:sessionId" element={<Layout><RoleBasedAccess allowedRoles={[TELEMETRY_DETAIL_ROLE]}><SessionDetails /></RoleBasedAccess></Layout>} />
+              <Route path="/questions/:id" element={<Layout><RoleBasedAccess allowedRoles={[TELEMETRY_DETAIL_ROLE]}><QuestionsDetails /></RoleBasedAccess></Layout>} />
+              <Route path="/feedback/:feedbackId" element={<Layout><RoleBasedAccess allowedRoles={[TELEMETRY_DETAIL_ROLE]}><FeedbackDetails /></RoleBasedAccess></Layout>} />
+              <Route path="/errors/:errorId" element={<Layout><RoleBasedAccess allowedRoles={[TELEMETRY_DETAIL_ROLE]}><ErrorDetails /></RoleBasedAccess></Layout>} />
               <Route path="/analytics" element={
                 <Layout>
                   <Analytics />
-                </Layout>
-              } />
-              <Route path="/sessions/:sessionId" element={
-                <Layout>
-                  <SessionDetails />
                 </Layout>
               } />
               <Route path="/feedback" element={
@@ -114,25 +106,24 @@ const App = () => {
                   <Feedback />
                 </Layout>
               } />
-              <Route path="/feedback/:feedbackId" element={
-                <Layout>
-                  <FeedbackDetails />
-                </Layout>
-              } />
+              {/* OD-3109: Keep Evaluation routes available to re-enable later. */}
+              {/*
               <Route path="/evaluation" element={<Layout><Evaluation /></Layout>} />
               <Route path="/evaluation/runs" element={<Layout><EvaluationRunAdmin /></Layout>} />
               <Route path="/evaluation/runs/new" element={<Layout><EvaluationRunAdmin /></Layout>} />
               <Route path="/evaluation/:runId/:itemId" element={<Layout><EvaluationDetails /></Layout>} />
+              */}
               <Route path="/content" element={
                 <Layout>
                   <Content />
                 </Layout>
               } />
-              <Route path="/service-status" element={
+              {/* OD-3109: Keep Service Status disabled until explicitly re-enabled. */}
+              {/* <Route path="/service-status" element={
                 <Layout>
                   <ServiceStatus />
                 </Layout>
-              } />
+              } /> */}
               <Route path="/service-snapshot" element={<Layout><ServiceSnapshot /></Layout>} />
               <Route path="/service-snapshot/provider/:providerName" element={<Layout><ServiceSnapshotProvider /></Layout>} />
               <Route path="/service-snapshot/provider/:providerName/service/:serviceKey" element={<Layout><ServiceSnapshotDetail /></Layout>} />
@@ -144,21 +135,12 @@ const App = () => {
                   <HealthMonitor />
                 </Layout>
               } /> */}
-              {/* Conditionally render error routes for super-admin users only */}
-              {isSuper && (
-                <>
-                  <Route path="/errors" element={
-                    <Layout>
-                      <Errors />
-                    </Layout>
-                  } />
-                  <Route path="/errors/:errorId" element={
-                    <Layout>
-                      <ErrorDetails />
-                    </Layout>
-                  } />
-                </>
-              )}
+              {/* All authenticated users can view the report; detail routes remain role-gated. */}
+              <Route path="/errors" element={
+                <Layout>
+                  <Errors />
+                </Layout>
+              } />
               <Route path="*" element={<NotFound />} />
             </Routes>
           </BrowserRouter>

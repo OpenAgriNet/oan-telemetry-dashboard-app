@@ -1,3 +1,5 @@
+import { Button } from "@/components/ui/button";
+import { ChevronLeft, ChevronRight } from "lucide-react";
 
 import React from "react";
 import {
@@ -5,9 +7,6 @@ import {
   PaginationContent,
   PaginationEllipsis,
   PaginationItem,
-  PaginationLink,
-  PaginationNext,
-  PaginationPrevious,
 } from "@/components/ui/pagination";
 
 interface TablePaginationProps {
@@ -63,12 +62,15 @@ const TablePagination = ({
 
   return (
     <Pagination className="mt-4">
-      <PaginationContent>
+      <PaginationContent className="flex-wrap justify-center">
         <PaginationItem>
-          <PaginationPrevious
+          <Button
+            type="button"
+            variant="ghost"
+            aria-label="Go to previous page"
+            disabled={currentPage <= 1}
             onClick={() => currentPage > 1 && onPageChange(currentPage - 1)}
-            className={currentPage <= 1 ? "pointer-events-none opacity-50" : "cursor-pointer"}
-          />
+          ><ChevronLeft className="mr-1 h-4 w-4" />Previous</Button>
         </PaginationItem>
         
         {getPageNumbers().map((page, index) => {
@@ -83,22 +85,29 @@ const TablePagination = ({
           
           return (
             <PaginationItem key={page}>
-              <PaginationLink
+              <Button
+                type="button"
+                size="icon"
+                variant={page === currentPage ? "outline" : "ghost"}
+                aria-label={`Go to page ${page}`}
+                aria-current={page === currentPage ? "page" : undefined}
                 onClick={() => onPageChange(page)}
-                isActive={page === currentPage}
                 className="cursor-pointer"
               >
                 {page}
-              </PaginationLink>
+              </Button>
             </PaginationItem>
           );
         })}
 
         <PaginationItem>
-          <PaginationNext
+          <Button
+            type="button"
+            variant="ghost"
+            aria-label="Go to next page"
+            disabled={currentPage >= totalPages}
             onClick={() => currentPage < totalPages && onPageChange(currentPage + 1)}
-            className={currentPage >= totalPages ? "pointer-events-none opacity-50" : "cursor-pointer"}
-          />
+          >Next<ChevronRight className="ml-1 h-4 w-4" /></Button>
         </PaginationItem>
       </PaginationContent>
     </Pagination>

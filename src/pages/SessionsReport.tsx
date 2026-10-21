@@ -1,3 +1,5 @@
+import SortableTableHead from "@/components/SortableTableHead";
+import TelemetryDetailLink from "@/components/TelemetryDetailLink";
 import React, { useState } from "react";
 import { useQuery } from "@tanstack/react-query";
 import {
@@ -8,7 +10,7 @@ import {
   type UserPaginationParams,
   type PaginationParams,
 } from "@/services/api";
-import { Link, useSearchParams } from "react-router-dom";
+import { useSearchParams } from "react-router-dom";
 import { useDateFilter } from "@/contexts/DateFilterContext";
 import { buildDateRangeParams, formatLocal } from "@/lib/utils";
 import {
@@ -59,7 +61,7 @@ const SessionsReport = () => {
   // Initialize state from URL params for persistence
   const [selectedUser, setSelectedUser] = useState<string>(searchParams.get("user") || "all");
   const [searchQuery, setSearchQuery] = useState<string>(searchParams.get("search") || "");
-  const [sortConfig, setSortConfig] = useState({
+  const [sortConfig, setSortConfig] = useState<{ key: string; direction: "asc" | "desc" }>({
     key: "session_time",
     direction: "desc",
   });
@@ -224,7 +226,7 @@ const SessionsReport = () => {
   if (error) {
     return (
       <div className="space-y-6">
-        <div className="flex items-center justify-between">
+        <div className="flex flex-wrap items-center justify-between gap-3">
           <h1 className="text-2xl font-bold tracking-tight">Sessions Report</h1>
         </div>
         <div className="flex justify-center items-center p-8 bg-destructive/10 border border-destructive/20 rounded-lg">
@@ -246,7 +248,7 @@ const SessionsReport = () => {
 
   return (
     <div className="space-y-6">
-      <div className="flex items-center justify-between">
+      <div className="flex flex-wrap items-center justify-between gap-3">
         <h1 className="text-2xl font-bold tracking-tight">Sessions Report</h1>
         <div className="flex gap-2">
           <Button
@@ -338,8 +340,8 @@ const SessionsReport = () => {
         </CardHeader>
         <CardContent>
           <div className="space-y-4">
-            <div className="flex flex-col md:flex-row gap-4">
-              <div className="relative flex-1">
+            <div className="flex flex-wrap gap-2 md:gap-4">
+              <div className="relative min-w-0 basis-full md:basis-0 flex-1">
                 <Search className="absolute left-2 top-2.5 h-4 w-4 text-muted-foreground" />
                 <Input
                   type="search"
@@ -355,10 +357,10 @@ const SessionsReport = () => {
                   maxLength={1000}
                 />
               </div>
-              <Button onClick={handleSearch} disabled={isLoading} variant="outline" size="icon" title="Search">
+              <Button onClick={handleSearch} disabled={isLoading} variant="outline" size="icon" title="Search" aria-label="Search">
                 <Search className="h-4 w-4" />
               </Button>
-              <Button onClick={handleResetFilters} variant="outline" size="icon" title="Reset Search">
+              <Button onClick={handleResetFilters} variant="outline" size="icon" title="Reset Search" aria-label="Reset search">
                 <RotateCcw className="h-4 w-4" />
               </Button>
             </div>
@@ -414,7 +416,7 @@ const SessionsReport = () => {
                 </Button>
               </div>
             ) : (
-              <Table>
+              <Table className="min-w-[640px]">
                 <TableHeader>
                   <TableRow>
                     <TableHead
@@ -424,13 +426,14 @@ const SessionsReport = () => {
                       Session ID
                       {/* <SortIndicator columnKey="session_id" />  */}
                     </TableHead>
-                    <TableHead
+                    <SortableTableHead
                       className="cursor-pointer hover:bg-muted/50"
+                      direction={sortConfig.key === "username" ? sortConfig.direction : undefined}
                       onClick={() => handleSort("username")}
                     >
                       User
                       <SortIndicator columnKey="username" />
-                    </TableHead>
+                    </SortableTableHead>
                     <TableHead
                       className="text-right cursor-pointer hover:bg-muted/50"
                       // onClick={() => handleSort("question_count")}
@@ -438,13 +441,14 @@ const SessionsReport = () => {
                       Questions
                       {/* <SortIndicator columnKey="question_count" /> */}
                     </TableHead>
-                    <TableHead
+                    <SortableTableHead
                       className="cursor-pointer hover:bg-muted/50"
+                      direction={sortConfig.key === "session_time" ? sortConfig.direction : undefined}
                       onClick={() => handleSort("session_time")}
                     >
                       Session Time
                       <SortIndicator columnKey="session_time" />
-                    </TableHead>
+                    </SortableTableHead>
                   </TableRow>
                 </TableHeader>
                 <TableBody>
@@ -456,14 +460,9 @@ const SessionsReport = () => {
                         className="hover:bg-muted/30"
                       >
                         <TableCell className="font-medium">
-                          <Link
-                            to={`/sessions/${session.sessionId}`}
-                            className="hover:underline"
-                          >
-                            <code className="relative rounded bg-muted px-[0.3rem] py-[0.2rem] font-mono text-xs">
-                              {session.sessionId.substring(0, 8)}...
-                            </code>
-                          </Link>
+                          <code className="relative rounded bg-muted px-[0.3rem] py-[0.2rem] font-mono text-xs">
+                            <TelemetryDetailLink to={`/sessions/${encodeURIComponent(session.sessionId)}`}>{session.sessionId.substring(0, 8)}...</TelemetryDetailLink>
+                          </code>
                         </TableCell>
                         <TableCell>
                           <code className="relative rounded bg-muted px-[0.3rem] py-[0.2rem] font-mono text-sm">

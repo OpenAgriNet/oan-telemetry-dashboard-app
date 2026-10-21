@@ -1,3 +1,4 @@
+import { useScopedPage } from "@/hooks/useScopedPage";
 import { useMemo, useState } from "react";
 import { Link } from "react-router-dom";
 import { useQuery } from "@tanstack/react-query";
@@ -41,7 +42,7 @@ function displayEndpoint(value: string | null) {
 const IndividualApiCalls = () => {
   const { dateRange } = useDateFilter();
   const dateParams = useMemo(() => buildDateRangeParams(dateRange, { includeDefaultStart: false }), [dateRange]);
-  const [page, setPage] = useState(1);
+  const [page, setPage] = useScopedPage(JSON.stringify([dateParams.startDate, dateParams.endDate]));
   const [outcome, setOutcome] = useState<"" | "success" | "failure">("");
   const [layer, setLayer] = useState("");
   const [service, setService] = useState("");

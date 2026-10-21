@@ -39,6 +39,7 @@ type?: "line" | "bar" | "area";
 color?: string;
 xAxisKey?: string;
 isLoading?: boolean;
+error?: unknown;
 }
 
 const TrendChart: React.FC<TrendChartProps> = ({
@@ -46,7 +47,8 @@ title,
 description,
 data,
 dataKey,
-isLoading, 
+isLoading,
+error,
 type = "line",
 color = "var(--primary)",
 xAxisKey = "date",
@@ -105,6 +107,7 @@ const CustomTooltip = ({ active, payload, label }: {
   const hasData = data && data.length > 0;
   
 const renderChart = () => {
+    if (error) return <div role="alert" className="flex items-center justify-center h-60 text-red-700 dark:text-red-300">Could not load chart data. Please try again.</div>;
     if (!hasData && !isLoading) { 
       return (
         <div className="flex items-center justify-center h-60 text-muted-foreground">
@@ -130,7 +133,7 @@ return (
 <BarChart data={data}>
 <XAxis
 dataKey={xAxisKey}
-stroke="#888888"
+stroke="hsl(var(--foreground))"
 fontSize={12}
 tickLine={false}
 axisLine={false}
@@ -138,7 +141,7 @@ tickFormatter={formatXAxis}
 interval="preserveStartEnd"
 />
 <YAxis
-stroke="#888888"
+stroke="hsl(var(--foreground))"
 fontSize={12}
 tickLine={false}
 axisLine={false}
@@ -165,7 +168,7 @@ return (
 <AreaChart data={data}>
 <XAxis
 dataKey={xAxisKey}
-stroke="#888888"
+stroke="hsl(var(--foreground))"
 fontSize={12}
 tickLine={false}
 axisLine={false}
@@ -173,7 +176,7 @@ tickFormatter={formatXAxis}
 interval="preserveStartEnd"
 />
 <YAxis
-stroke="#888888"
+stroke="hsl(var(--foreground))"
 fontSize={12}
 tickLine={false}
 axisLine={false}
@@ -203,7 +206,7 @@ return (
 <LineChart data={data}>
 <XAxis
 dataKey={xAxisKey}
-stroke="#888888"
+stroke="hsl(var(--foreground))"
 fontSize={12}
 tickLine={false}
 axisLine={false}
@@ -211,7 +214,7 @@ tickFormatter={formatXAxis}
 interval="preserveStartEnd"
 />
 <YAxis
-stroke="#888888"
+stroke="hsl(var(--foreground))"
 fontSize={12}
 tickLine={false}
 axisLine={false}
