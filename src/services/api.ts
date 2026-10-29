@@ -3413,6 +3413,97 @@ export interface BecknExtLifecycle {
   steps: BecknExtLifecycleStep[];
 }
 
+// Service Check → GET /v1/service-check (one row per external API call, grouped by service)
+export interface ServiceCheckCounts {
+  total: number;
+  /** Completed: upstream accepted the request */
+  success: number;
+  /** rejected + error */
+  failed: number;
+  /** Upstream answered but refused (e.g. wrong OTP) */
+  rejected: number;
+  /** Upstream unreachable / timeout / non-2xx / unreadable */
+  error: number;
+  unknown: number;
+  successRate: number;
+}
+
+export interface ServiceCheckApi extends ServiceCheckCounts {
+  apiService: string;
+  label: string;
+  avgLatencyMs: number;
+  maxLatencyMs: number;
+  lastCallAt: string | null;
+  errorTypes: { errorType: string; count: number }[];
+}
+
+export interface ServiceCheckService {
+  id: string;
+  label: string;
+  totals: ServiceCheckCounts;
+  apis: ServiceCheckApi[];
+}
+
+export interface ServiceCheckParams {
+  startDate?: string;
+  endDate?: string;
+  /** Service id, e.g. "pmkisan" */
+  service?: string;
+}
+
+const toServiceCheckCounts = (r: Record<string, unknown> = {}): ServiceCheckCounts => ({
+  total: Number(r.total) || 0,
+  success: Number(r.success) || 0,
+  failed: Number(r.failed) || 0,
+  rejected: Number(r.rejected) || 0,
+  error: Number(r.error) || 0,
+  unknown: Number(r.unknown) || 0,
+  successRate: Number(r.successRate) || 0,
+});
+
+export const fetchServiceCheck = async (
+  params: ServiceCheckParams = {},
+): Promise<ServiceCheckService[]> => {
+  const queryParams = buildQueryParams({
+    startDate: params.startDate || "",
+    endDate: params.endDate || "",
+    service: params.service || "",
+  });
+
+  const response = await fetch(
+    `${SERVER_URL}/service-check${queryParams ? `?${queryParams}` : ""}`,
+  );
+
+  if (!response.ok) {
+    await throwBecknExtHttpError(response);
+  }
+
+  const result = await response.json();
+  if (!Array.isArray(result.services)) return [];
+
+  return result.services.map((s: Record<string, unknown>) => ({
+    id: String(s.id || ""),
+    label: String(s.label || s.id || ""),
+    totals: toServiceCheckCounts(s.totals as Record<string, unknown>),
+    apis: Array.isArray(s.apis)
+      ? s.apis.map((a: Record<string, unknown>) => ({
+          apiService: String(a.apiService || ""),
+          label: String(a.label || a.apiService || ""),
+          ...toServiceCheckCounts(a),
+          avgLatencyMs: Number(a.avgLatencyMs) || 0,
+          maxLatencyMs: Number(a.maxLatencyMs) || 0,
+          lastCallAt: a.lastCallAt ? String(a.lastCallAt) : null,
+          errorTypes: Array.isArray(a.errorTypes)
+            ? a.errorTypes.map((e: Record<string, unknown>) => ({
+                errorType: String(e.errorType || "unknown"),
+                count: Number(e.count) || 0,
+              }))
+            : [],
+        }))
+      : [],
+  }));
+};
+
 export const fetchBecknExtLifecycle = async (params: {
   questionId: string;
   sessionId?: string;

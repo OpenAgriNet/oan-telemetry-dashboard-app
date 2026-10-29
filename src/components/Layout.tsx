@@ -37,6 +37,7 @@ import {
   Network,
   Bell,
   FileSpreadsheet,
+  ShieldCheck,
 } from "lucide-react";
 import {
   DropdownMenu,
@@ -152,6 +153,12 @@ const Layout: React.FC<LayoutProps> = ({ children }) => {
       name: "External API",
       path: "/external-api",
       icon: <Activity size={16} />,
+    },
+    {
+      tab: "service-check",
+      name: "Service Check",
+      path: "/service-check",
+      icon: <ShieldCheck size={16} />,
     },
   ] as const;
 

@@ -43,6 +43,7 @@ import Exports from "./pages/Exports";
 import ExternalApiObservability from "./pages/ExternalApiObservability";
 import ExternalApiUseCaseStatus from "./pages/ExternalApiUseCaseStatus";
 import BecknExtLifecycleDetails from "./pages/BecknExtLifecycleDetails";
+import ServiceCheck from "./pages/ServiceCheck";
 
 
 const queryClient = new QueryClient({
@@ -67,7 +68,8 @@ type ChatTelemetryTab =
   | "asr"
   | "tts"
   | "exports"
-  | "external-api";
+  | "external-api"
+  | "service-check";
 
 const AccessDenied = () => (
   <div className="min-h-screen bg-background text-foreground flex items-center justify-center px-6">
@@ -330,6 +332,14 @@ const AppRoutes = () => {
         element={
           <TelemetryRoute requiredTab="external-api">
             <BecknExtLifecycleDetails />
+          </TelemetryRoute>
+        }
+      />
+      <Route
+        path="/service-check"
+        element={
+          <TelemetryRoute requiredTab="service-check">
+            <ServiceCheck />
           </TelemetryRoute>
         }
       />

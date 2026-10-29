@@ -20,6 +20,7 @@ export interface TelemetryStateConfig {
     | "tts"
     | "exports"
     | "external-api"
+    | "service-check"
   >;
   showUnifiedMetrics: boolean;
 }
@@ -43,6 +44,7 @@ export const TELEMETRY_STATES: Record<TelemetryStateId, TelemetryStateConfig> = 
       "tts",
       "exports",
       "external-api",
+      "service-check",
     ],
     showUnifiedMetrics: true,
   },
@@ -129,7 +131,8 @@ export const canAccessTabForState = (
     | "asr"
     | "tts"
     | "exports"
-    | "external-api",
+    | "external-api"
+    | "service-check",
 ): boolean => {
   return TELEMETRY_STATES[stateId].chatTelemetryTabs.includes(tab);
 };
