@@ -44,6 +44,7 @@ import ExternalApiObservability from "./pages/ExternalApiObservability";
 import ExternalApiUseCaseStatus from "./pages/ExternalApiUseCaseStatus";
 import BecknExtLifecycleDetails from "./pages/BecknExtLifecycleDetails";
 import ServiceCheck from "./pages/ServiceCheck";
+import ReportSettings from "./pages/ReportSettings";
 
 
 const queryClient = new QueryClient({
@@ -333,6 +334,14 @@ const AppRoutes = () => {
           <TelemetryRoute requiredTab="external-api">
             <BecknExtLifecycleDetails />
           </TelemetryRoute>
+        }
+      />
+      <Route
+        path="/settings"
+        element={
+          <SuperAdminRoute>
+            <ReportSettings />
+          </SuperAdminRoute>
         }
       />
       <Route
