@@ -4011,3 +4011,76 @@ export const fetchProviderTelemetryFlow = async (
 
   return result.data;
 };
+
+// Daily report settings → /v1/settings/daily-report (super-admin only)
+export interface DailyReportRun {
+  report_key: string;
+  report_date: string;
+  status: "sending" | "sent" | "failed";
+  recipients: string | null;
+  error_message: string | null;
+  created_at: string;
+  sent_at: string | null;
+}
+
+export interface DailyReportSettings {
+  /** On/off switch for the 9 PM scheduled send */
+  enabled: boolean;
+  recipients: string[];
+  /** Used when no recipients are saved here */
+  envRecipients: string[];
+  /** Read-only: SMTP is configured on the server (SMTP_* env), never in the UI */
+  smtp: {
+    enabled: boolean;
+    configured: boolean;
+    host: string;
+    from: string;
+    /** Why email can't be sent from this server, or null when it can */
+    problem: string | null;
+  };
+  updatedAt: string | null;
+  updatedBy: string | null;
+  /** allowedOnServer is false unless the server sets SMTP_ENABLED=true */
+  schedule: { allowedOnServer: boolean; cron: string; timezone: string };
+  reports: { key: string; subject: string }[];
+  recentRuns: DailyReportRun[];
+}
+
+export interface SaveDailyReportSettingsInput {
+  enabled: boolean;
+  recipients: string[];
+}
+
+async function settingsRequest<T>(path: string, init?: RequestInit): Promise<T> {
+  const response = await fetch(`${SERVER_URL}${path}`, {
+    ...init,
+    headers: { "Content-Type": "application/json", ...(init?.headers || {}) },
+  });
+  if (!response.ok) {
+    let message = `Request failed (HTTP ${response.status})`;
+    try {
+      const body = await response.json();
+      if (body?.message) message = String(body.message);
+    } catch {
+      /* ignore body parse */
+    }
+    if (response.status === 403) message = "Only super admins can change report settings.";
+    throw new Error(message);
+  }
+  return response.json();
+}
+
+export const fetchDailyReportSettings = () =>
+  settingsRequest<DailyReportSettings>("/settings/daily-report");
+
+export const saveDailyReportSettings = (input: SaveDailyReportSettingsInput) =>
+  settingsRequest<DailyReportSettings>("/settings/daily-report", {
+    method: "POST",
+    body: JSON.stringify(input),
+  });
+
+export const sendDailyReportTest = (to: string) =>
+  settingsRequest<{ status: string; to: string }>("/settings/daily-report/test", {
+    method: "POST",
+    body: JSON.stringify({ to }),
+  });

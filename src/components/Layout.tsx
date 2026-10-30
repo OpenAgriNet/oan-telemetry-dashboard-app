@@ -38,6 +38,7 @@ import {
   Bell,
   FileSpreadsheet,
   ShieldCheck,
+  Settings,
 } from "lucide-react";
 import {
   DropdownMenu,
@@ -325,6 +326,20 @@ const Layout: React.FC<LayoutProps> = ({ children }) => {
                   name: "Service Status",
                   path: "/service-status",
                   icon: <Activity size={20} />,
+                },
+                isMobile,
+                !collapsed || isMobile,
+              )}
+            </li>
+          )}
+
+          {isSuper && (
+            <li>
+              {renderNavLink(
+                {
+                  name: "Report Settings",
+                  path: "/settings",
+                  icon: <Settings size={20} />,
                 },
                 isMobile,
                 !collapsed || isMobile,
