@@ -1,3 +1,4 @@
+import SortableTableHead from "@/components/SortableTableHead";
 import TelemetryDetailLink from "@/components/TelemetryDetailLink";
 import React, { useState } from "react";
 import { useSearchParams } from "react-router-dom";
@@ -57,7 +58,7 @@ const FeedbackPage = () => {
   // Initialize state from URL params for persistence
   const [searchTerm, setSearchTerm] = useState(searchParams.get("search") || "");
   const [selectedUser, setSelectedUser] = useState(searchParams.get("user") || "all");
-  const [sortConfig, setSortConfig] = useState({
+  const [sortConfig, setSortConfig] = useState<{ key: string; direction: "asc" | "desc" }>({
     key: "created_at",
     direction: "desc",
   });
@@ -359,10 +360,10 @@ const FeedbackPage = () => {
                   maxLength={1000}
                 />
               </div>
-              <Button onClick={handleSearch} disabled={isLoading} variant="outline" size="icon" title="Search">
+              <Button onClick={handleSearch} disabled={isLoading} variant="outline" size="icon" title="Search" aria-label="Search">
                 <Search className="h-4 w-4" />
               </Button>
-              <Button onClick={handleResetFilters} variant="outline" size="icon" title="Reset Search">
+              <Button onClick={handleResetFilters} variant="outline" size="icon" title="Reset Search" aria-label="Reset search">
                 <RotateCcw className="h-4 w-4" />
               </Button>
             </div>
@@ -421,20 +422,22 @@ const FeedbackPage = () => {
               <Table className="min-w-[640px]">
                 <TableHeader>
                   <TableRow>
-                    <TableHead
+                    <SortableTableHead
                       className="cursor-pointer hover:bg-muted/50"
+                      direction={sortConfig.key === "created_at" ? sortConfig.direction : undefined}
                       onClick={() => handleSort("created_at")}
                     >
                       Date
                       <SortIndicator columnKey="created_at" />
-                    </TableHead>
-                    <TableHead
+                    </SortableTableHead>
+                    <SortableTableHead
                       className="cursor-pointer hover:bg-muted/50"
+                      direction={sortConfig.key === "user_id" ? sortConfig.direction : undefined}
                       onClick={() => handleSort("user_id")}
                     >
                       User
                       <SortIndicator columnKey="user_id" />
-                    </TableHead>
+                    </SortableTableHead>
                     <TableHead
                       // className="cursor-pointer hover:bg-muted/50"
                       // onClick={() => handleSort("question")}
@@ -456,13 +459,14 @@ const FeedbackPage = () => {
                       Rating
                       {/* <SortIndicator columnKey="feedbacktype" /> */}
                     </TableHead>
-                    <TableHead
+                    <SortableTableHead
                       className="cursor-pointer hover:bg-muted/50"
+                      direction={sortConfig.key === "feedbacktext" ? sortConfig.direction : undefined}
                       onClick={() => handleSort("feedbacktext")}
                     >
                       Feedback
                       <SortIndicator columnKey="feedbacktext" />
-                    </TableHead>
+                    </SortableTableHead>
                     <TableHead>Details</TableHead>
                   </TableRow>
                 </TableHeader>
@@ -495,12 +499,12 @@ const FeedbackPage = () => {
                         {feedback.rating === "like" ? (
                           <div className="flex items-center gap-1">
                             <ThumbsUp className="h-4 w-4 text-green-500" />
-                            <span className="text-xs text-green-700">Like</span>
+                            <span className="text-xs text-green-700 dark:text-green-400">Like</span>
                           </div>
                         ) : feedback.rating === "dislike" ? (
                           <div className="flex items-center gap-1">
                             <ThumbsDown className="h-4 w-4 text-red-500" />
-                            <span className="text-xs text-red-700">
+                            <span className="text-xs text-red-700 dark:text-red-400">
                               Dislike
                             </span>
                           </div>

@@ -136,6 +136,119 @@ export interface PaginationParams {
   sortOrder?: 'asc' | 'desc';
 }
 
+export interface ServiceSnapshotMetrics {
+  requests: number;
+  successfulRequests: number;
+  failedRequests: number;
+  successPercentage: number;
+  failurePercentage: number;
+  p90LatencyMs: number | null;
+  maxLatencyMs: number | null;
+}
+
+export interface ServiceSnapshotApi {
+  key: string;
+  name: string;
+  description: string;
+  sourceService: string | null;
+  scopeCategories: string[];
+  method: string | null;
+  endpoint: string | null;
+  kind: "direct" | "fallback";
+  metrics: ServiceSnapshotMetrics;
+}
+
+export interface ServiceSnapshotService {
+  key: string;
+  name: string;
+  description: string;
+  metrics: ServiceSnapshotMetrics;
+  apiRequests: number;
+  apis: ServiceSnapshotApi[];
+}
+
+export interface ServiceSnapshotProvider {
+  name: string;
+  services: ServiceSnapshotService[];
+}
+
+export interface ServiceSnapshotResponse {
+  providers: ServiceSnapshotProvider[];
+  summary: {
+    providerCount: number;
+    serviceCount: number;
+    serviceRequests: number;
+    apiRequests: number;
+  };
+}
+
+export type ApiCallOutcome = "success" | "failure" | string | null;
+
+export interface IndividualApiCall {
+  id: number;
+  event_mid: string;
+  trace_id: string | null;
+  event_name: string;
+  layer: string | null;
+  service: string | null;
+  dependency: string | null;
+  method: string | null;
+  endpoint: string;
+  outcome: ApiCallOutcome;
+  http_status: number | null;
+  response_status: string | null;
+  error_payload: unknown | null;
+  event_time: string | null;
+  duration_ms: number | null;
+  has_request_payload: boolean;
+  has_response_payload: boolean;
+  has_error_payload: boolean;
+}
+
+export interface IndividualApiCallDetail extends Omit<IndividualApiCall, "has_request_payload" | "has_response_payload" | "has_error_payload"> {
+  stage: string | null;
+  action: string | null;
+  request_started_at: string | null;
+  response_received_at: string | null;
+  request_payload: unknown | null;
+  response_payload: unknown | null;
+  request_payload_bytes: number | null;
+  response_payload_bytes: number | null;
+  response_payload_truncated: boolean | null;
+  question_id: string | null;
+  session_id: string | null;
+  transaction_id: string | null;
+  message_id: string | null;
+  http_call_id: string | null;
+  dependency_operation_id: string | null;
+}
+
+export interface IndividualApiCallsResponse {
+  calls: IndividualApiCall[];
+  summary: { total: number; successful: number; failed: number };
+  filterOptions: { layers: string[]; services: string[] };
+}
+
+export interface IndividualApiCallsParams extends Pick<PaginationParams, "startDate" | "endDate" | "page" | "limit" | "search"> {
+  outcome?: "success" | "failure";
+  layer?: string;
+  service?: string;
+}
+
+export interface ServiceApiCallsParams extends Pick<PaginationParams, "startDate" | "endDate" | "page"> {
+  sourceService: string;
+  endpoint: string;
+  method: string | null;
+  kind: "direct" | "fallback";
+  categories: string[];
+  outcome?: "success" | "failure";
+}
+
+export interface ServiceApiCallsResponse {
+  calls: IndividualApiCall[];
+  summary: { total: number; successful: number; failed: number };
+}
+
 export interface UserPaginationParams extends PaginationParams {
   username?: string;
 }
@@ -599,7 +712,7 @@ export const fetchUserByUsername = async (username: string, params: PaginationPa
     const result = await response.json();
     
     if (!result.success) {
-      return null;
+      throw new Error('Failed to fetch user details');
     }
 
     // Transform backend response to match our User interface
@@ -618,8 +731,7 @@ export const fetchUserByUsername = async (username: string, params: PaginationPa
       dislikes: userData.dislikes
     };
   } catch (error) {
-    console.error('Error fetching user by username:', error);
-    return null;
+    throw error;
   }
 };
 
@@ -661,19 +773,7 @@ export const fetchUserStats = async (params: PaginationParams = {}): Promise<Use
       activeCumulative: result.data.activeCumulative || 0
     };
   } catch (error) {
-    console.error('Error fetching user stats:', error);
-    // Return default values on error
-    return {
-      totalUsers: 0,
-      totalSessions: 0,
-      totalQuestions: 0,
-      totalFeedback: 0,
-      totalLikes: 0,
-      totalDislikes: 0,
-      newUsers: 0,
-      returningUsers: 0,
-      activeCumulative: 0
-    };
+    throw error;
   }
 };
 
@@ -866,12 +966,7 @@ export const fetchBasicSessionStats = async (params: PaginationParams = {}): Pro
       totalUsers: uniqueUsers
     };
   } catch (error) {
-    console.error('Error fetching session stats:', error);
-    return {
-      totalSessions: 0,
-      totalQuestions: 0,
-      totalUsers: 0
-    };
+    throw error;
   }
 };
 
@@ -1078,12 +1173,7 @@ export const fetchFeedbackStats = async (params: PaginationParams = {}): Promise
       totalDislikes
     };
   } catch (error) {
-    console.error('Error fetching feedback stats:', error);
-    return {
-      totalFeedback: 0,
-      totalLikes: 0,
-      totalDislikes: 0
-    };
+    throw error;
   }
 };
 
@@ -1117,10 +1207,7 @@ export const fetchSessionStats = async (params: PaginationParams = {}): Promise<
 
     return result.data;
   } catch (error) {
-    console.error('Error fetching session stats:', error);
-    return {
-      totalSessions: 0
-    };
+    throw error;
   }
 };
 
@@ -1154,10 +1241,7 @@ export const fetchQuestionStats = async (params: PaginationParams = {}): Promise
 
     return result.data;
   } catch (error) {
-    console.error('Error fetching question stats:', error);
-    return {
-      totalQuestions: 0
-    };
+    throw error;
   }
 };
 
@@ -1193,12 +1277,7 @@ export const fetchComprehensiveFeedbackStats = async (params: PaginationParams =
 
     return result.data;
   } catch (error) {
-    console.error('Error fetching comprehensive feedback stats:', error);
-    return {
-      totalFeedback: 0,
-      totalLikes: 0,
-      totalDislikes: 0
-    };
+    throw error;
   }
 };
 
@@ -1238,17 +1317,80 @@ export const fetchDashboardStats = async (params: PaginationParams = {}): Promis
 
     return result.data;
   } catch (error) {
-    console.error('Error fetching dashboard stats:', error);
-    return {
-      totalUsers: 0,
-      totalNewUsers: 0,
-      totalSessions: 0,
-      totalQuestions: 0,
-      totalFeedback: 0,
-      totalLikes: 0,
-      totalDislikes: 0
-    };
+    throw error;
   }
+};
+
+export const fetchServiceSnapshot = async (
+  params: Pick<PaginationParams, "startDate" | "endDate"> = {}
+): Promise<{ data: ServiceSnapshotResponse; warning?: string }> => {
+  const queryParams = buildQueryParams({
+    startDate: params.startDate || "",
+    endDate: params.endDate || "",
+  });
+  const response = await fetch(
+    `${SERVER_URL}/service-snapshot${queryParams ? `?${queryParams}` : ""}`
+  );
+
+  if (!response.ok) {
+    throw new Error("Failed to fetch service snapshot");
+  }
+
+  const result = await response.json();
+  if (!result.success) {
+    throw new Error(result.error || "Failed to fetch service snapshot");
+  }
+
+  return { data: result.data, warning: result.warning };
+};
+
+export const fetchIndividualApiCalls = async (
+  params: IndividualApiCallsParams = {}
+): Promise<{ data: IndividualApiCallsResponse; pagination: { page: number; limit: number; total: number; totalPages: number }; warning?: string }> => {
+  const queryParams = buildQueryParams({
+    startDate: params.startDate || "",
+    endDate: params.endDate || "",
+    page: params.page || 1,
+    limit: params.limit || 10,
+    search: params.search || "",
+    outcome: params.outcome || "",
+    layer: params.layer || "",
+    service: params.service || "",
+  });
+  const response = await fetch(`${SERVER_URL}/individual-api-calls${queryParams ? `?${queryParams}` : ""}`);
+  if (!response.ok) throw new Error("Failed to fetch individual API calls");
+  const result = await response.json();
+  if (!result.success) throw new Error(result.error || "Failed to fetch individual API calls");
+  return { data: result.data, pagination: result.pagination, warning: result.warning };
+};
+
+export const fetchServiceApiCalls = async (
+  params: ServiceApiCallsParams
+): Promise<{ data: ServiceApiCallsResponse; pagination: { page: number; limit: number; total: number; totalPages: number }; warning?: string }> => {
+  const queryParams = buildQueryParams({
+    sourceService: params.sourceService,
+    endpoint: params.endpoint,
+    method: params.method || "",
+    kind: params.kind,
+    categories: JSON.stringify(params.categories),
+    startDate: params.startDate || "",
+    endDate: params.endDate || "",
+    page: params.page || 1,
+    outcome: params.outcome || "",
+  });
+  const response = await fetch(`${SERVER_URL}/service-snapshot/api-calls?${queryParams}`);
+  if (!response.ok) throw new Error("Failed to fetch service API calls");
+  const result = await response.json();
+  if (!result.success) throw new Error(result.error || "Failed to fetch service API calls");
+  return { data: result.data, pagination: result.pagination, warning: result.warning };
+};
+
+export const fetchIndividualApiCall = async (id: string | number): Promise<IndividualApiCallDetail> => {
+  const response = await fetch(`${SERVER_URL}/individual-api-calls/${encodeURIComponent(String(id))}`);
+  if (!response.ok) throw new Error(response.status === 404 ? "API call not found" : "Failed to fetch API call");
+  const result = await response.json();
+  if (!result.success) throw new Error(result.error || "Failed to fetch API call");
+  return result.data;
 };
 
 // Legacy support functions (these will be deprecated)
@@ -1481,35 +1623,7 @@ export const fetchQuestionsGraph = async (params: PaginationParams = {}): Promis
 
     return result;
   } catch (error) {
-    console.error('Error fetching questions graph data:', error);
-    return {
-      data: [],
-      metadata: {
-        granularity: 'daily',
-        totalDataPoints: 0,
-        dateRange: {
-          start: null,
-          end: null
-        },
-        summary: {
-          totalQuestions: 0,
-          totalUniqueUsers: 0,
-          avgQuestionsPerPeriod: 0,
-          peakActivity: {
-            date: null,
-            questionsCount: 0
-          }
-        }
-      },
-      filters: {
-        search: '',
-        startDate: null,
-        endDate: null,
-        granularity: 'daily',
-        appliedStartTimestamp: null,
-        appliedEndTimestamp: null
-      }
-    };
+    throw error;
   }
 };
 
@@ -1584,36 +1698,7 @@ export const fetchSessionsGraph = async (params: PaginationParams = {}): Promise
 
     return result;
   } catch (error) {
-    console.error('Error fetching sessions graph data:', error);
-    return {
-      data: [],
-      metadata: {
-        granularity: 'daily',
-        totalDataPoints: 0,
-        dateRange: {
-          start: null,
-          end: null
-        },
-        summary: {
-          totalSessions: 0,
-          totalQuestions: 0,
-          totalUsers: 0,
-          avgSessionsPerPeriod: 0,
-          peakActivity: {
-            date: null,
-            sessionsCount: 0
-          }
-        }
-      },
-      filters: {
-        search: '',
-        startDate: null,
-        endDate: null,
-        granularity: 'daily',
-        appliedStartTimestamp: null,
-        appliedEndTimestamp: null
-      }
-    };
+    throw error;
   }
 };
 
@@ -1692,38 +1777,7 @@ export const fetchFeedbackGraph = async (params: PaginationParams = {}): Promise
 
     return result;
   } catch (error) {
-    console.error('Error fetching feedback graph data:', error);
-    return {
-      data: [],
-      metadata: {
-        granularity: 'daily',
-        totalDataPoints: 0,
-        dateRange: {
-          start: null,
-          end: null
-        },
-        summary: {
-          totalFeedback: 0,
-          totalLikes: 0,
-          totalDislikes: 0,
-          totalUniqueUsers: 0,
-          avgFeedbackPerPeriod: 0,
-          overallSatisfactionRate: 0,
-          peakActivity: {
-            date: null,
-            feedbackCount: 0
-          }
-        }
-      },
-      filters: {
-        search: '',
-        startDate: null,
-        endDate: null,
-        granularity: 'daily',
-        appliedStartTimestamp: null,
-        appliedEndTimestamp: null
-      }
-    };
+    throw error;
   }
 };
 
@@ -1826,14 +1880,7 @@ export const fetchErrors = async (params: ErrorPaginationParams = {}): Promise<P
       totalPages: result.pagination.totalPages
     };
   } catch (error) {
-    console.error('Error fetching errors:', error);
-    return {
-      data: [],
-      total: 0,
-      page: 1,
-      pageSize: 10,
-      totalPages: 0
-    };
+    throw error;
   }
 };
 
@@ -1871,14 +1918,7 @@ export const fetchErrorStats = async (params: PaginationParams = {}): Promise<Er
     
     return result;
   } catch (error) {
-    console.error('Error fetching error statistics:', error);
-    return {
-      totalErrors: 0,
-      unresolvedErrors: 0,
-      resolvedErrors: 0,
-      criticalErrors: 0,
-      avgErrorCount: 0
-    };
+    throw error;
   }
 };
 
@@ -1908,10 +1948,7 @@ export const fetchErrorGraph = async (params: PaginationParams = {}): Promise<Er
     
     return result;
   } catch (error) {
-    console.error('Error fetching error graph data:', error);
-    return {
-      data: []
-    };
+    throw error;
   }
 };
 
@@ -1944,32 +1981,6 @@ export const fetchUsersGraph = async (params: PaginationParams = {}): Promise<Us
 
     return result;
   } catch (error) {
-    console.error('Error fetching users graph data:', error);
-    return {
-      data: [],
-      metadata: {
-        granularity: 'daily',
-        totalDataPoints: 0,
-        dateRange: {
-          start: null,
-          end: null
-        },
-        summary: {
-          totalUniqueUsers: 0,
-          peakActivity: {
-            date: null,
-            uniqueUsersCount: 0
-          }
-        }
-      },
-      filters: {
-        search: '',
-        startDate: null,
-        endDate: null,
-        granularity: 'daily',
-        appliedStartTimestamp: null,
-        appliedEndTimestamp: null
-      }
-    };
+    throw error;
   }
 };

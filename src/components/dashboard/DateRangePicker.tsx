@@ -13,7 +13,7 @@ import {
 } from "@/components/ui/dropdown-menu";
 import { Calendar } from "@/components/ui/calendar";
 import { ChevronDown } from "lucide-react";
-import { format, subDays } from "date-fns";
+import { format, subDays, startOfDay } from "date-fns";
 import { useIsMobile } from "@/hooks/use-mobile";
 import { cn } from "@/lib/utils";
 
@@ -31,14 +31,20 @@ const DateRangePicker: React.FC<DateRangePickerProps> = ({
   const isMobile = useIsMobile();
   const [isCalendarOpen, setIsCalendarOpen] = React.useState(false);
   const [selectedOption, setSelectedOption] = React.useState("last7");
+  const [draftRange, setDraftRange] = React.useState(dateRange);
+  const openCalendar = (open: boolean) => {
+    if (open) setDraftRange(dateRange);
+    setIsCalendarOpen(open);
+  };
   const hasInitialized = React.useRef(false);
+  const openingFromMenu = React.useRef(false);
 
   // Set default to last 7 days on component mount
   React.useEffect(() => {
     if (!hasInitialized.current && !dateRange.from && !dateRange.to) {
       const today = new Date();
       today.setHours(23, 59, 59, 999);
-      setDateRange({ from: subDays(today, 6), to: today });
+      setDateRange({ from: subDays(startOfDay(today), 6), to: today });
       hasInitialized.current = true;
     }
   }, [dateRange.from, dateRange.to, setDateRange]);
@@ -54,25 +60,24 @@ const DateRangePicker: React.FC<DateRangePickerProps> = ({
   const handleQuickSelect = (option: string) => {
     const today = new Date();
     today.setHours(23, 59, 59, 999);
-    const startOfDay = new Date(today);
-    startOfDay.setHours(0, 0, 0, 0);
+    const dayStart = startOfDay(today);
 
     switch (option) {
       case "today":
-        setDateRange({ from: startOfDay, to: today });
+        setDateRange({ from: dayStart, to: today });
         break;
       case "last7":
-        setDateRange({ from: subDays(today, 6), to: today });
+        setDateRange({ from: subDays(startOfDay(today), 6), to: today });
         break;
       case "last30":
-        setDateRange({ from: subDays(today, 29), to: today });
+        setDateRange({ from: subDays(startOfDay(today), 29), to: today });
         break;
       case "alltime":
         setDateRange({ from: new Date("2025-05-01T00:00:00.000Z"), to: today });
         break;
       case "custom":
-        setIsCalendarOpen(true);
-        break;
+        openingFromMenu.current = true;
+        return;
     }
     setSelectedOption(option);
   };
@@ -81,13 +86,13 @@ const DateRangePicker: React.FC<DateRangePickerProps> = ({
     // Reset to last 7 days
     const today = new Date();
     today.setHours(23, 59, 59, 999);
-    setDateRange({ from: subDays(today, 6), to: today });
+    setDateRange({ from: subDays(startOfDay(today), 6), to: today });
     setSelectedOption("last7");
   };
 
   return (
     <div className="flex min-w-0 flex-wrap items-center gap-2">
-      <Popover open={isCalendarOpen} onOpenChange={setIsCalendarOpen}>
+      <Popover open={isCalendarOpen} onOpenChange={openCalendar}>
         <PopoverTrigger asChild>
           <Button
             variant="outline"
@@ -95,10 +100,6 @@ const DateRangePicker: React.FC<DateRangePickerProps> = ({
               "bg-muted/40 hover:bg-muted/60 rounded-lg px-4 py-2 h-9 font-medium text-sm",
               !dateRange.from && "text-muted-foreground"
             )}
-            onClick={() => {
-              setIsCalendarOpen(true);
-              setSelectedOption("custom");
-            }}
           >
             {formatDateRange()}
           </Button>
@@ -108,23 +109,14 @@ const DateRangePicker: React.FC<DateRangePickerProps> = ({
             <Calendar
               initialFocus
               mode="range"
-              defaultMonth={dateRange.from}
+              defaultMonth={draftRange.from}
               selected={{
-                from: dateRange.from,
-                to: dateRange.to,
+                from: draftRange.from,
+                to: draftRange.to,
               }}
               disabled={(date) => date > new Date()}
               onSelect={(range) => {
-                // Only set the range, don't close the popover
-                setDateRange({
-                  from: range?.from,
-                  to: range?.to,
-                });
-
-                // Set to custom mode when starting a new selection
-                if (range?.from) {
-                  setSelectedOption("custom");
-                }
+                setDraftRange({ from: range?.from, to: range?.to });
               }}
               numberOfMonths={isMobile ? 1 : 2}
             />
@@ -134,8 +126,7 @@ const DateRangePicker: React.FC<DateRangePickerProps> = ({
               variant="outline"
               size="sm"
               onClick={() => {
-                setDateRange({ from: undefined, to: undefined });
-                setSelectedOption("alltime");
+                handleReset();
                 setIsCalendarOpen(false);
               }}
             >
@@ -144,11 +135,13 @@ const DateRangePicker: React.FC<DateRangePickerProps> = ({
             <Button
               size="sm"
               onClick={() => {
-                if (dateRange.from && dateRange.to) {
+                if (draftRange.from && draftRange.to) {
+                  setDateRange(draftRange);
+                  setSelectedOption("custom");
                   setIsCalendarOpen(false);
                 }
               }}
-              disabled={!dateRange.from || !dateRange.to}
+              disabled={!draftRange.from || !draftRange.to}
             >
               Apply
             </Button>
@@ -170,7 +163,14 @@ const DateRangePicker: React.FC<DateRangePickerProps> = ({
             <ChevronDown className="ml-2 h-4 w-4" />
           </Button>
         </DropdownMenuTrigger>
-        <DropdownMenuContent align="end">
+        <DropdownMenuContent align="end" onCloseAutoFocus={(event) => {
+          // Keep focus in the newly opened calendar instead of returning it to the preset menu.
+          if (openingFromMenu.current) {
+            event.preventDefault();
+            openingFromMenu.current = false;
+            openCalendar(true);
+          }
+        }}>
           <DropdownMenuItem onClick={() => handleQuickSelect("today")}>
             Today
           </DropdownMenuItem>

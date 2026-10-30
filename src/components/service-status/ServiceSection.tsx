@@ -13,7 +13,6 @@ interface ServiceSectionProps {
   latestUpdates?: { [endpointId: string]: LatestStatusUpdate };
   type?: 'ui' | 'api' | 'network';
   className?: string;
-  responseMetricStrategy?: 'auto' | 'latest' | 'average';
 }
 
 const ServiceSection: React.FC<ServiceSectionProps> = ({
@@ -24,8 +23,7 @@ const ServiceSection: React.FC<ServiceSectionProps> = ({
   trendsErrors = {},
   latestUpdates = {},
   type,
-  className,
-  responseMetricStrategy = 'auto'
+  className
 }) => {
   if (endpoints.length === 0) {
     return null;
@@ -118,7 +116,6 @@ const ServiceSection: React.FC<ServiceSectionProps> = ({
                 trendsLoading={trendsLoading[endpoint.id]}
                 trendsError={trendsErrors[endpoint.id]}
                 latestUpdate={latestUpdates[endpoint.id]}
-                responseMetricStrategy={responseMetricStrategy}
                 className={index === endpoints.length - 1 ? "border-b-0" : ""}
               />
             ))}

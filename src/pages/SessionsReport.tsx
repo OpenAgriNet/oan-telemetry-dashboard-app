@@ -1,3 +1,4 @@
+import SortableTableHead from "@/components/SortableTableHead";
 import TelemetryDetailLink from "@/components/TelemetryDetailLink";
 import React, { useState } from "react";
 import { useQuery } from "@tanstack/react-query";
@@ -9,7 +10,7 @@ import {
   type UserPaginationParams,
   type PaginationParams,
 } from "@/services/api";
-import { useSearchParams } from "react-router-dom";
+import { useDateScopedPage } from "@/hooks/useDateScopedPage";
 import { useDateFilter } from "@/contexts/DateFilterContext";
 import { buildDateRangeParams, formatLocal } from "@/lib/utils";
 import {
@@ -50,17 +51,19 @@ import TablePagination from "@/components/TablePagination";
 import { formatUtcDateWithPMCorrection, formatUTCToIST } from "@/lib/utils";
 
 const SessionsReport = () => {
-  const [searchParams, setSearchParams] = useSearchParams();
   const { dateRange } = useDateFilter();
+  const dateScope = dateRange.from && dateRange.to
+    ? JSON.stringify([dateRange.from.toISOString(), dateRange.to.toISOString()])
+    : null;
+  const { page, searchParams, setSearchParams } = useDateScopedPage(dateScope);
 
   // Get pagination and filter state from URL params
-  const page = parseInt(searchParams.get("page") || "1", 10);
   const pageSize = 10;
 
   // Initialize state from URL params for persistence
   const [selectedUser, setSelectedUser] = useState<string>(searchParams.get("user") || "all");
   const [searchQuery, setSearchQuery] = useState<string>(searchParams.get("search") || "");
-  const [sortConfig, setSortConfig] = useState({
+  const [sortConfig, setSortConfig] = useState<{ key: string; direction: "asc" | "desc" }>({
     key: "session_time",
     direction: "desc",
   });
@@ -356,10 +359,10 @@ const SessionsReport = () => {
                   maxLength={1000}
                 />
               </div>
-              <Button onClick={handleSearch} disabled={isLoading} variant="outline" size="icon" title="Search">
+              <Button onClick={handleSearch} disabled={isLoading} variant="outline" size="icon" title="Search" aria-label="Search">
                 <Search className="h-4 w-4" />
               </Button>
-              <Button onClick={handleResetFilters} variant="outline" size="icon" title="Reset Search">
+              <Button onClick={handleResetFilters} variant="outline" size="icon" title="Reset Search" aria-label="Reset search">
                 <RotateCcw className="h-4 w-4" />
               </Button>
             </div>
@@ -425,13 +428,14 @@ const SessionsReport = () => {
                       Session ID
                       {/* <SortIndicator columnKey="session_id" />  */}
                     </TableHead>
-                    <TableHead
+                    <SortableTableHead
                       className="cursor-pointer hover:bg-muted/50"
+                      direction={sortConfig.key === "username" ? sortConfig.direction : undefined}
                       onClick={() => handleSort("username")}
                     >
                       User
                       <SortIndicator columnKey="username" />
-                    </TableHead>
+                    </SortableTableHead>
                     <TableHead
                       className="text-right cursor-pointer hover:bg-muted/50"
                       // onClick={() => handleSort("question_count")}
@@ -439,13 +443,14 @@ const SessionsReport = () => {
                       Questions
                       {/* <SortIndicator columnKey="question_count" /> */}
                     </TableHead>
-                    <TableHead
+                    <SortableTableHead
                       className="cursor-pointer hover:bg-muted/50"
+                      direction={sortConfig.key === "session_time" ? sortConfig.direction : undefined}
                       onClick={() => handleSort("session_time")}
                     >
                       Session Time
                       <SortIndicator columnKey="session_time" />
-                    </TableHead>
+                    </SortableTableHead>
                   </TableRow>
                 </TableHeader>
                 <TableBody>

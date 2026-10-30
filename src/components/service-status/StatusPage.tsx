@@ -172,7 +172,6 @@ const StatusPage: React.FC<StatusPageProps> = ({
               trendsLoading={trendsLoading}
               trendsErrors={trendsErrors}
               latestUpdates={latestUpdates}
-              responseMetricStrategy="auto"
             />
           )}
 
@@ -186,7 +185,6 @@ const StatusPage: React.FC<StatusPageProps> = ({
               trendsLoading={trendsLoading}
               trendsErrors={trendsErrors}
               latestUpdates={latestUpdates}
-              responseMetricStrategy="auto"
             />
           )}
 
@@ -200,7 +198,6 @@ const StatusPage: React.FC<StatusPageProps> = ({
               trendsLoading={trendsLoading}
               trendsErrors={trendsErrors}
               latestUpdates={latestUpdates}
-              responseMetricStrategy="latest"
             />
           )}
 
