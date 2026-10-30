@@ -3440,6 +3440,8 @@ export interface ServiceCheckApi extends ServiceCheckCounts {
 export interface ServiceCheckService {
   id: string;
   label: string;
+  /** User requests to this service's tool (one request can make several API calls) */
+  toolCalls: number;
   totals: ServiceCheckCounts;
   apis: ServiceCheckApi[];
 }
@@ -3484,6 +3486,7 @@ export const fetchServiceCheck = async (
   return result.services.map((s: Record<string, unknown>) => ({
     id: String(s.id || ""),
     label: String(s.label || s.id || ""),
+    toolCalls: Number(s.toolCalls) || 0,
     totals: toServiceCheckCounts(s.totals as Record<string, unknown>),
     apis: Array.isArray(s.apis)
       ? s.apis.map((a: Record<string, unknown>) => ({

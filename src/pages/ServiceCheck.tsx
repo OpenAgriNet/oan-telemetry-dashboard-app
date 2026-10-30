@@ -3,11 +3,9 @@ import { useSearchParams } from "react-router-dom";
 import { useQuery } from "@tanstack/react-query";
 import {
   AlertCircle,
-  CheckCircle2,
   RefreshCw,
   ShieldCheck,
   Activity,
-  XCircle,
 } from "lucide-react";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
@@ -126,8 +124,6 @@ function ApiRow({ api }: { api: ServiceCheckApi }) {
 }
 
 function ServiceCard({ service }: { service: ServiceCheckService }) {
-  const { totals } = service;
-
   return (
     <Card className="overflow-hidden border-border/60 shadow-sm">
       <CardHeader className="space-y-4 border-b border-border/50 bg-muted/20">
@@ -137,30 +133,12 @@ function ServiceCard({ service }: { service: ServiceCheckService }) {
             {service.id}
           </Badge>
         </div>
-        <div className="grid grid-cols-2 gap-3 md:grid-cols-4">
+        <div className="max-w-xs">
           <SummaryTile
-            label="API calls"
-            value={totals.total}
+            label="Tool calls"
+            value={service.toolCalls}
+            hint={`Times users used the ${service.label} tool`}
             icon={<Activity size={14} />}
-          />
-          <SummaryTile
-            label="Completed"
-            value={totals.success}
-            icon={<CheckCircle2 size={14} />}
-            className={totals.success > 0 ? "text-emerald-600" : undefined}
-          />
-          <SummaryTile
-            label="Failed"
-            value={totals.failed}
-            hint={`${totals.rejected} rejected · ${totals.error} error`}
-            icon={<XCircle size={14} />}
-            className={totals.failed > 0 ? "text-red-600" : undefined}
-          />
-          <SummaryTile
-            label="Success rate"
-            value={totals.total > 0 ? `${totals.successRate}%` : "—"}
-            icon={<ShieldCheck size={14} />}
-            className={successRateClass(totals.successRate, totals.total)}
           />
         </div>
       </CardHeader>
