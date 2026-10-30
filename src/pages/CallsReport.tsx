@@ -38,6 +38,7 @@ import {
   RotateCcw,
 } from "lucide-react";
 import TablePagination from "@/components/TablePagination";
+import DownloadCsvButton from "@/components/DownloadCsvButton";
 
 function formatDuration(seconds: number | null): string {
   if (seconds === null || seconds === undefined) return "—";
@@ -234,7 +235,17 @@ const CallsReport = () => {
       {/* Header */}
       <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4">
         <h1 className="text-2xl font-bold tracking-tight">Call Logs</h1>
-        <Button
+        <div className="flex gap-2">
+          <DownloadCsvButton
+            moduleName="call-logs"
+            filters={{
+              search: searchQuery,
+              sortBy: sortConfig.key,
+              sortOrder: sortConfig.direction,
+            }}
+            disabled={isLoading}
+          />
+          <Button
           onClick={() => refetch()}
           disabled={isLoading}
           variant="outline"
@@ -244,6 +255,7 @@ const CallsReport = () => {
           />
           Refresh
         </Button>
+        </div>
       </div>
 
       {/* TODO: Uncomment after migration - disclaimer about data freshness */}

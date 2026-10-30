@@ -177,6 +177,11 @@ export interface NotificationTelemetryEvent {
   event_time?: string;
   metadata?: Record<string, unknown>;
   notification_id?: string;
+  notification_description?: string;
+  message_type?: string;
+  category_type?: string;
+  latitude?: number;
+  longitude?: number;
   action?: string;
   reason?: string;
   feedback?: string;
@@ -202,6 +207,10 @@ export interface NotificationTelemetrySummary {
   feedback_no?: string | number;
   negative_feedback_submitted?: string | number;
   total_sessions?: string | number;
+  category_counts?: Array<{
+    category_type: string;
+    count: string | number;
+  }>;
 }
 
 export interface NotificationTelemetrySession {
@@ -3061,6 +3070,113 @@ export const fetchCallsStats = async (
   }
 };
 
+export type ExportModuleName =
+  | "questions"
+  | "feedback"
+  | "notifications"
+  | "asr"
+  | "tts"
+  | "call-logs";
+
+export type ExportStatus = "PROCESSING" | "COMPLETED" | "FAILED";
+
+export interface ExportRecord {
+  id: string;
+  userId: string;
+  moduleName: ExportModuleName;
+  fromDate: string | null;
+  toDate: string | null;
+  exportStatus: ExportStatus;
+  fileName: string | null;
+  requestedAt: string;
+  completedAt: string | null;
+  errorMessage: string | null;
+  telemetryState: string | null;
+  telemetryStateLabel?: string;
+  username?: string | null;
+  exportedBy?: string | null;
+  filters: Record<string, string>;
+  publicDownloadUrl?: string;
+}
+
+export interface CreateExportParams {
+  moduleName: ExportModuleName;
+  fromDate?: string;
+  toDate?: string;
+  filters?: Record<string, string>;
+}
+
+export const createExport = async (
+  params: CreateExportParams,
+): Promise<ExportRecord> => {
+  const response = await fetch(`${SERVER_URL}/exports`, {
+    method: "POST",
+    headers: {
+      "Content-Type": "application/json",
+    },
+    body: JSON.stringify(params),
+  });
+
+  const result = await response.json();
+
+  if (!response.ok || !result.success) {
+    throw new Error(result.message || "Failed to initiate export");
+  }
+
+  return result.data;
+};
+
+export const fetchExports = async (): Promise<ExportRecord[]> => {
+  const response = await fetch(`${SERVER_URL}/exports`);
+
+  if (!response.ok) {
+    throw new Error(`HTTP error! status: ${response.status}`);
+  }
+
+  const result = await response.json();
+
+  if (!result.success) {
+    throw new Error("Failed to fetch exports");
+  }
+
+  return result.data;
+};
+
+export const downloadExport = async (
+  exportId: string,
+  fileName: string,
+): Promise<void> => {
+  const response = await fetch(`${SERVER_URL}/exports/${exportId}/download`);
+
+  if (!response.ok) {
+    let message = "Failed to download export";
+    try {
+      const result = await response.json();
+      message = result.message || message;
+    } catch {
+      // Response may not be JSON for some errors.
+    }
+    throw new Error(message);
+  }
+
+  const blob = await response.blob();
+  const isXlsx = fileName.toLowerCase().endsWith(".xlsx");
+  const url = window.URL.createObjectURL(
+    new Blob([blob], {
+      type: isXlsx
+        ? "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet"
+        : "text/csv;charset=utf-8",
+    }),
+  );
+  const link = document.createElement("a");
+  link.href = url;
+  link.download = fileName;
+  document.body.appendChild(link);
+  link.click();
+  link.remove();
+  window.URL.revokeObjectURL(url);
+};
+
 // ── Beckn / External API observability (beckn_ext_events) ──────────────────
 // Cards → GET /v1/beckn-ext/stats  (useCase = service_name)
 // Table → GET /v1/beckn-ext        (useCase = service_name)
@@ -3297,6 +3413,100 @@ export interface BecknExtLifecycle {
   steps: BecknExtLifecycleStep[];
 }
 
+// Service Check → GET /v1/service-check (one row per external API call, grouped by service)
+export interface ServiceCheckCounts {
+  total: number;
+  /** Completed: upstream accepted the request */
+  success: number;
+  /** rejected + error */
+  failed: number;
+  /** Upstream answered but refused (e.g. wrong OTP) */
+  rejected: number;
+  /** Upstream unreachable / timeout / non-2xx / unreadable */
+  error: number;
+  unknown: number;
+  successRate: number;
+}
+
+export interface ServiceCheckApi extends ServiceCheckCounts {
+  apiService: string;
+  label: string;
+  avgLatencyMs: number;
+  maxLatencyMs: number;
+  lastCallAt: string | null;
+  errorTypes: { errorType: string; count: number }[];
+}
+
+export interface ServiceCheckService {
+  id: string;
+  label: string;
+  /** User requests to this service's tool (one request can make several API calls) */
+  toolCalls: number;
+  totals: ServiceCheckCounts;
+  apis: ServiceCheckApi[];
+}
+
+export interface ServiceCheckParams {
+  startDate?: string;
+  endDate?: string;
+  /** Service id, e.g. "pmkisan" */
+  service?: string;
+}
+
+const toServiceCheckCounts = (r: Record<string, unknown> = {}): ServiceCheckCounts => ({
+  total: Number(r.total) || 0,
+  success: Number(r.success) || 0,
+  failed: Number(r.failed) || 0,
+  rejected: Number(r.rejected) || 0,
+  error: Number(r.error) || 0,
+  unknown: Number(r.unknown) || 0,
+  successRate: Number(r.successRate) || 0,
+});
+
+export const fetchServiceCheck = async (
+  params: ServiceCheckParams = {},
+): Promise<ServiceCheckService[]> => {
+  const queryParams = buildQueryParams({
+    startDate: params.startDate || "",
+    endDate: params.endDate || "",
+    service: params.service || "",
+  });
+
+  const response = await fetch(
+    `${SERVER_URL}/service-check${queryParams ? `?${queryParams}` : ""}`,
+  );
+
+  if (!response.ok) {
+    await throwBecknExtHttpError(response);
+  }
+
+  const result = await response.json();
+  if (!Array.isArray(result.services)) return [];
+
+  return result.services.map((s: Record<string, unknown>) => ({
+    id: String(s.id || ""),
+    label: String(s.label || s.id || ""),
+    toolCalls: Number(s.toolCalls) || 0,
+    totals: toServiceCheckCounts(s.totals as Record<string, unknown>),
+    apis: Array.isArray(s.apis)
+      ? s.apis.map((a: Record<string, unknown>) => ({
+          apiService: String(a.apiService || ""),
+          label: String(a.label || a.apiService || ""),
+          ...toServiceCheckCounts(a),
+          avgLatencyMs: Number(a.avgLatencyMs) || 0,
+          maxLatencyMs: Number(a.maxLatencyMs) || 0,
+          lastCallAt: a.lastCallAt ? String(a.lastCallAt) : null,
+          errorTypes: Array.isArray(a.errorTypes)
+            ? a.errorTypes.map((e: Record<string, unknown>) => ({
+                errorType: String(e.errorType || "unknown"),
+                count: Number(e.count) || 0,
+              }))
+            : [],
+        }))
+      : [],
+  }));
+};
+
 export const fetchBecknExtLifecycle = async (params: {
   questionId: string;
   sessionId?: string;
@@ -3436,6 +3646,284 @@ export const fetchBecknExtList = async (
     }
     throw error;
   }
+};
+
+// ── Use-case health: working vs not working from latest call / error ─────────
+// The reporting window applies only to counts/rates. Current status always
+// comes from the latest recorded call, even when that call predates the window.
+
+export type BecknExtUseCaseHealthStatus =
+  | "working"
+  | "not_working"
+  | "unknown";
+
+export interface BecknExtUseCaseHealth {
+  useCase: string;
+  status: BecknExtUseCaseHealthStatus;
+  totalCalls: number;
+  totalSuccess: number;
+  totalErrors: number;
+  successRate: number;
+  maxLatencyMs: number;
+  /** Most recent call timestamp (startEts || createdAt) */
+  latestCallAt: string | null;
+  latestCallSuccess: boolean | null;
+  latestStatusCode: number | null;
+  latestMethod: string | null;
+  latestUrl: string | null;
+  latestLatencyMs: number | null;
+  /** Most recent failed call timestamp in sampled window */
+  latestErrorAt: string | null;
+  latestErrorStatusCode: number | null;
+  latestErrorUrl: string | null;
+  /** Most recent successful call timestamp in sampled window */
+  latestSuccessAt: string | null;
+  /**
+   * When the current outage started (only for not_working).
+   * Prefer time of last success (outage since then); else oldest consecutive
+   * failure in the recent sample.
+   */
+  downSinceAt: string | null;
+  /** Milliseconds from downSinceAt until now (0 when working / unknown). */
+  downForMs: number;
+  /** Whole hours down (floor). Useful for “down for X hours”. */
+  downForHours: number;
+  /** Consecutive failed calls at the head of the sample (not_working only). */
+  consecutiveFailures: number;
+}
+
+export interface BecknExtUseCaseHealthResponse {
+  overall: BecknExtStats;
+  useCases: BecknExtUseCaseHealth[];
+  workingCount: number;
+  notWorkingCount: number;
+  unknownCount: number;
+  /** Longest outage among not_working use cases (ms). */
+  maxDownForMs: number;
+}
+
+function logTimestamp(log: BecknExtLog | undefined | null): string | null {
+  if (!log) return null;
+  return log.startEts || log.createdAt || log.endEts || null;
+}
+
+function isLogSuccess(log: BecknExtLog): boolean {
+  if (log.extApiSuccess === true) return true;
+  if (
+    log.extApiSuccess == null &&
+    log.extApiStatusCode != null &&
+    log.extApiStatusCode >= 200 &&
+    log.extApiStatusCode < 400
+  ) {
+    return true;
+  }
+  return false;
+}
+
+function isLogFailure(log: BecknExtLog): boolean {
+  if (log.extApiSuccess === false) return true;
+  if (
+    log.extApiSuccess == null &&
+    log.extApiStatusCode != null &&
+    log.extApiStatusCode >= 400
+  ) {
+    return true;
+  }
+  return false;
+}
+
+/**
+ * Resolve working / not working from the latest outbound API call for a use case.
+ * - working: latest call extApiSuccess === true
+ * - not_working: latest call extApiSuccess === false
+ * - unknown: no samples or success flag missing
+ */
+function resolveUseCaseHealthStatus(
+  latest: BecknExtLog | undefined,
+): BecknExtUseCaseHealthStatus {
+  if (!latest) return "unknown";
+  if (isLogSuccess(latest)) return "working";
+  if (isLogFailure(latest)) return "not_working";
+  return "unknown";
+}
+
+/**
+ * Outage start for a failing use case (logs newest → oldest):
+ * 1. Prefer last success time → "down since last success"
+ * 2. Else oldest failure in the current consecutive failure streak
+ * 3. Else latest call time
+ */
+function resolveOutage(
+  status: BecknExtUseCaseHealthStatus,
+  logs: BecknExtLog[],
+  latestSuccessAt: string | null,
+  latestCallAt: string | null,
+): {
+  downSinceAt: string | null;
+  downForMs: number;
+  downForHours: number;
+  consecutiveFailures: number;
+} {
+  if (status !== "not_working") {
+    return {
+      downSinceAt: null,
+      downForMs: 0,
+      downForHours: 0,
+      consecutiveFailures: 0,
+    };
+  }
+
+  let consecutiveFailures = 0;
+  let oldestFailInStreak: string | null = null;
+  for (const log of logs) {
+    if (isLogFailure(log)) {
+      consecutiveFailures += 1;
+      oldestFailInStreak = logTimestamp(log) || oldestFailInStreak;
+      continue;
+    }
+    // Hit a success or unknown → end of current failure streak
+    break;
+  }
+
+  // Primary: hours since last known success (most useful for ops)
+  // Fallback: start of consecutive failure streak in recent sample
+  const downSinceAt =
+    latestSuccessAt || oldestFailInStreak || latestCallAt || null;
+
+  let downForMs = 0;
+  if (downSinceAt) {
+    const t = new Date(downSinceAt).getTime();
+    if (Number.isFinite(t)) {
+      downForMs = Math.max(0, Date.now() - t);
+    }
+  }
+
+  return {
+    downSinceAt,
+    downForMs,
+    downForHours: Math.floor(downForMs / (1000 * 60 * 60)),
+    consecutiveFailures,
+  };
+}
+
+/**
+ * Per use-case health snapshot for the External API status page.
+ * The use-case catalog and latest-call lookup are intentionally unbounded so
+ * an API last accessed before the reporting window still has a current status.
+ * Counts and success rates remain scoped to the requested reporting window.
+ */
+export const fetchBecknExtUseCaseHealth = async (
+  params: BecknExtStatsParams = {},
+): Promise<BecknExtUseCaseHealthResponse> => {
+  const [overall, catalogStats] = await Promise.all([
+    fetchBecknExtStats({
+      startDate: params.startDate,
+      endDate: params.endDate,
+    }),
+    fetchBecknExtStats(),
+  ]);
+
+  const catalog = (catalogStats.useCases || []).filter((u) => u.useCase);
+  if (catalog.length === 0) {
+    return {
+      overall,
+      useCases: [],
+      workingCount: 0,
+      notWorkingCount: 0,
+      unknownCount: 0,
+      maxDownForMs: 0,
+    };
+  }
+
+  const useCases: BecknExtUseCaseHealth[] = await Promise.all(
+    catalog.map(async (entry): Promise<BecknExtUseCaseHealth> => {
+      const [ucStats, list] = await Promise.all([
+        fetchBecknExtStats({
+          startDate: params.startDate,
+          endDate: params.endDate,
+          useCase: entry.useCase,
+        }).catch(() => EMPTY_BECKN_EXT_STATS),
+        // Do not apply the reporting window here. "Current" is the result of
+        // the last time this API was actually accessed, however old that is.
+        fetchBecknExtList({
+          page: 1,
+          limit: 100,
+          useCase: entry.useCase,
+          sortBy: "start_ets",
+          sortOrder: "desc",
+        }).catch(() => ({
+          data: [] as BecknExtLog[],
+          total: 0,
+          page: 1,
+          pageSize: 100,
+          totalPages: 1,
+        })),
+      ]);
+
+      const logs = list.data ?? [];
+      const latest = logs[0];
+      const latestError = logs.find((l) => isLogFailure(l));
+      const latestSuccess = logs.find((l) => isLogSuccess(l));
+      const latestCallAt = logTimestamp(latest);
+      const latestSuccessAt = logTimestamp(latestSuccess);
+      const status = resolveUseCaseHealthStatus(latest);
+      const outage = resolveOutage(
+        status,
+        logs,
+        latestSuccessAt,
+        latestCallAt,
+      );
+
+      return {
+        useCase: entry.useCase,
+        status,
+        totalCalls: ucStats.totalExternalApiCalls || 0,
+        totalSuccess: ucStats.totalSuccess || 0,
+        totalErrors: ucStats.totalErrors || 0,
+        successRate: ucStats.successRate || 0,
+        maxLatencyMs: ucStats.maxLatencyMs || 0,
+        latestCallAt,
+        latestCallSuccess: latest?.extApiSuccess ?? null,
+        latestStatusCode: latest?.extApiStatusCode ?? null,
+        latestMethod: latest?.extApiMethod ?? null,
+        latestUrl: latest?.extApiUrl ?? null,
+        latestLatencyMs: latest?.extApiLatencyMs ?? null,
+        latestErrorAt: logTimestamp(latestError),
+        latestErrorStatusCode: latestError?.extApiStatusCode ?? null,
+        latestErrorUrl: latestError?.extApiUrl ?? null,
+        latestSuccessAt,
+        ...outage,
+      };
+    }),
+  );
+
+  // Sort: not working first (longest down first), then unknown, then working
+  const statusRank: Record<BecknExtUseCaseHealthStatus, number> = {
+    not_working: 0,
+    unknown: 1,
+    working: 2,
+  };
+  useCases.sort((a, b) => {
+    const rank = statusRank[a.status] - statusRank[b.status];
+    if (rank !== 0) return rank;
+    if (a.status === "not_working") {
+      return b.downForMs - a.downForMs;
+    }
+    const aErr = a.latestErrorAt ? new Date(a.latestErrorAt).getTime() : 0;
+    const bErr = b.latestErrorAt ? new Date(b.latestErrorAt).getTime() : 0;
+    return bErr - aErr;
+  });
+
+  const notWorking = useCases.filter((u) => u.status === "not_working");
+
+  return {
+    overall,
+    useCases,
+    workingCount: useCases.filter((u) => u.status === "working").length,
+    notWorkingCount: notWorking.length,
+    unknownCount: useCases.filter((u) => u.status === "unknown").length,
+    maxDownForMs: notWorking.reduce((max, u) => Math.max(max, u.downForMs), 0),
+  };
 };
 
 // Legacy aliases kept for any remaining imports / flow detail page

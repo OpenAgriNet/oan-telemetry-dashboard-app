@@ -31,6 +31,7 @@ import { Button } from "@/components/ui/button";
 import { useDateFilter } from "@/contexts/DateFilterContext";
 import { fetchAsr, type PaginationParams } from "@/services/api";
 import TablePagination from "@/components/TablePagination";
+import DownloadCsvButton from "@/components/DownloadCsvButton";
 import { buildDateRangeParams } from "@/lib/utils";
 
 const AsrReport = () => {
@@ -159,10 +160,21 @@ const AsrReport = () => {
     <div className="space-y-6">
       <div className="flex items-center justify-between">
         <h1 className="text-2xl font-bold tracking-tight">ASR Details</h1>
-        <Button onClick={() => refetch()} disabled={isLoading} variant="outline">
+        <div className="flex gap-2">
+          <DownloadCsvButton
+            moduleName="asr"
+            filters={{
+              search: searchTerm,
+              sortBy: sortConfig.key,
+              sortOrder: sortConfig.direction,
+            }}
+            disabled={isLoading}
+          />
+          <Button onClick={() => refetch()} disabled={isLoading} variant="outline">
           <RefreshCw className={`h-4 w-4 mr-2 ${isLoading ? "animate-spin" : ""}`} />
           Refresh
         </Button>
+        </div>
       </div>
 
       {/* Stat Cards */}

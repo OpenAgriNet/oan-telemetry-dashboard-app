@@ -10,6 +10,7 @@ import {
   type Question,
 } from "@/services/api";
 import TablePagination from "@/components/TablePagination";
+import DownloadCsvButton from "@/components/DownloadCsvButton";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import {
   Select,
@@ -279,10 +280,22 @@ console.log("Questions from ISO",dateRange.from?.toISOString())
   if (error) {
     return (
       <div className="space-y-6">
-        <div className="flex items-center justify-between">
-          <h1 className="text-2xl font-bold tracking-tight">
-            Questions Report
-          </h1>
+        <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4">
+          <h1 className="text-2xl font-bold tracking-tight">Questions Addressed</h1>
+          <div className="flex gap-2">
+            <DownloadCsvButton
+              moduleName="questions"
+              filters={{
+                search: searchQuery,
+                sortBy: sortConfig.key,
+                sortOrder: sortConfig.direction,
+              }}
+            />
+            <Button onClick={() => refetch()} variant="outline" size="sm">
+              <RefreshCw className="h-4 w-4 mr-2" />
+              Retry
+            </Button>
+          </div>
         </div>
         <div className="flex justify-center items-center p-8 bg-destructive/10 border border-destructive/20 rounded-lg">
           <div className="text-center">
@@ -291,10 +304,6 @@ console.log("Questions from ISO",dateRange.from?.toISOString())
               Error loading questions data
             </p>
             <p className="text-destructive/80 text-sm mb-4">{error.message}</p>
-            <Button onClick={() => refetch()} variant="outline" size="sm">
-              <RefreshCw className="h-4 w-4 mr-2" />
-              Retry
-            </Button>
           </div>
         </div>
       </div>
@@ -306,6 +315,14 @@ console.log("Questions from ISO",dateRange.from?.toISOString())
       <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4">
         <h1 className="text-2xl font-bold tracking-tight">Questions Addressed</h1>
         <div className="flex gap-2">
+          <DownloadCsvButton
+            moduleName="questions"
+            filters={{
+              search: searchQuery,
+              sortBy: sortConfig.key,
+              sortOrder: sortConfig.direction,
+            }}
+          />
           <Button
             onClick={handleApplyFilters}
             disabled={isLoading}

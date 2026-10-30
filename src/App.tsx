@@ -39,8 +39,11 @@ import LangfuseQuestions from "./pages/LangfuseQuestions";
 import AppDownloads from "./pages/AppDownloads";
 import NotificationTelemetry from "./pages/NotificationTelemetry";
 import NotificationTelemetryDetails from "./pages/NotificationTelemetryDetails";
+import Exports from "./pages/Exports";
 import ExternalApiObservability from "./pages/ExternalApiObservability";
+import ExternalApiUseCaseStatus from "./pages/ExternalApiUseCaseStatus";
 import BecknExtLifecycleDetails from "./pages/BecknExtLifecycleDetails";
+import ServiceCheck from "./pages/ServiceCheck";
 
 
 const queryClient = new QueryClient({
@@ -64,7 +67,9 @@ type ChatTelemetryTab =
   | "errors"
   | "asr"
   | "tts"
-  | "external-api";
+  | "exports"
+  | "external-api"
+  | "service-check";
 
 const AccessDenied = () => (
   <div className="min-h-screen bg-background text-foreground flex items-center justify-center px-6">
@@ -259,6 +264,14 @@ const AppRoutes = () => {
         }
       />
       <Route
+        path="/exports"
+        element={
+          <TelemetryRoute requiredTab="exports">
+            <Exports />
+          </TelemetryRoute>
+        }
+      />
+      <Route
         path="/calls"
         element={
           <SuperAdminRoute>
@@ -307,10 +320,26 @@ const AppRoutes = () => {
         }
       />
       <Route
+        path="/external-api/status"
+        element={
+          <TelemetryRoute requiredTab="external-api">
+            <ExternalApiUseCaseStatus />
+          </TelemetryRoute>
+        }
+      />
+      <Route
         path="/external-api/flow/:questionId"
         element={
           <TelemetryRoute requiredTab="external-api">
             <BecknExtLifecycleDetails />
+          </TelemetryRoute>
+        }
+      />
+      <Route
+        path="/service-check"
+        element={
+          <TelemetryRoute requiredTab="service-check">
+            <ServiceCheck />
           </TelemetryRoute>
         }
       />

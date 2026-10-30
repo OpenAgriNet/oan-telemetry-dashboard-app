@@ -392,7 +392,9 @@ const ErrorsPage = () => {
                           <TableCell>
                             <div className="max-w-md">
                               <p className="truncate font-medium">
-                                {errorItem.errorMessage}
+                                {errorItem.errorMessage?.trim()
+                                  ? errorItem.errorMessage
+                                  : "N/A"}
                               </p>
                             </div>
                           </TableCell>

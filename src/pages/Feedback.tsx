@@ -42,6 +42,7 @@ import {
   type PaginationParams,
 } from "@/services/api";
 import TablePagination from "@/components/TablePagination";
+import DownloadCsvButton from "@/components/DownloadCsvButton";
 import { buildDateRangeParams } from "@/lib/utils";
 import { useTelemetryState } from "@/contexts/TelemetryStateContext";
 
@@ -307,6 +308,17 @@ const FeedbackPage = () => {
       <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4">
         <h1 className="text-2xl font-bold tracking-tight">User Feedback</h1>
         <div className="flex gap-2">
+          <DownloadCsvButton
+            moduleName="feedback"
+            filters={{
+              search: searchTerm,
+              feedbackSource: selectedSource,
+              feedbackType: selectedFeedbackType,
+              sortBy: sortConfig.key,
+              sortOrder: sortConfig.direction,
+            }}
+            disabled={isLoading}
+          />
           <Button
             onClick={handleApplyFilters}
             disabled={isLoading}

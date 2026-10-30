@@ -36,6 +36,8 @@ import {
   PhoneCall,
   Network,
   Bell,
+  FileSpreadsheet,
+  ShieldCheck,
 } from "lucide-react";
 import {
   DropdownMenu,
@@ -141,10 +143,22 @@ const Layout: React.FC<LayoutProps> = ({ children }) => {
       icon: <Volume2 size={16} />,
     },
     {
+      tab: "exports",
+      name: "Exports",
+      path: "/exports",
+      icon: <FileSpreadsheet size={16} />,
+    },
+    {
       tab: "external-api",
       name: "External API",
       path: "/external-api",
       icon: <Activity size={16} />,
+    },
+    {
+      tab: "service-check",
+      name: "Service Check",
+      path: "/service-check",
+      icon: <ShieldCheck size={16} />,
     },
   ] as const;
 
