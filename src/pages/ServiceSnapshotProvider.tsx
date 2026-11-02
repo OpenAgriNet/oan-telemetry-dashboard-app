@@ -42,7 +42,7 @@ const ServiceSnapshotProvider = () => {
             <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-4">
               <Card className="border-border/80"><CardHeader className="pb-2"><CardDescription>Observed services</CardDescription><CardTitle>{provider.services.length}</CardTitle></CardHeader></Card>
               <Card className="border-border/80"><CardHeader className="pb-2"><CardDescription>Service requests</CardDescription><CardTitle>{formatNumber(metrics.requests)}</CardTitle></CardHeader></Card>
-              <Card className="border-border/80"><CardHeader className="pb-2"><CardDescription>API success rate</CardDescription><CardTitle><Rate value={apiMetrics.successPercentage} /></CardTitle></CardHeader></Card>
+              <Card className="border-border/80"><CardHeader className="pb-2"><CardDescription>API success rate</CardDescription><CardTitle><Rate value={apiMetrics.successPercentage} requests={apiMetrics.requests} /></CardTitle></CardHeader></Card>
               <Card className="border-border/80"><CardHeader className="pb-2"><CardDescription>API requests</CardDescription><CardTitle>{formatNumber(metrics.apiRequests)}</CardTitle></CardHeader></Card>
             </div>
 
@@ -73,7 +73,7 @@ const ServiceSnapshotProvider = () => {
                           <TableCell className="font-semibold">{service.name}</TableCell>
                           <TableCell className="text-muted-foreground">{service.description}</TableCell>
                           <TableCell className="font-semibold">{formatNumber(service.metrics.requests)}</TableCell>
-                          <TableCell><Rate value={apiMetricsForService.successPercentage} /></TableCell>
+                          <TableCell><Rate value={apiMetricsForService.successPercentage} requests={apiMetricsForService.requests} /></TableCell>
                           <TableCell className="whitespace-nowrap font-medium">{formatLatency(service.metrics.p90LatencyMs)}</TableCell>
                           <TableCell><Badge variant="secondary">{service.apis.length}</Badge></TableCell>
                           <TableCell className="whitespace-nowrap text-right">

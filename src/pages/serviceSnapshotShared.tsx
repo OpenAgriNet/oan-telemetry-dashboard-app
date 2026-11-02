@@ -22,14 +22,26 @@ export function formatLatency(value: number | null) {
   return `${Math.round(value)} ms`;
 }
 
-export function Rate({ value, kind = "success" }: { value: number; kind?: "success" | "failure" }) {
-  const className = kind === "success"
-    ? "border-emerald-500/30 bg-emerald-500/10 text-emerald-700 dark:text-emerald-300"
-    : value > 0
-      ? "border-rose-500/30 bg-rose-500/10 text-rose-700 dark:text-rose-300"
-      : "border-muted-foreground/20 bg-muted text-muted-foreground";
+export function Rate({ value, requests, kind = "success" }: { value: number; requests: number; kind?: "success" | "failure" }) {
+  const neutral = "border-muted-foreground/20 bg-muted text-muted-foreground";
+  if (!requests || !Number.isFinite(value)) {
+    return <Badge variant="outline" className={neutral} aria-label="No request data">No data</Badge>;
+  }
 
-  return <Badge variant="outline" className={className}>{value.toFixed(2)}%</Badge>;
+  const levelFor = (rate: number) => rate >= 95 ? "healthy" : rate >= 80 ? "needs attention" : "critical";
+  const level = levelFor(value);
+  const rounded = value.toFixed(2);
+  const displayedValue = levelFor(Number(rounded)) === level ? rounded : String(value);
+  const className = kind === "failure"
+    ? value > 0 ? "border-rose-500/30 bg-rose-500/10 text-rose-700 dark:text-rose-300" : neutral
+    : level === "healthy"
+      ? "border-emerald-500/30 bg-emerald-500/10 text-emerald-700 dark:text-emerald-300"
+      : level === "needs attention"
+        ? "border-amber-500/30 bg-amber-500/10 text-amber-800 dark:text-amber-300"
+        : "border-rose-500/30 bg-rose-500/10 text-rose-700 dark:text-rose-300";
+
+  const label = kind === "success" ? `${displayedValue}% success rate, ${level}` : `${displayedValue}% failure rate`;
+  return <Badge variant="outline" className={className} aria-label={label}>{displayedValue}%</Badge>;
 }
 
 export function useServiceSnapshot() {

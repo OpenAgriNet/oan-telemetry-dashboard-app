@@ -38,7 +38,7 @@ const ServiceSnapshotDetail = () => {
         <>
           <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-4">
             <Card className="border-border/80"><CardHeader className="pb-2"><CardDescription>API endpoints</CardDescription><CardTitle>{formatNumber(service.apis.length)}</CardTitle></CardHeader></Card>
-            <Card className="border-border/80"><CardHeader className="pb-2"><CardDescription>Success rate</CardDescription><CardTitle><Rate value={service.metrics.successPercentage} /></CardTitle></CardHeader></Card>
+            <Card className="border-border/80"><CardHeader className="pb-2"><CardDescription>Success rate</CardDescription><CardTitle><Rate value={service.metrics.successPercentage} requests={service.metrics.requests} /></CardTitle></CardHeader></Card>
             <Card className="border-border/80"><CardHeader className="pb-2"><CardDescription>P90 latency</CardDescription><CardTitle>{formatLatency(service.metrics.p90LatencyMs)}</CardTitle></CardHeader></Card>
             <Card className="border-border/80"><CardHeader className="pb-2"><CardDescription>Max latency</CardDescription><CardTitle>{formatLatency(service.metrics.maxLatencyMs)}</CardTitle></CardHeader></Card>
           </div>
@@ -79,8 +79,8 @@ const ServiceSnapshotDetail = () => {
                           <code className="break-all text-xs text-muted-foreground">{api.method || "Not captured"} {api.endpoint || "Not captured"}</code>
                         </TableCell>
                         <TableCell className="font-semibold">{formatNumber(api.metrics.requests)}</TableCell>
-                        <TableCell><Rate value={api.metrics.successPercentage} /></TableCell>
-                        <TableCell><Rate value={api.metrics.failurePercentage} kind="failure" /></TableCell>
+                        <TableCell><Rate value={api.metrics.successPercentage} requests={api.metrics.requests} /></TableCell>
+                        <TableCell><Rate value={api.metrics.failurePercentage} requests={api.metrics.requests} kind="failure" /></TableCell>
                         <TableCell className="whitespace-nowrap font-medium">{formatLatency(api.metrics.p90LatencyMs)}</TableCell>
                         <TableCell className="whitespace-nowrap font-medium">{formatLatency(api.metrics.maxLatencyMs)}</TableCell>
                         <TableCell className="text-right">
