@@ -4,6 +4,21 @@
 
 **URL**: https://mahapocra.dev/projects/a4e1cc95-723b-493f-aca2-00391d3815fb
 
+## Service Check: Voice
+
+In the Bharat Vistaar dashboard, open **Service Check** and select **Voice**.
+The **Chat Completions** row shows recorded voice requests, completed requests,
+failed requests, rejected/error counts, success rate, latency, last call, and
+error types. Streaming and non-streaming requests are counted once each, not
+once per chunk or model retry.
+
+Completed 2xx responses are successful; completed 4xx responses are rejected;
+server errors and interrupted streams are errors. The service dropdown is
+populated by `GET /v1/service-check`; no separate Voice endpoint is needed.
+Existing date/state filters and refresh apply. Counts require the updated voice
+API, telemetry processor, and dashboard service; no historical outcome backfill
+is available. A zero row means no recorded requests in the selected range.
+
 ## How can I edit this code? 
 
 There are several ways of editing your application.
