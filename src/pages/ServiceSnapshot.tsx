@@ -71,7 +71,7 @@ const ServiceSnapshot = () => {
                           <TableCell className="font-semibold">{provider.name}</TableCell>
                           <TableCell>{provider.services.length}</TableCell>
                           <TableCell className="font-semibold">{formatNumber(metrics.requests)}</TableCell>
-                          <TableCell><Rate value={metrics.successPercentage} /></TableCell>
+                          <TableCell><Rate value={metrics.successPercentage} requests={metrics.requests} /></TableCell>
                           <TableCell className="font-semibold">{formatNumber(metrics.apiRequests)}</TableCell>
                           <TableCell className="text-right">
                             <Link to={providerPath} className="inline-flex items-center gap-2 text-sm font-medium text-primary hover:underline focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring">
