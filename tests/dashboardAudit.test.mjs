@@ -33,18 +33,30 @@ export {default as Dashboard} from './src/pages/Dashboard';
 export {StatsProvider} from './src/contexts/StatsContext';
 export {DateFilterProvider, useDateFilter} from './src/contexts/DateFilterContext';
 export {default as TrendChart} from './src/components/dashboard/TrendChart';
+export {Rate} from './src/pages/serviceSnapshotShared';
 export * as api from './src/services/api';`,resolveDir:process.cwd(),loader:'tsx'},
   bundle:true,write:false,format:'cjs',platform:'node',jsx:'automatic',alias:{'@/lib/useAppAuth':'./tests/authFixture.ts','@':'./src'},
   plugins:[{name:'config',setup(b){b.onResolve({filter:/config\/environment$/},()=>({path:fileURLToPath(new URL('./configFixture.ts',import.meta.url))}));}}],
   external:['react','react/*','react-dom','react-dom/*','react-router-dom','@tanstack/react-query'],
 });
 const mod={exports:{}};new Function('module','exports','require',outputFiles[0].text)(mod,mod.exports,require);
-const { DatePicker, Pagination, SortHead, useScopedPage, useDateScopedPage, QuestionsReport, SessionsReport, Dashboard, StatsProvider, DateFilterProvider, useDateFilter, TrendChart, api }=mod.exports;
+const { DatePicker, Pagination, SortHead, useScopedPage, useDateScopedPage, QuestionsReport, SessionsReport, Dashboard, StatsProvider, DateFilterProvider, useDateFilter, TrendChart, Rate, api }=mod.exports;
 const h=React.createElement;
 async function mount(element){const div=document.createElement('div');document.body.append(div);const root=createRoot(div);await act(async()=>root.render(element));return {div,root,async close(){await act(async()=>root.unmount());div.remove();}};}
 async function click(el){assert.ok(el,'control exists');await act(async()=>el.click());}
 const button=(label)=>[...document.querySelectorAll('button')].find(b=>b.textContent.trim()===label);
 const initial={from:new Date(2026,9,1),to:new Date(2026,9,7)};
+
+test('service success rate colours respect both thresholds and missing data',()=>{
+ for(const [value, colour, label] of [[0,'rose','critical'],[79.99,'rose','critical'],[79.999,'rose','critical'],[80,'amber','needs attention'],[94.99,'amber','needs attention'],[94.999,'amber','needs attention'],[95,'emerald','healthy'],[100,'emerald','healthy']]){
+  const html=renderToStaticMarkup(h(Rate,{value,requests:100}));
+  assert.match(html,new RegExp(`text-${colour}-`));
+  assert.match(html,new RegExp(label));
+ }
+ assert.match(renderToStaticMarkup(h(Rate,{value:79.999,requests:100})),/>79\.999%/);
+ const empty=renderToStaticMarkup(h(Rate,{value:0,requests:0}));
+ assert.match(empty,/No data/);assert.doesNotMatch(empty,/text-rose-/);
+});
 
 test('custom dates are draft until Apply; Escape cancels; Clear restores last seven days',async()=>{
  let applied=initial,changes=0;
