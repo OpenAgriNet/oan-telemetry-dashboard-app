@@ -7,10 +7,15 @@
 ## Service Check: rejection reasons
 
 Each API row has a **Rejection reasons** column alongside **Error types**, for
-example `Grievance already registered (3), Registration number wrong (2)`.
+example `No Record Found (45), Grievance already registered. (1),
+System.IndexOutOfRangeException (1)`.
 Reasons use the recorded rejection message, with the `rejected:` prefix removed
 and identifiers masked by the existing PII masking helper. Matching labels are
-combined after masking. If no message was recorded, the stored type (such as
+combined after masking. The backend shortens record-not-found and
+duplicate-grievance messages and keeps only exception class names, removing
+identifier-specific suffixes and stack traces before combining counts.
+The **Error types** column and its counts remain unchanged.
+If no message was recorded, the stored type (such as
 `http_401`) or `unknown` is shown instead; reasons are not guessed.
 Counts follow the selected date range and state. No matching rejections display
 a dash. Existing error counts remain separate. Deploy the dashboard service

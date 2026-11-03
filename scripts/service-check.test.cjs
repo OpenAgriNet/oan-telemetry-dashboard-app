@@ -28,11 +28,12 @@ function load(file, mocks, globals = {}) {
 test("Service Check renders rejection reasons and counts separately from errors, including older responses", async () => {
   const row = {
     apiService: "pmkisan_grievance_lodge", label: "Grievance Lodge",
-    total: 8, success: 2, failed: 6, rejected: 5, error: 1, unknown: 0, successRate: 25,
+    total: 50, success: 2, failed: 48, rejected: 47, error: 1, unknown: 0, successRate: 4,
     errorTypes: [{ errorType: "timeout", count: "1" }],
     rejectedTypes: [
-      { errorType: "Grievance already registered", count: "3" },
-      { errorType: "Registration number wrong", count: "2" },
+      { errorType: "No Record Found", count: "45" },
+      { errorType: "Grievance already registered.", count: "1" },
+      { errorType: "System.IndexOutOfRangeException", count: "1" },
     ],
   };
   let response = { services: [{ id: "pmkisan", label: "PM-KISAN", toolCalls: 8, totals: row, apis: [row] }] };
@@ -41,7 +42,7 @@ test("Service Check renders rejection reasons and counts separately from errors,
     "../data/dailyMetrics.json": [],
   }, { fetch: async () => new Response(JSON.stringify(response)) });
   let services = await api.fetchServiceCheck();
-  assert.equal(services[0].apis[0].rejectedTypes[0].count, 3);
+  assert.equal(services[0].apis[0].rejectedTypes[0].count, 45);
   assert.equal(services[0].apis[0].errorTypes[0].count, 1);
   const mocks = {
     "@/services/api": api,
@@ -54,8 +55,9 @@ test("Service Check renders rejection reasons and counts separately from errors,
   const Page = load(resolve(src, "pages/ServiceCheck.tsx"), mocks).default;
   const html = renderToStaticMarkup(React.createElement(Page));
   assert.ok(html.includes("Rejection reasons"));
+  assert.ok(html.includes("Error types"));
   const cells = [...html.matchAll(/<td[^>]*>(.*?)<\/td>/g)].map((match) => match[1]);
-  assert.ok(cells.includes("Grievance already registered (3), Registration number wrong (2)"));
+  assert.ok(cells.includes("No Record Found (45), Grievance already registered. (1), System.IndexOutOfRangeException (1)"));
   assert.ok(cells.includes("timeout (1)"));
 
   delete row.rejectedTypes;
