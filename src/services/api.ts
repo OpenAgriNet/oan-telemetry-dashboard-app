@@ -3435,6 +3435,8 @@ export interface ServiceCheckApi extends ServiceCheckCounts {
   maxLatencyMs: number;
   lastCallAt: string | null;
   errorTypes: { errorType: string; count: number }[];
+  /** Masked rejection messages, falling back to recorded type or unknown. */
+  rejectedTypes: ServiceCheckApi["errorTypes"];
 }
 
 export interface ServiceCheckService {
@@ -3462,6 +3464,14 @@ const toServiceCheckCounts = (r: Record<string, unknown> = {}): ServiceCheckCoun
   unknown: Number(r.unknown) || 0,
   successRate: Number(r.successRate) || 0,
 });
+
+const toServiceCheckTypes = (types: unknown): ServiceCheckApi["errorTypes"] =>
+  Array.isArray(types)
+    ? types.map((e: Record<string, unknown>) => ({
+        errorType: String(e.errorType || "unknown"),
+        count: Number(e.count) || 0,
+      }))
+    : [];
 
 export const fetchServiceCheck = async (
   params: ServiceCheckParams = {},
@@ -3496,12 +3506,8 @@ export const fetchServiceCheck = async (
           avgLatencyMs: Number(a.avgLatencyMs) || 0,
           maxLatencyMs: Number(a.maxLatencyMs) || 0,
           lastCallAt: a.lastCallAt ? String(a.lastCallAt) : null,
-          errorTypes: Array.isArray(a.errorTypes)
-            ? a.errorTypes.map((e: Record<string, unknown>) => ({
-                errorType: String(e.errorType || "unknown"),
-                count: Number(e.count) || 0,
-              }))
-            : [],
+          errorTypes: toServiceCheckTypes(a.errorTypes),
+          rejectedTypes: toServiceCheckTypes(a.rejectedTypes),
         }))
       : [],
   }));

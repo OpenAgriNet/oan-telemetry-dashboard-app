@@ -4,6 +4,24 @@
 
 **URL**: https://mahapocra.dev/projects/a4e1cc95-723b-493f-aca2-00391d3815fb
 
+## Service Check: rejection reasons
+
+Each API row has a **Rejection reasons** column alongside **Error types**, for
+example `Grievance already registered (3), Registration number wrong (2)`.
+Reasons use the recorded rejection message, with the `rejected:` prefix removed
+and identifiers masked by the existing PII masking helper. Matching labels are
+combined after masking. If no message was recorded, the stored type (such as
+`http_401`) or `unknown` is shown instead; reasons are not guessed.
+Counts follow the selected date range and state. No matching rejections display
+a dash. Existing error counts remain separate. Deploy the dashboard service
+with the app; existing stored rejection messages need no migration or backfill.
+
+Run the focused API-decoding and rendered-column check:
+
+```sh
+node --test scripts/service-check.test.cjs
+```
+
 ## Service Check: Voice
 
 In the Bharat Vistaar dashboard, open **Service Check** and select **Voice**.

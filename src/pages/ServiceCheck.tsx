@@ -75,11 +75,13 @@ function SummaryTile({
   );
 }
 
-function ApiRow({ api }: { api: ServiceCheckApi }) {
-  const errorTypes = api.errorTypes
+function formatTypes(types: ServiceCheckApi["errorTypes"]): string {
+  return types
     .map((e) => `${e.errorType} (${e.count})`)
-    .join(", ");
+    .join(", ") || "—";
+}
 
+function ApiRow({ api }: { api: ServiceCheckApi }) {
   return (
     <TableRow className={cn(api.total === 0 && "text-muted-foreground")}>
       <TableCell>
@@ -117,7 +119,10 @@ function ApiRow({ api }: { api: ServiceCheckApi }) {
         {api.lastCallAt ?? "—"}
       </TableCell>
       <TableCell className="text-xs text-muted-foreground">
-        {errorTypes || "—"}
+        {formatTypes(api.rejectedTypes)}
+      </TableCell>
+      <TableCell className="text-xs text-muted-foreground">
+        {formatTypes(api.errorTypes)}
       </TableCell>
     </TableRow>
   );
@@ -162,6 +167,7 @@ function ServiceCard({ service }: { service: ServiceCheckService }) {
                 <TableHead className="text-right">Success rate</TableHead>
                 <TableHead className="text-right">Avg latency</TableHead>
                 <TableHead>Last call</TableHead>
+                <TableHead>Rejection reasons</TableHead>
                 <TableHead>Error types</TableHead>
               </TableRow>
             </TableHeader>
