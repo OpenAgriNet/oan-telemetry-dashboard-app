@@ -35,7 +35,7 @@ import {
 } from "@/services/api";
 
 /**
- * Service Check: per-service health of the external APIs the provider calls.
+ * Service Check: per-service health of provider APIs and voice requests.
  * Services and API labels come from the backend registry
  * (oan-telemetry-dashboard-service utils/serviceCheckConfig.js), so new
  * services show up here without UI changes.
@@ -75,11 +75,13 @@ function SummaryTile({
   );
 }
 
-function ApiRow({ api }: { api: ServiceCheckApi }) {
-  const errorTypes = api.errorTypes
+function formatTypes(types: ServiceCheckApi["errorTypes"]): string {
+  return types
     .map((e) => `${e.errorType} (${e.count})`)
-    .join(", ");
+    .join(", ") || "—";
+}
 
+function ApiRow({ api }: { api: ServiceCheckApi }) {
   return (
     <TableRow className={cn(api.total === 0 && "text-muted-foreground")}>
       <TableCell>
@@ -117,7 +119,10 @@ function ApiRow({ api }: { api: ServiceCheckApi }) {
         {api.lastCallAt ?? "—"}
       </TableCell>
       <TableCell className="text-xs text-muted-foreground">
-        {errorTypes || "—"}
+        {formatTypes(api.rejectedTypes)}
+      </TableCell>
+      <TableCell className="text-xs text-muted-foreground">
+        {formatTypes(api.errorTypes)}
       </TableCell>
     </TableRow>
   );
@@ -135,9 +140,11 @@ function ServiceCard({ service }: { service: ServiceCheckService }) {
         </div>
         <div className="max-w-xs">
           <SummaryTile
-            label="Tool calls"
+            label={service.id === "voice" ? "Voice requests" : "Tool calls"}
             value={service.toolCalls}
-            hint={`Times users used the ${service.label} tool`}
+            hint={service.id === "voice"
+              ? "Requests to the voice chat-completions endpoint"
+              : `Times users used the ${service.label} tool`}
             icon={<Activity size={14} />}
           />
         </div>
@@ -153,13 +160,14 @@ function ServiceCard({ service }: { service: ServiceCheckService }) {
                 <TableHead className="text-right">Failed</TableHead>
                 <TableHead
                   className="text-right"
-                  title="Rejected = API answered but refused (e.g. wrong OTP). Error = timeout, network or HTTP failure."
+                  title="Rejected = request refused (e.g. wrong OTP or voice HTTP 4xx). Error = server, timeout, network or stream failure."
                 >
                   Rejected / Error
                 </TableHead>
                 <TableHead className="text-right">Success rate</TableHead>
                 <TableHead className="text-right">Avg latency</TableHead>
                 <TableHead>Last call</TableHead>
+                <TableHead>Rejection reasons</TableHead>
                 <TableHead>Error types</TableHead>
               </TableRow>
             </TableHeader>
@@ -233,7 +241,7 @@ const ServiceCheck = () => {
           <div>
             <h1 className="text-2xl font-bold tracking-tight">Service Check</h1>
             <p className="text-sm text-muted-foreground">
-              How many times each external API was called, and how many
+              How many times each service API was called, and how many
               completed or failed
             </p>
           </div>
