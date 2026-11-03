@@ -9,14 +9,14 @@
 Each API row has a **Rejection reasons** column alongside **Error types**, for
 example `No Record Found (45), Grievance already registered. (1),
 System.IndexOutOfRangeException (1)`.
-Reasons use the recorded rejection message, with the `rejected:` prefix removed
-and identifiers masked by the existing PII masking helper. Matching labels are
-combined after masking. The backend shortens record-not-found and
+Reasons use recognized patterns in the recorded rejection message, with the
+`rejected:` prefix removed. Matching labels are combined. The backend shortens record-not-found and
 duplicate-grievance messages and keeps only exception class names, removing
 identifier-specific suffixes and stack traces before combining counts.
 The **Error types** column and its counts remain unchanged.
-If no message was recorded, the stored type (such as
-`http_401`) or `unknown` is shown instead; reasons are not guessed.
+Unmatched or missing messages are combined as `unknown (count)`, including
+unrecognized rejection types such as `http_401` and invalid registration/OTP
+messages. Raw rejection messages are not displayed.
 Counts follow the selected date range and state. No matching rejections display
 a dash. Existing error counts remain separate. Deploy the dashboard service
 with the app; existing stored rejection messages need no migration or backfill.

@@ -28,10 +28,11 @@ function load(file, mocks, globals = {}) {
 test("Service Check renders rejection reasons and counts separately from errors, including older responses", async () => {
   const row = {
     apiService: "pmkisan_grievance_lodge", label: "Grievance Lodge",
-    total: 50, success: 2, failed: 48, rejected: 47, error: 1, unknown: 0, successRate: 4,
+    total: 52, success: 2, failed: 50, rejected: 49, error: 1, unknown: 0, successRate: 4,
     errorTypes: [{ errorType: "timeout", count: "1" }],
     rejectedTypes: [
       { errorType: "No Record Found", count: "45" },
+      { errorType: "unknown", count: "2" },
       { errorType: "Grievance already registered.", count: "1" },
       { errorType: "System.IndexOutOfRangeException", count: "1" },
     ],
@@ -57,7 +58,7 @@ test("Service Check renders rejection reasons and counts separately from errors,
   assert.ok(html.includes("Rejection reasons"));
   assert.ok(html.includes("Error types"));
   const cells = [...html.matchAll(/<td[^>]*>(.*?)<\/td>/g)].map((match) => match[1]);
-  assert.ok(cells.includes("No Record Found (45), Grievance already registered. (1), System.IndexOutOfRangeException (1)"));
+  assert.ok(cells.includes("No Record Found (45), unknown (2), Grievance already registered. (1), System.IndexOutOfRangeException (1)"));
   assert.ok(cells.includes("timeout (1)"));
 
   delete row.rejectedTypes;

@@ -3435,7 +3435,7 @@ export interface ServiceCheckApi extends ServiceCheckCounts {
   maxLatencyMs: number;
   lastCallAt: string | null;
   errorTypes: { errorType: string; count: number }[];
-  /** Masked rejection messages, falling back to recorded type or unknown. */
+  /** Recognized short rejection labels; unmatched or missing messages use unknown. */
   rejectedTypes: ServiceCheckApi["errorTypes"];
 }
 
