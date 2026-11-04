@@ -31,7 +31,7 @@ const ServiceSnapshotProvider = () => {
         </div>
       </div>
 
-      {gap.isError && isMh && <p role="alert" className="text-sm text-destructive">MH historical reconstruction could not be loaded; counts exclude reconstructed calls.</p>}
+      {/* {gap.isError && isMh && <p role="alert" className="text-sm text-destructive">MH historical reconstruction could not be loaded; counts exclude reconstructed calls.</p>} */}
       <SnapshotState
         isLoading={snapshotQuery.isLoading}
         isError={snapshotQuery.isError}

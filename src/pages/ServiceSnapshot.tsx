@@ -36,8 +36,6 @@ const ServiceSnapshot = () => {
         </Link>
       </div>
 
-      {gapCount > 0 && <p className="text-sm text-muted-foreground">MH request totals include reconstructed BAP calls for 2–4 November 2026.</p>}
-      {gap.isError && <p role="alert" className="text-sm text-destructive">MH historical reconstruction could not be loaded; provider counts exclude reconstructed calls.</p>}
       <SnapshotState
         isLoading={snapshotQuery.isLoading}
         isError={snapshotQuery.isError}
