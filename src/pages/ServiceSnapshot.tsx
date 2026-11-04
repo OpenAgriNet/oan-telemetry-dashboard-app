@@ -1,4 +1,5 @@
 import { Link } from "react-router-dom";
+import { useMhGap } from "./mhGapShared";
 import { ArrowUpRight, Network, ServerCog } from "lucide-react";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
@@ -7,6 +8,14 @@ import { Rate, SnapshotState, formatNumber, providerMetrics, providerSlug, useSe
 const ServiceSnapshot = () => {
   const snapshotQuery = useServiceSnapshot();
   const snapshot = snapshotQuery.data?.data;
+  const gap = useMhGap();
+  const gapCount = gap.data?.totals.mappedCandidateCalls || 0;
+  const providers = snapshot ? [...snapshot.providers] : [];
+  if (gapCount && !providers.some(p => providerSlug(p.name) === "mh-vistaar")) {
+    providers.push({ name: "MH Vistaar", services: [] });
+  }
+  const mhExistingKeys = new Set(providers.find(p => providerSlug(p.name) === "mh-vistaar")?.services.map(s => s.key) || []);
+  const extraServices = gap.data?.services.filter(s => !mhExistingKeys.has(s.key)).length || 0;
 
   return (
     <div className="space-y-6">
@@ -27,19 +36,21 @@ const ServiceSnapshot = () => {
         </Link>
       </div>
 
+      {gapCount > 0 && <p className="text-sm text-muted-foreground">MH request totals include reconstructed BAP calls for 2–4 November 2026.</p>}
+      {gap.isError && <p role="alert" className="text-sm text-destructive">MH historical reconstruction could not be loaded; provider counts exclude reconstructed calls.</p>}
       <SnapshotState
         isLoading={snapshotQuery.isLoading}
         isError={snapshotQuery.isError}
         warning={snapshotQuery.data?.warning}
-        isEmpty={Boolean(snapshot && !snapshot.providers.length)}
+        isEmpty={Boolean(snapshot && !providers.length && !gap.isLoading)}
       />
 
-      {snapshot && snapshot.providers.length > 0 && (
+      {snapshot && providers.length > 0 && (
         <>
           <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-4">
-            <Card className="border-border/80"><CardHeader className="pb-2"><CardDescription>Providers</CardDescription><CardTitle>{snapshot.summary.providerCount}</CardTitle></CardHeader></Card>
-            <Card className="border-border/80"><CardHeader className="pb-2"><CardDescription>Services</CardDescription><CardTitle>{snapshot.summary.serviceCount}</CardTitle></CardHeader></Card>
-            <Card className="border-border/80"><CardHeader className="pb-2"><CardDescription>Service requests</CardDescription><CardTitle>{formatNumber(snapshot.summary.serviceRequests)}</CardTitle></CardHeader></Card>
+            <Card className="border-border/80"><CardHeader className="pb-2"><CardDescription>Providers</CardDescription><CardTitle>{providers.length}</CardTitle></CardHeader></Card>
+            <Card className="border-border/80"><CardHeader className="pb-2"><CardDescription>Services</CardDescription><CardTitle>{snapshot.summary.serviceCount + extraServices}</CardTitle></CardHeader></Card>
+            <Card className="border-border/80"><CardHeader className="pb-2"><CardDescription>Service requests</CardDescription><CardTitle>{formatNumber(snapshot.summary.serviceRequests + gapCount)}</CardTitle></CardHeader></Card>
             <Card className="border-border/80"><CardHeader className="pb-2"><CardDescription>API requests</CardDescription><CardTitle>{formatNumber(snapshot.summary.apiRequests)}</CardTitle></CardHeader></Card>
           </div>
 
@@ -62,15 +73,18 @@ const ServiceSnapshot = () => {
                     </TableRow>
                   </TableHeader>
                   <TableBody>
-                    {snapshot.providers.map((provider) => {
+                    {providers.map((provider) => {
                       const metrics = providerMetrics(provider);
+                      const isMh = providerSlug(provider.name) === "mh-vistaar";
+                      const reconstructed = isMh ? gapCount : 0;
+                      const extra = isMh ? extraServices : 0;
                       const providerPath = `/service-snapshot/provider/${providerSlug(provider.name)}`;
 
                       return (
                         <TableRow key={provider.name}>
                           <TableCell className="font-semibold">{provider.name}</TableCell>
-                          <TableCell>{provider.services.length}</TableCell>
-                          <TableCell className="font-semibold">{formatNumber(metrics.requests)}</TableCell>
+                          <TableCell>{provider.services.length + extra}</TableCell>
+                          <TableCell className="font-semibold">{formatNumber(metrics.requests + reconstructed)}</TableCell>
                           <TableCell><Rate value={metrics.successPercentage} requests={metrics.requests} /></TableCell>
                           <TableCell className="font-semibold">{formatNumber(metrics.apiRequests)}</TableCell>
                           <TableCell className="text-right">

@@ -1,3 +1,4 @@
+import { useMhGap } from "./mhGapShared";
 import { Link, useParams } from "react-router-dom";
 import { ArrowLeft, ServerCog } from "lucide-react";
 import { Badge } from "@/components/ui/badge";
@@ -9,7 +10,10 @@ import { Rate, SnapshotState, formatLatency, formatNumber, providerApiMetrics, p
 const ServiceSnapshotProvider = () => {
   const { providerName: providerSlugParam } = useParams();
   const snapshotQuery = useServiceSnapshot();
-  const provider = snapshotQuery.data?.data.providers.find((item) => providerSlug(item.name) === providerSlugParam);
+  const isMh = providerSlugParam === "mh-vistaar";
+  const gap = useMhGap(isMh);
+  const observedProvider = snapshotQuery.data?.data.providers.find((item) => providerSlug(item.name) === providerSlugParam);
+  const provider = observedProvider || (isMh && gap.data?.services.length ? { name: "MH Vistaar", services: [] } : undefined);
   const providerName = provider?.name || "Provider";
 
   return (
@@ -27,6 +31,7 @@ const ServiceSnapshotProvider = () => {
         </div>
       </div>
 
+      {gap.isError && isMh && <p role="alert" className="text-sm text-destructive">MH historical reconstruction could not be loaded; counts exclude reconstructed calls.</p>}
       <SnapshotState
         isLoading={snapshotQuery.isLoading}
         isError={snapshotQuery.isError}
@@ -37,11 +42,17 @@ const ServiceSnapshotProvider = () => {
       {provider && (() => {
         const metrics = providerMetrics(provider);
         const apiMetrics = providerApiMetrics(provider);
+        const gapServices = isMh ? gap.data?.services || [] : [];
+        const gapByKey = new Map(gapServices.map(item => [item.key, item]));
+        const observedKeys = new Set(provider.services.map(service => service.key));
+        const extras = gapServices.filter(service => !observedKeys.has(service.key));
+        const serviceCount = provider.services.length + extras.length;
+        const reconstructed = isMh ? gap.data?.totals.mappedCandidateCalls || 0 : 0;
         return (
           <>
             <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-4">
-              <Card className="border-border/80"><CardHeader className="pb-2"><CardDescription>Observed services</CardDescription><CardTitle>{provider.services.length}</CardTitle></CardHeader></Card>
-              <Card className="border-border/80"><CardHeader className="pb-2"><CardDescription>Service requests</CardDescription><CardTitle>{formatNumber(metrics.requests)}</CardTitle></CardHeader></Card>
+              <Card className="border-border/80"><CardHeader className="pb-2"><CardDescription>Observed services</CardDescription><CardTitle>{serviceCount}</CardTitle></CardHeader></Card>
+              <Card className="border-border/80"><CardHeader className="pb-2"><CardDescription>Service requests</CardDescription><CardTitle>{formatNumber(metrics.requests + reconstructed)}</CardTitle></CardHeader></Card>
               <Card className="border-border/80"><CardHeader className="pb-2"><CardDescription>API success rate</CardDescription><CardTitle><Rate value={apiMetrics.successPercentage} requests={apiMetrics.requests} /></CardTitle></CardHeader></Card>
               <Card className="border-border/80"><CardHeader className="pb-2"><CardDescription>API requests</CardDescription><CardTitle>{formatNumber(metrics.apiRequests)}</CardTitle></CardHeader></Card>
             </div>
@@ -49,7 +60,7 @@ const ServiceSnapshotProvider = () => {
             <Card className="border-border/80">
               <CardHeader className="border-b">
                 <CardTitle className="text-lg">Services</CardTitle>
-                <CardDescription>{provider.services.length} services available.</CardDescription>
+                <CardDescription>{serviceCount} services available.</CardDescription>
               </CardHeader>
               <CardContent className="p-0">
                 <div className="overflow-x-auto">
@@ -68,11 +79,12 @@ const ServiceSnapshotProvider = () => {
                     <TableBody>
                       {provider.services.map((service) => {
                         const apiMetricsForService = serviceApiMetrics(service);
+                        const reconstructedCalls = gapByKey.get(service.key)?.candidateCalls || 0;
                         return (
                         <TableRow key={service.key}>
                           <TableCell className="font-semibold">{service.name}</TableCell>
                           <TableCell className="text-muted-foreground">{service.description}</TableCell>
-                          <TableCell className="font-semibold">{formatNumber(service.metrics.requests)}</TableCell>
+                          <TableCell className="font-semibold">{formatNumber(service.metrics.requests + reconstructedCalls)}</TableCell>
                           <TableCell><Rate value={apiMetricsForService.successPercentage} requests={apiMetricsForService.requests} /></TableCell>
                           <TableCell className="whitespace-nowrap font-medium">{formatLatency(service.metrics.p90LatencyMs)}</TableCell>
                           <TableCell><Badge variant="secondary">{service.apis.length}</Badge></TableCell>
@@ -85,6 +97,12 @@ const ServiceSnapshotProvider = () => {
                         </TableRow>
                         );
                       })}
+                      {extras.map((service) => <TableRow key={service.key}>
+                        <TableCell className="font-semibold">{service.name}</TableCell>
+                        <TableCell className="text-muted-foreground">No provider API details captured for this period.</TableCell>
+                        <TableCell className="font-semibold">{formatNumber(service.candidateCalls)}</TableCell>
+                        <TableCell><Rate value={0} requests={0} /></TableCell><TableCell>—</TableCell><TableCell><Badge variant="secondary">0</Badge></TableCell><TableCell className="text-right text-muted-foreground">Unavailable</TableCell>
+                      </TableRow>)}
                     </TableBody>
                   </Table>
                 </div>
