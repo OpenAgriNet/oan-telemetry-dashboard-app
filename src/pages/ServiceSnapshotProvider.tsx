@@ -99,6 +99,7 @@ const ServiceSnapshotProvider = () => {
                       })}
                       {extras.map((service) => <TableRow key={service.key}>
                         <TableCell className="font-semibold">{service.name}</TableCell>
+                        <TableCell className="text-muted-foreground">No provider API details captured for this period.</TableCell>
                         <TableCell className="font-semibold">{formatNumber(service.candidateCalls)}</TableCell>
                         <TableCell><Rate value={0} requests={0} /></TableCell><TableCell>—</TableCell><TableCell><Badge variant="secondary">0</Badge></TableCell><TableCell className="text-right text-muted-foreground">Unavailable</TableCell>
                       </TableRow>)}
