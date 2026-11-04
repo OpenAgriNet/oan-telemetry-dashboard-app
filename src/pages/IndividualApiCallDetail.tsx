@@ -40,7 +40,8 @@ const IndividualApiCallDetail = () => {
   const { id } = useParams();
   const [searchParams] = useSearchParams();
   const returnTo = safeReturnTo(searchParams.get("returnTo"));
-  const returnLabel = returnTo.startsWith("/service-snapshot/") ? "Service API calls" : "Individual APIs";
+  const returnLabel = returnTo.split("?")[0].endsWith("/chatbot-requests") ? "Chatbot requests"
+    : returnTo.startsWith("/service-snapshot/") ? "Service API calls" : "Individual APIs";
   const query = useQuery({ queryKey: ["individual-api-call", id], queryFn: () => fetchIndividualApiCall(id || ""), enabled: Boolean(id) });
   const call = query.data;
   const isSuccess = call?.outcome === "success";

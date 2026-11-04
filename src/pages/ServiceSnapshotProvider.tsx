@@ -84,24 +84,32 @@ const ServiceSnapshotProvider = () => {
                         <TableRow key={service.key}>
                           <TableCell className="font-semibold">{service.name}</TableCell>
                           <TableCell className="text-muted-foreground">{service.description}</TableCell>
-                          <TableCell className="font-semibold">{formatNumber(service.metrics.requests + reconstructedCalls)}</TableCell>
+                          <TableCell className="font-semibold">{formatNumber(service.metrics.requests + reconstructedCalls)}{reconstructedCalls > 0 && <div className="text-xs font-normal text-muted-foreground">Includes {formatNumber(reconstructedCalls)} chatbot requests</div>}</TableCell>
                           <TableCell><Rate value={apiMetricsForService.successPercentage} requests={apiMetricsForService.requests} /></TableCell>
                           <TableCell className="whitespace-nowrap font-medium">{formatLatency(service.metrics.p90LatencyMs)}</TableCell>
                           <TableCell><Badge variant="secondary">{service.apis.length}</Badge></TableCell>
-                          <TableCell className="whitespace-nowrap text-right">
+                          <TableCell className="text-right">
                             <Link
                               to={`/service-snapshot/provider/${providerSlug(provider.name)}/service/${encodeURIComponent(service.key)}`}
                               className="inline-flex text-sm font-medium text-primary hover:underline focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring"
                             >View APIs</Link>
+                            {reconstructedCalls > 0 && <Link
+                              to={`/service-snapshot/provider/mh-vistaar/service/${encodeURIComponent(service.key)}/chatbot-requests`}
+                              className="mt-2 block text-sm font-medium text-primary hover:underline focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring"
+                            >View chatbot requests</Link>}
                           </TableCell>
                         </TableRow>
                         );
                       })}
                       {extras.map((service) => <TableRow key={service.key}>
                         <TableCell className="font-semibold">{service.name}</TableCell>
-                        <TableCell className="text-muted-foreground">No provider API details captured for this period.</TableCell>
-                        <TableCell className="font-semibold">{formatNumber(service.candidateCalls)}</TableCell>
-                        <TableCell><Rate value={0} requests={0} /></TableCell><TableCell>—</TableCell><TableCell><Badge variant="secondary">0</Badge></TableCell><TableCell className="text-right text-muted-foreground">Unavailable</TableCell>
+                        <TableCell className="text-muted-foreground">{service.description}</TableCell>
+                        <TableCell className="font-semibold">{formatNumber(service.candidateCalls)}<div className="text-xs font-normal text-muted-foreground">Chatbot requests</div></TableCell>
+                        <TableCell><Rate value={0} requests={0} /></TableCell><TableCell>—</TableCell><TableCell><Badge variant="secondary">0</Badge></TableCell>
+                        <TableCell className="text-right"><Link
+                          to={`/service-snapshot/provider/mh-vistaar/service/${encodeURIComponent(service.key)}/chatbot-requests`}
+                          className="text-sm font-medium text-primary hover:underline focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring"
+                        >View chatbot requests</Link></TableCell>
                       </TableRow>)}
                     </TableBody>
                   </Table>
